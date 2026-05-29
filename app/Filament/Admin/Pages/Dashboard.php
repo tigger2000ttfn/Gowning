@@ -29,6 +29,27 @@ class Dashboard extends BaseDashboard
 
     public function getColumns(): int|array { return 2; }
 
+    protected function buildQuickLinks(): array
+    {
+        $role = \Illuminate\Support\Facades\Auth::user()?->role;
+        if (! $role) return [];
+        $links = [];
+        if ($role->canManageScheduling()) {
+            $links[] = ['Run Slots', \App\Filament\Admin\Resources\RunSlotResource::getUrl(), 'heroicon-o-calendar-days', '#A4123F'];
+            $links[] = ['Class Completions', \App\Filament\Admin\Resources\ClassCompletionResource::getUrl(), 'heroicon-o-academic-cap', '#6B2C91'];
+            $links[] = ['Reservations', \App\Filament\Admin\Resources\ReservationResource::getUrl(), 'heroicon-o-ticket', '#C79A2E'];
+        }
+        if ($role->canQaReview()) {
+            $links[] = ['Reports', \App\Filament\Admin\Pages\Reports::getUrl(), 'heroicon-o-chart-bar', '#2E7D5B'];
+        }
+        if ($role->canAdminister()) {
+            $links[] = ['Import Personnel', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray', '#1F6FB2'];
+            $links[] = ['Users & Approvals', \App\Filament\Admin\Resources\UserResource::getUrl(), 'heroicon-o-user-group', '#A4123F'];
+            $links[] = ['Settings', \App\Filament\Admin\Pages\Settings::getUrl(), 'heroicon-o-cog-6-tooth', '#3A3A40'];
+        }
+        return $links;
+    }
+
     protected function buildWeek(): array
     {
         $days = [];
@@ -66,6 +87,7 @@ class Dashboard extends BaseDashboard
                                 ->orderBy('session_date')->limit(5)->get(),
             'pendingApprovals' => User::where('approval_status', 'pending')->latest()->limit(5)->get(),
             'weekDays' => $this->buildWeek(),
+            'quickLinks' => $this->buildQuickLinks(),
         ];
     }
 }

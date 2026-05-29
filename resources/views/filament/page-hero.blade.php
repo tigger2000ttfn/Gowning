@@ -1,7 +1,7 @@
 {{-- Reusable branded page hero. Pass $title, $subtitle, $icon (heroicon name). --}}
 <style>
     .pg-hero{position:relative;overflow:hidden;background:#15151A;color:#fff;
-        padding:30px 40px;margin:-24px -24px 24px;display:flex;align-items:center;gap:24px;}
+        padding:30px 40px;margin:-32px -32px 24px;display:flex;align-items:center;gap:24px;}
     .pg-hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
         radial-gradient(45% 50% at 22% 40%,rgba(126,60,168,.30),transparent 70%),
         radial-gradient(42% 48% at 82% 60%,rgba(164,18,63,.28),transparent 72%);

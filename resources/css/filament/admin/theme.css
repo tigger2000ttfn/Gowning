@@ -394,3 +394,11 @@ html.dark {
 .gqs-manage-link:hover { background: var(--gqs-surface-2); }
 .gqs-manage-link-ico { width: 18px; height: 18px; color: var(--astellas-magenta); flex: 0 0 18px; }
 html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
+
+/* Full-bleed hero support: remove page content top padding + side padding so heroes touch edges */
+.fi-page .fi-page-content,
+.fi-main > .fi-page > section {
+    padding-top: 0 !important;
+}
+/* The negative margins on heroes pull to the gutters; ensure no clipping */
+.fi-main { overflow-x: hidden; }

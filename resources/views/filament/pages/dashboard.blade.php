@@ -7,7 +7,7 @@
 <style>
     .dash-hero{position:relative;overflow:hidden;background:#15151A;color:#fff;
         padding:60px 48px;display:flex;align-items:center;gap:40px;
-        margin:-24px -24px 26px;border-radius:0;}
+        margin:-32px -32px 26px;border-radius:0;}
     @media (min-width:1024px){.dash-hero{padding:72px 56px;}}
     .dash-hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
         radial-gradient(45% 50% at 24% 38%,rgba(126,60,168,.32),transparent 70%),
@@ -46,6 +46,12 @@
     html.dark .wk-ev.class{background:rgba(164,18,63,.25);color:#F0A8C0;}
     html.dark .wk-ev.run{background:rgba(199,154,46,.22);color:#E8C24A;}
     .wk-empty{font-size:11px;color:var(--gqs-text-dim,#aaa);}
+        .dash-quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:8px;}
+    .qtile{display:flex;align-items:center;gap:12px;background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:12px;padding:16px;text-decoration:none;transition:transform .12s,box-shadow .12s;}
+    .qtile:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.10);}
+    .qtile-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:0 0 38px;}
+    .qtile-ic svg{width:20px;height:20px;color:#fff;}
+    .qtile-label{font-weight:700;font-size:14px;color:var(--gqs-text,#1A1A1F);}
     .dash-section-title{font-size:15px;font-weight:700;margin:4px 0 12px;color:var(--gqs-text,#1A1A1F);display:flex;align-items:center;gap:8px;}
     .dash-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
     .dash-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:14px;overflow:hidden;}
@@ -122,4 +128,17 @@
         @empty<div class="dash-empty">No Accounts Awaiting Approval.</div>@endforelse
     </div>
 </div>
+
+@if(!empty($quickLinks))
+<div class="dash-section-title" style="margin-top:24px;">Quick Access</div>
+<div class="dash-quick">
+    @foreach($quickLinks as [$label,$url,$icon,$color])
+        <a href="{{ $url }}" class="qtile">
+            <span class="qtile-ic" style="background:{{ $color }};"><x-filament::icon :icon="$icon" /></span>
+            <span class="qtile-label">{{ $label }}</span>
+        </a>
+    @endforeach
+</div>
+@endif
+
 </x-filament-panels::page>
