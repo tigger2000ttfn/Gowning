@@ -10,7 +10,7 @@
     @else
         <span style="font-weight:800;font-size:17px;letter-spacing:.04em;color:#E8C24A;">ASTELLAS</span>
     @endif
-    <span class="gqs-brand-text" style="font-weight:600;font-size:16px;color:#ECECF0;white-space:nowrap;letter-spacing:.01em;position:relative;bottom:5px;">
+    <span class="gqs-brand-text" style="font-weight:600;font-size:16px;color:#ECECF0;white-space:nowrap;letter-spacing:.01em;position:relative;bottom:9px;">
         Gowning Qualification
     </span>
 </div>

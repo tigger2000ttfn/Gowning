@@ -6,6 +6,7 @@ use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Schemas\Components\Component;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Checkbox;
+use Filament\Actions\Action;
 
 /**
  * Custom login page so we control the exact labels (Title Case) without
@@ -16,6 +17,11 @@ class Login extends BaseLogin
     public function getHeading(): string
     {
         return 'Sign In';
+    }
+
+    protected function getAuthenticateFormAction(): Action
+    {
+        return parent::getAuthenticateFormAction()->label('Sign In');
     }
 
     protected function getEmailFormComponent(): Component

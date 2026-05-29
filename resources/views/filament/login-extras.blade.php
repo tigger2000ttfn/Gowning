@@ -11,14 +11,14 @@
         $glow = round($sz * 1.6, 1);
         $spread = round($sz * 0.4, 1);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
-        $stars[] = ['t'=>rand(1,98),'l'=>rand(1,98),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(180,520)/100,'glow'=>$glow,'spread'=>$spread,'color'=>$color];
+        $stars[] = ['t'=>rand(1,98),'l'=>rand(1,98),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(400,900)/100,'glow'=>$glow,'spread'=>$spread,'color'=>$color];
     }
     // extra small stars clustered top-left
     for ($i=0;$i<22;$i++){
         $cls = rand(0,9) < 7 ? '' : (rand(0,1) ? 'g' : 'p');
         $sz = rand(2,4);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
-        $stars[] = ['t'=>rand(1,42),'l'=>rand(1,40),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(180,520)/100,'glow'=>round($sz*1.6,1),'spread'=>round($sz*0.4,1),'color'=>$color];
+        $stars[] = ['t'=>rand(1,42),'l'=>rand(1,40),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(400,900)/100,'glow'=>round($sz*1.6,1),'spread'=>round($sz*0.4,1),'color'=>$color];
     }
 @endphp
 @if ($onLogin)
@@ -37,7 +37,7 @@
     .gqs-stars i.g{background:#E8C24A;}
     .gqs-stars i.p{background:#B98CE0;}
     .gqs-stars i.r{background:#E8657F;}
-    @keyframes gqsTw{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.4)}}
+    @keyframes gqsTw{0%,100%{opacity:.4;transform:scale(.95)}50%{opacity:1;transform:scale(1.12)}}
 
     /* the login card sits above the cosmos */
     /* card + its container must out-stack the fixed star layer */
