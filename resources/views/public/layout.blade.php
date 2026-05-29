@@ -109,7 +109,8 @@
 
         
         .hero-split{display:flex;align-items:center;gap:38px;text-align:left;max-width:900px;}
-        .hero-figure{width:150px;height:150px;flex:0 0 150px;filter:drop-shadow(0 8px 24px rgba(200,16,46,.35));animation:float 6s ease-in-out infinite;}
+        .hero-figure{width:200px;height:200px;flex:0 0 200px;animation:float 6s ease-in-out infinite,heroglow 4s ease-in-out infinite;}
+        @keyframes heroglow{0%,100%{filter:drop-shadow(0 0 8px rgba(232,194,74,.4))}50%{filter:drop-shadow(0 0 22px rgba(232,194,74,.7))}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         @media(prefers-reduced-motion:reduce){.hero-figure{animation:none}}
         .hero-text{flex:1;}
@@ -135,8 +136,16 @@
 <body>
     <nav class="nav">
         <a href="{{ route('public.home') }}" class="brand">
-            <span>ASTELLAS<small>Gowning Qualification</small></span>
-            <span class="star">&#10039;</span>
+            @php
+                $logoSvg = file_exists(public_path('images/astellas-logo.svg'));
+                $logoPng = file_exists(public_path('images/astellas-logo.png'));
+            @endphp
+            @if ($logoSvg || $logoPng)
+                <img src="{{ asset('images/' . ($logoSvg ? 'astellas-logo.svg' : 'astellas-logo.png')) }}"
+                     alt="Astellas" style="height:34px;width:auto;">
+            @else
+                <span>ASTELLAS<small>Gowning Qualification</small></span>
+            @endif
         </a>
         <div class="nav-links">
             <a href="{{ route('public.classes') }}">Classes</a>
