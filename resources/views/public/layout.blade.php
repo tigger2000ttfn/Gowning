@@ -21,7 +21,7 @@
         .nav-links a{color:#E5E5EA;margin-left:22px;font-size:14px;font-weight:500;}
         .nav-links a.btn{background:var(--magenta);padding:9px 16px;border-radius:8px;color:#fff;}
         .flash{max-width:1080px;margin:18px auto 0;padding:14px 18px;background:#E8F5EC;border:1px solid #2E7D5B;border-radius:10px;color:#1B5E3A;}
-        .hero{position:relative;overflow:hidden;background:var(--charcoal);color:#fff;padding:88px 32px 96px;text-align:center;}
+        .hero{position:relative;overflow:hidden;background:var(--charcoal);color:#fff;padding:48px 32px 56px;text-align:center;}
         .hero::before{content:'';position:absolute;inset:-20%;background:
             radial-gradient(2px 2px at 18% 75%,rgba(200,16,46,.9),transparent 60%),
             radial-gradient(3px 3px at 38% 60%,rgba(184,134,11,.8),transparent 60%),
@@ -33,10 +33,10 @@
         @keyframes rise{0%{transform:translateY(0)}50%{transform:translateY(-6%)}100%{transform:translateY(0)}}
         @media(prefers-reduced-motion:reduce){.hero::before{animation:none}}
         .hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
-        .hero-star{width:96px;height:96px;margin-bottom:22px;filter:drop-shadow(0 6px 20px rgba(200,16,46,.5));animation:spin 40s linear infinite;}
+        .hero-star{width:64px;height:64px;margin-bottom:14px;filter:drop-shadow(0 6px 20px rgba(200,16,46,.5));animation:spin 40s linear infinite;}
         @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
         @media(prefers-reduced-motion:reduce){.hero-star{animation:none}}
-        .hero h1{font-size:42px;font-weight:800;line-height:1.1;margin-bottom:16px;}
+        .hero h1{font-size:34px;font-weight:800;line-height:1.1;margin-bottom:16px;}
         .hero .accent{color:var(--gold);}
         .hero p{font-size:18px;color:#C8C8D0;margin-bottom:30px;}
         .hero .cta{display:inline-flex;gap:14px;flex-wrap:wrap;justify-content:center;}
@@ -80,6 +80,16 @@
         .signup-gold{color:#8A6D0B;}
         .empty{color:var(--muted);padding:26px;text-align:center;border:1px dashed #C4C4CC;border-radius:12px;background:#fff;}
 
+        
+        /* Tabs */
+        .tabbar{display:flex;gap:6px;border-bottom:2px solid #D8D8DE;margin-bottom:20px;}
+        .tabbar button{display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:12px 18px;font-size:15px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+        .tabbar button:hover{color:var(--ink);}
+        .tabbar button.active{color:var(--magenta);border-bottom-color:var(--magenta);}
+        .tabbar .count{background:#EDEDF0;color:var(--ink);font-size:12px;font-weight:700;border-radius:20px;padding:1px 8px;}
+        .tabbar button.active .count{background:var(--magenta);color:#fff;}
+        .tab-sub{color:var(--muted);font-size:14px;margin-bottom:18px;}
+
         .formwrap{max-width:460px;margin:56px auto;padding:0 24px;}
         .formcard{background:#fff;border:1px solid var(--line);border-top:4px solid var(--magenta);border-radius:14px;padding:32px;}
         .formcard h2{margin-bottom:6px;}
@@ -93,12 +103,14 @@
         .foot{background:var(--charcoal);color:#9A9AA2;text-align:center;padding:28px;font-size:13px;margin-top:60px;}
         .backlink{display:inline-block;margin-bottom:18px;font-size:14px;}
     </style>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>[x-cloak]{display:none!important;}</style>
 </head>
 <body>
     <nav class="nav">
         <a href="{{ route('public.home') }}" class="brand">
-            <span class="star">&#10039;</span>
             <span>ASTELLAS<small>Gowning Qualification</small></span>
+            <span class="star">&#10039;</span>
         </a>
         <div class="nav-links">
             <a href="{{ route('public.home') }}#classes">Classes</a>
