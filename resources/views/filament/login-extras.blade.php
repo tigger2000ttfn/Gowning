@@ -41,6 +41,7 @@
     .gqs-login-bar .rhs a:hover{color:#F0CB55;}
 
     /* in-card brand: keep the logo visible, give it room */
+    .fi-simple-main .gqs-brand-text{display:none !important;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
