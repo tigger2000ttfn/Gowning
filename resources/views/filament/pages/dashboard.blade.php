@@ -77,6 +77,18 @@
     .pill-gold{background:#FBF3DC;color:#8A6D0B;}
 
     /* QUICK ACCESS */
+        .dash-comments{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:14px;overflow:hidden;margin-bottom:16px;}
+    .dash-comments h3{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;padding:12px 16px;margin:0;color:#fff;background:linear-gradient(135deg,#7E3CA8,#4A1E66);}
+    .cmt{display:block;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#EEE);text-decoration:none;transition:background .12s;}
+    .cmt:last-child{border-bottom:none;}
+    .cmt:hover{background:rgba(126,60,168,.06);}
+    .cmt-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+    .cmt-who{font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);display:flex;align-items:center;gap:6px;}
+    .cmt-who svg{width:14px;height:14px;color:#7E3CA8;}
+    .cmt-when{font-size:11px;color:var(--gqs-text-dim,#888);}
+    .cmt-body{font-size:13px;color:var(--gqs-text-dim,#5A5A62);line-height:1.4;}
+    .cmt-ref{font-size:11px;font-weight:600;color:#7E3CA8;margin-top:3px;display:flex;align-items:center;gap:5px;}
+    .cmt-ref svg{width:12px;height:12px;}
     .dash-quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:11px;}
     .qtile{display:flex;align-items:center;gap:11px;background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:12px;padding:14px;text-decoration:none;transition:transform .12s,box-shadow .12s;}
     .qtile:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.10);}
@@ -107,6 +119,25 @@
     <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-ticket"/></span><div class="n">{{ $pendingRes }}</div><div class="l">Run Requests</div></div>
 </div>
 
+
+
+<div class="dash-comments">
+    <h3><x-filament::icon icon="heroicon-m-chat-bubble-left-right"/> Recent Comments &amp; QA Notes</h3>
+    @forelse($recentComments as $cmt)
+        <a class="cmt" href="{{ $cmt->qualification ? \App\Filament\Admin\Resources\QualificationResource::getUrl('index') : '#' }}">
+            <div class="cmt-top">
+                <span class="cmt-who"><x-filament::icon icon="heroicon-m-user-circle"/>{{ $cmt->author_name ?? 'System' }}</span>
+                <span class="cmt-when">{{ $cmt->created_at?->diffForHumans() }}</span>
+            </div>
+            <div class="cmt-body">{{ \Illuminate\Support\Str::limit($cmt->body, 140) }}</div>
+            @if($cmt->qualification?->personnel)
+                <div class="cmt-ref"><x-filament::icon icon="heroicon-m-arrow-top-right-on-square"/>{{ $cmt->qualification->personnel->full_name }}</div>
+            @endif
+        </a>
+    @empty
+        <div class="dash-empty">No comments yet. QA and reviewer notes will appear here.</div>
+    @endforelse
+</div>
 
 <div class="dash-section-title">This Week</div>
 <div class="dash-week">

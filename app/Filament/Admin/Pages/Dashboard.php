@@ -86,6 +86,8 @@ class Dashboard extends BaseDashboard
                                 ->whereDate('session_date', '>=', now())->where('status','open')
                                 ->orderBy('session_date')->limit(5)->get(),
             'pendingApprovals' => User::where('approval_status', 'pending')->latest()->limit(5)->get(),
+            'recentComments' => \App\Models\QualificationComment::with(['qualification.personnel'])
+                                    ->latest()->limit(6)->get(),
             'weekDays' => $this->buildWeek(),
             'quickLinks' => $this->buildQuickLinks(),
         ];
