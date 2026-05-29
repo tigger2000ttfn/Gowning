@@ -17,6 +17,18 @@ class Dashboard extends BaseDashboard
 
     protected string $view = 'filament.pages.dashboard';
 
+    public function getHeading(): string { return ''; }
+
+    public function getFooterWidgets(): array
+    {
+        return [
+            \App\Filament\Admin\Widgets\QualStatusChart::class,
+            \App\Filament\Admin\Widgets\RunsTrendChart::class,
+        ];
+    }
+
+    public function getColumns(): int|array { return 2; }
+
     public function getViewData(): array
     {
         return [
