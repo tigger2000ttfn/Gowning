@@ -24,14 +24,14 @@ class UserResource extends Resource
 {
     public static function canAccessNavigation(): bool
     {
-        $r = \Illuminate\Support\Facades\Auth::user()?->role;
-        return $r && $r->canAdminister();
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageUsers));
     }
     public static function shouldRegisterNavigation(): bool { return false; }
     public static function canViewAny(): bool
     {
-        $r = \Illuminate\Support\Facades\Auth::user()?->role;
-        return (bool) ($r && $r->canAdminister());
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageUsers));
     }
     protected static ?string $model = User::class;
 

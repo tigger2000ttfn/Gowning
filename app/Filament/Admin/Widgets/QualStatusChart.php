@@ -13,8 +13,8 @@ class QualStatusChart extends ChartWidget
 
     public static function canView(): bool
     {
-        $r = Auth::user()?->role;
-        return (bool) ($r && $r->canManagePersonnel());
+        $u = Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManagePersonnel));
     }
 
     protected function getData(): array

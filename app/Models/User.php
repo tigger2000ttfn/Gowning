@@ -61,4 +61,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasOne(Personnel::class);
     }
+
+    public function hasCapability(\App\Enums\Capability $cap): bool
+    {
+        return \App\Models\RoleCapability::roleHas($this->role, $cap);
+    }
 }

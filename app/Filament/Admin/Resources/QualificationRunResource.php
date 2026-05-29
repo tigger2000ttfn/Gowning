@@ -21,18 +21,18 @@ class QualificationRunResource extends Resource
 {
     public static function canAccessNavigation(): bool
     {
-        $r = \Illuminate\Support\Facades\Auth::user()?->role;
-        return $r && $r->canManageScheduling();
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
     public static function shouldRegisterNavigation(): bool
     {
-        $r = \Illuminate\Support\Facades\Auth::user()?->role;
-        return (bool) ($r && $r->canManageScheduling());
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
     public static function canViewAny(): bool
     {
-        $r = \Illuminate\Support\Facades\Auth::user()?->role;
-        return (bool) ($r && $r->canManageScheduling());
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
     protected static ?string $model = QualificationRun::class;
 

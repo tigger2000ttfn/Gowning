@@ -4,48 +4,83 @@ namespace App\Enums;
 
 enum Role: string
 {
-    case SystemAdmin = 'system_admin';
-    case QcMicro = 'qc_micro';
-    case Qa = 'qa';
-    case Operator = 'operator';
+    case SuperUser           = 'super_user';
+    case SiteAdmin           = 'site_admin';
+    case PowerUser           = 'power_user';
+    case QaApprover          = 'qa_approver';
+    case Qa                  = 'qa';
+    case QcmAdmin            = 'qcm_admin';
+    case QcmScheduler        = 'qcm_scheduler';
+    case Qcm                 = 'qcm';
+    case TrainingCoordinator = 'training_coordinator';
+    case ViewOnly            = 'view_only';
+    case Operator            = 'operator';
 
     public function label(): string
     {
         return match ($this) {
-            self::SystemAdmin => 'System Admin',
-            self::QcMicro => 'QC Micro Admin',
-            self::Qa => 'QA / Manager',
-            self::Operator => 'Trainee / Operator',
+            self::SuperUser           => 'Super User',
+            self::SiteAdmin           => 'Site Admin',
+            self::PowerUser           => 'Power User',
+            self::QaApprover          => 'QA Approver',
+            self::Qa                  => 'QA',
+            self::QcmAdmin            => 'QCM Admin',
+            self::QcmScheduler        => 'QCM Scheduler',
+            self::Qcm                 => 'QCM',
+            self::TrainingCoordinator => 'Training Coordinator',
+            self::ViewOnly            => 'View Only',
+            self::Operator            => 'Operator',
         };
     }
 
-    /** Roles permitted to manage scheduling and record run results. */
-    public function isStaff(): bool
+    /** Super User always has every capability and cannot be locked out. */
+    public function isSuperUser(): bool
     {
-        return in_array($this, [self::SystemAdmin, self::QcMicro], true);
+        return $this === self::SuperUser;
     }
 
-    /** Can manage scheduling: classes, run slots, run day, reservations. */
-    public function canManageScheduling(): bool
+    /** Default capabilities seeded for each role (editable afterward in the matrix). */
+    public function defaultCapabilities(): array
     {
-        return in_array($this, [self::SystemAdmin, self::QcMicro], true);
-    }
-
-    /** Can manage personnel & view all qualifications. */
-    public function canManagePersonnel(): bool
-    {
-        return in_array($this, [self::SystemAdmin, self::QcMicro, self::Qa], true);
-    }
-
-    /** QA oversight: due-date override, determinations, reports. */
-    public function canQaReview(): bool
-    {
-        return in_array($this, [self::SystemAdmin, self::Qa], true);
-    }
-
-    /** System administration: users, settings, import. */
-    public function canAdminister(): bool
-    {
-        return $this === self::SystemAdmin;
+        $c = Capability::class;
+        return match ($this) {
+            self::SuperUser => array_map(fn ($cap) => $cap->value, Capability::cases()),
+            self::SiteAdmin => array_map(fn ($cap) => $cap->value, Capability::cases()),
+            self::PowerUser => [
+                Capability::ManageScheduling->value, Capability::RecordRuns->value,
+                Capability::ManageClasses->value, Capability::ManageAttendance->value,
+                Capability::ManagePersonnel->value, Capability::ViewQualifications->value,
+                Capability::ViewReports->value, Capability::ImportData->value,
+            ],
+            self::QaApprover => [
+                Capability::ViewQualifications->value, Capability::QaReview->value,
+                Capability::QaApprove->value, Capability::ViewReports->value,
+            ],
+            self::Qa => [
+                Capability::ViewQualifications->value, Capability::QaReview->value,
+                Capability::ViewReports->value,
+            ],
+            self::QcmAdmin => [
+                Capability::ManageScheduling->value, Capability::RecordRuns->value,
+                Capability::ManageClasses->value, Capability::ManageAttendance->value,
+                Capability::ViewQualifications->value, Capability::ViewReports->value,
+            ],
+            self::QcmScheduler => [
+                Capability::ManageScheduling->value, Capability::ManageClasses->value,
+                Capability::ViewQualifications->value,
+            ],
+            self::Qcm => [
+                Capability::RecordRuns->value, Capability::ViewQualifications->value,
+            ],
+            self::TrainingCoordinator => [
+                Capability::ManageClasses->value, Capability::ManageAttendance->value,
+                Capability::ViewQualifications->value,
+            ],
+            self::ViewOnly => [
+                Capability::ViewOnly->value, Capability::ViewQualifications->value,
+                Capability::ViewReports->value,
+            ],
+            self::Operator => [],
+        };
     }
 }

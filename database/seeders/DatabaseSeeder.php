@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'System Admin',
                 'password' => Hash::make($password),
-                'role' => Role::SystemAdmin,
+                'role' => Role::SuperUser,
                 'is_active' => true,
                 'approval_status' => 'approved',
                 'approved_at' => now(),
@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command?->info("Seeded System Admin: {$email}");
 
+        $this->call(RoleCapabilitySeeder::class);
         $this->call(SampleDataSeeder::class);
     }
 }

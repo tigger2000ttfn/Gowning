@@ -1,18 +1,19 @@
 @php
-    $role = \Illuminate\Support\Facades\Auth::user()?->role;
-    $can = fn ($m) => $role && $role->$m();
+    $u = \Illuminate\Support\Facades\Auth::user();
+    $can = fn ($cap) => $u && $u->hasCapability($cap);
     $links = [];
-    if ($can('canManageScheduling')) {
+    if ($can(\App\Enums\Capability::ManageScheduling)) {
         $links[] = ['Run Slots', \App\Filament\Admin\Resources\RunSlotResource::getUrl(), 'heroicon-o-calendar-days'];
         $links[] = ['Class Completions', \App\Filament\Admin\Resources\ClassCompletionResource::getUrl(), 'heroicon-o-academic-cap'];
         $links[] = ['Reservations', \App\Filament\Admin\Resources\ReservationResource::getUrl(), 'heroicon-o-ticket'];
     }
-    if ($can('canQaReview')) {
+    if ($can(\App\Enums\Capability::ViewReports)) {
         $links[] = ['Reports', \App\Filament\Admin\Pages\Reports::getUrl(), 'heroicon-o-chart-bar'];
     }
-    if ($can('canAdminister')) {
+    if ($can(\App\Enums\Capability::ManageUsers)) {
         $links[] = ['Import Personnel', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray'];
         $links[] = ['Users & Approvals', \App\Filament\Admin\Resources\UserResource::getUrl(), 'heroicon-o-user-group'];
+        $links[] = ['Roles & Permissions', \App\Filament\Admin\Pages\RolePermissions::getUrl(), 'heroicon-o-shield-check'];
         $links[] = ['Settings', \App\Filament\Admin\Pages\Settings::getUrl(), 'heroicon-o-cog-6-tooth'];
     }
 @endphp

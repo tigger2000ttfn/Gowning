@@ -21,7 +21,7 @@ class SampleDataSeeder extends Seeder
             [
                 'name' => 'QC Micro Admin',
                 'password' => Hash::make('QcMicro!2026'),
-                'role' => Role::QcMicro,
+                'role' => Role::QcmAdmin,
                 'is_active' => true,
                 'approval_status' => 'approved',
                 'approved_at' => now(),

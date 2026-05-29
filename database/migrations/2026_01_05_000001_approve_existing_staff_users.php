@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         DB::table('users')
-            ->whereIn('role', [Role::SystemAdmin->value, Role::QcMicro->value, Role::Qa->value])
+            ->whereIn('role', ['super_user','site_admin','power_user','qa_approver','qa','qcm_admin','qcm_scheduler','qcm','training_coordinator'])
             ->where('approval_status', 'pending')
             ->update(['approval_status' => 'approved', 'approved_at' => now()]);
     }
