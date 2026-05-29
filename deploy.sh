@@ -23,11 +23,20 @@ echo "==> Running migrations"
 php artisan migrate --force
 
 echo "==> Building front-end assets (theme + JS)"
-npm install --silent
-npm run build
+# clear stale build output so a failed build can't silently serve old CSS
+rm -rf public/build
+npm install --no-audit --no-fund
+npm run build || { echo "!!! npm run build FAILED - see errors above"; exit 1; }
 
 echo "==> Publishing Filament assets"
 php artisan filament:assets
+
+# verify the theme actually compiled (sanity check for a known token)
+if grep -rq "1C1C21" public/build/assets/*.css 2>/dev/null; then
+    echo "==> Theme CSS compiled OK (token found)"
+else
+    echo "!!! WARNING: theme token NOT found in compiled CSS - build may be stale"
+fi
 
 echo "==> Fixing ownership + permissions"
 chown -R www-data:www-data "$APP_DIR"
