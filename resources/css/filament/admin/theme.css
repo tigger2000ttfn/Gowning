@@ -237,10 +237,25 @@ html:not(.dark) .fi-wi-stats-overview-stat { border-left: 4px solid var(--astell
 html:not(.dark) .fi-badge { font-weight: 600 !important; }
 
 /* Topbar a touch of charcoal so the header has presence */
+/* Header (topbar) uses dark charcoal styling in BOTH themes for consistency */
 html:not(.dark) .fi-topbar {
-    background-color: #FFFFFF !important;
+    background-color: #1C1C21 !important;
     border-bottom: 2px solid var(--astellas-magenta) !important;
 }
+/* Keep topbar contents readable on the dark header in light theme */
+html:not(.dark) .fi-topbar .fi-icon-btn,
+html:not(.dark) .fi-topbar .fi-icon-btn svg,
+html:not(.dark) .fi-topbar .fi-dropdown-trigger,
+html:not(.dark) .fi-topbar .fi-global-search-field input,
+html:not(.dark) .fi-topbar .fi-user-menu-trigger,
+html:not(.dark) .fi-topbar a,
+html:not(.dark) .fi-topbar button { color: #ECECF0 !important; }
+html:not(.dark) .fi-topbar .fi-global-search-field input::placeholder { color: #9A9AA4 !important; }
+html:not(.dark) .fi-topbar .fi-global-search-field {
+    background-color: rgba(255,255,255,.07) !important;
+    border-radius: 9px;
+}
+html:not(.dark) .fi-topbar .fi-icon-btn:hover { background-color: rgba(255,255,255,.12) !important; }
 
 /* Primary page headings in magenta for definition */
 html:not(.dark) .fi-header-heading { color: #1A1A1F !important; }
