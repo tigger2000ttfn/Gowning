@@ -150,6 +150,7 @@
             @endif
         </a>
         <div class="nav-links">
+            <a href="{{ route('public.home') }}">Home</a>
             <a href="{{ route('public.classes') }}">Classes</a>
             <a href="{{ route('public.runs') }}">Run Slots</a>
             <a href="{{ route('public.register') }}">Register</a>
