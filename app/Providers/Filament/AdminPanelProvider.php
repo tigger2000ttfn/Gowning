@@ -29,6 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->login()                   // required: registers the login route/page
             ->path('admin')
             ->brandName('MATC Gowning Qualification')
+            ->brandLogo(fn () => view('filament.brand'))
+            ->theme(asset('css/filament/admin/theme.css'))
             ->darkMode(true)            // dark/light toggle available in the user menu
             ->colors([
                 // Astellas-inspired palette: magenta/red primary, purple + gold accents,

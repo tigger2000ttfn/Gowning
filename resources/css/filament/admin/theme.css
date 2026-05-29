@@ -1,0 +1,56 @@
+@import '/vendor/filament/filament/resources/css/theme.css';
+
+@config 'tailwind.config.js';
+
+/* MATC Gowning Qualification - Astellas-inspired theme
+   Reds, purples, magentas, charcoal base, gold accent. */
+
+:root {
+    --astellas-magenta: #A4123F;
+    --astellas-red: #C8102E;
+    --astellas-purple: #6B2C91;
+    --astellas-gold: #B8860B;
+    --astellas-charcoal: #2B2B30;
+    --astellas-charcoal-light: #3A3A40;
+}
+
+/* Sidebar: charcoal with a magenta accent edge */
+.fi-sidebar {
+    background-color: var(--astellas-charcoal);
+    border-right: 3px solid var(--astellas-magenta);
+}
+.fi-sidebar .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-group-label {
+    color: #E5E5EA;
+}
+.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-button {
+    background-color: var(--astellas-magenta);
+}
+.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-icon {
+    color: #FFFFFF;
+}
+
+/* Brand wordmark area */
+.fi-sidebar-header {
+    background-color: var(--astellas-charcoal);
+    border-bottom: 1px solid var(--astellas-charcoal-light);
+}
+
+/* Topbar tint */
+.fi-topbar {
+    border-bottom: 1px solid var(--astellas-magenta);
+}
+
+/* Gold accent on primary section headings */
+.fi-section-header-heading {
+    color: var(--astellas-magenta);
+}
+
+/* Login page: branded gradient backdrop */
+.fi-simple-layout {
+    background: linear-gradient(135deg, var(--astellas-charcoal) 0%, #1F1F23 100%);
+}
+.fi-simple-main {
+    border-top: 4px solid var(--astellas-magenta);
+}
