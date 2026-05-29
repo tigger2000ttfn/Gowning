@@ -17,7 +17,17 @@ use Filament\Tables\Table;
 
 class RunSlotResource extends Resource
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canManageScheduling();
+    }
     public static function shouldRegisterNavigation(): bool { return false; }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
     protected static ?string $model = RunSlot::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';

@@ -26,6 +26,21 @@ use Filament\Tables\Table;
 
 class TrainingClassResource extends Resource
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canManageScheduling();
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
     protected static ?string $model = TrainingClass::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';

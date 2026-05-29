@@ -16,6 +16,21 @@ use Filament\Tables\Table;
 
 class PersonnelResource extends Resource
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canManagePersonnel();
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManagePersonnel());
+    }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManagePersonnel());
+    }
     protected static ?string $model = Personnel::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';

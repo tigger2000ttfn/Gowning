@@ -7,6 +7,21 @@ use Filament\Pages\Page;
 
 class RunDayRoster extends Page
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canManageScheduling();
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Qual Run Day';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';

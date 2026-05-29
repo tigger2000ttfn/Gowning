@@ -10,11 +10,21 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Reports extends Page
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canQaReview();
+    }
+    public static function shouldRegisterNavigation(): bool { return false; }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canQaReview());
+    }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected static string|\UnitEnum|null $navigationGroup = 'Administration';
     protected static ?int $navigationSort = 8;
-    protected static ?string $title = 'Reports';
-    public static function shouldRegisterNavigation(): bool { return false; } // lives in Manage menu
+    protected static ?string $title = 'Reports'; // lives in Manage menu
 
     protected string $view = 'filament.pages.reports';
 

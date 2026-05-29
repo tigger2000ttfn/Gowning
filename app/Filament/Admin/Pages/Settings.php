@@ -15,7 +15,17 @@ use Filament\Notifications\Notification;
 
 class Settings extends Page implements HasForms
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canAdminister();
+    }
     public static function shouldRegisterNavigation(): bool { return false; }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canAdminister());
+    }
     use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';

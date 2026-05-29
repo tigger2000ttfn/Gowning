@@ -50,6 +50,10 @@ class AdminPanelProvider extends PanelProvider
             ->pages([])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
             ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): string => Blade::render('@include("filament.login-extras")'),
+            )
+            ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('@include("filament.topbar-manage")'),
             )

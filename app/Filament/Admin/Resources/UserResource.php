@@ -22,7 +22,17 @@ use Filament\Notifications\Notification;
 
 class UserResource extends Resource
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canAdminister();
+    }
     public static function shouldRegisterNavigation(): bool { return false; }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canAdminister());
+    }
     protected static ?string $model = User::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';

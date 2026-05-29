@@ -8,6 +8,21 @@ use Illuminate\Support\Facades\Auth;
 
 class ReservationBoard extends Page
 {
+    public static function canAccessNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return $r && $r->canManageScheduling();
+    }
+    public static function shouldRegisterNavigation(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
+    public static function canViewAny(): bool
+    {
+        $r = \Illuminate\Support\Facades\Auth::user()?->role;
+        return (bool) ($r && $r->canManageScheduling());
+    }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-view-columns';
     protected static ?string $navigationLabel = 'Reservation Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
