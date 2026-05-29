@@ -19,7 +19,7 @@ class PersonnelResource extends Resource
     protected static ?string $model = Personnel::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static ?string $navigationGroup = 'Personnel & Qualifications';
+    protected static string|\UnitEnum|null $navigationGroup = 'Personnel & Qualifications';
     protected static ?int $navigationSort = 1;
     protected static ?string $recordTitleAttribute = 'employee_id';
 
