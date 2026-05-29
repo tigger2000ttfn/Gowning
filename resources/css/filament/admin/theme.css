@@ -406,7 +406,10 @@ html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 .fi-page-dashboard section.fi-page-content,
 .fi-page-dashboard .fi-page-content,
 .fi-main:has(.dash-hero) .fi-page-content,
-.fi-main:has(.dash-hero) > section { padding: 0 !important; gap: 0 !important; }
+.fi-main:has(.dash-hero) > section { padding: 0 !important; gap: 0 !important; max-width: none !important; width: 100% !important; }
+/* the page wrapper itself can also cap width — release it on dashboard */
+.fi-page-dashboard,
+.fi-main:has(.dash-hero) { max-width: none !important; }
 
 /* the hero already has width:100%; content blocks re-add padding */
 .dash-pad { padding: 1.5rem; padding-top: 0; }

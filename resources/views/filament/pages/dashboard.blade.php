@@ -89,12 +89,13 @@
     .cmt-body{font-size:13px;color:var(--gqs-text-dim,#5A5A62);line-height:1.4;}
     .cmt-ref{font-size:11px;font-weight:600;color:#7E3CA8;margin-top:3px;display:flex;align-items:center;gap:5px;}
     .cmt-ref svg{width:12px;height:12px;}
-    .dash-quick{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:11px;}
-    .qtile{display:flex;align-items:center;gap:11px;background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:12px;padding:14px;text-decoration:none;transition:transform .12s,box-shadow .12s;}
+    .dash-quick{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:11px;overflow-x:auto;}
+    @media(max-width:760px){.dash-quick{grid-auto-flow:row;grid-template-columns:repeat(2,1fr);grid-auto-columns:unset;}}
+    .qtile{display:flex;align-items:center;gap:10px;min-width:0;background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:12px;padding:13px;text-decoration:none;transition:transform .12s,box-shadow .12s;}
     .qtile:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.10);}
     .qtile-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:0 0 36px;}
     .qtile-ic svg{width:19px;height:19px;color:#fff;}
-    .qtile-label{font-weight:700;font-size:14px;color:var(--gqs-text,#1A1A1F);}
+    .qtile-label{font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 </style>
 
 <div class="dash-hero">
