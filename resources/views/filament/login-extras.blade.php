@@ -7,11 +7,18 @@
         $r = rand(0,9);
         $cls = $r < 5 ? '' : ($r < 7 ? 'g' : ($r < 9 ? 'p' : 'r'));
         $b = rand(0,9);
-        $sz = $b < 5 ? rand(2,4) : ($b < 8 ? rand(5,8) : rand(9,12));
+        $sz = $b < 6 ? rand(2,4) : ($b < 9 ? rand(5,7) : rand(8,9));
         $glow = round($sz * 1.6, 1);
         $spread = round($sz * 0.4, 1);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
         $stars[] = ['t'=>rand(1,98),'l'=>rand(1,98),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(180,520)/100,'glow'=>$glow,'spread'=>$spread,'color'=>$color];
+    }
+    // extra small stars clustered top-left
+    for ($i=0;$i<22;$i++){
+        $cls = rand(0,9) < 7 ? '' : (rand(0,1) ? 'g' : 'p');
+        $sz = rand(2,4);
+        $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
+        $stars[] = ['t'=>rand(1,42),'l'=>rand(1,40),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(180,520)/100,'glow'=>round($sz*1.6,1),'spread'=>round($sz*0.4,1),'color'=>$color];
     }
 @endphp
 @if ($onLogin)
@@ -23,8 +30,8 @@
         radial-gradient(45% 50% at 26% 38%,rgba(126,60,168,.30),transparent 70%),
         radial-gradient(42% 48% at 78% 60%,rgba(164,18,63,.24),transparent 72%),
         radial-gradient(38% 42% at 58% 80%,rgba(80,40,140,.22),transparent 70%);
-        filter:blur(10px);animation:gqsNeb 26s ease-in-out infinite;}
-    @keyframes gqsNeb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,-3%) scale(1.07)}}
+        filter:blur(10px);animation:gqsNeb 18s ease-in-out infinite;}
+    @keyframes gqsNeb{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(5%,3%) scale(1.08)}50%{transform:translate(-4%,-5%) scale(1.12)}75%{transform:translate(3%,-3%) scale(1.06)}}
     .gqs-stars{position:fixed;inset:0;z-index:2;pointer-events:none;}
     .gqs-stars i{position:absolute;border-radius:50%;animation:gqsTw 3s ease-in-out infinite;}
     .gqs-stars i.g{background:#E8C24A;}
