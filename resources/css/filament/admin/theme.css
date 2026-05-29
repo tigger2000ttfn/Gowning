@@ -231,8 +231,10 @@ html:not(.dark) .fi-header-heading { color: #1A1A1F !important; }
 html:not(.dark) .fi-header-subheading { color: #44444C !important; }
 
 
-/* Hide breadcrumbs (felt disconnected) */
-.fi-breadcrumbs { display: none !important; }
+/* Breadcrumbs: keep them, just style cleanly */
+.fi-breadcrumbs { margin-bottom: 8px; }
+.fi-breadcrumbs-item a { color: var(--astellas-magenta) !important; }
+html.dark .fi-breadcrumbs-item a { color: var(--astellas-gold) !important; }
 
 /* Page header: tighter, with room for an icon */
 .fi-header { padding-bottom: 4px; }
@@ -257,3 +259,64 @@ html:not(.dark) .fi-header-subheading { color: #44444C !important; }
 .fi-wi-stats-overview-stat:has(.fi-color-info){ background:linear-gradient(135deg,#6B2C91,#4E1F6B)!important; }
 .fi-wi-stats-overview-stat:has(.fi-color-danger){ background:linear-gradient(135deg,#C8102E,#9A0C23)!important; }
 .fi-wi-stats-overview-stat:has(.fi-color-gray){ background:linear-gradient(135deg,#3A3A40,#26262C)!important; }
+
+/* ============================================================
+   MODALS — consistent solid-header design, both themes
+   ============================================================ */
+/* Modal container: clean rounded card */
+.fi-modal-window {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+    border: none !important;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45) !important;
+}
+
+/* Solid magenta header bar */
+.fi-modal-header {
+    background: linear-gradient(135deg, #A4123F 0%, #850F33 100%) !important;
+    padding: 18px 24px !important;
+    margin: 0 !important;
+}
+.fi-modal-header .fi-modal-heading,
+.fi-modal-header .fi-modal-description,
+.fi-modal-header h2,
+.fi-modal-header h3 {
+    color: #FFFFFF !important;
+}
+.fi-modal-header .fi-modal-description { color: rgba(255,255,255,.8) !important; }
+/* Close (x) button white on the magenta header */
+.fi-modal-header .fi-icon-btn,
+.fi-modal-header .fi-icon-btn svg { color: #FFFFFF !important; }
+.fi-modal-header .fi-icon-btn:hover { background: rgba(255,255,255,.18) !important; }
+
+/* Body padding + light/dark surfaces */
+.fi-modal-content { padding: 22px 24px !important; }
+html:not(.dark) .fi-modal-window { background: #FFFFFF !important; }
+html.dark .fi-modal-window { background: #1F1F25 !important; }
+html.dark .fi-modal-content,
+html.dark .fi-modal-content * { color: #E5E5EA; }
+
+/* Footer: divider + right-aligned actions */
+.fi-modal-footer {
+    border-top: 1px solid rgba(120,120,130,.18) !important;
+    padding: 16px 24px !important;
+    background: transparent !important;
+}
+.fi-modal-footer-actions { justify-content: flex-end !important; }
+
+/* Kill the pinkish tint: form inputs in modals use neutral borders, magenta focus */
+.fi-modal-content .fi-input,
+.fi-modal-content .fi-select-input {
+    border-color: #C9C9D2 !important;
+}
+.fi-modal-content .fi-input:focus,
+.fi-modal-content .fi-select-input:focus {
+    border-color: #A4123F !important;
+    box-shadow: 0 0 0 1px #A4123F !important;
+}
+html.dark .fi-modal-content .fi-input { border-color: #3A3A40 !important; background:#15151A !important; }
+
+/* Section headers inside modals */
+.fi-modal-content .fi-section { border:1px solid rgba(120,120,130,.15) !important; border-radius:10px !important; }
+.fi-modal-content .fi-section-header-heading { color:#A4123F !important; }
+html.dark .fi-modal-content .fi-section-header-heading { color:#E8C24A !important; }
