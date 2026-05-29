@@ -156,7 +156,7 @@
             <a href="{{ route('public.runs') }}">Run Slots</a>
             <a href="{{ route('public.calendar') }}">Calendar</a>
             <a href="{{ route('public.register') }}">Register</a>
-            <a href="{{ url('/admin') }}" class="btn">Login</a>
+            <a href="{{ url('/admin') }}" class="btn">Sign In</a>
         </div>
     </nav>
 

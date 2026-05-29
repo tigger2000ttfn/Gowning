@@ -56,6 +56,8 @@
 
     /* in-card brand: keep the logo visible, give it room */
     .fi-simple-main .gqs-brand-text{display:none !important;}
+    /* bigger logo inside the sign-in card */
+    .fi-simple-main img{height:56px !important;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
