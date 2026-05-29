@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0B83C"/>
+      <stop offset="55%" stop-color="#C8102E"/>
+      <stop offset="100%" stop-color="#A4123F"/>
+    </linearGradient>
+  </defs>
+  <!-- Astellas-style flying star: a four-point star leaning forward with motion -->
+  <path d="M50 6 L60 40 L94 50 L60 60 L50 94 L40 60 L6 50 L40 40 Z" fill="url(#g)"/>
+  <path d="M50 22 L56 44 L78 50 L56 56 L50 78 L44 56 L22 50 L44 44 Z" fill="#fff" opacity="0.18"/>
+</svg>

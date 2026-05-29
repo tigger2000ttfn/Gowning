@@ -3,6 +3,7 @@
 @section('content')
     <section class="hero">
         <div class="hero-inner">
+            <img src="{{ asset('images/flying-star.svg') }}" alt="" class="hero-star">
             <h1>Cleanroom Gowning <span class="accent">Qualification</span></h1>
             <p>Schedule and track the full gowning qualification cycle at the Manufacturing
                Technology Center: gowning classes, cleanroom qualification runs, and annual

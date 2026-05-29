@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <title>@yield('title', 'MATC Gowning Qualification')</title>
     <style>
         :root{
@@ -32,6 +33,9 @@
         @keyframes rise{0%{transform:translateY(0)}50%{transform:translateY(-6%)}100%{transform:translateY(0)}}
         @media(prefers-reduced-motion:reduce){.hero::before{animation:none}}
         .hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
+        .hero-star{width:96px;height:96px;margin-bottom:22px;filter:drop-shadow(0 6px 20px rgba(200,16,46,.5));animation:spin 40s linear infinite;}
+        @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+        @media(prefers-reduced-motion:reduce){.hero-star{animation:none}}
         .hero h1{font-size:42px;font-weight:800;line-height:1.1;margin-bottom:16px;}
         .hero .accent{color:var(--gold);}
         .hero p{font-size:18px;color:#C8C8D0;margin-bottom:30px;}
@@ -83,7 +87,7 @@
     @yield('content')
 
     <div class="foot">
-        MATC Gowning Qualification System &middot; 21 CFR Part 11 controlled &middot; QC Micro
+        &copy; {{ date('Y') }} Astellas &middot; MATC Gowning Qualification
     </div>
 </body>
 </html>

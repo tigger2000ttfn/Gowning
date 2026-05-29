@@ -10,7 +10,7 @@
     --astellas-magenta: #A4123F;
     --astellas-magenta-dark: #850F33;
     --astellas-red: #C8102E;
-    --astellas-gold: #C79A33;        /* readable gold on dark */
+    --astellas-gold: #E0B83C;        /* brighter, less brown */
     --astellas-gold-deep: #B8860B;
     --astellas-purple: #6B2C91;
     --astellas-charcoal: #1C1C21;
@@ -160,7 +160,7 @@ html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
     color: var(--astellas-gold) !important;
     font-weight: 600;
 }
-.fi-simple-layout a:hover { color: #E0B84A !important; }
+.fi-simple-layout a:hover { color: #F0CB55 !important; }
 
 @media (prefers-reduced-motion: reduce) {
     .fi-simple-layout::before { animation: none; }
