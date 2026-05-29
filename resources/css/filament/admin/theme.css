@@ -395,14 +395,14 @@ html.dark {
 .gqs-manage-link-ico { width: 18px; height: 18px; color: var(--astellas-magenta); flex: 0 0 18px; }
 html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 
-/* Full-bleed hero support: explicit, known page padding so hero breakout math is exact */
-.fi-page > section,
-.fi-page .fi-page-content {
-    padding: 1.5rem !important;
-    padding-top: 1.5rem !important;
-}
-@media (max-width: 640px) {
-    .fi-page > section,
-    .fi-page .fi-page-content { padding: 1rem !important; }
-}
+/* Full-bleed hero support */
 .fi-main { overflow-x: hidden; }
+
+/* DASHBOARD ONLY: zero the page padding so the hero is naturally full-width.
+   Non-hero blocks get their own padding via .dash-pad below. */
+.fi-page-dashboard .fi-page-content,
+.fi-page-dashboard > section,
+.fi-main:has(.dash-hero) .fi-page-content,
+.fi-main:has(.dash-hero) section.fi-page-content { padding: 0 !important; }
+.dash-pad { padding: 0 1.5rem; }
+@media (max-width: 640px){ .dash-pad { padding: 0 1rem; } }

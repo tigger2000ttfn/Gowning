@@ -13,8 +13,8 @@
     .dash-hero{position:relative;overflow:hidden;background:#15151A;color:#fff;
         display:flex;align-items:center;gap:36px;
         padding:clamp(28px,5vw,56px) clamp(20px,5vw,56px);
-        width:calc(100% + 3rem);margin-left:-1.5rem;margin-top:-1.5rem;margin-bottom:18px;border-radius:0;}
-    @media (max-width:640px){.dash-hero{flex-direction:column;text-align:center;gap:18px;width:calc(100% + 2rem);margin-left:-1rem;margin-top:-1rem;}}
+        width:100%;margin:0 0 16px;border-radius:0;}
+    @media (max-width:640px){.dash-hero{flex-direction:column;text-align:center;gap:18px;}}
     .dash-hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
         radial-gradient(45% 50% at 24% 38%,rgba(126,60,168,.32),transparent 70%),
         radial-gradient(42% 48% at 80% 60%,rgba(164,18,63,.30),transparent 72%);
@@ -95,6 +95,7 @@
     </div>
 </div>
 
+<div class="dash-pad">
 <div class="dash-grid">
     <div class="dash-stat s-green"><div class="n">{{ $qualified }}</div><div class="l">Qualified</div></div>
     <div class="dash-stat s-gold"><div class="n">{{ $inProgress }}</div><div class="l">In Progress</div></div>
@@ -156,4 +157,5 @@
 </div>
 @endif
 
+</div>
 </x-filament-panels::page>
