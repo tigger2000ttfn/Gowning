@@ -12,6 +12,14 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Actions\EditAction;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TimePicker;
+use Filament\Forms\Components\TextInput as FormTextInput;
+use App\Models\ClassSession;
+use Carbon\Carbon;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Table;
@@ -49,7 +57,65 @@ class TrainingClassResource extends Resource
                 IconColumn::make('is_gowning_prerequisite')->label('Prereq')->boolean(),
                 IconColumn::make('is_published')->label('Published')->boolean(),
             ])
-            ->recordActions([EditAction::make()])
+            ->recordActions([
+                Action::make('generate')
+                    ->label('Generate Sessions')
+                    ->icon('heroicon-m-arrow-path')
+                    ->color('success')
+                    ->modalHeading('Generate Recurring Sessions')
+                    ->modalWidth('lg')
+                    ->schema([
+                        Select::make('pattern')->label('Repeat')->options([
+                            'weekly' => 'Weekly', 'biweekly' => 'Bi-weekly (every 2 weeks)', 'monthly' => 'Monthly',
+                        ])->default('weekly')->required(),
+                        Select::make('weekday')->label('Day of week')->options([
+                            1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday',0=>'Sunday',
+                        ])->default(2)->required()
+                            ->helperText('For monthly, uses this weekday of the first matching week each month.'),
+                        DatePicker::make('start_date')->label('Start date')->required()->native(false),
+                        DatePicker::make('end_date')->label('End date')->required()->native(false),
+                        TimePicker::make('start_time')->seconds(false),
+                        TimePicker::make('end_time')->seconds(false),
+                        FormTextInput::make('location')->maxLength(255),
+                        FormTextInput::make('instructor')->maxLength(255),
+                        FormTextInput::make('capacity')->numeric()->default(20)->minValue(1)->required(),
+                    ])
+                    ->action(function (TrainingClass $record, array $data) {
+                        $start = Carbon::parse($data['start_date']);
+                        $end = Carbon::parse($data['end_date']);
+                        $weekday = (int) $data['weekday'];
+                        // advance start to the first matching weekday
+                        $cursor = $start->copy();
+                        while ($cursor->dayOfWeek !== $weekday) { $cursor->addDay(); }
+                        $created = 0; $guard = 0;
+                        while ($cursor->lte($end) && $guard < 400) {
+                            $guard++;
+                            ClassSession::firstOrCreate(
+                                ['training_class_id' => $record->id, 'session_date' => $cursor->toDateString()],
+                                [
+                                    'start_time' => $data['start_time'] ?? null,
+                                    'end_time' => $data['end_time'] ?? null,
+                                    'location' => $data['location'] ?? null,
+                                    'instructor' => $data['instructor'] ?? null,
+                                    'capacity' => $data['capacity'],
+                                    'status' => 'open',
+                                ],
+                            );
+                            $created++;
+                            $cursor = match ($data['pattern']) {
+                                'weekly' => $cursor->addWeek(),
+                                'biweekly' => $cursor->addWeeks(2),
+                                'monthly' => $cursor->addMonthNoOverflow()->startOfMonth()->next($weekday),
+                                default => $cursor->addWeek(),
+                            };
+                        }
+                        Notification::make()->success()
+                            ->title('Sessions generated')
+                            ->body("{$created} sessions created for {$record->name}.")
+                            ->send();
+                    }),
+                EditAction::make(),
+            ])
             ->defaultSort('name');
     }
 
