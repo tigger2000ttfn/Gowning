@@ -131,25 +131,37 @@ html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
     content: '';
     position: absolute;
     inset: -20%;
-    background:
-        radial-gradient(2px 2px at 15% 80%, rgba(199,154,51,0.95) 0%, transparent 60%),
-        radial-gradient(3px 3px at 35% 65%, rgba(200,16,46,0.85) 0%, transparent 60%),
-        radial-gradient(2px 2px at 55% 90%, rgba(199,154,51,0.8) 0%, transparent 60%),
-        radial-gradient(2px 2px at 70% 75%, rgba(220,40,70,0.85) 0%, transparent 60%),
-        radial-gradient(3px 3px at 85% 60%, rgba(199,154,51,0.8) 0%, transparent 60%),
-        radial-gradient(2px 2px at 25% 50%, rgba(200,16,46,0.7) 0%, transparent 60%),
-        radial-gradient(2px 2px at 60% 40%, rgba(220,40,70,0.75) 0%, transparent 60%),
-        radial-gradient(40% 50% at 30% 30%, rgba(164,18,63,0.28) 0%, transparent 65%),
-        radial-gradient(45% 55% at 75% 70%, rgba(120,10,40,0.30) 0%, transparent 68%);
-    animation: astellas-rise 30s linear infinite;
     z-index: 0;
+    background:
+        radial-gradient(45% 50% at 26% 38%, rgba(126,60,168,0.32), transparent 70%),
+        radial-gradient(42% 48% at 78% 60%, rgba(164,18,63,0.26), transparent 72%),
+        radial-gradient(38% 42% at 58% 80%, rgba(80,40,140,0.22), transparent 70%);
+    filter: blur(10px);
+    animation: nebula 26s ease-in-out infinite;
 }
+/* twinkling star nodes injected via CSS gradients on ::after */
+.fi-simple-layout::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+        radial-gradient(2px 2px at 12% 30%, #fff, transparent 55%),
+        radial-gradient(2px 2px at 22% 70%, #E8C24A, transparent 55%),
+        radial-gradient(1.5px 1.5px at 35% 18%, #fff, transparent 55%),
+        radial-gradient(2px 2px at 48% 62%, #B98CE0, transparent 55%),
+        radial-gradient(2px 2px at 60% 28%, #fff, transparent 55%),
+        radial-gradient(1.5px 1.5px at 72% 75%, #E8C24A, transparent 55%),
+        radial-gradient(2px 2px at 82% 40%, #B98CE0, transparent 55%),
+        radial-gradient(2px 2px at 90% 65%, #fff, transparent 55%),
+        radial-gradient(1.5px 1.5px at 18% 52%, #fff, transparent 55%),
+        radial-gradient(2px 2px at 66% 88%, #B98CE0, transparent 55%);
+    animation: twinkle-bg 4s ease-in-out infinite;
+}
+@keyframes nebula { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(3%,-3%) scale(1.07)} }
+@keyframes twinkle-bg { 0%,100%{opacity:.45} 50%{opacity:1} }
 .fi-simple-layout > * { position: relative; z-index: 1; }
-@keyframes astellas-rise {
-    0%   { transform: translateY(0) translateX(0); }
-    50%  { transform: translateY(-6%) translateX(2%); }
-    100% { transform: translateY(0) translateX(0); }
-}
+
 .fi-simple-main {
     border-top: 4px solid var(--astellas-magenta);
     box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(164,18,63,0.25);
