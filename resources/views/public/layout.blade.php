@@ -23,27 +23,25 @@
         .nav-links a.btn-admin{border:1.5px solid var(--gold);color:var(--gold);padding:8px 14px;border-radius:8px;}
         .flash{max-width:1080px;margin:18px auto 0;padding:14px 18px;background:#E8F5EC;border:1px solid #2E7D5B;border-radius:10px;color:#1B5E3A;}
         .hero{position:relative;overflow:hidden;background:var(--charcoal);color:#fff;padding:48px 32px 56px;text-align:center;}
-        .hero::before{content:'';position:absolute;inset:-30%;background:
-            radial-gradient(2px 2px at 12% 30%,rgba(232,194,74,.95),transparent 55%),
-            radial-gradient(2px 2px at 22% 70%,rgba(126,60,168,.95),transparent 55%),
-            radial-gradient(1.5px 1.5px at 35% 18%,rgba(255,255,255,.9),transparent 55%),
-            radial-gradient(2px 2px at 48% 62%,rgba(232,194,74,.85),transparent 55%),
-            radial-gradient(2px 2px at 60% 28%,rgba(200,16,46,.85),transparent 55%),
-            radial-gradient(1.5px 1.5px at 72% 75%,rgba(255,255,255,.85),transparent 55%),
-            radial-gradient(2px 2px at 82% 40%,rgba(126,60,168,.95),transparent 55%),
-            radial-gradient(2px 2px at 90% 65%,rgba(232,194,74,.9),transparent 55%),
-            radial-gradient(1.5px 1.5px at 18% 50%,rgba(255,255,255,.8),transparent 55%),
-            radial-gradient(2px 2px at 66% 88%,rgba(126,60,168,.9),transparent 55%);
-            animation:drift 60s linear infinite, twinkle 4s ease-in-out infinite;}
+        
         @keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(-6%,-8%)}}
         @keyframes twinkle{0%,100%{opacity:.55}50%{opacity:1}}
         @keyframes nebula{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,-3%) scale(1.08)}}
         @media(prefers-reduced-motion:reduce){.hero::before{animation:none}}
-        .hero::after{content:'';position:absolute;inset:-20%;z-index:0;background:
-            radial-gradient(50% 55% at 25% 35%,rgba(126,60,168,.35),transparent 70%),
-            radial-gradient(45% 50% at 78% 62%,rgba(164,18,63,.30),transparent 72%),
-            radial-gradient(40% 45% at 60% 20%,rgba(232,194,74,.12),transparent 70%);
-            filter:blur(8px);animation:nebula 24s ease-in-out infinite;}
+        
+                /* Cosmic hero: soft nebula clouds + real twinkling star nodes */
+        .hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
+            radial-gradient(45% 50% at 26% 38%,rgba(126,60,168,.30),transparent 70%),
+            radial-gradient(42% 48% at 78% 60%,rgba(164,18,63,.24),transparent 72%),
+            radial-gradient(38% 42% at 58% 80%,rgba(80,40,140,.22),transparent 70%);
+            filter:blur(10px);animation:nebula 26s ease-in-out infinite;}
+        @keyframes nebula{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,-3%) scale(1.07)}}
+        .stars{position:absolute;inset:0;z-index:0;pointer-events:none;}
+        .stars i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff;
+            box-shadow:0 0 6px 1px rgba(255,255,255,.6);opacity:.5;animation:tw 3s ease-in-out infinite;}
+        .stars i.g{background:#E8C24A;box-shadow:0 0 7px 1px rgba(232,194,74,.7);}
+        .stars i.p{background:#B98CE0;box-shadow:0 0 7px 1px rgba(185,140,224,.7);}
+        @keyframes tw{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
         .hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
         .hero-star{width:64px;height:64px;margin-bottom:14px;filter:drop-shadow(0 6px 20px rgba(200,16,46,.5));animation:spin 40s linear infinite;}
         @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
