@@ -40,13 +40,18 @@
 
 /* ACTIVE item: magenta fill, WHITE text (fixes unreadable active link) */
 .fi-sidebar .fi-sidebar-item-active > .fi-sidebar-item-button,
-.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-button {
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-button,
+.fi-sidebar a[aria-current="page"],
+.fi-sidebar .fi-active > a,
+.fi-sidebar li[aria-current] > a {
     background-color: var(--astellas-magenta) !important;
 }
 .fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-label,
 .fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-icon,
 .fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label,
-.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon,
+.fi-sidebar a[aria-current="page"] *,
+.fi-sidebar .fi-active > a * {
     color: #FFFFFF !important;
 }
 
