@@ -5,7 +5,10 @@
 @endphp
 
 <style>
-    .dash-hero{position:relative;overflow:hidden;background:#15151A;border-radius:18px;padding:48px 40px;color:#fff;margin-bottom:24px;display:flex;align-items:center;gap:34px;}
+    .dash-hero{position:relative;overflow:hidden;background:#15151A;color:#fff;
+        padding:60px 48px;display:flex;align-items:center;gap:40px;
+        margin:-24px -24px 26px;border-radius:0;}
+    @media (min-width:1024px){.dash-hero{padding:72px 56px;}}
     .dash-hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
         radial-gradient(45% 50% at 24% 38%,rgba(126,60,168,.32),transparent 70%),
         radial-gradient(42% 48% at 80% 60%,rgba(164,18,63,.30),transparent 72%);
@@ -14,7 +17,7 @@
     .dash-star{position:absolute;border-radius:50%;z-index:0;animation:dashtw 3s ease-in-out infinite;}
     @keyframes dashtw{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
     .dash-hero-in{position:relative;z-index:1;flex:1;}
-    .dash-hero-icon{position:relative;z-index:1;width:110px;height:110px;flex:0 0 110px;filter:drop-shadow(0 0 14px rgba(232,194,74,.5));animation:dashFloat 6s ease-in-out infinite;}
+    .dash-hero-icon{position:relative;z-index:1;width:130px;height:130px;flex:0 0 130px;filter:drop-shadow(0 0 14px rgba(232,194,74,.5));animation:dashFloat 6s ease-in-out infinite;}
     @keyframes dashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
     .dash-hello{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#E8C24A;font-weight:700;}
     .dash-title{font-size:38px;font-weight:800;margin:4px 0 4px;}
@@ -48,7 +51,7 @@
     @foreach($stars as $s)
         <span class="dash-star" style="top:{{$s['t']}}%;left:{{$s['l']}}%;width:{{$s['s']}}px;height:{{$s['s']}}px;background:{{$s['c']}};animation-delay:{{$s['d']}}s;animation-duration:{{$s['u']}}s;"></span>
     @endforeach
-    <img src="{{ asset('images/hero-icon.svg') }}" alt="" class="dash-hero-icon">
+    <img src="{{ asset('images/dashboard-icon.svg') }}" alt="" class="dash-hero-icon">
     <div class="dash-hero-in">
         <div class="dash-hello">Welcome Back</div>
         <div class="dash-title">{{ $userName }}</div>
