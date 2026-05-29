@@ -50,14 +50,18 @@
         padding:16px 32px;background:#1C1C21;border-bottom:2px solid #A4123F;}
     .gqs-login-bar .lhs{display:flex;align-items:center;gap:12px;}
     .gqs-login-bar img{height:34px;}
-    .gqs-login-bar .brand{color:#444;font-weight:700;letter-spacing:.03em;font-size:15px;padding-top:17px;}
+    .gqs-login-bar .brand{color:#444;font-weight:700;letter-spacing:.03em;font-size:15px;padding-top:20px;}
     .gqs-login-bar .rhs a{color:#E8C24A;font-weight:600;font-size:14px;text-decoration:none;}
     .gqs-login-bar .rhs a:hover{color:#F0CB55;}
 
     /* in-card brand: keep the logo visible, give it room */
     .fi-simple-main .gqs-brand-text{display:none !important;}
-    /* bigger logo inside the sign-in card, with breathing room on top */
-    .fi-simple-main img{height:56px !important;margin-top:14px;}
+    /* bigger logo inside the sign-in card */
+    .fi-simple-main img{height:56px !important;box-sizing:content-box;}
+    /* breathing room above the logo: pad the card's logo/header area, not the img */
+    .fi-simple-main .fi-simple-header,
+    .fi-simple-main > a:first-child,
+    .fi-simple-main .fi-logo{padding-top:20px !important;display:block;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
