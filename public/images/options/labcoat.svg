@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="coat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#DCDEE6"/>
+    </linearGradient>
+  </defs>
+  <!-- collar -->
+  <path d="M52 26 L60 36 L68 26 L74 30 L60 46 L46 30 Z" fill="url(#coat)" stroke="#C2C4CE" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- coat body -->
+  <path d="M46 30 C40 33 34 40 32 52 L28 92 C28 96 31 98 35 98 L85 98 C89 98 92 96 92 92 L88 52 C86 40 80 33 74 30
+           L60 48 Z" fill="url(#coat)" stroke="#C2C4CE" stroke-width="1.5" stroke-linejoin="round"/>
+  <!-- lapels -->
+  <path d="M52 30 L58 46 L60 48 L56 92" fill="none" stroke="#C8CAD4" stroke-width="1.4"/>
+  <path d="M68 30 L62 46 L60 48 L64 92" fill="none" stroke="#C8CAD4" stroke-width="1.4"/>
+  <!-- buttons -->
+  <circle cx="60" cy="60" r="1.8" fill="#A4123F"/>
+  <circle cx="60" cy="72" r="1.8" fill="#A4123F"/>
+  <circle cx="60" cy="84" r="1.8" fill="#A4123F"/>
+  <!-- pocket -->
+  <rect x="70" y="72" width="13" height="11" rx="1.5" fill="none" stroke="#C8CAD4" stroke-width="1.4"/>
+  <!-- breast pocket w/ pen -->
+  <rect x="48" y="54" width="9" height="9" rx="1" fill="none" stroke="#C8CAD4" stroke-width="1.3"/>
+  <rect x="51" y="51" width="1.6" height="7" rx="0.8" fill="#A4123F"/>
+</svg>
