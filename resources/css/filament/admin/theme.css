@@ -95,38 +95,23 @@
     .fi-simple-layout::before { animation: none; }
 }
 
-/* Light theme: ensure dark, readable text on white backgrounds */
-:where(.fi:not(.dark)) {
-    --gray-400: #4B4B52;
-    --gray-500: #3A3A40;
-    --gray-600: #2B2B30;
-    --gray-700: #1F1F23;
+/* ---- Light theme readable text (high specificity, actually applies) ---- */
+html:not(.dark) .fi-ta-text,
+html:not(.dark) .fi-ta-cell,
+html:not(.dark) .fi-in-text,
+html:not(.dark) .fi-ta-record-content,
+html:not(.dark) .fi-text-tinted-600,
+html:not(.dark) .fi-text-tinted-500,
+html:not(.dark) .fi-text-tinted-400 {
+    color: #1F1F23 !important;
 }
-:where(.fi:not(.dark)) .fi-ta-text,
-:where(.fi:not(.dark)) .fi-ta-record-content,
-:where(.fi:not(.dark)) .fi-in-text {
-    color: #1F1F23;
+html:not(.dark) .fi-ta-header-cell-label {
+    color: #2B2B30 !important;
+    font-weight: 600 !important;
 }
-/* Muted/secondary text that was too light grey */
-:where(.fi:not(.dark)) .fi-color-gray.fi-text-color-500,
-:where(.fi:not(.dark)) .text-gray-400,
-:where(.fi:not(.dark)) .text-gray-500 {
+/* Muted/description text darkened from light grey */
+html:not(.dark) .fi-fo-field-wrp-helper-text,
+html:not(.dark) .fi-section-header-description,
+html:not(.dark) .fi-color-gray {
     color: #3A3A40 !important;
-}
-/* Table headers readable in light mode */
-:where(.fi:not(.dark)) .fi-ta-header-cell-label {
-    color: #2B2B30;
-    font-weight: 600;
-}
-
-
-/* Login submit button: solid Astellas magenta, not pink */
-.fi-simple-layout .fi-btn-color-primary {
-    background-color: #A4123F !important;
-    border-color: #A4123F !important;
-    color: #fff !important;
-}
-.fi-simple-layout .fi-btn-color-primary:hover {
-    background-color: #850F33 !important;
-    border-color: #850F33 !important;
 }
