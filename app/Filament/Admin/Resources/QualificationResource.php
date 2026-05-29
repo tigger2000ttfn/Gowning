@@ -40,6 +40,50 @@ class QualificationResource extends Resource
                     collect(QualificationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
                 ),
             ])
+            ->recordActions([
+                \Filament\Actions\Action::make('override_due')
+                    ->label('Override Due Date')
+                    ->icon('heroicon-m-calendar')
+                    ->color('warning')
+                    ->schema([
+                        \Filament\Forms\Components\DatePicker::make('due_date')->label('New due date')->required()->native(false),
+                        \Filament\Forms\Components\Textarea::make('reason')->label('Reason (recorded for audit)')->required()->rows(2),
+                    ])
+                    ->fillForm(fn ($record) => ['due_date' => $record->due_date])
+                    ->action(function ($record, array $data) {
+                        $old = $record->due_date?->toDateString();
+                        $record->update(['due_date' => $data['due_date']]);
+                        $record->comments()->create([
+                            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                            'author_name' => \Illuminate\Support\Facades\Auth::user()?->name,
+                            'body' => "QA overrode due date ({$old} → {$data['due_date']}). Reason: {$data['reason']}",
+                        ]);
+                        \Filament\Notifications\Notification::make()->success()->title('Due date updated')->send();
+                    }),
+                \Filament\Actions\Action::make('determination')
+                    ->label('QA Determination')
+                    ->icon('heroicon-m-clipboard-document-check')
+                    ->color('info')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('outcome')->label('Determination')->options([
+                            'retrain' => 'Require retraining (gowning class again)',
+                            'requalify' => 'Requalify (reset to 3 initial runs)',
+                            'continue' => 'Continue current cycle (no change)',
+                        ])->required(),
+                        \Filament\Forms\Components\Textarea::make('note')->label('QA note')->required()->rows(3),
+                    ])
+                    ->action(function ($record, array $data) {
+                        $record->comments()->create([
+                            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                            'author_name' => \Illuminate\Support\Facades\Auth::user()?->name,
+                            'body' => "QA determination: {$data['outcome']}. {$data['note']}",
+                        ]);
+                        if ($data['outcome'] === 'requalify') {
+                            $record->update(['status' => 'pending', 'runs_completed' => 0, 'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3)]);
+                        }
+                        \Filament\Notifications\Notification::make()->success()->title('Determination recorded')->send();
+                    }),
+            ])
             ->defaultSort('due_date');
     }
 

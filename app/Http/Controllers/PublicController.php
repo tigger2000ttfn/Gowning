@@ -194,10 +194,14 @@ class PublicController extends Controller
             'password' => Hash::make($data['password']),
             'role' => \App\Enums\Role::Operator,
             'is_active' => true,
-            'approval_status' => 'pending',
+            'approval_status' => \App\Models\Setting::get('auto_approve', false) ? 'approved' : 'pending',
+            'approved_at' => \App\Models\Setting::get('auto_approve', false) ? now() : null,
         ]);
 
-        return redirect()->route('public.home')
-            ->with('flash', 'Account requested. An administrator will approve your access shortly.');
+        $msg = \App\Models\Setting::get('auto_approve', false)
+            ? 'Account created. You can sign in now.'
+            : 'Account requested. An administrator will approve your access shortly.';
+
+        return redirect()->route('public.home')->with('flash', $msg);
     }
 }

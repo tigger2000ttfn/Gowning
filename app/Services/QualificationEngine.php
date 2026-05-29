@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
+
 use App\Enums\QualificationStatus;
 use App\Enums\QualificationType;
 use App\Enums\RunResult;
@@ -26,6 +28,26 @@ class QualificationEngine
 {
     public const ANNUAL_VALID_MONTHS = 12;
 
+    protected function cycleMonths(): int
+    {
+        return (int) Setting::get('cycle_months', self::ANNUAL_VALID_MONTHS);
+    }
+
+    protected function initialRunsRequired(): int
+    {
+        return (int) Setting::get('initial_runs_required', QualificationType::Initial->runsRequired());
+    }
+
+    protected function annualRunsRequired(): int
+    {
+        return (int) Setting::get('annual_runs_required', QualificationType::Annual->runsRequired());
+    }
+
+    protected function graceDays(): int
+    {
+        return (int) Setting::get('grace_days', 0);
+    }
+
     /** Get or create the single qualification record for a person. */
     public function qualificationFor(Personnel $personnel): Qualification
     {
@@ -34,7 +56,7 @@ class QualificationEngine
             [
                 'type' => QualificationType::Initial,
                 'status' => QualificationStatus::Pending,
-                'runs_required' => QualificationType::Initial->runsRequired(),
+                'runs_required' => $this->initialRunsRequired(),
                 'runs_completed' => 0,
             ],
         );
@@ -95,7 +117,7 @@ class QualificationEngine
     public function replay(iterable $runs): array
     {
         $type = QualificationType::Initial;
-        $required = QualificationType::Initial->runsRequired();
+        $required = $this->initialRunsRequired();
         $passes = 0;
         $status = QualificationStatus::Pending;
         $qualifiedDate = null;   // CarbonImmutable|null
@@ -111,7 +133,7 @@ class QualificationEngine
                 && $runDate->greaterThan($dueDate)) {
                 $status = QualificationStatus::Lapsed;
                 $type = QualificationType::Initial;
-                $required = QualificationType::Initial->runsRequired();
+                $required = $this->initialRunsRequired();
                 $passes = 0;
             }
 
@@ -125,12 +147,12 @@ class QualificationEngine
             if ($passes >= $required) {
                 // Cycle complete: qualified, valid for 12 months from this pass.
                 $qualifiedDate = $runDate;
-                $dueDate = $runDate->addMonths(self::ANNUAL_VALID_MONTHS);
+                $dueDate = $runDate->addMonths($this->cycleMonths());
                 $status = QualificationStatus::Qualified;
 
                 // Next cycle is the annual requalification (1 run).
                 $type = QualificationType::Annual;
-                $required = QualificationType::Annual->runsRequired();
+                $required = $this->annualRunsRequired();
                 $passes = 0;
             } else {
                 $status = QualificationStatus::InProgress;
@@ -143,7 +165,7 @@ class QualificationEngine
             && $dueDate->lessThan(CarbonImmutable::now()->startOfDay())) {
             $status = QualificationStatus::Lapsed;
             $type = QualificationType::Initial;
-            $required = QualificationType::Initial->runsRequired();
+            $required = $this->initialRunsRequired();
             $passes = 0;
         }
 
