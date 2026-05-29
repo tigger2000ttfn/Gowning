@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0B83C"/><stop offset="60%" stop-color="#C8102E"/><stop offset="100%" stop-color="#A4123F"/>
+    </linearGradient>
+    <linearGradient id="suit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBFBFD"/><stop offset="100%" stop-color="#DBDDE5"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" stroke="url(#ring)" stroke-width="4" opacity="0.9"/>
+  <!-- flatter hood -->
+  <path d="M60 26 C47 26 40 35 40 47 L40 54 C40 58 44 60 48 60 L72 60 C76 60 80 58 80 54 L80 47 C80 35 73 26 60 26 Z" fill="url(#suit)" stroke="#C2C4CE" stroke-width="1.5"/>
+  <ellipse cx="60" cy="45" rx="11" ry="13" fill="#2B2B30"/>
+  <!-- shoulders/body -->
+  <path d="M48 60 L42 96 C42 99 44 100 47 100 L73 100 C76 100 78 99 78 96 L72 60 Z" fill="url(#suit)" stroke="#C2C4CE" stroke-width="1.5"/>
+  <line x1="60" y1="60" x2="60" y2="100" stroke="#AEB0BC" stroke-width="1.6" stroke-dasharray="2 2"/>
+  <!-- arms -->
+  <path d="M48 62 L34 82 C32 85 34 87 37 86 L46 78" fill="url(#suit)" stroke="#C2C4CE" stroke-width="1.5"/>
+  <path d="M72 62 L86 82 C88 85 86 87 83 86 L74 78" fill="url(#suit)" stroke="#C2C4CE" stroke-width="1.5"/>
+</svg>
