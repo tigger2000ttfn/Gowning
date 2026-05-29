@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0B83C"/><stop offset="60%" stop-color="#C8102E"/><stop offset="100%" stop-color="#A4123F"/>
+    </linearGradient>
+    <linearGradient id="m" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FBFBFD"/><stop offset="100%" stop-color="#DBDDE5"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="54" stroke="url(#ring)" stroke-width="4" opacity="0.9"/>
+  <!-- SAFETY GLASSES (above) -->
+  <g stroke="#9298A4" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M30 40 L90 40" />
+    <path d="M30 40 C28 40 28 52 34 53 L50 53 C56 52 56 41 53 40 Z" fill="#BFE3EC" fill-opacity="0.55"/>
+    <path d="M90 40 C92 40 92 52 86 53 L70 53 C64 52 64 41 67 40 Z" fill="#BFE3EC" fill-opacity="0.55"/>
+    <path d="M53 45 L67 45" />
+  </g>
+  <!-- ear loops -->
+  <path d="M40 62 C28 62 28 88 43 90" fill="none" stroke="#AEB0BC" stroke-width="3"/>
+  <path d="M80 62 C92 62 92 88 77 90" fill="none" stroke="#AEB0BC" stroke-width="3"/>
+  <!-- MASK body -->
+  <path d="M38 62 C50 58 70 58 82 62 L80 86 C70 94 50 94 40 86 Z" fill="url(#m)" stroke="#C2C4CE" stroke-width="1.5"/>
+  <!-- pleats -->
+  <path d="M41 70 L79 70 M42 77 L78 77 M44 84 L76 84" stroke="#CDCFD8" stroke-width="1.4"/>
+  <!-- nose wire -->
+  <path d="M48 63 C55 60 65 60 72 63" fill="none" stroke="#AEB0BC" stroke-width="2"/>
+</svg>

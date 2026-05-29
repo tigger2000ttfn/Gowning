@@ -16,6 +16,11 @@
                 <div style="color:#9A9AA2;font-size:13px;">name: mask</div>
             </div>
             <div style="background:var(--charcoal);border-radius:14px;padding:28px;text-align:center;">
+                <img src="{{ asset('images/options/mask-glasses.svg') }}" style="width:130px;height:130px;">
+                <div style="color:#fff;margin-top:12px;font-weight:600;">Mask + Safety Glasses</div>
+                <div style="color:#9A9AA2;font-size:13px;">name: mask-glasses</div>
+            </div>
+            <div style="background:var(--charcoal);border-radius:14px;padding:28px;text-align:center;">
                 <img src="{{ asset('images/options/coverall.svg') }}" style="width:130px;height:130px;">
                 <div style="color:#fff;margin-top:12px;font-weight:600;">Flatter Coverall</div>
                 <div style="color:#9A9AA2;font-size:13px;">name: coverall</div>
