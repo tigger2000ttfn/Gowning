@@ -25,7 +25,7 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->id('admin')
             ->default()                 // required: marks this as the default panel
-            ->login()                   // required: registers the login route/page
+            ->login(\App\Filament\Admin\Auth\Login::class)  // custom login (Title Case labels)
             ->passwordReset()           // adds the "forgot password?" link + flow
             ->spa()                     // SPA navigation: persistent sidebar/header, no full reloads
             ->databaseNotifications()   // bell icon + notifications in header
