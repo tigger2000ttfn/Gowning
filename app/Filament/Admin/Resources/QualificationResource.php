@@ -46,8 +46,8 @@ class QualificationResource extends Resource
                     ->icon('heroicon-m-calendar')
                     ->color('warning')
                     ->schema([
-                        \Filament\Forms\Components\DatePicker::make('due_date')->label('New due date')->required()->native(false),
-                        \Filament\Forms\Components\Textarea::make('reason')->label('Reason (recorded for audit)')->required()->rows(2),
+                        \Filament\Forms\Components\DatePicker::make('due_date')->label('New Due Date')->required()->native(false),
+                        \Filament\Forms\Components\Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
                     ])
                     ->fillForm(fn ($record) => ['due_date' => $record->due_date])
                     ->action(function ($record, array $data) {
@@ -70,7 +70,7 @@ class QualificationResource extends Resource
                             'requalify' => 'Requalify (reset to 3 initial runs)',
                             'continue' => 'Continue current cycle (no change)',
                         ])->required(),
-                        \Filament\Forms\Components\Textarea::make('note')->label('QA note')->required()->rows(3),
+                        \Filament\Forms\Components\Textarea::make('note')->label('QA Note')->required()->rows(3),
                     ])
                     ->action(function ($record, array $data) {
                         $record->comments()->create([

@@ -53,7 +53,7 @@ class UserResource extends Resource
                 Select::make('approval_status')->options([
                     'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
                 ])->required(),
-                Select::make('linked_personnel')->label('Linked personnel record')
+                Select::make('linked_personnel')->label('Linked Personnel Record')
                     ->options(fn () => \App\Models\Personnel::orderBy('employee_id')->get()
                         ->mapWithKeys(fn ($r) => [$r->id => "{$r->employee_id} — {$r->full_name}"]))
                     ->searchable()
@@ -86,7 +86,7 @@ class UserResource extends Resource
             ->filters([
                 SelectFilter::make('approval_status')->options([
                     'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
-                ])->label('Approval status'),
+                ])->label('Approval Status'),
             ])
             ->recordActions([
                 Action::make('approve')->icon('heroicon-m-check')->color('success')

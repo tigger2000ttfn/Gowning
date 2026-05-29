@@ -33,8 +33,8 @@ class CommentsRelationManager extends RelationManager
             ->defaultSort('created_at', 'desc')
             ->headerActions([
                 \Filament\Actions\CreateAction::make()
-                    ->label('Add comment')
-                    ->modalHeading('Add a running comment')
+                    ->label('Add Comment')
+                    ->modalHeading('Add A Running Comment')
                     ->mutateDataUsing(function (array $data): array {
                         $data['user_id'] = Auth::id();
                         $data['author_name'] = Auth::user()?->name;

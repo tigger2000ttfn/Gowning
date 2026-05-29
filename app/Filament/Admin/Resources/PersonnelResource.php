@@ -42,7 +42,7 @@ class PersonnelResource extends Resource
                 ->columns(2)
                 ->schema([
                     TextInput::make('department'),
-                    TextInput::make('job_title')->label('Job title'),
+                    TextInput::make('job_title')->label('Job Title'),
                 ]),
         ]);
     }

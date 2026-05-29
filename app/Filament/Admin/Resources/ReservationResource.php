@@ -31,12 +31,12 @@ class ReservationResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Reservation request')->columns(2)->schema([
+            Section::make('Reservation Request')->columns(2)->schema([
                 Select::make('personnel_id')->label('Person')
                     ->relationship('personnel', 'employee_id')
                     ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} — {$r->full_name}")
                     ->searchable()->preload()->required(),
-                Select::make('run_slot_id')->label('Open slot')
+                Select::make('run_slot_id')->label('Open Slot')
                     ->options(function () {
                         return RunSlot::query()
                             ->where('status', 'open')
@@ -62,7 +62,7 @@ class ReservationResource extends Resource
             ->columns([
                 TextColumn::make('personnel.employee_id')->label('Employee ID')->searchable(),
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
-                TextColumn::make('runSlot.slot_date')->label('Slot date')->date()->sortable(),
+                TextColumn::make('runSlot.slot_date')->label('Slot Date')->date()->sortable(),
                 TextColumn::make('runSlot.cleanroom')->label('Cleanroom'),
                 TextColumn::make('status')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
@@ -71,7 +71,7 @@ class ReservationResource extends Resource
                         ReservationStatus::Rejected, ReservationStatus::NoShow => 'danger',
                         default => 'warning',
                     }),
-                TextColumn::make('decidedBy.name')->label('Decided by')->placeholder('—')->toggleable(),
+                TextColumn::make('decidedBy.name')->label('Decided By')->placeholder('—')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(
@@ -106,7 +106,7 @@ class ReservationResource extends Resource
                         Notification::make()->title('Reservation rejected')->send();
                     }),
                 Action::make('complete')->icon('heroicon-m-check-badge')->color('success')
-                    ->label('Mark completed')
+                    ->label('Mark Completed')
                     ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Approved)
                     ->action(fn (Reservation $r) => $r->update(['status' => ReservationStatus::Completed])),
                 Action::make('no_show')->icon('heroicon-m-user-minus')->color('danger')
@@ -116,9 +116,9 @@ class ReservationResource extends Resource
                 Action::make('reschedule')->icon('heroicon-m-arrows-right-left')->color('warning')
                     ->label('Reschedule')
                     ->visible(fn (Reservation $r) => in_array($r->status, [ReservationStatus::Requested, ReservationStatus::Approved]))
-                    ->modalHeading('Move to another run slot')
+                    ->modalHeading('Move To Another Run Slot')
                     ->schema([
-                        Select::make('run_slot_id')->label('New open slot')
+                        Select::make('run_slot_id')->label('New Open Slot')
                             ->options(function () {
                                 return RunSlot::query()
                                     ->where('status', 'open')

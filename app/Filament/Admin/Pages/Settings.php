@@ -46,20 +46,20 @@ class Settings extends Page implements HasForms
             ->statePath('data')
             ->components([
                 Section::make('Qualification Rules')->columns(2)->schema([
-                    TextInput::make('initial_runs_required')->label('Runs required for initial qualification')
+                    TextInput::make('initial_runs_required')->label('Runs Required For Initial Qualification')
                         ->numeric()->minValue(1)->required(),
-                    TextInput::make('annual_runs_required')->label('Runs required for annual requalification')
+                    TextInput::make('annual_runs_required')->label('Runs Required For Annual Requalification')
                         ->numeric()->minValue(1)->required(),
-                    TextInput::make('cycle_months')->label('Qualification valid for (months)')
+                    TextInput::make('cycle_months')->label('Qualification Valid For (Months)')
                         ->numeric()->minValue(1)->required(),
-                    TextInput::make('grace_days')->label('Grace window after due date (days)')
+                    TextInput::make('grace_days')->label('Grace Window After Due Date (Days)')
                         ->numeric()->minValue(0)->required()
                         ->helperText('Days past due before a qualification is treated as lapsed.'),
                 ]),
                 Section::make('Class & Access')->columns(2)->schema([
-                    Toggle::make('class_required')->label('Gowning class required before initial runs'),
-                    Toggle::make('self_register_open')->label('Public self-registration open'),
-                    Toggle::make('auto_approve')->label('Auto-approve new registrations')
+                    Toggle::make('class_required')->label('Gowning Class Required Before Initial Runs'),
+                    Toggle::make('self_register_open')->label('Public Self-registration Open'),
+                    Toggle::make('auto_approve')->label('Auto-approve New Registrations')
                         ->helperText('Off is recommended for Part 11 (admin approves each account).'),
                 ]),
             ]);

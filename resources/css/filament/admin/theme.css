@@ -117,18 +117,34 @@ html.dark .fi-ta,
 html.dark .fi-wi { background-color: #1F1F25 !important; }
 html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
 
-/* ===========================================================
-   PRIMARY BUTTONS — solid magenta in BOTH themes (no pink)
-   =========================================================== */
-.fi-btn-color-primary {
-    background-color: var(--astellas-magenta) !important;
-    border-color: var(--astellas-magenta) !important;
+/* ============================================================
+   PRIMARY BUTTONS / ACCENTS — solid magenta everywhere, NO pink
+   ============================================================ */
+.fi-btn-color-primary,
+.fi-btn-color-primary:focus,
+.fi-btn-color-primary:active,
+button.fi-btn-color-primary,
+a.fi-btn-color-primary,
+.fi-ac-btn-action.fi-btn-color-primary {
+    background-color: #A4123F !important;
+    border-color: #A4123F !important;
     color: #FFFFFF !important;
+    --tw-ring-color: #A4123F !important;
+    box-shadow: none !important;
 }
 .fi-btn-color-primary:hover {
-    background-color: var(--astellas-magenta-dark) !important;
-    border-color: var(--astellas-magenta-dark) !important;
+    background-color: #850F33 !important;
+    border-color: #850F33 !important;
 }
+/* Filament sometimes uses primary at 10-20% opacity for soft buttons/badges -> reads pink. Force solid. */
+.fi-color-primary.fi-badge,
+.fi-badge.fi-color-primary {
+    background-color: #A4123F !important;
+    color: #FFFFFF !important;
+}
+/* Links/primary text that rendered pink */
+.fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
+html.dark .fi-link.fi-color-primary, html.dark a.fi-color-primary { color: #E8C24A !important; }
 
 /* ===========================================================
    LOGIN PAGE — charcoal backdrop + flying-star drift
@@ -157,16 +173,16 @@ html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
     inset: 0;
     z-index: 0;
     background:
-        radial-gradient(2px 2px at 12% 30%, #fff, transparent 55%),
-        radial-gradient(2px 2px at 22% 70%, #E8C24A, transparent 55%),
-        radial-gradient(1.5px 1.5px at 35% 18%, #fff, transparent 55%),
-        radial-gradient(2px 2px at 48% 62%, #B98CE0, transparent 55%),
-        radial-gradient(2px 2px at 60% 28%, #fff, transparent 55%),
-        radial-gradient(1.5px 1.5px at 72% 75%, #E8C24A, transparent 55%),
-        radial-gradient(2px 2px at 82% 40%, #B98CE0, transparent 55%),
-        radial-gradient(2px 2px at 90% 65%, #fff, transparent 55%),
-        radial-gradient(1.5px 1.5px at 18% 52%, #fff, transparent 55%),
-        radial-gradient(2px 2px at 66% 88%, #B98CE0, transparent 55%);
+        radial-gradient(4px 4px at 12% 30%, #fff, transparent 55%),
+        radial-gradient(4px 4px at 22% 70%, #E8C24A, transparent 55%),
+        radial-gradient(3px 3px at 35% 18%, #fff, transparent 55%),
+        radial-gradient(4px 4px at 48% 62%, #B98CE0, transparent 55%),
+        radial-gradient(4px 4px at 60% 28%, #fff, transparent 55%),
+        radial-gradient(3px 3px at 72% 75%, #E8C24A, transparent 55%),
+        radial-gradient(4px 4px at 82% 40%, #B98CE0, transparent 55%),
+        radial-gradient(4px 4px at 90% 65%, #fff, transparent 55%),
+        radial-gradient(3px 3px at 18% 52%, #fff, transparent 55%),
+        radial-gradient(4px 4px at 66% 88%, #B98CE0, transparent 55%);
     animation: twinkle-bg 4s ease-in-out infinite;
 }
 @keyframes nebula { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(3%,-3%) scale(1.07)} }
@@ -211,7 +227,7 @@ html:not(.dark) .fi-ta-header-cell {
     border-bottom: 2px solid var(--astellas-magenta) !important;
 }
 html:not(.dark) .fi-ta-row:nth-child(even) { background-color: #F4F4F6 !important; }
-html:not(.dark) .fi-ta-row:hover { background-color: #FBEAF0 !important; }
+html:not(.dark) .fi-ta-row:hover { background-color: #F1F1F4 !important; }
 html:not(.dark) .fi-ta-row { border-bottom: 1px solid #DDDDE3 !important; }
 
 /* Stat/overview widgets: colored accents */

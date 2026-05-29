@@ -10,8 +10,8 @@ class ListReservations extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('New reservation')
-                ->modalHeading('Request a run slot')
+                ->label('New Reservation')
+                ->modalHeading('Request A Run Slot')
                 ->mutateDataUsing(function (array $data): array {
                     $data['status'] = 'requested';
                     $data['requested_at'] = now();

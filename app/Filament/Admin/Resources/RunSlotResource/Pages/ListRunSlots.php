@@ -11,8 +11,8 @@ class ListRunSlots extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Publish slot')
-                ->modalHeading('Publish a run slot')
+                ->label('Publish Slot')
+                ->modalHeading('Publish A Run Slot')
                 ->mutateDataUsing(function (array $data): array {
                     $data['created_by'] = Auth::id();
                     return $data;

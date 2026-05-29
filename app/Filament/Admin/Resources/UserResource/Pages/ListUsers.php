@@ -8,6 +8,6 @@ class ListUsers extends ListRecords
     protected static string $resource = UserResource::class;
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('New User')->modalHeading('Create a User')];
+        return [CreateAction::make()->label('New User')->modalHeading('Create A User')];
     }
 }

@@ -61,7 +61,7 @@ class SessionsRelationManager extends RelationManager
                 }),
             ])
             ->headerActions([
-                CreateAction::make()->label('Add Session')->modalHeading('Schedule a Session'),
+                CreateAction::make()->label('Add Session')->modalHeading('Schedule A Session'),
             ])
             ->recordActions([
                 Action::make('attendance')

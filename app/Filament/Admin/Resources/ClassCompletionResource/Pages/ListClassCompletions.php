@@ -8,6 +8,6 @@ class ListClassCompletions extends ListRecords
     protected static string $resource = ClassCompletionResource::class;
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('Add completion')->modalHeading('Record a class completion')];
+        return [CreateAction::make()->label('Add Completion')->modalHeading('Record A Class Completion')];
     }
 }

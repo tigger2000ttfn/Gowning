@@ -8,6 +8,6 @@ class ListTrainingClasses extends ListRecords
     protected static string $resource = TrainingClassResource::class;
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('New Class')->modalHeading('Create a Gowning Class')];
+        return [CreateAction::make()->label('New Class')->modalHeading('Create A Gowning Class')];
     }
 }

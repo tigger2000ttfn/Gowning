@@ -6,5 +6,5 @@ use Filament\Resources\Pages\ListRecords;
 class ListQualificationRuns extends ListRecords
 {
     protected static string $resource = QualificationRunResource::class;
-    protected function getHeaderActions(): array { return [CreateAction::make()->label('Record run')]; }
+    protected function getHeaderActions(): array { return [CreateAction::make()->label('Record Run')]; }
 }

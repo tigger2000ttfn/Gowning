@@ -43,11 +43,11 @@ class QualificationRunResource extends Resource
                     ])->required(),
                     Textarea::make('notes')->columnSpanFull(),
                 ]),
-            Section::make('Electronic signature (21 CFR Part 11)')
+            Section::make('Electronic Signature (21 CFR Part 11)')
                 ->description('Recording a run is an electronic signature: it attributes this result to you.')
                 ->schema([
                     Textarea::make('signature_meaning')
-                        ->label('Meaning of signature')
+                        ->label('Meaning Of Signature')
                         ->default('Recorded and verified cleanroom qualification run result')
                         ->required(),
                 ]),
@@ -65,7 +65,7 @@ class QualificationRunResource extends Resource
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s === RunResult::Pass ? 'success' : 'danger'),
                 TextColumn::make('cycle_type')->label('Cycle')->formatStateUsing(fn ($s) => $s?->label())->toggleable(),
-                TextColumn::make('recordedBy.name')->label('Recorded by')->toggleable(),
+                TextColumn::make('recordedBy.name')->label('Recorded By')->toggleable(),
                 TextColumn::make('signed_at')->dateTime()->label('Signed')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([

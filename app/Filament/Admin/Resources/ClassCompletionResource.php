@@ -26,9 +26,9 @@ class ClassCompletionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Gowning class completion')->columns(2)->schema([
+            Section::make('Gowning Class Completion')->columns(2)->schema([
                 TextInput::make('employee_id')->label('Employee ID')->required(),
-                Select::make('personnel_id')->label('Linked person')
+                Select::make('personnel_id')->label('Linked Person')
                     ->relationship('personnel', 'employee_id')
                     ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} — {$r->full_name}")
                     ->searchable()->preload(),
@@ -48,7 +48,7 @@ class ClassCompletionResource extends Resource
                 TextColumn::make('class_name')->label('Class')->searchable(),
                 TextColumn::make('completion_date')->date()->sortable(),
                 TextColumn::make('source')->badge(),
-                TextColumn::make('importBatch.filename')->label('Import file')->placeholder('—')->toggleable(),
+                TextColumn::make('importBatch.filename')->label('Import File')->placeholder('—')->toggleable(),
             ])
             ->recordActions([
                 \Filament\Actions\EditAction::make(),

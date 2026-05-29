@@ -40,8 +40,8 @@ class TrainingClassResource extends Resource
             Section::make('Class Details')->columns(2)->schema([
                 TextInput::make('name')->required()->maxLength(255)->columnSpanFull(),
                 TextInput::make('code')->label('Class Code')->maxLength(50),
-                Toggle::make('is_gowning_prerequisite')->label('Counts as gowning prerequisite')->default(true),
-                Toggle::make('is_published')->label('Published (visible on public site)')->default(true),
+                Toggle::make('is_gowning_prerequisite')->label('Counts As Gowning Prerequisite')->default(true),
+                Toggle::make('is_published')->label('Published (Visible On Public Site)')->default(true),
                 Textarea::make('description')->rows(3)->columnSpanFull(),
             ]),
         ]);
@@ -68,12 +68,12 @@ class TrainingClassResource extends Resource
                         Select::make('pattern')->label('Repeat')->options([
                             'weekly' => 'Weekly', 'biweekly' => 'Bi-weekly (every 2 weeks)', 'monthly' => 'Monthly',
                         ])->default('weekly')->required(),
-                        Select::make('weekday')->label('Day of week')->options([
+                        Select::make('weekday')->label('Day Of Week')->options([
                             1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday',0=>'Sunday',
                         ])->default(2)->required()
                             ->helperText('For monthly, uses this weekday of the first matching week each month.'),
-                        DatePicker::make('start_date')->label('Start date')->required()->native(false),
-                        DatePicker::make('end_date')->label('End date')->required()->native(false),
+                        DatePicker::make('start_date')->label('Start Date')->required()->native(false),
+                        DatePicker::make('end_date')->label('End Date')->required()->native(false),
                         TimePicker::make('start_time')->seconds(false),
                         TimePicker::make('end_time')->seconds(false),
                         FormTextInput::make('location')->maxLength(255),

@@ -28,7 +28,7 @@ class RunSlotResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Weekly run slot')->columns(2)->schema([
+            Section::make('Weekly Run Slot')->columns(2)->schema([
                 TextInput::make('cleanroom')->required(),
                 Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),
                 DatePicker::make('slot_date')->label('Date')->required(),
