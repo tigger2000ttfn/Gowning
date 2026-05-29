@@ -24,7 +24,7 @@ class QualificationRunResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static string|\UnitEnum|null $navigationGroup = 'Personnel & Qualifications';
     protected static ?int $navigationSort = 3;
-    protected static ?string $modelLabel = 'qualification run';
+    protected static ?string $modelLabel = 'Qualification Run';
 
     public static function form(Schema $schema): Schema
     {

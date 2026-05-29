@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class CommentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'comments';
-    protected static ?string $title = 'Running comments';
+    protected static ?string $title = 'Running Comments';
     protected static string|\BackedEnum|null $icon = 'heroicon-o-chat-bubble-left-right';
 
     public function form(Schema $schema): Schema

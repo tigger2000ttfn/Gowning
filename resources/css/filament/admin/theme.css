@@ -34,9 +34,15 @@
 .fi-sidebar .fi-sidebar-group-label { color: var(--astellas-gold) !important; font-weight:600; letter-spacing:.03em; }
 
 /* Hover */
-.fi-sidebar .fi-sidebar-item-button:hover { background-color: var(--astellas-charcoal-3) !important; }
+.fi-sidebar .fi-sidebar-item-button:hover,
+.fi-sidebar a:hover {
+    background-color: var(--astellas-charcoal-3) !important;
+}
 .fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-label,
-.fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-icon { color:#FFFFFF !important; }
+.fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-icon,
+.fi-sidebar a:hover * {
+    color: #FFFFFF !important;
+}
 
 /* ACTIVE item: magenta fill, WHITE text (fixes unreadable active link) */
 .fi-sidebar .fi-sidebar-item-active > .fi-sidebar-item-button,
@@ -223,3 +229,31 @@ html:not(.dark) .fi-topbar {
 /* Primary page headings in magenta for definition */
 html:not(.dark) .fi-header-heading { color: #1A1A1F !important; }
 html:not(.dark) .fi-header-subheading { color: #44444C !important; }
+
+
+/* Hide breadcrumbs (felt disconnected) */
+.fi-breadcrumbs { display: none !important; }
+
+/* Page header: tighter, with room for an icon */
+.fi-header { padding-bottom: 4px; }
+.fi-header-heading { font-weight: 700 !important; }
+
+/* x-cloak for topbar dropdown */
+[x-cloak] { display: none !important; }
+
+/* Dashboard stat cards: solid colored backgrounds with icons */
+.fi-wi-stats-overview-stat {
+    border-radius: 14px !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
+}
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-value,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-label,
+.fi-wi-stats-overview-stat .fi-wi-stats-overview-stat-description { color: #fff !important; }
+/* color each card by its semantic color via the icon/description color class */
+.fi-wi-stats-overview-stat:has(.fi-color-success){ background:linear-gradient(135deg,#2E7D5B,#246148)!important; }
+.fi-wi-stats-overview-stat:has(.fi-color-warning){ background:linear-gradient(135deg,#C79A2E,#9E7818)!important; }
+.fi-wi-stats-overview-stat:has(.fi-color-info){ background:linear-gradient(135deg,#6B2C91,#4E1F6B)!important; }
+.fi-wi-stats-overview-stat:has(.fi-color-danger){ background:linear-gradient(135deg,#C8102E,#9A0C23)!important; }
+.fi-wi-stats-overview-stat:has(.fi-color-gray){ background:linear-gradient(135deg,#3A3A40,#26262C)!important; }
