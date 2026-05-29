@@ -8,6 +8,8 @@ Route::get('/', [PublicController::class, 'home'])->name('public.home');
 
 Route::get('/classes', [PublicController::class, 'classes'])->name('public.classes');
 Route::get('/runs', [PublicController::class, 'runs'])->name('public.runs');
+Route::get('/calendar', [PublicController::class, 'calendar'])->name('public.calendar');
+Route::get('/calendar/events', [PublicController::class, 'calendarEvents'])->name('public.calendar.events');
 
 Route::get('/classes/{session}/signup', [PublicController::class, 'showSignup'])->name('public.signup');
 Route::post('/classes/{session}/signup', [PublicController::class, 'storeSignup'])->name('public.signup.store');

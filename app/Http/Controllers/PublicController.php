@@ -40,6 +40,46 @@ class PublicController extends Controller
         ]);
     }
 
+    /** Calendar page (FullCalendar shell). */
+    public function calendar()
+    {
+        return view('public.calendar');
+    }
+
+    /** JSON feed of all classes + run slots as calendar events. */
+    public function calendarEvents()
+    {
+        $events = [];
+
+        $sessions = ClassSession::with('trainingClass')
+            ->whereHas('trainingClass', fn ($q) => $q->where('is_published', true))
+            ->get();
+        foreach ($sessions as $s) {
+            $events[] = [
+                'title' => $s->trainingClass->name,
+                'start' => $s->session_date->toDateString() . ($s->start_time ? 'T' . $s->start_time : ''),
+                'end' => $s->end_time ? $s->session_date->toDateString() . 'T' . $s->end_time : null,
+                'color' => '#A4123F',
+                'url' => $s->isOpen() ? route('public.signup', $s) : null,
+                'extendedProps' => ['type' => 'Gowning Class', 'location' => $s->location, 'seats' => $s->seatsLeft()],
+            ];
+        }
+
+        $slots = RunSlot::all();
+        foreach ($slots as $slot) {
+            $events[] = [
+                'title' => $slot->cleanroom . ' Run',
+                'start' => $slot->slot_date->toDateString() . ($slot->start_time ? 'T' . $slot->start_time : ''),
+                'end' => $slot->end_time ? $slot->slot_date->toDateString() . 'T' . $slot->end_time : null,
+                'color' => '#C79A2E',
+                'url' => ($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast()) ? route('public.run.signup', $slot) : null,
+                'extendedProps' => ['type' => 'Run Slot', 'location' => $slot->cleanroom, 'seats' => max(0, $slot->capacity - $slot->approvedCount())],
+            ];
+        }
+
+        return response()->json($events);
+    }
+
     /** Show the run-slot reservation request form. */
     public function showRunSignup(RunSlot $slot)
     {

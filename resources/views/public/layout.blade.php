@@ -153,6 +153,7 @@
             <a href="{{ route('public.home') }}">Home</a>
             <a href="{{ route('public.classes') }}">Classes</a>
             <a href="{{ route('public.runs') }}">Run Slots</a>
+            <a href="{{ route('public.calendar') }}">Calendar</a>
             <a href="{{ route('public.register') }}">Register</a>
             <a href="{{ url('/admin') }}" class="btn-admin">Admin</a>
             <a href="{{ url('/admin') }}" class="btn">Sign In</a>
