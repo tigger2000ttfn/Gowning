@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\QualificationResource\Pages;
+use App\Filament\Admin\Resources\QualificationResource\RelationManagers;
 use App\Models\Qualification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -40,6 +41,13 @@ class QualificationResource extends Resource
                 ),
             ])
             ->defaultSort('due_date');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\CommentsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

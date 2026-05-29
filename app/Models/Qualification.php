@@ -41,6 +41,11 @@ class Qualification extends Model
         return $this->hasMany(QualificationRun::class);
     }
 
+    public function comments(): HasMany
+    {
+        return $this->hasMany(QualificationComment::class)->latest();
+    }
+
     public function isPastDue(): bool
     {
         return $this->due_date !== null && $this->due_date->isPast();

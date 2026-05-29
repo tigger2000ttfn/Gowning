@@ -52,6 +52,10 @@ class RunSlotResource extends Resource
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s?->value === 'open' ? 'success' : 'gray'),
             ])
+            ->recordActions([
+                \Filament\Actions\EditAction::make(),
+                \Filament\Actions\DeleteAction::make(),
+            ])
             ->defaultSort('slot_date', 'desc');
     }
 
@@ -59,8 +63,6 @@ class RunSlotResource extends Resource
     {
         return [
             'index' => Pages\ListRunSlots::route('/'),
-            'create' => Pages\CreateRunSlot::route('/create'),
-            'edit' => Pages\EditRunSlot::route('/{record}/edit'),
         ];
     }
 }

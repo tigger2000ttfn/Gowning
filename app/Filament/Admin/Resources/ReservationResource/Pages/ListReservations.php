@@ -6,5 +6,17 @@ use Filament\Resources\Pages\ListRecords;
 class ListReservations extends ListRecords
 {
     protected static string $resource = ReservationResource::class;
-    protected function getHeaderActions(): array { return [CreateAction::make()]; }
+    protected function getHeaderActions(): array
+    {
+        return [
+            CreateAction::make()
+                ->label('New reservation')
+                ->modalHeading('Request a run slot')
+                ->mutateDataUsing(function (array $data): array {
+                    $data['status'] = 'requested';
+                    $data['requested_at'] = now();
+                    return $data;
+                }),
+        ];
+    }
 }

@@ -165,3 +165,44 @@ html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
 @media (prefers-reduced-motion: reduce) {
     .fi-simple-layout::before { animation: none; }
 }
+
+
+/* ===========================================================
+   LIGHT THEME — more color + definition (less white-on-white)
+   =========================================================== */
+/* Cards get a clear border + soft shadow so they read as panels */
+html:not(.dark) .fi-section,
+html:not(.dark) .fi-wi-stats-overview-stat {
+    border: 1px solid #B0B0B8 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,.10) !important;
+    border-radius: 12px !important;
+}
+/* Section headers get a tinted bar so they pop */
+html:not(.dark) .fi-section-header {
+    background: linear-gradient(90deg, rgba(164,18,63,0.06), transparent) !important;
+    border-bottom: 1px solid #D8D8DE !important;
+}
+/* Tables: header row tinted, row separators visible, zebra striping */
+html:not(.dark) .fi-ta-header-cell {
+    background-color: #EDEDF0 !important;
+    border-bottom: 2px solid var(--astellas-magenta) !important;
+}
+html:not(.dark) .fi-ta-row:nth-child(even) { background-color: #F4F4F6 !important; }
+html:not(.dark) .fi-ta-row:hover { background-color: #FBEAF0 !important; }
+html:not(.dark) .fi-ta-row { border-bottom: 1px solid #DDDDE3 !important; }
+
+/* Stat/overview widgets: colored accents */
+html:not(.dark) .fi-wi-stats-overview-stat { border-left: 4px solid var(--astellas-magenta) !important; }
+
+/* Badges keep strong color in light mode */
+html:not(.dark) .fi-badge { font-weight: 600 !important; }
+
+/* Topbar a touch of charcoal so the header has presence */
+html:not(.dark) .fi-topbar {
+    background-color: #FFFFFF !important;
+    border-bottom: 2px solid var(--astellas-magenta) !important;
+}
+
+/* Primary page headings in magenta for definition */
+html:not(.dark) .fi-header-heading { color: #1A1A1F !important; }
+html:not(.dark) .fi-header-subheading { color: #44444C !important; }

@@ -49,6 +49,9 @@ class ClassCompletionResource extends Resource
                 TextColumn::make('source')->badge(),
                 TextColumn::make('importBatch.filename')->label('Import file')->placeholder('—')->toggleable(),
             ])
+            ->recordActions([
+                \Filament\Actions\EditAction::make(),
+            ])
             ->defaultSort('completion_date', 'desc');
     }
 
@@ -56,7 +59,6 @@ class ClassCompletionResource extends Resource
     {
         return [
             'index' => Pages\ListClassCompletions::route('/'),
-            'create' => Pages\CreateClassCompletion::route('/create'),
         ];
     }
 }

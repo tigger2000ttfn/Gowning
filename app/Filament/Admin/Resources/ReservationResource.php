@@ -5,16 +5,19 @@ namespace App\Filament\Admin\Resources;
 use App\Enums\ReservationStatus;
 use App\Filament\Admin\Resources\ReservationResource\Pages;
 use App\Models\Reservation;
+use App\Models\RunSlot;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\Action;
+use Filament\Actions\Action;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Filament\Notifications\Notification;
 
 class ReservationResource extends Resource
 {
@@ -27,19 +30,27 @@ class ReservationResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Reservation')->columns(2)->schema([
+            Section::make('Reservation request')->columns(2)->schema([
                 Select::make('personnel_id')->label('Person')
                     ->relationship('personnel', 'employee_id')
                     ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} — {$r->full_name}")
                     ->searchable()->preload()->required(),
-                Select::make('run_slot_id')->label('Slot')
-                    ->relationship('runSlot', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->slot_date?->format('Y-m-d')} — {$r->cleanroom}")
-                    ->searchable()->preload()->required(),
-                Select::make('status')->options(
-                    collect(ReservationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
-                )->default('requested')->required(),
-                Textarea::make('notes')->columnSpanFull(),
+                Select::make('run_slot_id')->label('Open slot')
+                    ->options(function () {
+                        return RunSlot::query()
+                            ->where('status', 'open')
+                            ->whereDate('slot_date', '>=', now()->toDateString())
+                            ->orderBy('slot_date')
+                            ->get()
+                            ->filter(fn ($s) => $s->hasCapacity())
+                            ->mapWithKeys(fn ($s) => [
+                                $s->id => "{$s->slot_date->format('M j, Y')} — {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity} filled)",
+                            ]);
+                    })
+                    ->searchable()->required()
+                    ->helperText('Only open, future slots with remaining capacity are listed.'),
+                Textarea::make('notes')->columnSpanFull()
+                    ->placeholder('Optional note for QC Micro'),
             ]),
         ]);
     }
@@ -59,26 +70,49 @@ class ReservationResource extends Resource
                         ReservationStatus::Rejected, ReservationStatus::NoShow => 'danger',
                         default => 'warning',
                     }),
+                TextColumn::make('decidedBy.name')->label('Decided by')->placeholder('—')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(
                     collect(ReservationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
                 ),
             ])
-            ->actions([
+            ->recordActions([
                 Action::make('approve')->icon('heroicon-m-check')->color('success')
                     ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Requested)
-                    ->action(fn (Reservation $r) => $r->update([
-                        'status' => ReservationStatus::Approved,
-                        'decided_by' => Auth::id(), 'decided_at' => now(),
-                    ])),
+                    ->requiresConfirmation()
+                    ->action(function (Reservation $r) {
+                        // capacity guard at approval time
+                        if (! $r->runSlot?->hasCapacity()) {
+                            Notification::make()->danger()->title('Slot is full')
+                                ->body('This slot has no remaining capacity.')->send();
+                            return;
+                        }
+                        $r->update([
+                            'status' => ReservationStatus::Approved,
+                            'decided_by' => Auth::id(), 'decided_at' => now(),
+                        ]);
+                        Notification::make()->success()->title('Reservation approved')->send();
+                    }),
                 Action::make('reject')->icon('heroicon-m-x-mark')->color('danger')
                     ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Requested)
                     ->requiresConfirmation()
-                    ->action(fn (Reservation $r) => $r->update([
-                        'status' => ReservationStatus::Rejected,
-                        'decided_by' => Auth::id(), 'decided_at' => now(),
-                    ])),
+                    ->action(function (Reservation $r) {
+                        $r->update([
+                            'status' => ReservationStatus::Rejected,
+                            'decided_by' => Auth::id(), 'decided_at' => now(),
+                        ]);
+                        Notification::make()->title('Reservation rejected')->send();
+                    }),
+                Action::make('complete')->icon('heroicon-m-check-badge')->color('success')
+                    ->label('Mark completed')
+                    ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Approved)
+                    ->action(fn (Reservation $r) => $r->update(['status' => ReservationStatus::Completed])),
+                Action::make('no_show')->icon('heroicon-m-user-minus')->color('danger')
+                    ->label('No-show')
+                    ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Approved)
+                    ->action(fn (Reservation $r) => $r->update(['status' => ReservationStatus::NoShow])),
+                EditAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
     }
@@ -87,7 +121,6 @@ class ReservationResource extends Resource
     {
         return [
             'index' => Pages\ListReservations::route('/'),
-            'create' => Pages\CreateReservation::route('/create'),
         ];
     }
 }
