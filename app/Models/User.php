@@ -17,6 +17,7 @@ class User extends Authenticatable implements FilamentUser
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'is_active',
+        'approval_status', 'approved_at', 'approved_by',
     ];
 
     protected $hidden = [
@@ -30,13 +31,18 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => Role::class,
             'is_active' => 'boolean',
+            'approved_at' => 'datetime',
         ];
     }
 
-    /** Filament panel access: active users only. */
+    /**
+     * Filament panel access: active AND approved.
+     * Part 11: self-registered accounts stay out of the admin panel until an
+     * administrator approves them. Set APP self-approval only if QA permits.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        return (bool) $this->is_active;
+        return $this->is_active && $this->approval_status === 'approved';
     }
 
     public function hasRole(Role $role): bool
