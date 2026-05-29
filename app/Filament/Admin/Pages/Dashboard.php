@@ -33,7 +33,6 @@ class Dashboard extends BaseDashboard
     {
         $u = \Illuminate\Support\Facades\Auth::user();
         if (! $u) return [];
-        if (! $role) return [];
         $links = [];
         if ($u->hasCapability(\App\Enums\Capability::ManageScheduling)) {
             $links[] = ['Run Slots', \App\Filament\Admin\Resources\RunSlotResource::getUrl(), 'heroicon-o-calendar-days', '#A4123F'];
