@@ -2,18 +2,16 @@
     $onLogin = request()->routeIs('filament.admin.auth.*')
         || str_contains(request()->path(), 'admin/login')
         || str_ends_with(request()->path(), 'admin/login');
-    // Pre-generate varied stars (same approach as the landing page)
     $stars = [];
-    for ($i=0;$i<60;$i++){
-        $cls = [''=>6,'g'=>2,'p'=>2][array_rand(['','','','','','','g','g','p','p'])] ?? '';
+    for ($i=0;$i<90;$i++){
         $r = rand(0,9);
-        $cls = $r < 6 ? '' : ($r < 8 ? 'g' : 'p');
+        $cls = $r < 5 ? '' : ($r < 7 ? 'g' : ($r < 9 ? 'p' : 'r'));
+        // size buckets: lots of small, several medium, a few BIG
+        $b = rand(0,9);
+        $sz = $b < 5 ? rand(2,4) : ($b < 8 ? rand(5,8) : rand(9,14));
         $stars[] = [
-            't'=>rand(2,95), 'l'=>rand(1,98),
-            'sz'=>rand(2,6),                      // 2-6px like landing (small but visible)
-            'cls'=>$cls,
-            'd'=>rand(0,300)/100,                 // 0-3s delay
-            'u'=>rand(220,460)/100,               // 2.2-4.6s duration, all different
+            't'=>rand(1,97), 'l'=>rand(1,98), 'sz'=>$sz, 'cls'=>$cls,
+            'd'=>rand(0,400)/100, 'u'=>rand(180,520)/100,
         ];
     }
 @endphp
@@ -32,6 +30,7 @@
         box-shadow:0 0 6px 1px rgba(255,255,255,.6);opacity:.5;animation:gqsTw 3s ease-in-out infinite;}
     .gqs-stars i.g{background:#E8C24A;box-shadow:0 0 8px 2px rgba(232,194,74,.75);}
     .gqs-stars i.p{background:#B98CE0;box-shadow:0 0 8px 2px rgba(185,140,224,.75);}
+    .gqs-stars i.r{background:#E8657F;box-shadow:0 0 9px 2px rgba(200,16,46,.7);}
     @keyframes gqsTw{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.4)}}
 
     /* the login card sits above the cosmos */
@@ -46,8 +45,9 @@
     .gqs-login-bar .rhs a{color:#E8C24A;font-weight:600;font-size:14px;text-decoration:none;}
     .gqs-login-bar .rhs a:hover{color:#F0CB55;}
 
-    /* breathing room under logo */
-    .fi-simple-layout .fi-logo{margin-bottom:28px !important;}
+    /* hide in-card brand logo (it's in our top bar instead) */
+    .fi-simple-main .fi-logo, .fi-simple-layout > a.fi-logo{display:none !important;}
+    .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
     .fi-simple-main .fi-btn-color-primary,
