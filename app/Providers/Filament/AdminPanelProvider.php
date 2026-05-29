@@ -27,6 +27,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->default()                 // required: marks this as the default panel
             ->login()                   // required: registers the login route/page
+            ->passwordReset()           // adds the "forgot password?" link + flow
             ->path('admin')
             ->brandName('MATC Gowning Qualification')
             ->brandLogo(fn () => view('filament.brand'))
