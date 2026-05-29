@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\ClassEnrollment;
 use App\Models\ClassSession;
+use App\Models\RunSlot;
+use App\Models\Reservation;
+use App\Models\Personnel;
 use App\Models\TrainingClass;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -24,7 +27,47 @@ class PublicController extends Controller
             ->get()
             ->filter(fn ($s) => $s->isOpen());
 
-        return view('public.home', ['sessions' => $sessions]);
+        $runSlots = RunSlot::query()
+            ->where('status', 'open')
+            ->whereDate('slot_date', '>=', now()->toDateString())
+            ->orderBy('slot_date')
+            ->get()
+            ->filter(fn ($s) => $s->hasCapacity());
+
+        return view('public.home', [
+            'sessions' => $sessions,
+            'runSlots' => $runSlots,
+        ]);
+    }
+
+    /** Show the run-slot reservation request form. */
+    public function showRunSignup(RunSlot $slot)
+    {
+        abort_unless($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
+        return view('public.run-signup', ['slot' => $slot]);
+    }
+
+    /** Record a run-slot reservation request from the public page. */
+    public function storeRunSignup(Request $request, RunSlot $slot)
+    {
+        abort_unless($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
+
+        $data = $request->validate([
+            'employee_id' => ['required', 'string', 'max:50'],
+        ]);
+
+        $person = Personnel::where('employee_id', $data['employee_id'])->first();
+        if (! $person) {
+            return back()->withErrors(['employee_id' => 'No personnel record matches that Employee ID. Contact QC Micro.'])->withInput();
+        }
+
+        Reservation::firstOrCreate(
+            ['run_slot_id' => $slot->id, 'personnel_id' => $person->id],
+            ['status' => 'requested', 'requested_at' => now()],
+        );
+
+        return redirect()->route('public.home')
+            ->with('flash', "Run-slot request submitted for {$slot->slot_date->format('M j, Y')} in {$slot->cleanroom}. QC Micro will approve it.");
     }
 
     /** Show the sign-up form for a specific session. */
