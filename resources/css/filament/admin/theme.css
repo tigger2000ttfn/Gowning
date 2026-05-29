@@ -53,3 +53,25 @@
 .fi-simple-main {
     border-top: 4px solid var(--astellas-magenta);
 }
+
+/* Animated login background: slow-drifting Astellas gradient (no JS) */
+.fi-simple-layout {
+    background: linear-gradient(-45deg, #1F1F23, #4A0E2A, #2B1145, #6B2C91, #1F1F23);
+    background-size: 400% 400%;
+    animation: astellas-drift 22s ease infinite;
+}
+@keyframes astellas-drift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+/* Login card lifts off the animated backdrop */
+.fi-simple-main {
+    border-top: 4px solid #A4123F;
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    backdrop-filter: blur(2px);
+}
+/* Respect reduced-motion accessibility preference */
+@media (prefers-reduced-motion: reduce) {
+    .fi-simple-layout { animation: none; }
+}

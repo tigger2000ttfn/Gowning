@@ -22,6 +22,9 @@ class PersonnelResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Personnel & Qualifications';
     protected static ?int $navigationSort = 1;
     protected static ?string $recordTitleAttribute = 'employee_id';
+    protected static ?string $modelLabel = 'Person';
+    protected static ?string $pluralModelLabel = 'Personnel';
+    protected static ?string $navigationLabel = 'Personnel';
 
     public static function form(Schema $schema): Schema
     {
