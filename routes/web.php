@@ -15,7 +15,6 @@ Route::post('/classes/{session}/signup', [PublicController::class, 'storeSignup'
 Route::get('/runs/{slot}/signup', [PublicController::class, 'showRunSignup'])->name('public.run.signup');
 Route::post('/runs/{slot}/signup', [PublicController::class, 'storeRunSignup'])->name('public.run.signup.store');
 
-Route::view('/icon-options', 'public.icon-preview')->name('public.icons');
 
 Route::get('/register', [PublicController::class, 'showRegister'])->name('public.register');
 Route::post('/register', [PublicController::class, 'storeRegister'])->name('public.register.store');

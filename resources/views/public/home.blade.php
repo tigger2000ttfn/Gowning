@@ -3,7 +3,7 @@
 @section('content')
     <section class="hero">
         <div class="hero-inner hero-split">
-            <img src="{{ asset('images/gowned-figure.svg') }}" alt="" class="hero-figure">
+            <img src="{{ asset('images/hero-icon.svg') }}" alt="" class="hero-figure">
             <div class="hero-text">
                 <h1>Cleanroom Gowning <span class="accent">Qualification</span></h1>
                 <p>Schedule gowning classes, sign up for qualification run slots, and track your status across the full qualification cycle.</p>
