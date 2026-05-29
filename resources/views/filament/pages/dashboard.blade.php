@@ -36,6 +36,8 @@
     .dash-stat{border-radius:14px;padding:16px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.14);position:relative;overflow:hidden;}
     .dash-stat .n{font-size:30px;font-weight:800;line-height:1;}
     .dash-stat .l{font-size:13px;font-weight:600;margin-top:6px;opacity:.95;}
+    .dash-stat .ic{position:absolute;right:12px;top:12px;width:30px;height:30px;opacity:.30;}
+    .dash-stat .ic svg{width:30px;height:30px;color:#fff;}
     .s-green{background:linear-gradient(135deg,#2E7D5B,#21563F);}
     .s-gold{background:linear-gradient(135deg,#C79A2E,#9E7818);}
     .s-purple{background:linear-gradient(135deg,#6B2C91,#4A1E66);}
@@ -97,12 +99,12 @@
 
 <div class="dash-pad">
 <div class="dash-grid">
-    <div class="dash-stat s-green"><div class="n">{{ $qualified }}</div><div class="l">Qualified</div></div>
-    <div class="dash-stat s-gold"><div class="n">{{ $inProgress }}</div><div class="l">In Progress</div></div>
-    <div class="dash-stat s-purple"><div class="n">{{ $dueSoon }}</div><div class="l">Due Within 30 Days</div></div>
-    <div class="dash-stat s-red"><div class="n">{{ $lapsed }}</div><div class="l">Lapsed</div></div>
-    <div class="dash-stat s-charcoal"><div class="n">{{ $pendingUsers }}</div><div class="l">Pending Approvals</div></div>
-    <div class="dash-stat s-charcoal"><div class="n">{{ $pendingRes }}</div><div class="l">Run Requests</div></div>
+    <div class="dash-stat s-green"><span class="ic"><x-filament::icon icon="heroicon-o-shield-check"/></span><div class="n">{{ $qualified }}</div><div class="l">Qualified</div></div>
+    <div class="dash-stat s-gold"><span class="ic"><x-filament::icon icon="heroicon-o-arrow-path"/></span><div class="n">{{ $inProgress }}</div><div class="l">In Progress</div></div>
+    <div class="dash-stat s-purple"><span class="ic"><x-filament::icon icon="heroicon-o-clock"/></span><div class="n">{{ $dueSoon }}</div><div class="l">Due Within 30 Days</div></div>
+    <div class="dash-stat s-red"><span class="ic"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span><div class="n">{{ $lapsed }}</div><div class="l">Lapsed</div></div>
+    <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-user-plus"/></span><div class="n">{{ $pendingUsers }}</div><div class="l">Pending Approvals</div></div>
+    <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-ticket"/></span><div class="n">{{ $pendingRes }}</div><div class="l">Run Requests</div></div>
 </div>
 
 

@@ -41,7 +41,7 @@ class ReservationResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Reservation Request')->columns(2)->schema([
+            Section::make('Reservation Request')->icon('heroicon-o-ticket')->columns(2)->schema([
                 Select::make('personnel_id')->label('Person')
                     ->relationship('personnel', 'employee_id')
                     ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} — {$r->full_name}")

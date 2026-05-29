@@ -43,11 +43,18 @@ class QualificationResource extends Resource
                 TextColumn::make('type')->badge()->formatStateUsing(fn ($s) => $s?->label()),
                 TextColumn::make('status')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
+                    ->icon(fn ($s) => match($s?->value) {
+                        'qualified' => 'heroicon-m-shield-check',
+                        'in_progress' => 'heroicon-m-arrow-path',
+                        'pending' => 'heroicon-m-clock',
+                        'lapsed' => 'heroicon-m-exclamation-triangle',
+                        default => null,
+                    })
                     ->color(fn ($s) => $s?->color() ?? 'gray'),
-                TextColumn::make('runs_completed')->label('Passes')
+                TextColumn::make('runs_completed')->label('Passes')->icon('heroicon-m-check-circle')
                     ->formatStateUsing(fn ($state, $record) => "{$state} / {$record->runs_required}"),
                 TextColumn::make('qualified_date')->date()->placeholder('—')->sortable(),
-                TextColumn::make('due_date')->label('Due')->date()->placeholder('—')->sortable()
+                TextColumn::make('due_date')->icon('heroicon-m-calendar-days')->label('Due')->date()->placeholder('—')->sortable()
                     ->color(fn ($record) => $record->isPastDue() ? 'danger' : null),
             ])
             ->filters([

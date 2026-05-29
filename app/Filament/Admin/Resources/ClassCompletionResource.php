@@ -36,7 +36,7 @@ class ClassCompletionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Gowning Class Completion')->columns(2)->schema([
+            Section::make('Gowning Class Completion')->icon('heroicon-o-check-badge')->columns(2)->schema([
                 TextInput::make('employee_id')->label('Employee ID')->required(),
                 Select::make('personnel_id')->label('Linked Person')
                     ->relationship('personnel', 'employee_id')
@@ -53,10 +53,10 @@ class ClassCompletionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('employee_id')->label('Employee ID')->searchable()->sortable(),
+                TextColumn::make('employee_id')->icon('heroicon-m-identification')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('personnel.full_name')->label('Name')->placeholder('Unmatched')->searchable(['personnel.first_name', 'personnel.last_name']),
-                TextColumn::make('class_name')->label('Class')->searchable(),
-                TextColumn::make('completion_date')->date()->sortable(),
+                TextColumn::make('class_name')->icon('heroicon-m-academic-cap')->label('Class')->searchable(),
+                TextColumn::make('completion_date')->icon('heroicon-m-check-badge')->date()->sortable(),
                 TextColumn::make('source')->badge(),
                 TextColumn::make('importBatch.filename')->label('Import File')->placeholder('—')->toggleable(),
             ])

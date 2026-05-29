@@ -56,7 +56,7 @@ class Settings extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Section::make('Qualification Rules')->columns(2)->schema([
+                Section::make('Qualification Rules')->icon('heroicon-o-adjustments-horizontal')->columns(2)->schema([
                     TextInput::make('initial_runs_required')->label('Runs Required For Initial Qualification')
                         ->numeric()->minValue(1)->required(),
                     TextInput::make('annual_runs_required')->label('Runs Required For Annual Requalification')
@@ -67,7 +67,7 @@ class Settings extends Page implements HasForms
                         ->numeric()->minValue(0)->required()
                         ->helperText('Days past due before a qualification is treated as lapsed.'),
                 ]),
-                Section::make('Class & Access')->columns(2)->schema([
+                Section::make('Class & Access')->icon('heroicon-o-lock-closed')->columns(2)->schema([
                     Toggle::make('class_required')->label('Gowning Class Required Before Initial Runs'),
                     Toggle::make('self_register_open')->label('Public Self-registration Open'),
                     Toggle::make('auto_approve')->label('Auto-approve New Registrations')

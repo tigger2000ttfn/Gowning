@@ -52,7 +52,7 @@ class TrainingClassResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Class Details')->columns(2)->schema([
+            Section::make('Class Details')->icon('heroicon-o-academic-cap')->columns(2)->schema([
                 TextInput::make('name')->required()->maxLength(255)->columnSpanFull(),
                 TextInput::make('code')->label('Class Code')->maxLength(50),
                 Toggle::make('is_gowning_prerequisite')->label('Counts As Gowning Prerequisite')->default(true),
@@ -66,7 +66,7 @@ class TrainingClassResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable()->sortable()->weight('bold'),
+                TextColumn::make('name')->icon('heroicon-m-user')->searchable()->sortable()->weight('bold'),
                 TextColumn::make('code')->label('Code')->badge()->color('gray'),
                 TextColumn::make('sessions_count')->counts('sessions')->label('Sessions')->badge(),
                 IconColumn::make('is_gowning_prerequisite')->label('Prereq')->boolean(),

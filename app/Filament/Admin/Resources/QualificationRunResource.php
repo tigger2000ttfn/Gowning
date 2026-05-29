@@ -44,7 +44,7 @@ class QualificationRunResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Run')
+            Section::make('Run')->icon('heroicon-o-beaker')
                 ->columns(2)
                 ->schema([
                     Select::make('personnel_id')->label('Person')
@@ -58,7 +58,7 @@ class QualificationRunResource extends Resource
                     ])->required(),
                     Textarea::make('notes')->columnSpanFull(),
                 ]),
-            Section::make('Electronic Signature (21 CFR Part 11)')
+            Section::make('Electronic Signature (21 CFR Part 11)')->icon('heroicon-o-finger-print')
                 ->description('Recording a run is an electronic signature: it attributes this result to you.')
                 ->schema([
                     Textarea::make('signature_meaning')
@@ -75,7 +75,7 @@ class QualificationRunResource extends Resource
             ->columns([
                 TextColumn::make('personnel.employee_id')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
-                TextColumn::make('run_date')->date()->sortable(),
+                TextColumn::make('run_date')->icon('heroicon-m-beaker')->date()->sortable(),
                 TextColumn::make('result')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s === RunResult::Pass ? 'success' : 'danger'),

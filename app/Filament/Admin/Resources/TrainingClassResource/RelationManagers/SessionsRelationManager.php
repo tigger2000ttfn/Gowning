@@ -32,7 +32,7 @@ class SessionsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Session')->columns(2)->schema([
+            Section::make('Session')->icon('heroicon-o-calendar')->columns(2)->schema([
                 DatePicker::make('session_date')->required()->native(false),
                 Select::make('status')->options([
                     'open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled',

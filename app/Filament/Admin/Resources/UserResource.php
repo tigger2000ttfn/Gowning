@@ -54,7 +54,7 @@ class UserResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Account')->columns(2)->schema([
+            Section::make('Account')->icon('heroicon-o-user-circle')->columns(2)->schema([
                 TextInput::make('name')->required(),
                 TextInput::make('email')->email()->required(),
                 Select::make('role')->options(
@@ -83,8 +83,8 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable()->sortable()->weight('bold'),
-                TextColumn::make('email')->searchable()->copyable(),
+                TextColumn::make('name')->icon('heroicon-m-user')->searchable()->sortable()->weight('bold'),
+                TextColumn::make('email')->icon('heroicon-m-envelope')->searchable()->copyable(),
                 TextColumn::make('role')->badge()->formatStateUsing(fn ($r) => $r?->label()),
                 TextColumn::make('approval_status')->badge()->label('Approval')
                     ->color(fn ($s) => match($s) {

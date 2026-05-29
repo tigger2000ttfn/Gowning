@@ -44,7 +44,7 @@ class PersonnelResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Identity')
+            Section::make('Identity')->icon('heroicon-o-identification')
                 ->columns(2)
                 ->schema([
                     TextInput::make('employee_id')->label('Employee ID')->required()->unique(ignoreRecord: true),
@@ -53,7 +53,7 @@ class PersonnelResource extends Resource
                     TextInput::make('last_name')->required(),
                     TextInput::make('email')->email(),
                 ]),
-            Section::make('Assignment')
+            Section::make('Assignment')->icon('heroicon-o-link')
                 ->columns(2)
                 ->schema([
                     TextInput::make('department'),
@@ -66,9 +66,9 @@ class PersonnelResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('employee_id')->label('Employee ID')->searchable()->sortable(),
+                TextColumn::make('employee_id')->icon('heroicon-m-identification')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('full_name')->label('Name')->searchable(['first_name', 'last_name']),
-                TextColumn::make('department')->searchable()->toggleable(),
+                TextColumn::make('department')->icon('heroicon-m-building-office-2')->searchable()->toggleable(),
                 TextColumn::make('qualification.status')
                     ->label('Qualification')
                     ->badge()

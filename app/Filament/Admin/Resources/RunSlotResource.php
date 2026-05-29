@@ -38,7 +38,7 @@ class RunSlotResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Weekly Run Slot')->columns(2)->schema([
+            Section::make('Weekly Run Slot')->icon('heroicon-o-calendar-days')->columns(2)->schema([
                 TextInput::make('cleanroom')->required(),
                 Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),
                 DatePicker::make('slot_date')->label('Date')->required(),
@@ -54,8 +54,8 @@ class RunSlotResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('slot_date')->date()->sortable(),
-                TextColumn::make('cleanroom')->searchable(),
+                TextColumn::make('slot_date')->icon('heroicon-m-calendar')->date()->sortable(),
+                TextColumn::make('cleanroom')->icon('heroicon-m-home-modern')->searchable(),
                 TextColumn::make('start_time')->time('H:i')->placeholder('—'),
                 TextColumn::make('capacity'),
                 TextColumn::make('reservations_count')->counts('reservations')->label('Requests'),

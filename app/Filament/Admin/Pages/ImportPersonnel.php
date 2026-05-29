@@ -50,7 +50,7 @@ class ImportPersonnel extends Page implements HasForms
     public function form(Schema $schema): Schema
     {
         return $schema->statePath('data')->components([
-            Section::make('1. Upload CSV')->schema([
+            Section::make('1. Upload CSV')->icon('heroicon-o-arrow-up-tray')->schema([
                 FileUpload::make('csv')
                     ->label('Personnel CSV')
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
