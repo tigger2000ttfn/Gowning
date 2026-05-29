@@ -440,3 +440,10 @@ html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 /* the panel container itself */
 .fi-no-database-notifications .fi-modal-window,
 .fi-no .fi-modal-window { border-radius: 0 !important; }
+
+/* Login card readable on the cosmic charcoal backdrop */
+.fi-simple-main { background: rgba(28,28,33,.78) !important; backdrop-filter: blur(8px); border-radius: 16px; }
+.fi-simple-main .fi-simple-header h1,
+.fi-simple-main label,
+.fi-simple-main .fi-fo-field-wrp-label { color: #ECECF0 !important; }
+.fi-simple-main .fi-input { background:#15151A !important; border-color:#3A3A40 !important; color:#fff !important; }
