@@ -112,6 +112,25 @@ class ReservationResource extends Resource
                     ->label('No-show')
                     ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Approved)
                     ->action(fn (Reservation $r) => $r->update(['status' => ReservationStatus::NoShow])),
+                Action::make('reschedule')->icon('heroicon-m-arrows-right-left')->color('warning')
+                    ->label('Reschedule')
+                    ->visible(fn (Reservation $r) => in_array($r->status, [ReservationStatus::Requested, ReservationStatus::Approved]))
+                    ->modalHeading('Move to another run slot')
+                    ->schema([
+                        Select::make('run_slot_id')->label('New open slot')
+                            ->options(function () {
+                                return RunSlot::query()
+                                    ->where('status', 'open')
+                                    ->whereDate('slot_date', '>=', now()->toDateString())
+                                    ->orderBy('slot_date')->get()
+                                    ->filter(fn ($s) => $s->hasCapacity())
+                                    ->mapWithKeys(fn ($s) => [$s->id => "{$s->slot_date->format('M j, Y')} — {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity})"]);
+                            })->searchable()->required(),
+                    ])
+                    ->action(function (Reservation $r, array $data) {
+                        $r->update(['run_slot_id' => $data['run_slot_id']]);
+                        Notification::make()->success()->title('Reservation rescheduled')->send();
+                    }),
                 EditAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
