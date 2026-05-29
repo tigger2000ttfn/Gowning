@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 use App\Enums\Role;
 use App\Models\Concerns\Auditable;
 use Filament\Models\Contracts\FilamentUser;
@@ -53,5 +55,10 @@ class User extends Authenticatable implements FilamentUser
     public function isStaff(): bool
     {
         return $this->role?->isStaff() ?? false;
+    }
+
+    public function personnel(): HasOne
+    {
+        return $this->hasOne(Personnel::class);
     }
 }
