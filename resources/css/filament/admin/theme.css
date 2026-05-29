@@ -96,10 +96,10 @@
 }
 /* Links on login (forgot password, etc.) in Astellas magenta */
 .fi-simple-layout a {
-    color: #C8326B;
+    color: #A4123F;
     font-weight: 600;
 }
-.fi-simple-layout a:hover { color: #A4123F; }
+.fi-simple-layout a:hover { color: #C8102E; }
 /* Respect reduced-motion accessibility preference */
 @media (prefers-reduced-motion: reduce) {
     .fi-simple-layout::before, .fi-simple-layout::after { animation: none; }
@@ -127,4 +127,16 @@
 :where(.fi:not(.dark)) .fi-ta-header-cell-label {
     color: #2B2B30;
     font-weight: 600;
+}
+
+
+/* Login submit button: solid Astellas magenta, not pink */
+.fi-simple-layout .fi-btn-color-primary {
+    background-color: #A4123F !important;
+    border-color: #A4123F !important;
+    color: #fff !important;
+}
+.fi-simple-layout .fi-btn-color-primary:hover {
+    background-color: #850F33 !important;
+    border-color: #850F33 !important;
 }
