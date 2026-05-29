@@ -3,7 +3,7 @@
 @section('content')
     <section class="pagehead">
         <div class="pagehead-inner">
-            <h1><span class="dot dot-magenta"></span> Gowning Classes</h1>
+            <h1><img src="{{ asset('images/title-graduation-cap.svg') }}" alt="" class="title-icon"> Gowning Classes</h1>
             <p>Completing a gowning class is the prerequisite for initial qualification runs.</p>
         </div>
     </section>

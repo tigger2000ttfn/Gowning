@@ -105,7 +105,8 @@
         /* Dedicated page header */
         .pagehead{background:var(--charcoal);color:#fff;padding:36px 32px;}
         .pagehead-inner{max-width:1080px;margin:0 auto;}
-        .pagehead h1{display:flex;align-items:center;gap:12px;font-size:28px;}
+        .pagehead h1{display:flex;align-items:center;gap:14px;font-size:28px;}
+        .title-icon{width:40px;height:40px;flex:0 0 40px;filter:drop-shadow(0 0 6px rgba(232,194,74,.35));}
         .pagehead p{color:#C8C8D0;margin-top:6px;font-size:15px;}
 
         

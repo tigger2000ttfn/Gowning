@@ -3,7 +3,7 @@
 @section('content')
     <section class="pagehead">
         <div class="pagehead-inner">
-            <h1><span class="dot dot-gold"></span> Qualification Run Slots</h1>
+            <h1><img src="{{ asset('images/title-flask.svg') }}" alt="" class="title-icon"> Qualification Run Slots</h1>
             <p>Request a cleanroom run slot published by QC Micro. Requests are approved before the run.</p>
         </div>
     </section>
