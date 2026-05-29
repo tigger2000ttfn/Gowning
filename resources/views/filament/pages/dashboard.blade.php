@@ -32,6 +32,21 @@
     .s-purple{background:linear-gradient(135deg,#6B2C91,#4A1E66);}
     .s-red{background:linear-gradient(135deg,#C8102E,#920B22);}
     .s-charcoal{background:linear-gradient(135deg,#3A3A40,#26262C);}
+        .dash-week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:22px;}
+    @media(max-width:760px){.dash-week{grid-template-columns:repeat(3,1fr);}}
+    .wk-day{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:12px;padding:10px;min-height:96px;}
+    .wk-day.today{border-color:#A4123F;box-shadow:0 0 0 1px #A4123F;}
+    .wk-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+    .wk-name{font-size:12px;font-weight:700;color:var(--gqs-text-dim,#6A6A72);text-transform:uppercase;}
+    .wk-num{font-size:18px;font-weight:800;color:var(--gqs-text,#1A1A1F);}
+    .today .wk-num{color:#A4123F;}
+    .wk-ev{font-size:11px;font-weight:600;padding:3px 6px;border-radius:6px;margin-bottom:4px;line-height:1.2;}
+    .wk-ev.class{background:#F4E0E8;color:#A4123F;}
+    .wk-ev.run{background:#FBF3DC;color:#8A6D0B;}
+    html.dark .wk-ev.class{background:rgba(164,18,63,.25);color:#F0A8C0;}
+    html.dark .wk-ev.run{background:rgba(199,154,46,.22);color:#E8C24A;}
+    .wk-empty{font-size:11px;color:var(--gqs-text-dim,#aaa);}
+    .dash-section-title{font-size:15px;font-weight:700;margin:4px 0 12px;color:var(--gqs-text,#1A1A1F);display:flex;align-items:center;gap:8px;}
     .dash-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;}
     .dash-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-radius:14px;overflow:hidden;}
     .dash-card h3{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;padding:14px 18px;margin:0;color:#fff;}
@@ -66,6 +81,21 @@
     <div class="dash-stat s-red"><div class="n">{{ $lapsed }}</div><div class="l">Lapsed</div></div>
     <div class="dash-stat s-charcoal"><div class="n">{{ $pendingUsers }}</div><div class="l">Pending Approvals</div></div>
     <div class="dash-stat s-charcoal"><div class="n">{{ $pendingRes }}</div><div class="l">Run Requests</div></div>
+</div>
+
+
+<div class="dash-section-title">This Week</div>
+<div class="dash-week">
+    @foreach($weekDays as $day)
+        <div class="wk-day {{ $day['today'] ? 'today' : '' }}">
+            <div class="wk-head"><span class="wk-name">{{ $day['name'] }}</span><span class="wk-num">{{ $day['num'] }}</span></div>
+            @forelse($day['events'] as $ev)
+                <div class="wk-ev {{ $ev['type'] }}">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($ev['label']), 22) }}</div>
+            @empty
+                <div class="wk-empty">—</div>
+            @endforelse
+        </div>
+    @endforeach
 </div>
 
 <div class="dash-cols">

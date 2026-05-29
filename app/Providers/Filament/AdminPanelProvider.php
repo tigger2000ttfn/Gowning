@@ -28,6 +28,8 @@ class AdminPanelProvider extends PanelProvider
             ->login()                   // required: registers the login route/page
             ->passwordReset()           // adds the "forgot password?" link + flow
             ->spa()                     // SPA navigation: persistent sidebar/header, no full reloads
+            ->databaseNotifications()   // bell icon + notifications in header
+            ->databaseNotificationsPolling('60s')
             ->path('admin')
             ->brandName('MATC Gowning Qualification')
             ->brandLogo(fn () => view('filament.brand'))

@@ -29,6 +29,26 @@ class Dashboard extends BaseDashboard
 
     public function getColumns(): int|array { return 2; }
 
+    protected function buildWeek(): array
+    {
+        $days = [];
+        for ($i = 0; $i < 7; $i++) {
+            $day = now()->addDays($i)->startOfDay();
+            $classes = ClassSession::with('trainingClass')
+                ->whereDate('session_date', $day->toDateString())->where('status', 'open')->get()
+                ->map(fn ($s) => ['type' => 'class', 'label' => $s->trainingClass?->name, 'time' => $s->start_time]);
+            $runs = \App\Models\RunSlot::whereDate('slot_date', $day->toDateString())->where('status', 'open')->get()
+                ->map(fn ($s) => ['type' => 'run', 'label' => $s->cleanroom . ' Run', 'time' => $s->start_time]);
+            $days[] = [
+                'name' => $day->format('D'),
+                'num' => $day->format('j'),
+                'today' => $i === 0,
+                'events' => $classes->concat($runs)->all(),
+            ];
+        }
+        return $days;
+    }
+
     public function getViewData(): array
     {
         return [
@@ -45,6 +65,7 @@ class Dashboard extends BaseDashboard
                                 ->whereDate('session_date', '>=', now())->where('status','open')
                                 ->orderBy('session_date')->limit(5)->get(),
             'pendingApprovals' => User::where('approval_status', 'pending')->latest()->limit(5)->get(),
+            'weekDays' => $this->buildWeek(),
         ];
     }
 }

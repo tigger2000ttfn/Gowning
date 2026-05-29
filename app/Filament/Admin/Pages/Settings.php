@@ -15,6 +15,7 @@ use Filament\Notifications\Notification;
 
 class Settings extends Page implements HasForms
 {
+    public function getHeading(): string { return ''; }
     public static function canAccessNavigation(): bool
     {
         $r = \Illuminate\Support\Facades\Auth::user()?->role;

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportPersonnel extends Page implements HasForms
 {
+    public function getHeading(): string { return ''; }
     public static function canAccessNavigation(): bool
     {
         $r = \Illuminate\Support\Facades\Auth::user()?->role;

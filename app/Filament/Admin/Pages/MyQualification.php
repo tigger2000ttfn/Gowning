@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class MyQualification extends Page
 {
+    public function getHeading(): string { return ''; }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-identification';
     protected static ?string $navigationLabel = 'My Qualification';
     protected static ?int $navigationSort = -10; // top of sidebar

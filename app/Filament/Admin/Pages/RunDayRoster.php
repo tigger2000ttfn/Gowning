@@ -7,6 +7,7 @@ use Filament\Pages\Page;
 
 class RunDayRoster extends Page
 {
+    public function getHeading(): string { return ''; }
     public static function canAccessNavigation(): bool
     {
         $r = \Illuminate\Support\Facades\Auth::user()?->role;

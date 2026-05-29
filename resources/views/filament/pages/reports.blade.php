@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    @include('filament.page-hero', ['title' => 'Reports', 'subtitle' => 'Overdue, upcoming, pass/fail, completions, and LIMS export.', 'icon' => 'heroicon-o-chart-bar'])
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:8px;">
         @php $pf = $this->passFail; @endphp
         <div style="background:linear-gradient(135deg,#C8102E,#9A0C23);color:#fff;border-radius:14px;padding:18px;">

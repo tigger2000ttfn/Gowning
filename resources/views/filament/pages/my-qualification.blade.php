@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    @include('filament.page-hero', ['title' => 'My Qualification', 'subtitle' => 'Your status, run history, gowning class, and upcoming sessions.', 'icon' => 'heroicon-o-identification'])
     @if (! $person)
         <div style="padding:24px;border:1px dashed var(--gray-300);border-radius:12px;">
             <p>No personnel record is linked to your account yet. An administrator can link
