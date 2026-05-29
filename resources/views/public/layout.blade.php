@@ -111,7 +111,7 @@
 
         
         .hero-split{display:flex;align-items:center;gap:38px;text-align:left;max-width:900px;}
-        .hero-figure{width:200px;height:200px;flex:0 0 200px;animation:float 6s ease-in-out infinite,heroglow 4s ease-in-out infinite;}
+        .hero-figure{width:240px;height:240px;flex:0 0 240px;animation:float 6s ease-in-out infinite,heroglow 4s ease-in-out infinite;}
         @keyframes heroglow{0%,100%{filter:drop-shadow(0 0 8px rgba(232,194,74,.4))}50%{filter:drop-shadow(0 0 22px rgba(232,194,74,.7))}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         @media(prefers-reduced-motion:reduce){.hero-figure{animation:none}}
