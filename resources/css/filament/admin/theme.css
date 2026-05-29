@@ -406,3 +406,14 @@ html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 .fi-main:has(.dash-hero) section.fi-page-content { padding: 0 !important; }
 .dash-pad { padding: 0 1.5rem; }
 @media (max-width: 640px){ .dash-pad { padding: 0 1rem; } }
+
+/* Notification slide-out panel (right): square corners, not rounded */
+.fi-no-notification,
+.fi-no-database-notifications,
+.fi-no-database-notifications-modal,
+[class*="fi-no"] .fi-modal-window {
+    border-radius: 0 !important;
+}
+/* the panel container itself */
+.fi-no-database-notifications .fi-modal-window,
+.fi-no .fi-modal-window { border-radius: 0 !important; }
