@@ -12,7 +12,8 @@
             --charcoal:#15151A; --charcoal2:#222228;
         }
         *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;}
+        body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.5;min-height:100vh;display:flex;flex-direction:column;}
+        main{flex:1 0 auto;}
         a{color:var(--magenta);text-decoration:none;}
         .nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:var(--charcoal);position:sticky;top:0;z-index:10;}
         .brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:700;letter-spacing:.02em;}
@@ -127,7 +128,7 @@
         .submit{width:100%;margin-top:22px;background:var(--magenta);color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
         .submit:hover{background:#850F33;}
         .err{color:var(--red);font-size:13px;margin-top:5px;}
-        .foot{background:var(--charcoal);color:#9A9AA2;text-align:center;padding:28px;font-size:13px;margin-top:60px;}
+        .foot{background:var(--charcoal);color:#9A9AA2;text-align:center;padding:28px;font-size:13px;flex-shrink:0;}
         .backlink{display:inline-block;margin-bottom:18px;font-size:14px;}
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -160,7 +161,9 @@
         <div class="flash">{{ session('flash') }}</div>
     @endif
 
-    @yield('content')
+    <main>
+        @yield('content')
+    </main>
 
     <div class="foot">
         &copy; {{ date('Y') }} Astellas &middot; MATC Gowning Qualification
