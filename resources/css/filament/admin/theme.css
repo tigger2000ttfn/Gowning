@@ -46,17 +46,10 @@
     color: var(--astellas-magenta);
 }
 
-/* Login page: branded gradient backdrop */
-.fi-simple-layout {
-    background: linear-gradient(135deg, var(--astellas-charcoal) 0%, #1F1F23 100%);
-}
-.fi-simple-main {
-    border-top: 4px solid var(--astellas-magenta);
-}
 
 /* Animated login background: slow-drifting Astellas gradient (no JS) */
 .fi-simple-layout {
-    background: linear-gradient(-45deg, #1F1F23, #4A0E2A, #2B1145, #6B2C91, #1F1F23);
+    background: linear-gradient(-45deg, #0A0A0C, #161618, #1F1F23, #101012, #0A0A0C);
     background-size: 400% 400%;
     animation: astellas-drift 22s ease infinite;
 }
@@ -74,4 +67,28 @@
 /* Respect reduced-motion accessibility preference */
 @media (prefers-reduced-motion: reduce) {
     .fi-simple-layout { animation: none; }
+}
+
+/* Light theme: ensure dark, readable text on white backgrounds */
+:where(.fi:not(.dark)) {
+    --gray-400: #4B4B52;
+    --gray-500: #3A3A40;
+    --gray-600: #2B2B30;
+    --gray-700: #1F1F23;
+}
+:where(.fi:not(.dark)) .fi-ta-text,
+:where(.fi:not(.dark)) .fi-ta-record-content,
+:where(.fi:not(.dark)) .fi-in-text {
+    color: #1F1F23;
+}
+/* Muted/secondary text that was too light grey */
+:where(.fi:not(.dark)) .fi-color-gray.fi-text-color-500,
+:where(.fi:not(.dark)) .text-gray-400,
+:where(.fi:not(.dark)) .text-gray-500 {
+    color: #3A3A40 !important;
+}
+/* Table headers readable in light mode */
+:where(.fi:not(.dark)) .fi-ta-header-cell-label {
+    color: #2B2B30;
+    font-weight: 600;
 }
