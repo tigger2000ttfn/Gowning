@@ -395,10 +395,14 @@ html.dark {
 .gqs-manage-link-ico { width: 18px; height: 18px; color: var(--astellas-magenta); flex: 0 0 18px; }
 html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 
-/* Full-bleed hero support: remove page content top padding + side padding so heroes touch edges */
-.fi-page .fi-page-content,
-.fi-main > .fi-page > section {
-    padding-top: 0 !important;
+/* Full-bleed hero support: explicit, known page padding so hero breakout math is exact */
+.fi-page > section,
+.fi-page .fi-page-content {
+    padding: 1.5rem !important;
+    padding-top: 1.5rem !important;
 }
-/* The negative margins on heroes pull to the gutters; ensure no clipping */
+@media (max-width: 640px) {
+    .fi-page > section,
+    .fi-page .fi-page-content { padding: 1rem !important; }
+}
 .fi-main { overflow-x: hidden; }
