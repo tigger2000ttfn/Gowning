@@ -1,101 +1,81 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
 
-
-/* MATC Gowning Qualification - Astellas-inspired theme
-   Reds, purples, magentas, charcoal base, gold accent. */
+/* ============================================================
+   MATC Gowning Qualification — Astellas theme
+   Explicit palette for LIGHT and DARK. Brand: deep magenta/red,
+   gold accent, charcoal structure.
+   ============================================================ */
 
 :root {
     --astellas-magenta: #A4123F;
+    --astellas-magenta-dark: #850F33;
     --astellas-red: #C8102E;
+    --astellas-gold: #C79A33;        /* readable gold on dark */
+    --astellas-gold-deep: #B8860B;
     --astellas-purple: #6B2C91;
-    --astellas-gold: #B8860B;
-    --astellas-charcoal: #2B2B30;
-    --astellas-charcoal-light: #3A3A40;
+    --astellas-charcoal: #1C1C21;
+    --astellas-charcoal-2: #26262C;
+    --astellas-charcoal-3: #33333A;
 }
 
-/* Sidebar: charcoal with a magenta accent edge */
-.fi-sidebar {
-    background-color: var(--astellas-charcoal);
-    border-right: 3px solid var(--astellas-magenta);
+/* ===========================================================
+   SIDEBAR (same charcoal in both themes for brand consistency)
+   =========================================================== */
+.fi-sidebar,
+.fi-sidebar-header {
+    background-color: var(--astellas-charcoal) !important;
 }
-.fi-sidebar .fi-sidebar-item-label,
-.fi-sidebar .fi-sidebar-group-label {
-    color: #E5E5EA;
-}
-.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-button {
-    background-color: var(--astellas-magenta);
+.fi-sidebar { border-right: 3px solid var(--astellas-magenta); }
+.fi-sidebar-header { border-bottom: 1px solid var(--astellas-charcoal-3); }
+
+/* Inactive items: light text on charcoal */
+.fi-sidebar .fi-sidebar-item-label { color: #D8D8DE !important; }
+.fi-sidebar .fi-sidebar-item-icon { color: #9A9AA4 !important; }
+.fi-sidebar .fi-sidebar-group-label { color: var(--astellas-gold) !important; font-weight:600; letter-spacing:.03em; }
+
+/* Hover */
+.fi-sidebar .fi-sidebar-item-button:hover { background-color: var(--astellas-charcoal-3) !important; }
+.fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-icon { color:#FFFFFF !important; }
+
+/* ACTIVE item: magenta fill, WHITE text (fixes unreadable active link) */
+.fi-sidebar .fi-sidebar-item-active > .fi-sidebar-item-button,
+.fi-sidebar .fi-sidebar-item.fi-active > .fi-sidebar-item-button {
+    background-color: var(--astellas-magenta) !important;
 }
 .fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-label,
-.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-icon {
-    color: #FFFFFF;
+.fi-sidebar .fi-sidebar-item-active .fi-sidebar-item-icon,
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-label,
+.fi-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: #FFFFFF !important;
 }
 
-/* Brand wordmark area */
-.fi-sidebar-header {
-    background-color: var(--astellas-charcoal);
-    border-bottom: 1px solid var(--astellas-charcoal-light);
+/* Brand wordmark text beside the logo — readable, not light grey */
+.fi-sidebar-header .fi-logo,
+.fi-sidebar-header span {
+    color: #FFFFFF !important;
 }
 
-/* Topbar tint */
-.fi-topbar {
-    border-bottom: 1px solid var(--astellas-magenta);
-}
+/* ===========================================================
+   TOPBAR
+   =========================================================== */
+.fi-topbar { border-bottom: 1px solid var(--astellas-magenta); }
 
-/* Gold accent on primary section headings */
-.fi-section-header-heading {
-    color: var(--astellas-magenta);
+/* ===========================================================
+   LIGHT THEME
+   =========================================================== */
+html:not(.dark) .fi-main,
+html:not(.dark) .fi-body {
+    background-color: #C1C1C1 !important;   /* requested darker light-mode page bg */
 }
-
-
-/* Animated login background: slow-drifting Astellas gradient (no JS) */
-.fi-simple-layout {
-    background-color: #0A0A0C;
-    position: relative;
-    overflow: hidden;
+/* Content cards/panels stay white to sit on the grey page */
+html:not(.dark) .fi-section,
+html:not(.dark) .fi-ta,
+html:not(.dark) .fi-wi,
+html:not(.dark) .fi-fo-component-ctn {
+    background-color: #FFFFFF !important;
 }
-/* Astellas "flying star" field: drifting deep-red light points over charcoal */
-.fi-simple-layout::before {
-    content: '';
-    position: absolute;
-    inset: -20%;
-    background:
-        radial-gradient(2px 2px at 15% 80%, rgba(200,16,46,0.9) 0%, transparent 60%),
-        radial-gradient(3px 3px at 35% 65%, rgba(164,18,63,0.8) 0%, transparent 60%),
-        radial-gradient(2px 2px at 55% 90%, rgba(200,16,46,0.7) 0%, transparent 60%),
-        radial-gradient(2px 2px at 70% 75%, rgba(220,40,70,0.85) 0%, transparent 60%),
-        radial-gradient(3px 3px at 85% 60%, rgba(164,18,63,0.75) 0%, transparent 60%),
-        radial-gradient(2px 2px at 25% 50%, rgba(200,16,46,0.6) 0%, transparent 60%),
-        radial-gradient(2px 2px at 60% 40%, rgba(220,40,70,0.7) 0%, transparent 60%),
-        radial-gradient(40% 50% at 30% 30%, rgba(164,18,63,0.28) 0%, transparent 65%),
-        radial-gradient(45% 55% at 75% 70%, rgba(120,10,40,0.30) 0%, transparent 68%);
-    animation: astellas-rise 30s linear infinite;
-    z-index: 0;
-}
-.fi-simple-layout > * { position: relative; z-index: 1; }
-
-@keyframes astellas-rise {
-    0%   { transform: translateY(0) translateX(0); }
-    50%  { transform: translateY(-6%) translateX(2%); }
-    100% { transform: translateY(0) translateX(0); }
-}
-/* Login card lifts off the animated backdrop */
-.fi-simple-main {
-    border-top: 4px solid #A4123F;
-    box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(164,18,63,0.25);
-    backdrop-filter: blur(3px);
-}
-/* Links on login (forgot password, etc.) in Astellas magenta */
-.fi-simple-layout a {
-    color: #A4123F;
-    font-weight: 600;
-}
-.fi-simple-layout a:hover { color: #C8102E; }
-/* Respect reduced-motion accessibility preference */
-@media (prefers-reduced-motion: reduce) {
-    .fi-simple-layout::before { animation: none; }
-}
-
-/* ---- Light theme readable text (high specificity, actually applies) ---- */
+/* Readable dark text everywhere in light mode */
 html:not(.dark) .fi-ta-text,
 html:not(.dark) .fi-ta-cell,
 html:not(.dark) .fi-in-text,
@@ -103,15 +83,85 @@ html:not(.dark) .fi-ta-record-content,
 html:not(.dark) .fi-text-tinted-600,
 html:not(.dark) .fi-text-tinted-500,
 html:not(.dark) .fi-text-tinted-400 {
-    color: #1F1F23 !important;
+    color: #1A1A1F !important;
 }
 html:not(.dark) .fi-ta-header-cell-label {
-    color: #2B2B30 !important;
+    color: #26262C !important;
     font-weight: 600 !important;
 }
-/* Muted/description text darkened from light grey */
 html:not(.dark) .fi-fo-field-wrp-helper-text,
 html:not(.dark) .fi-section-header-description,
 html:not(.dark) .fi-color-gray {
-    color: #3A3A40 !important;
+    color: #44444C !important;
+}
+html:not(.dark) .fi-section-header-heading { color: var(--astellas-magenta) !important; }
+
+/* ===========================================================
+   DARK THEME
+   =========================================================== */
+html.dark .fi-main,
+html.dark .fi-body { background-color: #15151A !important; }
+html.dark .fi-section,
+html.dark .fi-ta,
+html.dark .fi-wi { background-color: #1F1F25 !important; }
+html.dark .fi-section-header-heading { color: var(--astellas-gold) !important; }
+
+/* ===========================================================
+   PRIMARY BUTTONS — solid magenta in BOTH themes (no pink)
+   =========================================================== */
+.fi-btn-color-primary {
+    background-color: var(--astellas-magenta) !important;
+    border-color: var(--astellas-magenta) !important;
+    color: #FFFFFF !important;
+}
+.fi-btn-color-primary:hover {
+    background-color: var(--astellas-magenta-dark) !important;
+    border-color: var(--astellas-magenta-dark) !important;
+}
+
+/* ===========================================================
+   LOGIN PAGE — charcoal backdrop + flying-star drift
+   =========================================================== */
+.fi-simple-layout {
+    background-color: #0A0A0C;
+    position: relative;
+    overflow: hidden;
+}
+.fi-simple-layout::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(2px 2px at 15% 80%, rgba(199,154,51,0.95) 0%, transparent 60%),
+        radial-gradient(3px 3px at 35% 65%, rgba(200,16,46,0.85) 0%, transparent 60%),
+        radial-gradient(2px 2px at 55% 90%, rgba(199,154,51,0.8) 0%, transparent 60%),
+        radial-gradient(2px 2px at 70% 75%, rgba(220,40,70,0.85) 0%, transparent 60%),
+        radial-gradient(3px 3px at 85% 60%, rgba(199,154,51,0.8) 0%, transparent 60%),
+        radial-gradient(2px 2px at 25% 50%, rgba(200,16,46,0.7) 0%, transparent 60%),
+        radial-gradient(2px 2px at 60% 40%, rgba(220,40,70,0.75) 0%, transparent 60%),
+        radial-gradient(40% 50% at 30% 30%, rgba(164,18,63,0.28) 0%, transparent 65%),
+        radial-gradient(45% 55% at 75% 70%, rgba(120,10,40,0.30) 0%, transparent 68%);
+    animation: astellas-rise 30s linear infinite;
+    z-index: 0;
+}
+.fi-simple-layout > * { position: relative; z-index: 1; }
+@keyframes astellas-rise {
+    0%   { transform: translateY(0) translateX(0); }
+    50%  { transform: translateY(-6%) translateX(2%); }
+    100% { transform: translateY(0) translateX(0); }
+}
+.fi-simple-main {
+    border-top: 4px solid var(--astellas-magenta);
+    box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(164,18,63,0.25);
+    backdrop-filter: blur(3px);
+}
+/* Login links in GOLD for readability on the dark backdrop */
+.fi-simple-layout a {
+    color: var(--astellas-gold) !important;
+    font-weight: 600;
+}
+.fi-simple-layout a:hover { color: #E0B84A !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .fi-simple-layout::before { animation: none; }
 }

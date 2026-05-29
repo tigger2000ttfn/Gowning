@@ -31,5 +31,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->command?->info("Seeded System Admin: {$email}");
+
+        $this->call(SampleDataSeeder::class);
     }
 }
