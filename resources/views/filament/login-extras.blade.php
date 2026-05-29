@@ -11,14 +11,14 @@
         $glow = round($sz * 1.6, 1);
         $spread = round($sz * 0.4, 1);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
-        $stars[] = ['t'=>rand(1,98),'l'=>rand(1,98),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(400,900)/100,'glow'=>$glow,'spread'=>$spread,'color'=>$color];
+        $stars[] = ['t'=>rand(1,98),'l'=>rand(1,98),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>(rand(0,3)===0 ? rand(180,320) : rand(400,900))/100,'glow'=>$glow,'spread'=>$spread,'color'=>$color];
     }
     // extra small stars clustered top-left
     for ($i=0;$i<22;$i++){
         $cls = rand(0,9) < 7 ? '' : (rand(0,1) ? 'g' : 'p');
         $sz = rand(2,4);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
-        $stars[] = ['t'=>rand(1,42),'l'=>rand(1,40),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>rand(400,900)/100,'glow'=>round($sz*1.6,1),'spread'=>round($sz*0.4,1),'color'=>$color];
+        $stars[] = ['t'=>rand(1,42),'l'=>rand(1,40),'sz'=>$sz,'cls'=>$cls,'d'=>rand(0,400)/100,'u'=>(rand(0,3)===0 ? rand(180,320) : rand(400,900))/100,'glow'=>round($sz*1.6,1),'spread'=>round($sz*0.4,1),'color'=>$color];
     }
 @endphp
 @if ($onLogin)
@@ -50,14 +50,14 @@
         padding:16px 32px;background:#1C1C21;border-bottom:2px solid #A4123F;}
     .gqs-login-bar .lhs{display:flex;align-items:center;gap:12px;}
     .gqs-login-bar img{height:34px;}
-    .gqs-login-bar .brand{color:#fff;font-weight:700;letter-spacing:.03em;font-size:15px;}
+    .gqs-login-bar .brand{color:#444;font-weight:700;letter-spacing:.03em;font-size:15px;padding-top:17px;}
     .gqs-login-bar .rhs a{color:#E8C24A;font-weight:600;font-size:14px;text-decoration:none;}
     .gqs-login-bar .rhs a:hover{color:#F0CB55;}
 
     /* in-card brand: keep the logo visible, give it room */
     .fi-simple-main .gqs-brand-text{display:none !important;}
-    /* bigger logo inside the sign-in card */
-    .fi-simple-main img{height:56px !important;}
+    /* bigger logo inside the sign-in card, with breathing room on top */
+    .fi-simple-main img{height:56px !important;margin-top:14px;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
