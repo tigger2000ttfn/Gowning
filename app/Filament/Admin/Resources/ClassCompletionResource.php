@@ -5,10 +5,10 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\ClassCompletionResource\Pages;
 use App\Models\ClassCompletion;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -22,9 +22,9 @@ class ClassCompletionResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $modelLabel = 'class completion';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Section::make('Gowning class completion')->columns(2)->schema([
                 TextInput::make('employee_id')->label('Employee ID')->required(),
                 Select::make('personnel_id')->label('Linked person')

@@ -5,10 +5,10 @@ namespace App\Filament\Admin\Resources;
 use App\Enums\ReservationStatus;
 use App\Filament\Admin\Resources\ReservationResource\Pages;
 use App\Models\Reservation;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
@@ -24,9 +24,9 @@ class ReservationResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
     protected static ?int $navigationSort = 2;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Section::make('Reservation')->columns(2)->schema([
                 Select::make('personnel_id')->label('Person')
                     ->relationship('personnel', 'employee_id')

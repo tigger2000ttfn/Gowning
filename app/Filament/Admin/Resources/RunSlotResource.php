@@ -5,12 +5,12 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\RunSlotResource\Pages;
 use App\Models\RunSlot;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -24,9 +24,9 @@ class RunSlotResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $modelLabel = 'run slot';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Section::make('Weekly run slot')->columns(2)->schema([
                 TextInput::make('cleanroom')->required(),
                 Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),

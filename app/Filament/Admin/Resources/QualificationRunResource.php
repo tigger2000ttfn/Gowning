@@ -8,10 +8,10 @@ use App\Models\Personnel;
 use App\Models\QualificationRun;
 use App\Services\QualificationEngine;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Section;
+use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -26,9 +26,9 @@ class QualificationRunResource extends Resource
     protected static ?int $navigationSort = 3;
     protected static ?string $modelLabel = 'qualification run';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
+        return $schema->components([
             Section::make('Run')
                 ->columns(2)
                 ->schema([
