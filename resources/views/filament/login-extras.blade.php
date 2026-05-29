@@ -1,4 +1,11 @@
-@if (request()->routeIs('filament.admin.auth.*'))
+@php
+    $onLogin = request()->routeIs('filament.admin.auth.*')
+        || request()->routeIs('filament.admin.auth.login')
+        || str_contains(request()->path(), 'admin/login')
+        || str_ends_with(request()->path(), 'admin/login')
+        || request()->path() === 'gowning/admin/login';
+@endphp
+@if ($onLogin)
 @php
     $stars = [];
     for ($i=0;$i<70;$i++){               // many more stars
@@ -25,6 +32,18 @@
     .gqs-login-bar .rhs a{color:#E8C24A;font-weight:600;font-size:14px;text-decoration:none;display:flex;align-items:center;gap:7px;}
     .gqs-login-bar .rhs a:hover{color:#F0CB55;}
 
+    /* Login submit button: solid magenta, no pink, in this scope */
+    .fi-simple-main .fi-btn-color-primary,
+    .fi-simple-main button[type=submit],
+    .fi-simple-main .fi-btn.fi-btn-size-lg {
+        background-color:#A4123F !important;border-color:#A4123F !important;color:#fff !important;
+        --tw-ring-color:#A4123F !important;box-shadow:none !important;
+    }
+    .fi-simple-main .fi-btn-color-primary:hover,
+    .fi-simple-main button[type=submit]:hover { background-color:#850F33 !important;border-color:#850F33 !important; }
+    /* spacing under the sign-in button */
+    .fi-simple-main form { padding-bottom:18px; }
+    .fi-simple-main .fi-form > div:last-child { margin-top:6px; }
     /* push the login card down + breathing room under logo */
     .fi-simple-layout{padding-top:96px;}
     .fi-simple-main .fi-logo,
