@@ -7,7 +7,7 @@
 <style>
     .dash-hero{position:relative;overflow:hidden;background:#15151A;color:#fff;
         padding:60px 48px;display:flex;align-items:center;gap:40px;
-        margin:-32px -32px 26px;border-radius:0;}
+        margin-left:calc(-1 * var(--page-pad, 1.5rem));margin-right:calc(-1 * var(--page-pad, 1.5rem));margin-top:calc(-1 * var(--page-pad, 1.5rem));margin-bottom:26px;border-radius:0;}
     @media (min-width:1024px){.dash-hero{padding:72px 56px;}}
     .dash-hero::before{content:'';position:absolute;inset:-20%;z-index:0;background:
         radial-gradient(45% 50% at 24% 38%,rgba(126,60,168,.32),transparent 70%),
