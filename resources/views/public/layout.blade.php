@@ -93,13 +93,13 @@
 
         
         /* Tabs */
-        .tabbar{display:flex;gap:6px;border-bottom:2px solid #D8D8DE;margin-bottom:20px;}
+        .tabbar{display:flex;gap:6px;border-bottom:2px solid #D8D8DE;margin-bottom:10px;}
         .tabbar button{display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;padding:12px 18px;font-size:15px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
         .tabbar button:hover{color:var(--ink);}
         .tabbar button.active{color:var(--magenta);border-bottom-color:var(--magenta);}
         .tabbar .count{background:#EDEDF0;color:var(--ink);font-size:12px;font-weight:700;border-radius:20px;padding:1px 8px;}
         .tabbar button.active .count{background:var(--magenta);color:#fff;}
-        .tab-sub{color:var(--muted);font-size:14px;margin-bottom:18px;}
+        .tab-sub{color:var(--muted);font-size:14px;margin:0 0 12px;}
 
         
         /* Dedicated page header */

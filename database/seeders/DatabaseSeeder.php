@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make($password),
                 'role' => Role::SystemAdmin,
                 'is_active' => true,
+                'approval_status' => 'approved',
+                'approved_at' => now(),
                 'email_verified_at' => now(),
             ],
         );
