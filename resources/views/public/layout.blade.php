@@ -20,6 +20,7 @@
         .brand small{display:block;font-weight:500;font-size:11px;color:#B8B8C0;}
         .nav-links a{color:#E5E5EA;margin-left:22px;font-size:14px;font-weight:500;}
         .nav-links a.btn{background:var(--magenta);padding:9px 16px;border-radius:8px;color:#fff;}
+        .nav-links a.btn-admin{border:1.5px solid var(--gold);color:var(--gold);padding:8px 14px;border-radius:8px;}
         .flash{max-width:1080px;margin:18px auto 0;padding:14px 18px;background:#E8F5EC;border:1px solid #2E7D5B;border-radius:10px;color:#1B5E3A;}
         .hero{position:relative;overflow:hidden;background:var(--charcoal);color:#fff;padding:48px 32px 56px;text-align:center;}
         .hero::before{content:'';position:absolute;inset:-20%;background:
@@ -90,6 +91,13 @@
         .tabbar button.active .count{background:var(--magenta);color:#fff;}
         .tab-sub{color:var(--muted);font-size:14px;margin-bottom:18px;}
 
+        
+        /* Dedicated page header */
+        .pagehead{background:var(--charcoal);color:#fff;padding:36px 32px;}
+        .pagehead-inner{max-width:1080px;margin:0 auto;}
+        .pagehead h1{display:flex;align-items:center;gap:12px;font-size:28px;}
+        .pagehead p{color:#C8C8D0;margin-top:6px;font-size:15px;}
+
         .formwrap{max-width:460px;margin:56px auto;padding:0 24px;}
         .formcard{background:#fff;border:1px solid var(--line);border-top:4px solid var(--magenta);border-radius:14px;padding:32px;}
         .formcard h2{margin-bottom:6px;}
@@ -113,9 +121,11 @@
             <span class="star">&#10039;</span>
         </a>
         <div class="nav-links">
-            <a href="{{ route('public.home') }}#classes">Classes</a>
+            <a href="{{ route('public.classes') }}">Classes</a>
+            <a href="{{ route('public.runs') }}">Run Slots</a>
             <a href="{{ route('public.register') }}">Register</a>
-            <a href="{{ url('/admin') }}" class="btn">Sign in</a>
+            <a href="{{ url('/admin') }}" class="btn-admin">Admin</a>
+            <a href="{{ url('/admin') }}" class="btn">Sign In</a>
         </div>
     </nav>
 

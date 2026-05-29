@@ -70,6 +70,34 @@ class PublicController extends Controller
             ->with('flash', "Run-slot request submitted for {$slot->slot_date->format('M j, Y')} in {$slot->cleanroom}. QC Micro will approve it.");
     }
 
+    /** Dedicated page: all open gowning class sessions. */
+    public function classes()
+    {
+        $sessions = ClassSession::query()
+            ->with('trainingClass')
+            ->whereHas('trainingClass', fn ($q) => $q->where('is_published', true))
+            ->where('status', 'open')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')
+            ->get()
+            ->filter(fn ($s) => $s->isOpen());
+
+        return view('public.classes', ['sessions' => $sessions]);
+    }
+
+    /** Dedicated page: all open qualification run slots. */
+    public function runs()
+    {
+        $runSlots = RunSlot::query()
+            ->where('status', 'open')
+            ->whereDate('slot_date', '>=', now()->toDateString())
+            ->orderBy('slot_date')
+            ->get()
+            ->filter(fn ($s) => $s->hasCapacity());
+
+        return view('public.runs', ['runSlots' => $runSlots]);
+    }
+
     /** Show the sign-up form for a specific session. */
     public function showSignup(ClassSession $session)
     {
