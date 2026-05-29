@@ -22,6 +22,7 @@ use Filament\Notifications\Notification;
 
 class UserResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool { return false; }
     protected static ?string $model = User::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';

@@ -17,6 +17,7 @@ use Filament\Tables\Table;
 
 class RunSlotResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool { return false; }
     protected static ?string $model = RunSlot::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';

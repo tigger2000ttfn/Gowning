@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ImportPersonnel extends Page implements HasForms
 {
+    public static function shouldRegisterNavigation(): bool { return false; }
     use InteractsWithForms;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-up-tray';

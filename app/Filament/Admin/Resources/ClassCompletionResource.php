@@ -15,6 +15,7 @@ use Filament\Tables\Table;
 
 class ClassCompletionResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool { return false; }
     protected static ?string $model = ClassCompletion::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';

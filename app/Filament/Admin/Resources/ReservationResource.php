@@ -21,6 +21,7 @@ use Filament\Notifications\Notification;
 
 class ReservationResource extends Resource
 {
+    public static function shouldRegisterNavigation(): bool { return false; }
     protected static ?string $model = Reservation::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-ticket';
