@@ -57,11 +57,9 @@
     /* in-card brand: keep the logo visible, give it room */
     .fi-simple-main .gqs-brand-text{display:none !important;}
     /* bigger logo inside the sign-in card */
-    .fi-simple-main img{height:56px !important;box-sizing:content-box;}
-    /* breathing room above the logo: pad the card's logo/header area, not the img */
-    .fi-simple-main .fi-simple-header,
-    .fi-simple-main > a:first-child,
-    .fi-simple-main .fi-logo{padding-top:20px !important;display:block;}
+    .fi-simple-main img{height:56px !important;}
+    /* breathing room ABOVE the card content (pushes logo down from card top) */
+    .fi-simple-main{padding-top:40px !important;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */
