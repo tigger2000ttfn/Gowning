@@ -7,7 +7,7 @@
         $r = rand(0,9);
         $cls = $r < 5 ? '' : ($r < 7 ? 'g' : ($r < 9 ? 'p' : 'r'));
         $b = rand(0,9);
-        $sz = $b < 4 ? rand(3,5) : ($b < 7 ? rand(6,9) : ($b < 9 ? rand(10,13) : rand(14,18)));
+        $sz = $b < 5 ? rand(2,4) : ($b < 8 ? rand(5,8) : rand(9,12));
         $glow = round($sz * 1.6, 1);
         $spread = round($sz * 0.4, 1);
         $color = ['' => '255,255,255', 'g' => '232,194,74', 'p' => '185,140,224', 'r' => '232,101,127'][$cls];
@@ -33,7 +33,10 @@
     @keyframes gqsTw{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.4)}}
 
     /* the login card sits above the cosmos */
-    .fi-simple-main{position:relative;z-index:5;}
+    /* card + its container must out-stack the fixed star layer */
+    .fi-simple-layout .fi-simple-main-ctn,
+    .fi-simple-main-ctn{position:relative;z-index:10 !important;}
+    .fi-simple-main{position:relative;z-index:10;}
 
     /* header bar */
     .gqs-login-bar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;justify-content:space-between;
