@@ -54,7 +54,8 @@
         .cta a{padding:13px 26px;border-radius:10px;font-weight:600;font-size:15px;}
         .cta .primary{background:var(--magenta);color:#fff;}
         .cta .ghost{border:1.5px solid var(--gold);color:var(--gold);}
-        .section{max-width:1080px;margin:56px auto;padding:0 32px;}
+        .section{max-width:1080px;margin:28px auto;padding:0 32px;}
+        #browse{margin-top:18px;}
         .section h2{font-size:26px;margin-bottom:8px;}
         .section .sub{color:var(--muted);margin-bottom:28px;}
         
@@ -99,7 +100,7 @@
         .tabbar button.active{color:var(--magenta);border-bottom-color:var(--magenta);}
         .tabbar .count{background:#EDEDF0;color:var(--ink);font-size:12px;font-weight:700;border-radius:20px;padding:1px 8px;}
         .tabbar button.active .count{background:var(--magenta);color:#fff;}
-        .tab-sub{color:var(--muted);font-size:14px;margin:0 0 12px;}
+        .tab-sub{color:var(--muted);font-size:13px;margin:0 0 8px;}
 
         
         /* Dedicated page header */
