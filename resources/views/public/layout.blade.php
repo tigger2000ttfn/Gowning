@@ -98,6 +98,15 @@
         .pagehead h1{display:flex;align-items:center;gap:12px;font-size:28px;}
         .pagehead p{color:#C8C8D0;margin-top:6px;font-size:15px;}
 
+        
+        .hero-split{display:flex;align-items:center;gap:38px;text-align:left;max-width:900px;}
+        .hero-figure{width:150px;height:150px;flex:0 0 150px;filter:drop-shadow(0 8px 24px rgba(200,16,46,.35));animation:float 6s ease-in-out infinite;}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @media(prefers-reduced-motion:reduce){.hero-figure{animation:none}}
+        .hero-text{flex:1;}
+        .hero-text .cta{justify-content:flex-start;}
+        @media(max-width:680px){.hero-split{flex-direction:column;text-align:center;}.hero-text .cta{justify-content:center;}}
+
         .formwrap{max-width:460px;margin:56px auto;padding:0 24px;}
         .formcard{background:#fff;border:1px solid var(--line);border-top:4px solid var(--magenta);border-radius:14px;padding:32px;}
         .formcard h2{margin-bottom:6px;}

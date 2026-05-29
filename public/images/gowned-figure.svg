@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <defs>
+    <linearGradient id="suit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F4F4F8"/>
+      <stop offset="100%" stop-color="#D6D8E0"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E0B83C"/>
+      <stop offset="60%" stop-color="#C8102E"/>
+      <stop offset="100%" stop-color="#A4123F"/>
+    </linearGradient>
+  </defs>
+  <!-- accent ring -->
+  <circle cx="60" cy="60" r="54" stroke="url(#ring)" stroke-width="4" opacity="0.9"/>
+  <!-- hood -->
+  <path d="M60 24
+           C46 24 38 34 38 48
+           L38 58
+           C38 60 40 62 43 62
+           L77 62
+           C80 62 82 60 82 58
+           L82 48
+           C82 34 74 24 60 24 Z" fill="url(#suit)" stroke="#B8BAC4" stroke-width="1.5"/>
+  <!-- face opening -->
+  <ellipse cx="60" cy="46" rx="13" ry="15" fill="#2B2B30"/>
+  <!-- goggles hint -->
+  <rect x="50" y="40" width="20" height="8" rx="4" fill="#5A6470" opacity="0.7"/>
+  <!-- coverall body -->
+  <path d="M43 62
+           L40 96
+           C40 99 42 100 45 100
+           L75 100
+           C78 100 80 99 80 96
+           L77 62 Z" fill="url(#suit)" stroke="#B8BAC4" stroke-width="1.5"/>
+  <!-- center seam -->
+  <line x1="60" y1="62" x2="60" y2="100" stroke="#C4C6D0" stroke-width="1.5"/>
+  <!-- arms -->
+  <path d="M43 64 L30 84 C29 86 30 88 33 88 L40 80" fill="url(#suit)" stroke="#B8BAC4" stroke-width="1.5"/>
+  <path d="M77 64 L90 84 C91 86 90 88 87 88 L80 80" fill="url(#suit)" stroke="#B8BAC4" stroke-width="1.5"/>
+</svg>

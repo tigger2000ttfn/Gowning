@@ -2,13 +2,15 @@
 @section('title', 'MATC Gowning Qualification')
 @section('content')
     <section class="hero">
-        <div class="hero-inner">
-            <img src="{{ asset('images/flying-star.svg') }}" alt="" class="hero-star">
-            <h1>Cleanroom Gowning <span class="accent">Qualification</span></h1>
-            <p>Schedule gowning classes, sign up for qualification run slots, and track your status across the full qualification cycle.</p>
-            <div class="cta">
-                <a href="{{ route('public.register') }}" class="primary">Request Access</a>
-                <a href="#browse" class="ghost">Browse Sessions</a>
+        <div class="hero-inner hero-split">
+            <img src="{{ asset('images/gowned-figure.svg') }}" alt="" class="hero-figure">
+            <div class="hero-text">
+                <h1>Cleanroom Gowning <span class="accent">Qualification</span></h1>
+                <p>Schedule gowning classes, sign up for qualification run slots, and track your status across the full qualification cycle.</p>
+                <div class="cta">
+                    <a href="{{ route('public.register') }}" class="primary">Request Access</a>
+                    <a href="#browse" class="ghost">Browse Sessions</a>
+                </div>
             </div>
         </div>
     </section>
