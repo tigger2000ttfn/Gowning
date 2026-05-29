@@ -14,7 +14,7 @@ class QualificationResource extends Resource
 {
     protected static ?string $model = Qualification::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
     protected static string|\UnitEnum|null $navigationGroup = 'Personnel & Qualifications';
     protected static ?int $navigationSort = 2;
 
