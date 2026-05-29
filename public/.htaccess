@@ -5,6 +5,10 @@
 
     RewriteEngine On
 
+    # Base path for subdirectory install (app is served at /gowning/).
+    # Required so the trailing-slash rule below does not loop on a subfolder.
+    RewriteBase /gowning/
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
