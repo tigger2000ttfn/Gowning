@@ -32,7 +32,7 @@ echo "==> Publishing Filament assets"
 php artisan filament:assets
 
 # verify the theme actually compiled (sanity check for a known token)
-if grep -rq "1C1C21" public/build/assets/*.css 2>/dev/null; then
+if grep -riq "1c1c21" public/build/assets/*.css 2>/dev/null; then
     echo "==> Theme CSS compiled OK (token found)"
 else
     echo "!!! WARNING: theme token NOT found in compiled CSS - build may be stale"

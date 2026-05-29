@@ -238,6 +238,9 @@ html:not(.dark) .fi-badge { font-weight: 600 !important; }
 
 /* Topbar a touch of charcoal so the header has presence */
 /* Header (topbar) uses dark charcoal styling in BOTH themes for consistency */
+html body .fi-topbar,
+html:not(.dark) body .fi-topbar,
+html .fi-main .fi-topbar,
 html:not(.dark) .fi-topbar {
     background-color: #1C1C21 !important;
     border-bottom: 2px solid var(--astellas-magenta) !important;
