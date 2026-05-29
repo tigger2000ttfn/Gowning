@@ -320,3 +320,61 @@ html.dark .fi-modal-content .fi-input { border-color: #3A3A40 !important; backgr
 .fi-modal-content .fi-section { border:1px solid rgba(120,120,130,.15) !important; border-radius:10px !important; }
 .fi-modal-content .fi-section-header-heading { color:#A4123F !important; }
 html.dark .fi-modal-content .fi-section-header-heading { color:#E8C24A !important; }
+
+/* ============================================================
+   UNIFIED DESIGN TOKENS — consistent radius & surfaces both themes
+   ============================================================ */
+:root {
+    --gqs-radius: 12px;
+    --gqs-radius-sm: 9px;
+    --gqs-surface: #FFFFFF;
+    --gqs-surface-2: #F1F1F4;
+    --gqs-border: #DADADF;
+    --gqs-text: #1A1A1F;
+    --gqs-text-dim: #5A5A62;
+    --gqs-menu-shadow: 0 16px 40px rgba(0,0,0,.16);
+}
+html.dark {
+    --gqs-surface: #1F1F25;
+    --gqs-surface-2: #26262C;
+    --gqs-border: #34343C;
+    --gqs-text: #ECECF0;
+    --gqs-text-dim: #9A9AA4;
+    --gqs-menu-shadow: 0 16px 40px rgba(0,0,0,.5);
+}
+
+/* Consistent radius across the major surfaces in BOTH themes */
+.fi-section, .fi-ta, .fi-wi, .fi-modal-window, .fi-input, .fi-btn,
+.fi-dropdown-panel, .fi-ta-ctn { border-radius: var(--gqs-radius) !important; }
+.fi-input, .fi-select-input { border-radius: var(--gqs-radius-sm) !important; }
+
+/* ---- Manage dropdown (solid, theme-aware, left of search) ---- */
+.gqs-manage { position: relative; margin-right: 10px; }
+.gqs-manage-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 8px 14px; border-radius: var(--gqs-radius-sm);
+    background: var(--astellas-magenta); color: #fff;
+    font-weight: 600; font-size: 14px; border: none; cursor: pointer;
+    box-shadow: 0 2px 6px rgba(164,18,63,.3);
+    transition: background .15s, transform .1s;
+}
+.gqs-manage-btn:hover { background: #850F33; }
+.gqs-manage-btn:active { transform: translateY(1px); }
+.gqs-manage-ico { width: 17px; height: 17px; }
+.gqs-manage-chev { width: 15px; height: 15px; transition: transform .18s; }
+.gqs-manage-menu {
+    position: absolute; left: 0; top: calc(100% + 8px);
+    min-width: 240px; padding: 7px;
+    background: var(--gqs-surface); border: 1px solid var(--gqs-border);
+    border-radius: var(--gqs-radius); box-shadow: var(--gqs-menu-shadow);
+    z-index: 50;
+}
+.gqs-manage-link {
+    display: flex; align-items: center; gap: 11px;
+    padding: 10px 12px; border-radius: var(--gqs-radius-sm);
+    color: var(--gqs-text); font-size: 14px; font-weight: 500;
+    text-decoration: none; transition: background .12s;
+}
+.gqs-manage-link:hover { background: var(--gqs-surface-2); }
+.gqs-manage-link-ico { width: 18px; height: 18px; color: var(--astellas-magenta); flex: 0 0 18px; }
+html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
