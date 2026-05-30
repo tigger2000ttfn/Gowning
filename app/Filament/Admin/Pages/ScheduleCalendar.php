@@ -30,6 +30,79 @@ class ScheduleCalendar extends Page
 
     public string $tab = 'calendar';   // calendar | list
 
+    public ?string $calMonth = null;   // YYYY-MM anchor for the month grid
+
+    public function mount(): void
+    {
+        $this->calMonth = $this->calMonth ?: now()->format('Y-m');
+    }
+
+    protected function anchor(): \Illuminate\Support\Carbon
+    {
+        try { return \Illuminate\Support\Carbon::createFromFormat('Y-m', $this->calMonth)->startOfMonth(); }
+        catch (\Throwable $e) { return now()->startOfMonth(); }
+    }
+
+    public function prevMonth(): void { $this->calMonth = $this->anchor()->subMonth()->format('Y-m'); }
+    public function nextMonth(): void { $this->calMonth = $this->anchor()->addMonth()->format('Y-m'); }
+    public function thisMonth(): void { $this->calMonth = now()->format('Y-m'); }
+
+    public function monthLabel(): string { return $this->anchor()->format('F Y'); }
+
+    /** Events bucketed by Y-m-d for the visible month, each: type,color,title,time. */
+    protected function eventsByDate(\Illuminate\Support\Carbon $from, \Illuminate\Support\Carbon $to): array
+    {
+        $b = [];
+        $push = function ($date, $row) use (&$b) {
+            $k = $date->toDateString();
+            $b[$k] ??= [];
+            $b[$k][] = $row;
+        };
+        foreach (RunSlot::with('analyst')->where('status', '!=', 'cancelled')
+            ->whereBetween('slot_date', [$from->toDateString(), $to->toDateString()])->get() as $s) {
+            $push($s->slot_date, ['color' => '#A4123F', 'title' => 'Run: ' . ($s->cleanroom ?: 'Run Day'),
+                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '']);
+        }
+        foreach (ClassSession::with('trainingClass')->where('status', '!=', 'cancelled')
+            ->whereBetween('session_date', [$from->toDateString(), $to->toDateString()])->get() as $s) {
+            $push($s->session_date, ['color' => '#2E7D5B', 'title' => 'Class: ' . ($s->trainingClass?->name ?? 'Gowning'),
+                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '']);
+        }
+        foreach (Qualification::with('personnel')->where('status', 'qualified')->whereNotNull('due_date')
+            ->whereBetween('due_date', [$from->toDateString(), $to->toDateString()])->get() as $q) {
+            $push($q->due_date, ['color' => '#C79A2E', 'title' => 'Due: ' . ($q->personnel?->full_name ?? 'Unknown'), 'time' => '']);
+        }
+        return $b;
+    }
+
+    /** A 6-week grid (Sun-start) of days for the visible month. */
+    public function monthGrid(): array
+    {
+        $start = $this->anchor();
+        $gridStart = $start->copy()->startOfWeek(\Carbon\CarbonInterface::SUNDAY);
+        $gridEnd = $start->copy()->endOfMonth()->endOfWeek(\Carbon\CarbonInterface::SATURDAY);
+        $events = $this->eventsByDate($gridStart, $gridEnd);
+        $today = now()->toDateString();
+        $weeks = [];
+        $cur = $gridStart->copy();
+        while ($cur <= $gridEnd) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $k = $cur->toDateString();
+                $week[] = [
+                    'day' => $cur->day,
+                    'date' => $k,
+                    'inMonth' => $cur->month === $start->month,
+                    'isToday' => $k === $today,
+                    'events' => $events[$k] ?? [],
+                ];
+                $cur->addDay();
+            }
+            $weeks[] = $week;
+        }
+        return $weeks;
+    }
+
     /** Upcoming schedule as a flat, date-sorted list (run days + class sessions). */
     public function listItems(): array
     {

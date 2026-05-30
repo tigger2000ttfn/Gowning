@@ -1,19 +1,10 @@
 <x-filament-panels::page>
-    <div class="sb-headrow">
-        <div class="sb-headrow-title">
-            <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-calendar" /></span>
-            <div class="pg-head-tx" style="min-width:0;">
-                <h1>Schedule Calendar</h1>
-                <p>Run days, class sessions, and qualification due dates in one view.</p>
-            </div>
-        </div>
-        <div class="sb-headrow-filters">
-            <div class="gqs-tabs">
-                <button type="button" wire:click="$set('tab','calendar')" class="gqs-tab @if($tab==='calendar') on @endif">Calendar</button>
-                <button type="button" wire:click="$set('tab','list')" class="gqs-tab @if($tab==='list') on @endif">List</button>
-            </div>
-        </div>
-    </div>
+    @php $tab = $this->tab ?? 'calendar'; @endphp
+
+    @include('filament.page-hero', ['title' => 'Schedule Calendar', 'icon' => 'heroicon-o-calendar', 'actions' => '
+        <button type="button" wire:click="$set(\'tab\',\'calendar\')" class="gqs-tab ' . ($tab === 'calendar' ? 'active' : '') . '">Calendar</button>
+        <button type="button" wire:click="$set(\'tab\',\'list\')" class="gqs-tab ' . ($tab === 'list' ? 'active' : '') . '">List</button>
+    '])
 
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px;font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#A4123F;margin-right:4px;"></span>Run Days</span>
@@ -45,71 +36,54 @@
             </div>
         </div>
     @else
+    @php $weeks = $this->monthGrid(); @endphp
     <div class="gqs-panel">
-        <div class="gqs-panel-body" style="padding:16px;">
-            <div id="gqs-cal-data" data-events='@json($this->events())' style="display:none;"></div>
-            <div id="gqs-calendar"></div>
+        <div class="gqs-panel-head" style="justify-content:space-between;">
+            <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $this->monthLabel() }}</span>
+            <span style="display:flex;align-items:center;gap:6px;">
+                <button type="button" wire:click="prevMonth" class="rd-act" style="background:#fff;color:#A4123F;">‹ Prev</button>
+                <button type="button" wire:click="thisMonth" class="rd-act" style="background:#fff;color:#A4123F;">Today</button>
+                <button type="button" wire:click="nextMonth" class="rd-act" style="background:#fff;color:#A4123F;">Next ›</button>
+            </span>
+        </div>
+        <div class="gqs-panel-body" style="padding:0;">
+            <div class="cal-grid">
+                @foreach(['Sun','Mon','Tue','Wed','Thu','Fri','Sat'] as $dow)
+                    <div class="cal-dow">{{ $dow }}</div>
+                @endforeach
+                @foreach($weeks as $week)
+                    @foreach($week as $cell)
+                        <div class="cal-cell {{ $cell['inMonth'] ? '' : 'cal-out' }} {{ $cell['isToday'] ? 'cal-today' : '' }}">
+                            <div class="cal-num">{{ $cell['day'] }}</div>
+                            @foreach($cell['events'] as $ev)
+                                <div class="cal-ev" style="border-left:3px solid {{ $ev['color'] }};" title="{{ $ev['title'] }}{{ $ev['time'] ? ' · '.$ev['time'] : '' }}">
+                                    <span class="cal-ev-t">{{ $ev['title'] }}</span>@if($ev['time'])<span class="cal-ev-w">{{ $ev['time'] }}</span>@endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endforeach
+                @endforeach
+            </div>
         </div>
     </div>
     @endif
 
-    <div wire:ignore>
-        <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-        <script>
-            (function () {
-                let cal = null;
-                function render() {
-                    const el = document.getElementById('gqs-calendar');
-                    const data = document.getElementById('gqs-cal-data');
-                    if (!el || !data || !window.FullCalendar) return;
-                    let events = [];
-                    try { events = JSON.parse(data.getAttribute('data-events') || '[]'); } catch (e) {}
-                    if (cal) { try { window._gqsCalDate = cal.getDate(); window._gqsCalView = cal.view.type; } catch(e){} cal.destroy(); cal = null; }
-                    cal = new FullCalendar.Calendar(el, {
-                        initialView: (window._gqsCalView || 'dayGridMonth'),
-                        initialDate: (window._gqsCalDate || undefined),
-                        height: 'auto',
-                        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
-                        events: events,
-                        editable: @json($this->canDrag()),
-                        eventStartEditable: @json($this->canDrag()),
-                        eventDurationEditable: false,
-                        datesSet: function (info) { window._gqsCalDate = cal ? cal.getDate() : info.start; window._gqsCalView = info.view.type; },
-                        eventDrop: function (info) {
-                            const id = info.event.id;
-                            const newDate = info.event.start ? info.event.startStr.substring(0, 10) : null;
-                            if (!id || !newDate) { info.revert(); return; }
-                            // due-date events are not movable
-                            if (id.startsWith('due:')) { info.revert(); return; }
-                            $wire.moveEvent(id, newDate).then(() => {}).catch(() => info.revert());
-                        },
-                    });
-                    cal.render();
-                    // FullCalendar can render as a blank/white bar if the container had no
-                    // dimensions at render time (tab switch / layout not settled). Recalc after paint.
-                    requestAnimationFrame(() => { try { cal && cal.updateSize(); } catch(e){} });
-                    setTimeout(() => { try { cal && cal.updateSize(); } catch(e){} }, 250);
-                }
-                function boot() {
-                    const el = document.getElementById('gqs-calendar');
-                    // only render once the element is actually laid out (has width)
-                    if (el && el.offsetWidth > 0) { render(); }
-                    else { setTimeout(boot, 120); }
-                }
-                if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
-                document.addEventListener('livewire:initialized', () => {
-                    if (window.Livewire) Livewire.hook('morph.updated', () => setTimeout(boot, 60));
-                });
-            })();
-        </script>
-    </div>
-
     <style>
-        #gqs-calendar .fc{font-size:13px;}
-        #gqs-calendar .fc-toolbar-title{font-size:18px;font-weight:800;color:var(--gqs-text,#1A1A1F);}
-        #gqs-calendar .fc-button-primary{background:#A4123F;border-color:#A4123F;}
-        #gqs-calendar .fc-button-primary:hover{background:#850F33;border-color:#850F33;}
-        #gqs-calendar .fc-button-primary:not(:disabled).fc-button-active{background:#850F33;border-color:#850F33;}
-        .dark #gqs-calendar .fc-toolbar-title{color:#ECECF0;}
+        .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--gqs-border,#E2E2E6);border-top:1px solid var(--gqs-border,#E2E2E6);}
+        .cal-dow{background:#26262C;color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:8px 6px;text-align:center;}
+        .cal-cell{background:var(--gqs-surface,#fff);min-height:104px;padding:6px 6px 8px;display:flex;flex-direction:column;gap:3px;}
+        .dark .cal-cell{background:#1A1A20;}
+        .cal-out{background:#F6F6F8;}
+        .dark .cal-out{background:#141418;}
+        .cal-out .cal-num{opacity:.4;}
+        .cal-today{box-shadow:inset 0 0 0 2px #A4123F;}
+        .cal-num{font-size:12.5px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-bottom:2px;}
+        .dark .cal-num{color:#ECECF0;}
+        .cal-ev{background:var(--gqs-surface-2,#F4F4F7);border-radius:5px;padding:3px 6px;font-size:11px;line-height:1.25;display:flex;flex-direction:column;overflow:hidden;}
+        .dark .cal-ev{background:#26262E;}
+        .cal-ev-t{font-weight:600;color:var(--gqs-text,#1A1A1F);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .dark .cal-ev-t{color:#ECECF0;}
+        .cal-ev-w{font-size:10px;color:var(--gqs-text-dim,#6A6A72);}
+        @media (max-width:640px){ .cal-cell{min-height:74px;} .cal-ev-t{font-size:10px;} }
     </style>
 </x-filament-panels::page>
