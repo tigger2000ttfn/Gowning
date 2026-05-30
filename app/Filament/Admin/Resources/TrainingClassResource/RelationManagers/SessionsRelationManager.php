@@ -68,14 +68,14 @@ class SessionsRelationManager extends RelationManager
                     ->label('Attendance')
                     ->icon('heroicon-m-clipboard-document-check')
                     ->color('success')
-                    ->modalHeading(fn (ClassSession $record) => 'Attendance — ' . $record->session_date->format('M j, Y'))
+                    ->modalHeading(fn (ClassSession $record) => 'Attendance, ' . $record->session_date->format('M j, Y'))
                     ->modalWidth('xl')
                     ->fillForm(function (ClassSession $record) {
                         return [
                             'rows' => $record->enrollments->map(fn ($e) => [
                                 'enrollment_id' => $e->id,
-                                'who' => trim(($e->employee_id ? $e->employee_id . ' — ' : '') . $e->name),
-                                'present' => $e->status === 'attended',
+                                'who' => trim(($e->employee_id ? $e->employee_id . ', ' : '') . $e->name),
+                                'present' => in_array($e->status, ['attended', 'completed'], true),
                             ])->all(),
                         ];
                     })
@@ -96,18 +96,33 @@ class SessionsRelationManager extends RelationManager
                             $enr = ClassEnrollment::find($row['enrollment_id']);
                             if (! $enr) continue;
                             if (! empty($row['present'])) {
-                                $enr->update(['status' => 'attended']);
+                                // mark completed (drives the Class Board "Completed" lane)
+                                $enr->update(['status' => 'completed']);
                                 // generate the class-completion record (prerequisite for runs)
                                 ClassCompletion::firstOrCreate(
                                     ['personnel_id' => $enr->personnel_id, 'class_name' => $record->trainingClass->name, 'completion_date' => $record->session_date->toDateString()],
                                     ['employee_id' => $enr->employee_id, 'source' => 'attendance'],
                                 );
+                                // AUTOMATION: advance the person to Class Complete in the GMP pipeline
+                                if ($enr->personnel_id) {
+                                    $q = \App\Models\Qualification::firstOrCreate(
+                                        ['personnel_id' => $enr->personnel_id],
+                                        ['type' => 'initial', 'status' => 'in_progress',
+                                         'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3), 'runs_completed' => 0]
+                                    );
+                                    if (in_array($q->workflow_stage?->value, [null, 'class_pending'], true)) {
+                                        $q->workflow_stage = \App\Enums\WorkflowStage::ClassComplete;
+                                        $q->stage_changed_at = now();
+                                        $q->save();
+                                    }
+                                }
                                 $marked++;
                             } else {
-                                if ($enr->status === 'attended') $enr->update(['status' => 'signed_up']);
+                                if (in_array($enr->status, ['attended', 'completed'], true)) $enr->update(['status' => 'signed_up']);
                             }
                         }
-                        Notification::make()->success()->title('Attendance recorded')->body("{$marked} marked present; completions generated.")->send();
+                        Notification::make()->success()->title('Attendance recorded')
+                            ->body("{$marked} marked present. Completions generated and pipeline advanced.")->send();
                     }),
                 EditAction::make(),
                 DeleteAction::make(),

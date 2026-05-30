@@ -105,6 +105,20 @@ class QualificationEngine
             'due_date' => $state['due_date'],
         ])->save();
 
+        // AUTOMATION: recording a run advances the GMP workflow stage. A run has been
+        // performed, so move the card forward to "Run Performed" (unless it is already
+        // further along in sampling/incubation/QA, or already signed off).
+        $current = $qualification->workflow_stage?->value;
+        $alreadyPast = in_array($current, [
+            'run_performed', 'samples_taken', 'incubating',
+            'results_released', 'qa_review', 'qa_signoff',
+        ], true);
+        if (! $alreadyPast && $current !== 'failed') {
+            $qualification->workflow_stage = \App\Enums\WorkflowStage::RunPerformed;
+            $qualification->stage_changed_at = now();
+            $qualification->save();
+        }
+
         return $qualification;
     }
 
