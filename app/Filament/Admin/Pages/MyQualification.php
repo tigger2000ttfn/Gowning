@@ -41,7 +41,7 @@ class MyQualification extends Page
             ->label('Reschedule My Run')
             ->icon('heroicon-m-arrows-right-left')
             ->color('primary')
-            ->visible(fn () => $this->myActiveReservation() !== null)
+            ->visible(fn () => $this->myActiveReservation() !== null && (bool) \App\Models\Setting::get('allow_self_reschedule', true))
             ->modalHeading('Reschedule My Qualification Run')
             ->modalDescription('Move to the next available day, or pick a specific open day.')
             ->form([

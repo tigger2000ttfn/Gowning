@@ -29,6 +29,11 @@ class LifecycleAdvancer
         return (int) Setting::get('initial_runs_required', 3);
     }
 
+    public function lapsedRuns(): int
+    {
+        return (int) Setting::get('lapsed_runs_required', $this->initialRuns());
+    }
+
     /** Scan qualified records and lapse any past due (+grace) into a 3-run requal. Returns count. */
     public function run(): int
     {
@@ -45,7 +50,7 @@ class LifecycleAdvancer
                 // lapsed: full 3-run requalification
                 $q->status = 'lapsed';
                 $q->type = 'initial';
-                $q->runs_required = $this->initialRuns();
+                $q->runs_required = $this->lapsedRuns();
                 $q->runs_completed = 0;
                 $q->qualified_date = null;
                 // class persists: if on file, skip straight to ready-to-book; else needs class
