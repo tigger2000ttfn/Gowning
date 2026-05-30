@@ -6,6 +6,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListUsers extends ListRecords
 {
     protected static string $resource = UserResource::class;
+    public function getSubheading(): ?string { return 'Staff accounts, roles, and approval status.'; }
     protected function getHeaderActions(): array
     {
         return [CreateAction::make()->label('New User')->modalHeading('Create A User')];

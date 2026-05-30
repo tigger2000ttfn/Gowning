@@ -6,6 +6,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListReservations extends ListRecords
 {
     protected static string $resource = ReservationResource::class;
+    public function getSubheading(): ?string { return 'Individual run reservations and their status.'; }
     protected function getHeaderActions(): array
     {
         return [

@@ -1,6 +1,17 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Audit Trail', 'subtitle' => 'Computer-generated record of every change. Part 11 / ALCOA+.', 'icon' => 'heroicon-o-document-magnifying-glass'])
 
+    @php
+        $todayCount = \Spatie\Activitylog\Models\Activity::whereDate('created_at', now()->toDateString())->count();
+        $weekCount = \Spatie\Activitylog\Models\Activity::where('created_at', '>=', now()->subDays(7))->count();
+        $totalCount = \Spatie\Activitylog\Models\Activity::count();
+    @endphp
+    <div class="gqs-stats">
+        <div class="gqs-stat magenta"><div class="n">{{ number_format($todayCount) }}</div><div class="l">Events Today</div><span class="wm"><x-filament::icon icon="heroicon-o-bolt"/></span></div>
+        <div class="gqs-stat purple"><div class="n">{{ number_format($weekCount) }}</div><div class="l">Last 7 Days</div><span class="wm"><x-filament::icon icon="heroicon-o-calendar"/></span></div>
+        <div class="gqs-stat charcoal"><div class="n">{{ number_format($totalCount) }}</div><div class="l">Total Logged</div><span class="wm"><x-filament::icon icon="heroicon-o-archive-box"/></span></div>
+    </div>
+
     <div class="gqs-panel">
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-funnel"/> Filters</div>
         <div class="gqs-panel-body" style="padding:14px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:end;">

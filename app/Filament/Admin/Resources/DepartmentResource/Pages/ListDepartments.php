@@ -9,6 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListDepartments extends ListRecords
 {
     protected static string $resource = DepartmentResource::class;
+    public function getSubheading(): ?string { return 'Departments for personnel assignment.'; }
     public function getHeading(): string { return ''; }
     protected function getHeaderActions(): array
     {

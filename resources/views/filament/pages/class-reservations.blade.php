@@ -1,7 +1,16 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Gowning Class Reservations', 'subtitle' => 'Enrollments grouped by class session.', 'icon' => 'heroicon-o-calendar-days'])
 
-    @php $groups = $this->getGroupedBySession(); @endphp
+    @php $groups = $this->getGroupedBySession();
+        $totalEnrolled = collect($groups)->sum(fn ($g) => count($g['rows']));
+        $sessionCount = count($groups);
+    @endphp
+
+    <div class="gqs-stats">
+        <div class="gqs-stat green"><div class="n">{{ $totalEnrolled }}</div><div class="l">Total Enrolled</div><span class="wm"><x-filament::icon icon="heroicon-o-user-group"/></span></div>
+        <div class="gqs-stat magenta"><div class="n">{{ $sessionCount }}</div><div class="l">Upcoming Sessions</div><span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span></div>
+        <div class="gqs-stat charcoal"><div class="n">{{ $sessionCount ? round($totalEnrolled / max($sessionCount,1), 1) : 0 }}</div><div class="l">Avg Per Session</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
+    </div>
 
     @forelse ($groups as $group)
         <div class="gqs-panel">

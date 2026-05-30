@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 class ListAnnouncements extends ListRecords
 {
     protected static string $resource = AnnouncementResource::class;
+    public function getSubheading(): ?string { return 'Broadcast messages to staff and operators.'; }
 
     public function getHeading(): string { return ''; }
 

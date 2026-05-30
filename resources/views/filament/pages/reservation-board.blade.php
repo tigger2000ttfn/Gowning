@@ -1,7 +1,16 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Qualification Run Reservations', 'subtitle' => 'Reservations grouped by run day. Click status to advance.', 'icon' => 'heroicon-o-calendar-days'])
 
-    @php $groups = $this->getGroupedByDay(); @endphp
+    @php $groups = $this->getGroupedByDay();
+        $totalReserved = collect($groups)->sum(fn ($g) => count($g['rows']));
+        $dayCount = count($groups);
+    @endphp
+
+    <div class="gqs-stats">
+        <div class="gqs-stat magenta"><div class="n">{{ $totalReserved }}</div><div class="l">Total Reserved</div><span class="wm"><x-filament::icon icon="heroicon-o-ticket"/></span></div>
+        <div class="gqs-stat purple"><div class="n">{{ $dayCount }}</div><div class="l">Upcoming Run Days</div><span class="wm"><x-filament::icon icon="heroicon-o-calendar-days"/></span></div>
+        <div class="gqs-stat charcoal"><div class="n">{{ $dayCount ? round($totalReserved / max($dayCount,1), 1) : 0 }}</div><div class="l">Avg Per Day</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
+    </div>
 
     @forelse ($groups as $group)
         <div class="gqs-panel">

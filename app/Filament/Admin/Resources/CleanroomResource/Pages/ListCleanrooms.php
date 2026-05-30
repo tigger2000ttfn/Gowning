@@ -9,6 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListCleanrooms extends ListRecords
 {
     protected static string $resource = CleanroomResource::class;
+    public function getSubheading(): ?string { return 'Cleanroom locations available for run scheduling.'; }
     public function getHeading(): string { return ''; }
     protected function getHeaderActions(): array
     {

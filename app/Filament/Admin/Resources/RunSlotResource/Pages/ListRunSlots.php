@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 class ListRunSlots extends ListRecords
 {
     protected static string $resource = RunSlotResource::class;
+    public function getSubheading(): ?string { return 'Run day slots, capacity, and analyst assignment.'; }
     protected function getHeaderActions(): array
     {
         return [

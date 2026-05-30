@@ -1,7 +1,18 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'QA Sign-off Queue', 'subtitle' => 'Review released results and sign off to complete qualification.', 'icon' => 'heroicon-o-clipboard-document-check'])
 
-    @php $queue = $this->getQueue(); $failed = $this->getFailed(); $canApprove = $this->canApprove(); @endphp
+    @php $queue = $this->getQueue(); $failed = $this->getFailed(); $canApprove = $this->canApprove();
+        $unassigned = $queue->filter(fn ($q) => ! $q->qa_owner_id)->count();
+        $oldest = $queue->min('stage_changed_at');
+        $waitDays = $oldest ? (int) \Illuminate\Support\Carbon::parse($oldest)->diffInDays(now()) : 0;
+    @endphp
+
+    <div class="gqs-stats">
+        <div class="gqs-stat magenta"><div class="n">{{ $queue->count() }}</div><div class="l">Awaiting Sign-off</div><span class="wm"><x-filament::icon icon="heroicon-o-inbox-stack"/></span></div>
+        <div class="gqs-stat gold"><div class="n">{{ $unassigned }}</div><div class="l">Unassigned Owner</div><span class="wm"><x-filament::icon icon="heroicon-o-user-plus"/></span></div>
+        <div class="gqs-stat purple"><div class="n">{{ $waitDays }}d</div><div class="l">Oldest In Queue</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
+        <div class="gqs-stat red"><div class="n">{{ $failed->count() }}</div><div class="l">Failed, Need Determination</div><span class="wm"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span></div>
+    </div>
 
     @unless($canApprove)
         <div class="gqs-panel"><div class="gqs-empty" style="padding:14px;color:#8A6D0B;">You can review this queue, but only a QA Approver can sign off.</div></div>
