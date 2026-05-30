@@ -54,3 +54,24 @@ Artisan::command('gqs:flush-emails', function () {
     $this->info("Flushed {$sent} queued email(s).");
 })->purpose('Send queued notification emails once the mail relay is up');
 
+
+// Daily due-soon scan: fire the DueSoon automation trigger for qualifications
+// coming due within the configured reminder window (Settings: notify_days_before).
+Artisan::command('gqs:notify-due-soon', function () {
+    $days = (int) \App\Models\Setting::get('notify_days_before', 14);
+    $today = now()->startOfDay();
+    $until = now()->addDays($days)->endOfDay();
+    $due = \App\Models\Qualification::with('personnel')
+        ->where('status', 'qualified')
+        ->whereNotNull('due_date')
+        ->whereBetween('due_date', [$today->toDateString(), $until->toDateString()])
+        ->get();
+    foreach ($due as $q) {
+        \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::DueSoon, [
+            'personnel' => $q->personnel, 'qualification' => $q,
+        ]);
+    }
+    $this->info("Due-soon: fired for {$due->count()} qualification(s).");
+})->purpose('Fire DueSoon automation rules for qualifications coming due');
+
+Schedule::command('gqs:notify-due-soon')->dailyAt('06:20');
