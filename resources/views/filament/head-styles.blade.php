@@ -35,6 +35,29 @@
     .fi-sidebar-group-label { font-size: 10.5px !important; letter-spacing: .04em; }
     .fi-sidebar-item-icon, .fi-sidebar-item-icon svg { width: 18px !important; height: 18px !important; }
 
+    /* ===== SOLID MAGENTA BUTTONS (no pink shades) - use the sidebar magenta #A4123F ===== */
+    .fi-btn.fi-color-primary,
+    .fi-btn-color-primary,
+    button.fi-btn-color-primary,
+    .fi-ac-btn-action.fi-color-primary {
+        background-color: #A4123F !important;
+        border-color: #A4123F !important;
+        color: #fff !important;
+        --tw-ring-color: #A4123F !important;
+    }
+    .fi-btn.fi-color-primary:hover,
+    .fi-btn-color-primary:hover,
+    button.fi-btn-color-primary:hover {
+        background-color: #850F33 !important;
+        border-color: #850F33 !important;
+    }
+    /* primary links/text also magenta not pink */
+    .fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
+
+    /* ===== TIGHTEN top-of-page wasted space ===== */
+    .fi-page-header-main-ctn { padding-top: 12px !important; }
+    .fi-main { padding-top: 8px !important; }
+
     /* Manage dropdown links: dark text in light theme (the --gqs-text var resolves too light) */
     html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
     html:not(.dark) .gqs-manage-menu { background: #fff !important; }
@@ -57,6 +80,7 @@
     /* .fi-main has 0 32px padding -> the left/right gap */
     .fi-main:has(.dash-hero) { padding-left: 0 !important; padding-right: 0 !important; }
     .fi-page-dashboard .fi-main { padding-left: 0 !important; padding-right: 0 !important; }
+    .fi-main:has(.dash-hero) { padding-top: 0 !important; }
     /* .fi-page-header-main-ctn has 32px top padding -> the gap above the hero */
     .fi-main:has(.dash-hero) .fi-page-header-main-ctn { padding-top: 0 !important; }
     .fi-page-dashboard .fi-page-header-main-ctn { padding-top: 0 !important; }
