@@ -43,7 +43,7 @@ class Dashboard extends BaseDashboard
             $links[] = ['Reports', \App\Filament\Admin\Pages\Reports::getUrl(), 'heroicon-o-chart-bar', '#2E7D5B'];
         }
         if ($u->hasCapability(\App\Enums\Capability::ManageUsers)) {
-            $links[] = ['Import Personnel', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray', '#1F6FB2'];
+            $links[] = ['Import Classroom Or LMS Data', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray', '#1F6FB2'];
             $links[] = ['Users & Approvals', \App\Filament\Admin\Resources\UserResource::getUrl(), 'heroicon-o-user-group', '#A4123F'];
             $links[] = ['Settings', \App\Filament\Admin\Pages\Settings::getUrl(), 'heroicon-o-cog-6-tooth', '#3A3A40'];
         }

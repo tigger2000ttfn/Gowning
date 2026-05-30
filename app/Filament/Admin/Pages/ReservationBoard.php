@@ -23,9 +23,9 @@ class ReservationBoard extends Page
         return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'Run Reservations';
+    protected static ?string $navigationLabel = 'Run Reservation Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
     protected static ?string $title = 'Qualification Run Reservations';
     public function getHeading(): string { return ''; }
 

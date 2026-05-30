@@ -8,7 +8,7 @@
         $top[] = ['Reports', \App\Filament\Admin\Pages\Reports::getUrl(), 'heroicon-o-chart-bar'];
     }
     if ($can(\App\Enums\Capability::ManageUsers)) {
-        $top[] = ['Import Personnel', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray'];
+        $top[] = ['Import Classroom Or LMS Data', \App\Filament\Admin\Pages\ImportPersonnel::getUrl(), 'heroicon-o-arrow-up-tray'];
     }
     if ($can(\App\Enums\Capability::ManageClasses) || $can(\App\Enums\Capability::ManageUsers)) {
         $top[] = ['Announcements', \App\Filament\Admin\Resources\AnnouncementResource::getUrl(), 'heroicon-o-megaphone'];

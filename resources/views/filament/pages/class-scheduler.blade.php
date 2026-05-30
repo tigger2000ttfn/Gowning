@@ -3,6 +3,7 @@
         <button type="button" wire:click="$set(\'tab\',\'overview\')" class="gqs-tab ' . ($tab==='overview' ? 'active' : '') . '">Overview</button>
         <button type="button" wire:click="$set(\'tab\',\'classes\')" class="gqs-tab ' . ($tab==='classes' ? 'active' : '') . '">Classes</button>
         <button type="button" wire:click="$set(\'tab\',\'sessions\')" class="gqs-tab ' . ($tab==='sessions' ? 'active' : '') . '">Sessions</button>
+        <button type="button" wire:click="$set(\'tab\',\'attendance\')" class="gqs-tab ' . ($tab==='attendance' ? 'active' : '') . '">Attendance</button>
     '])
 
     @if($tab === 'overview')
@@ -98,12 +99,105 @@
             </div>
         @endif
 
-    @else
-        {{-- SESSIONS --}}
+    @elseif($tab === 'sessions')
+        {{-- SESSIONS SETUP (manage the dated sessions; take attendance on the Attendance tab) --}}
         @php $sessions = $this->sessions(); @endphp
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+            <button type="button" wire:click="$set('showAddSession', true)"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
+                <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add / Generate Sessions
+            </button>
+        </div>
+        @if($sessions->isEmpty())
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
+        @else
+            <div class="gqs-panel">
+                <div class="gqs-panel-body" style="padding:0;">
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Location</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>
+                        <tbody>
+                            @foreach($sessions as $s)
+                                <tr>
+                                    <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
+                                    <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
+                                    <td>{{ $s->trainingClass?->name }}</td>
+                                    <td>{{ $s->location ?: '—' }}</td>
+                                    <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
+                                    <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
+                                    <td>@if($s->attendance_submitted_at)<span class="gqs-pill gqs-pill-green">Submitted</span>@else<span class="gqs-pill gqs-pill-purple">Open</span>@endif</td>
+                                    <td style="text-align:right;white-space:nowrap;">
+                                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Form</button>
+                                        <button type="button" wire:click="askConfirm('cancelSession', {{ $s->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="rd-act" style="background:#C8102E;">Cancel</button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
 
+        @if($showAddSession)
+            <div class="gqs-modal-overlay" wire:click.self="$set('showAddSession', false)">
+                <div class="gqs-modal" style="width:500px;">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-plus"/></span>Add / Generate Class Sessions</div>
+                    <div class="gqs-modal-body">
+                        <div><label class="gqs-flbl">Class Template</label>
+                            <select wire:model="sessClassId" class="gqs-fld"><option value="">Select a class...</option>
+                                @foreach($this->classOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                            </select></div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div><label class="gqs-flbl">First Date</label><input type="date" wire:model="sessDate" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Location</label><input type="text" wire:model="sessLocation" placeholder="Template default" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Start</label><input type="time" wire:model="sessStart" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">End</label><input type="time" wire:model="sessEnd" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="sessCapacity" placeholder="default" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Instructor</label>
+                                <select wire:model="sessInstructorId" class="gqs-fld"><option value="">Unassigned</option>
+                                    @foreach($this->instructorOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                                </select></div>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gqs-text,#1A1A1F);">
+                            <input type="checkbox" wire:model.live="sessRepeat"> Repeat this session
+                        </label>
+                        @if($sessRepeat)
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:var(--gqs-surface-2,#F5F5F7);border-radius:9px;">
+                                <div><label class="gqs-flbl">Pattern</label>
+                                    <select wire:model="sessPattern" class="gqs-fld">
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Every 2 Weeks</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select></div>
+                                <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="sessUntil" class="gqs-fld"></div>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showAddSession', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="addSession" class="gqs-btn gqs-btn-primary">@if($sessRepeat)Generate @else Add Session @endif</button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- in-app confirmation modal (replaces native confirm prompts) --}}
+        @if(! empty($confirm))
+            <div class="gqs-modal-overlay" wire:click.self="cancelConfirm">
+                <div class="gqs-modal" style="width:440px;">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-exclamation-triangle"/></span>{{ $confirm['title'] }}</div>
+                    <div class="gqs-modal-body"><p style="margin:0;font-size:13.5px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">{{ $confirm['body'] }}</p></div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="cancelConfirm" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="runConfirm" class="gqs-btn {{ ($confirm['danger'] ?? false) ? '' : 'gqs-btn-primary' }}" @if($confirm['danger'] ?? false) style="background:#C8102E;color:#fff;" @endif>{{ $confirm['label'] ?? 'Confirm' }}</button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+    @elseif($tab === 'attendance')
+        {{-- ATTENDANCE: pick a session, then take attendance on one focused sheet --}}
+        @php $sessions = $this->sessions(); @endphp
         @if($focusSessionId)
-            {{-- ===== SINGLE SESSION ATTENDANCE SHEET ===== --}}
             @php $s = $sessions->firstWhere('id', $focusSessionId) ?? \App\Models\ClassSession::with(['trainingClass','instructorUser'])->find($focusSessionId);
                 $attendees = $this->sessionAttendees($focusSessionId); $submitted = (bool) $s?->attendance_submitted_at; @endphp
             @if(! $s)
@@ -113,7 +207,6 @@
                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">&larr; Back To Sessions</button>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Attendance Form</button>
-                        <button type="button" wire:click="askConfirm('cancelSession', {{ $s->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="rd-act" style="background:#C8102E;">Cancel Session</button>
                     </div>
                 </div>
                 <div class="gqs-panel">
@@ -132,13 +225,13 @@
                             @if(! $submitted)
                                 <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
                                     <button type="button" class="gqs-btn gqs-btn-primary"
-                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session\'s attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance</button>
+                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance</button>
                                 </div>
                             @else
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
                                     <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('M j, Y g:i A') }} · awaiting QA classroom approval.</span>
                                     <button type="button" class="gqs-btn gqs-btn-ghost"
-                                            wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft so attendance can be corrected.', 'Reopen')">Reopen</button>
+                                            wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft.', 'Reopen')">Reopen</button>
                                 </div>
                             @endif
                             <table class="gqs-tbl">
@@ -166,30 +259,22 @@
                     </div>
                 </div>
             @endif
-
         @else
-            {{-- ===== SESSIONS OVERVIEW LIST (click a session to take attendance) ===== --}}
-            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-                <button type="button" wire:click="$set('showAddSession', true)"
-                        style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
-                    <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add / Generate Sessions
-                </button>
-            </div>
+            @php $sessions = $this->sessions(); @endphp
             @if($sessions->isEmpty())
-                <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
+                <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No sessions yet. Create them on the Sessions tab.</div></div>
             @else
                 <div class="gqs-panel">
                     <div class="gqs-panel-body" style="padding:0;">
                         <table class="gqs-tbl">
-                            <thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Attendance</th></tr></thead>
+                            <thead><tr><th>Date</th><th>Class</th><th>Instructor</th><th>Booked</th><th>Status</th><th style="text-align:right;">Attendance</th></tr></thead>
                             <tbody>
                                 @foreach($sessions as $s)
                                     <tr style="cursor:pointer;" wire:click="focusSession({{ $s->id }})">
                                         <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
-                                        <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
                                         <td>{{ $s->trainingClass?->name }}</td>
                                         <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
-                                        <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
+                                        <td>{{ $s->booked }}</td>
                                         <td>@if($s->attendance_submitted_at)<span class="gqs-pill gqs-pill-green">Submitted</span>@else<span class="gqs-pill gqs-pill-purple">Open</span>@endif</td>
                                         <td style="text-align:right;white-space:nowrap;">
                                             <button type="button" wire:click.stop="focusSession({{ $s->id }})" class="rd-act rd-act-magenta">Take Attendance</button>
@@ -217,49 +302,8 @@
             </div>
         @endif
 
-        @if($showAddSession)
-            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAddSession', false)">
-                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:480px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Add / Generate Class Sessions</div>
-                    <div style="padding:18px 20px;">
-                        <div style="margin-bottom:12px;"><label class="gqs-flbl">Class Template</label>
-                            <select wire:model="sessClassId" class="gqs-fld"><option value="">Select a class...</option>
-                                @foreach($this->classOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
-                            </select></div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div><label class="gqs-flbl">First Date</label><input type="date" wire:model="sessDate" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">Location</label><input type="text" wire:model="sessLocation" placeholder="Template default" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">Start</label><input type="time" wire:model="sessStart" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">End</label><input type="time" wire:model="sessEnd" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="sessCapacity" placeholder="default" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">Instructor</label>
-                                <select wire:model="sessInstructorId" class="gqs-fld"><option value="">Unassigned</option>
-                                    @foreach($this->instructorOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
-                                </select></div>
-                        </div>
-                        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gqs-text,#1A1A1F);">
-                            <input type="checkbox" wire:model.live="sessRepeat"> Repeat this session
-                        </label>
-                        @if($sessRepeat)
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;padding:12px;background:var(--gqs-surface-2,#F5F5F7);border-radius:9px;">
-                                <div><label class="gqs-flbl">Pattern</label>
-                                    <select wire:model="sessPattern" class="gqs-fld">
-                                        <option value="weekly">Weekly</option>
-                                        <option value="biweekly">Every 2 Weeks</option>
-                                        <option value="monthly">Monthly</option>
-                                    </select></div>
-                                <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="sessUntil" class="gqs-fld"></div>
-                            </div>
-                        @endif
-                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                            <button type="button" wire:click="$set('showAddSession', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                            <button type="button" wire:click="addSession" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">@if($sessRepeat)Generate @else Add Session @endif</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
     @endif
+
 
     {{-- Attendance Form: pick trainer (teach-qualified staff), then open prefilled PDF --}}
     @if($showAttendanceForm)
