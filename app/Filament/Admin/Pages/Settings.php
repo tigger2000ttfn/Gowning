@@ -8,6 +8,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
@@ -82,6 +84,8 @@ class Settings extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
+                Tabs::make('Settings')->columnSpanFull()->persistTabInQueryString()->tabs([
+                Tab::make('Rules')->icon('heroicon-o-adjustments-horizontal')->schema([
                 Section::make('Qualification Rules')->icon('heroicon-o-adjustments-horizontal')->columns(2)->schema([
                     TextInput::make('initial_runs_required')->label('Runs Required For Initial Qualification')
                         ->numeric()->minValue(1)->required(),
@@ -101,6 +105,8 @@ class Settings extends Page implements HasForms
                     Toggle::make('auto_approve')->label('Auto-approve New Registrations')
                         ->helperText('Off is recommended for Part 11 (admin approves each account).'),
                 ]),
+]),
+                Tab::make('Workflow')->icon('heroicon-o-beaker')->schema([
                 Section::make('Sampling & Incubation')->icon('heroicon-o-beaker')->columns(2)->schema([
                     TextInput::make('incubation_days')->label('Incubation Period (Days)')
                         ->numeric()->minValue(1)->required()
@@ -123,11 +129,15 @@ class Settings extends Page implements HasForms
                     Toggle::make('allow_self_reschedule')->label('Allow Operator Self-reschedule')
                         ->helperText('Let operators move their own run from My Qualification.'),
                 ]),
+]),
+                Tab::make('Quality')->icon('heroicon-o-shield-check')->schema([
                 Section::make('Quality / Part 11')->icon('heroicon-o-shield-check')->columns(2)->schema([
                     Toggle::make('require_qa_signoff')->label('Require QA Sign-off To Complete')
                         ->helperText('A run is only Completed after QA approval.'),
                     Toggle::make('esig_required')->label('Require Electronic Signature On QA Sign-off'),
                 ]),
+]),
+                Tab::make('Notifications')->icon('heroicon-o-bell')->schema([
                 Section::make('Notifications')->icon('heroicon-o-bell')->schema([
                     TextInput::make('notify_days_before')->label('Due-date Reminder Days')
                         ->helperText('Comma-separated days before due to remind (e.g. 60,30,7).'),
@@ -165,6 +175,8 @@ class Settings extends Page implements HasForms
                                 ->action(fn () => $this->sendTestEmail()),
                         ])->columnSpanFull(),
                     ]),
+]),
+                Tab::make('Organization')->icon('heroicon-o-building-office-2')->schema([
                 Section::make('Organization')->icon('heroicon-o-building-office-2')->columns(2)->schema([
                     TextInput::make('org_name')->label('Organization Name'),
                     TextInput::make('site_name')->label('Site Name'),
@@ -179,7 +191,9 @@ class Settings extends Page implements HasForms
                             ->options(fn () => \App\Models\User::where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                             ->searchable()->placeholder('Unassigned'),
                     ]),
-            ]);
+                ]),
+                ]), // close last Tab schema, then Tabs::tabs()
+            ]); // close components
     }
 
     public function save(): void
