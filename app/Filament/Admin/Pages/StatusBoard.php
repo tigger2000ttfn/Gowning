@@ -231,8 +231,16 @@ class StatusBoard extends Page
             return;
         }
 
+        // Read-only viewers (ViewQualifications only) cannot move cards.
+        $u = Auth::user();
+        if (! ($u?->hasCapability(Capability::ManageScheduling) || $u?->hasCapability(Capability::QaApprove))) {
+            Notification::make()->danger()->title('Read-only Access')
+                ->body('You can view the board but not move cards.')->send();
+            return;
+        }
+
         // QA sign-off gate
-        if ($stage === WorkflowStage::QaSignoff && ! Auth::user()?->hasCapability(Capability::QaApprove)) {
+        if ($stage === WorkflowStage::QaSignoff && ! $u?->hasCapability(Capability::QaApprove)) {
             Notification::make()->danger()->title('Not authorized')
                 ->body('Only QA approvers can sign off a qualification.')->send();
             return;

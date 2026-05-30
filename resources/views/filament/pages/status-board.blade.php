@@ -21,7 +21,7 @@
     </div>
 
     <div wire:ignore.self
-         x-data="sbBoard({ canReorder: @json((bool) auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) })"
+         x-data="sbBoard({ canReorder: @json((bool) auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling)), canMove: @json((bool) (auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling) || auth()->user()?->hasCapability(\App\Enums\Capability::QaApprove))) })"
          x-init="init()">
 
         {{-- Toolbar: selection happens via per-card checkboxes; bar only shows when something is picked --}}
@@ -48,9 +48,11 @@
                         @foreach ($stage['cards'] as $card)
                             <div class="sb-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $stage['color'] }};"
                                  :class="{ 'sb-selected': isSelected({{ $card['id'] }}) }">
+                                @if(auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
                                 <label class="sb-check" @click.stop>
                                     <input type="checkbox" :checked="isSelected({{ $card['id'] }})" @change="toggleSelect({{ $card['id'] }})">
                                 </label>
+                                @endif
                                 <div class="sb-card-body" @click="openCard({{ $card['id'] }})">
                                     <div class="sb-name">{{ $card['name'] }}</div>
                                     <div class="sb-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
@@ -106,10 +108,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script>
-        function sbBoard({ canReorder }) {
+        function sbBoard({ canReorder, canMove }) {
             return {
                 selected: [],
-                canReorder,
+                canReorder, canMove,
                 _dragging: false,
                 toggleSelect(id) {
                     const i = this.selected.indexOf(id);
@@ -124,7 +126,8 @@
                     Livewire.hook('morph.updated', () => this.$nextTick(() => this.wireSortables()));
                 },
                 wireSortables() {
-                    // card drag between lanes
+                    // card drag between lanes (only for users who can move cards)
+                    if (this.canMove) {
                     this.$root.querySelectorAll('.sb-lane').forEach(lane => {
                         if (lane._sortable) return;
                         lane._sortable = Sortable.create(lane, {
@@ -140,6 +143,7 @@
                             }
                         });
                     });
+                    }
                     // lane (column) reordering by dragging headers
                     const board = this.$refs.board;
                     if (this.canReorder && board && !board._laneSortable) {
