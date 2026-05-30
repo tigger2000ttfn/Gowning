@@ -65,6 +65,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('@include("filament.topbar-manage")'),
             )
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => Blade::render('@include("filament.topbar-messages")'),
+            )
             ->navigationGroups([
                 'Qualifications',
                 'Scheduling',
