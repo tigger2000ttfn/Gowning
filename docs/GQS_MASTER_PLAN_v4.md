@@ -197,6 +197,10 @@ America/New_York timestamps; external record linkage (TrackWise NC, Veeva docs, 
 rather than transcription; validation package (IQ/OQ/PQ) versioned with code; (planned) scheduled
 backups + job-run monitoring as IQ/OQ evidence. Technical controls built in; validation QA-governed.
 
+**The full validation blueprint, document set, Part 11 control mapping, IQ/OQ/PQ approach, and the
+authoring sequence, lives in `validation/VALIDATION_MASTER_PLAN_v1.md`** (with `validation/README.md`
+for the package structure).
+
 ---
 
 ## 10. QCM INCUBATION / PLATE-READ WORKSPACE (NEW, for QC Micro)

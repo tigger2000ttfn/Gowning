@@ -15,6 +15,8 @@ READ FIRST (in the repo / project knowledge):
   Section 10 = the new QCM Incubation / Plate-Read Workspace)
 - docs/GQS_OPEN_ISSUES.md      (honest list of unresolved / unconfirmed / server-needed items)
 - docs/DESIGN_AND_LESSONS_v1.md (design language + the hard-won UI lessons; obey the Golden Rules)
+- validation/VALIDATION_MASTER_PLAN_v1.md (the CSV/GAMP 5 validation blueprint: document set, Part 11
+  control mapping, IQ/OQ/PQ approach, sequence) + validation/README.md (package structure)
 - GOWNING_ACCESS_REFERENCE.md  (server / RDS / GitHub credentials; PAT for push)
 
 STACK: PHP 8.3 + Laravel 13 + Filament v5; PostgreSQL on AWS RDS; Apache subfolder /gowning/ on port
