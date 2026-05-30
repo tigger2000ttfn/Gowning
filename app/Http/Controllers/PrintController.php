@@ -36,7 +36,12 @@ class PrintController extends Controller
                 ?: ($session->instructorUser?->name ?? $session->instructor ?? ''),
         ];
 
-        $bytes = app(\App\Services\AttendanceFormFiller::class)->fill($header, $trainees);
+        try {
+            $bytes = app(\App\Services\AttendanceFormFiller::class)->fill($header, $trainees);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Attendance form fill failed: ' . $e->getMessage());
+            abort(500, 'Could not generate the attendance form: ' . $e->getMessage());
+        }
         $fname = 'FORM-AST-36513-' . ($session->session_date?->format('Y-m-d') ?? 'session') . '.pdf';
 
         return response($bytes, 200, [
