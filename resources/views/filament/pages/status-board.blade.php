@@ -101,10 +101,15 @@
                 isSelected(id) { return this.selected.includes(id); },
                 clearSel() { this.selected = []; },
                 openCard(id) { if (this._dragging) return; this.$wire.showDetail(id); },
+                fitHeight() {
+                    const el = this.$root.querySelector('.sb-gpane') || this.$root.querySelector('.sb-wrap');
+                    if (el) el.style.height = Math.max(320, window.innerHeight - el.getBoundingClientRect().top - 10) + 'px';
+                },
                 init() {
-                    this.$nextTick(() => this.wireSortables());
-                    // re-wire after Livewire DOM updates (search/filter/move re-render the lanes)
-                    Livewire.hook('morph.updated', () => this.$nextTick(() => this.wireSortables()));
+                    this.$nextTick(() => { this.wireSortables(); this.fitHeight(); });
+                    // re-wire + re-fit after Livewire DOM updates (search/filter/group/move re-render the lanes)
+                    Livewire.hook('morph.updated', () => this.$nextTick(() => { this.wireSortables(); this.fitHeight(); }));
+                    window.addEventListener('resize', () => this.fitHeight());
                 },
                 wireSortables() {
                     // card drag between lanes (only for users who can move cards)

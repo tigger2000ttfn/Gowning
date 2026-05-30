@@ -51,8 +51,13 @@
 
     <div x-data="{
             init() {
-                this.$nextTick(() => this.wire());
-                Livewire.hook('morph.updated', () => this.$nextTick(() => this.wire()));
+                this.$nextTick(() => { this.wire(); this.fit(); });
+                Livewire.hook('morph.updated', () => this.$nextTick(() => { this.wire(); this.fit(); }));
+                window.addEventListener('resize', () => this.fit());
+            },
+            fit() {
+                const el = this.$el.querySelector('.sb-gpane') || this.$el.querySelector('.kanban-wrap');
+                if (el) el.style.height = Math.max(320, window.innerHeight - el.getBoundingClientRect().top - 10) + 'px';
             },
             wire() {
                 document.querySelectorAll('[data-lane]').forEach(lane => {
@@ -204,8 +209,8 @@
     </style>
     <style>
         .sb-fullbleed{width:100%;}
-        .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:stretch;min-height:calc(100vh - 260px);}
-        .kanban-col{flex:0 0 320px;display:flex;flex-direction:column;}
+        .kanban-wrap{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;padding:0 32px 12px;align-items:stretch;height:calc(100vh - 178px);min-height:360px;}
+        .kanban-col{flex:0 0 320px;display:flex;flex-direction:column;max-height:100%;}
         .cb-needs-col{flex:0 0 250px;}
         .cb-needs-card{background:#FFF6F7;}
         .dark .cb-needs-card{background:#241419;}
@@ -219,7 +224,7 @@
         .dark .kanban-col{background:#121216;border-color:#34343E;}
         .kanban-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;padding:8px 11px;border-radius:8px;color:#fff;margin-bottom:10px;}
         .kanban-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 9px;font-size:12px;}
-        .kanban-lane{display:flex;flex-direction:column;gap:8px;min-height:60px;}
+        .kanban-lane{display:flex;flex-direction:column;gap:8px;min-height:60px;overflow-y:auto;}
         .kanban-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DCDCE2);border-left:4px solid #A4123F;border-radius:9px;padding:10px 12px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.08);}
         .dark .kanban-card{background:#2C2C36;border-color:#44444F;box-shadow:0 1px 3px rgba(0,0,0,.4);}
         .kanban-name{font-weight:700;font-size:14px;color:var(--gqs-text,#1A1A1F);}
