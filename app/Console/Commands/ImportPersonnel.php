@@ -63,7 +63,7 @@ class ImportPersonnel extends Command
                 'email'         => $r['email'],
                 'job_title'     => $r['title'] ?: null,
                 'lims_username' => $r['lims_username'],
-                'is_active'     => true,
+                'is_active'     => false,   // imported inactive for now; activate as needed
             ];
             if ($existing) {
                 $existing->fill($data)->save();
@@ -129,7 +129,7 @@ class ImportPersonnel extends Command
             $lims = $r['PERSONNEL'];
             $skip = $this->isSystemAccount($lims, $r['TITLE'], $r['FULLNAME']);
             $provided = strtolower(trim($r['EMAIL']));
-            [$first, $last] = $this->splitName($r['FULLNAME'], $provided);
+            [$first, $last] = $this->splitName($r['FULLNAME'], $lims, $provided);
             $email = $provided;
             if ($email === '' && $first !== '' && $last !== '') {
                 $email = $this->generateEmail($first, $last);
@@ -155,10 +155,11 @@ class ImportPersonnel extends Command
         return false;
     }
 
-    /** Split a full name into [first, last]. Handles "Last, First" and strips noise.
-     *  When a provided email in firstname.lastname form disagrees with the parsed order
-     *  (same two tokens, swapped), trust the email order. */
-    protected function splitName(string $full, string $providedEmail = ''): array
+    /** Split a full name into [first, last].
+     *  Strongest signal: LIMS username = first-initial + full last name, so the name token
+     *  that the LIMS username ends with is the LAST name. Falls back to a provided email in
+     *  firstname.lastname form, then to positional order. */
+    protected function splitName(string $full, string $lims = '', string $providedEmail = ''): array
     {
         $full = trim($full);
         $full = preg_replace('/\(.*?\)/u', '', $full);
@@ -166,30 +167,43 @@ class ImportPersonnel extends Command
         $full = trim(preg_replace('/\s+/', ' ', $full));
         if ($full === '') return ['', ''];
 
+        // initial positional split (handles "Last, First")
         if (str_contains($full, ',')) {
             [$last, $first] = array_pad(explode(',', $full, 2), 2, '');
-            $first = Str::title(trim($first));
-            $last = Str::title(trim($last));
+            $first = trim($first); $last = trim($last);
         } else {
             $parts = preg_split('/\s+/', $full);
-            $first = Str::title(array_shift($parts));
-            $last = Str::title(implode(' ', $parts));
+            $first = array_shift($parts);
+            $last = implode(' ', $parts);
         }
 
-        // email-order correction (only for real provided emails)
-        if ($providedEmail !== '' && str_contains($providedEmail, '@astellas.com')) {
-            $local = explode('@', $providedEmail)[0];
-            $tok = array_values(array_filter(explode('.', $local), fn ($t) => $t !== '' && $t !== 'contractor'));
-            if (count($tok) === 2) {
-                $a = strtolower($tok[0]); $b = strtolower($tok[1]);
-                $set = [strtolower($first), strtolower($last)];
-                sort($set); $emailSet = [$a, $b]; sort($emailSet);
+        $alnum = fn ($s) => strtoupper(preg_replace('/[^A-Za-z]/', '', $s));
+        $limsA = $alnum($lims);
+
+        // LIMS suffix check (primary): whichever token the LIMS username ends with is the last name.
+        if ($limsA !== '' && $first !== '' && $last !== '') {
+            $fA = $alnum($first); $lA = $alnum($last);
+            $endsFirst = $fA !== '' && str_ends_with($limsA, $fA);
+            $endsLast  = $lA !== '' && str_ends_with($limsA, $lA);
+            if ($endsLast && ! $endsFirst) {
+                // already first/last; keep
+            } elseif ($endsFirst && ! $endsLast) {
+                [$first, $last] = [$last, $first]; // reversed (e.g. "Patel Prachi" with LIMS PPATEL)
+            }
+        } elseif ($providedEmail !== '' && str_contains($providedEmail, '@astellas.com') && $first !== '' && $last !== '') {
+            // secondary: email order, only when LIMS gave no answer
+            $localTok = array_values(array_filter(explode('.', explode('@', $providedEmail)[0]), fn ($t) => $t !== '' && $t !== 'contractor'));
+            if (count($localTok) === 2) {
+                $a = strtolower($localTok[0]); $b = strtolower($localTok[1]);
+                $set = [strtolower($first), strtolower($last)]; sort($set);
+                $emailSet = [$a, $b]; sort($emailSet);
                 if ($set === $emailSet && [$a, $b] !== [strtolower($first), strtolower($last)]) {
-                    $first = Str::title($a); $last = Str::title($b);
+                    $first = $a; $last = $b;
                 }
             }
         }
-        return [$first, $last];
+
+        return [Str::title($first), Str::title($last)];
     }
 
     protected function generateEmail(string $first, string $last): string
