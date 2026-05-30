@@ -206,6 +206,152 @@ class QaQueue extends Page
 
     /** QA requalification recommendation on the failed/requal path:
      *  full initial (3 runs) or annual requal (1 run). Resets the qualification accordingly. */
+    // ===================== QA SIGN-OFF WIZARD (custom modal) =====================
+    public ?int $wizQid = null;          // qualification under review
+    public string $wizStep = 'review';   // review | pass | fail
+    public string $wizMeaning = 'Approved';
+    public string $wizPassword = '';
+    public string $wizPath = 'requal_three';
+    public bool $wizRetrain = false;
+    public string $wizNote = '';
+
+    public function openSignoff(int $qid): void
+    {
+        $this->wizQid = $qid;
+        $this->wizStep = 'review';
+        $this->wizMeaning = 'Approved';
+        $this->wizPassword = '';
+        $this->wizPath = 'requal_three';
+        $this->wizRetrain = false;
+        $this->wizNote = '';
+    }
+    public function closeSignoff(): void { $this->wizQid = null; }
+    public function openDetermination(int $qid): void { $this->openSignoff($qid); $this->wizStep = 'fail'; }
+    public function wizSetStep(string $s): void { if (in_array($s, ['review','pass','fail'], true)) $this->wizStep = $s; }
+
+    /** Details payload for the wizard's review step. */
+    public function wizData(): ?array
+    {
+        if (! $this->wizQid) return null;
+        $q = Qualification::with('personnel')->find($this->wizQid);
+        if (! $q) return null;
+        $run = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+        $nc = $run ? \App\Models\NonConformance::where('qualification_run_id', $run->id)->first() : null;
+        return [
+            'name' => $q->personnel?->full_name ?? 'Unknown',
+            'employee_id' => $q->personnel?->employee_id,
+            'progress' => $q->runs_completed . ' / ' . $q->runs_required,
+            'type' => $q->type?->label(),
+            'run_uid' => $run?->run_uid,
+            'veeva' => $run?->veeva_doc_number,
+            'veeva_url' => $run?->veeva_url,
+            'lms' => $q->lms_number,
+            'nc' => $nc?->nc_number,
+            'is_subject' => $this->signerIsSubject($q),
+            'esig' => (bool) Setting::get('esig_required', true),
+        ];
+    }
+
+    /** Two-person rule: signer cannot be the person being qualified. */
+    protected function signerIsSubject(Qualification $q): bool
+    {
+        $u = Auth::user();
+        if (! $u || ! $q->personnel_id) return false;
+        $p = \App\Models\Personnel::find($q->personnel_id);
+        if (! $p) return false;
+        return ($p->user_id && $p->user_id === $u->id) || ($p->email && $u->email && strcasecmp($p->email, $u->email) === 0);
+    }
+
+    protected function wizGuard(Qualification $q): bool
+    {
+        if (! $this->canApprove()) { Notification::make()->danger()->title('Not Authorized')->send(); return false; }
+        if ($this->signerIsSubject($q)) {
+            Notification::make()->danger()->title('Two-Person Rule')->body('You cannot sign off your own qualification.')->send();
+            return false;
+        }
+        if ((bool) Setting::get('esig_required', true) && ! Hash::check($this->wizPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+            return false;
+        }
+        return true;
+    }
+
+    /** PASS: final QA sign-off -> Qualified. */
+    public function finalizeSignoff(): void
+    {
+        $q = Qualification::with('personnel')->find($this->wizQid);
+        if (! $q || ! $this->wizGuard($q)) return;
+        ElectronicSignature::create([
+            'signable_type' => Qualification::class, 'signable_id' => $q->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name,
+            'meaning' => $this->wizMeaning ?: 'Approved',
+            'statement' => 'QA sign-off: qualification approved as complete.', 'signed_at' => now(),
+        ]);
+        $q->workflow_stage = WorkflowStage::QaSignoff;
+        $q->stage_changed_at = now();
+        $q->status = 'qualified';
+        if (! $q->qualified_date) $q->qualified_date = now();
+        if (! $q->due_date) $q->due_date = now()->addMonths((int) Setting::get('cycle_months', 12));
+        $q->save();
+        \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Qualified, ['personnel' => $q->personnel, 'qualification' => $q]);
+        $this->wizQid = null;
+        Notification::make()->success()->title('Signed Off')->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
+    }
+
+    /** FAIL: QA determination -> requalification path. */
+    public function finalizeFail(): void
+    {
+        $q = Qualification::with('personnel')->find($this->wizQid);
+        if (! $q || ! $this->wizGuard($q)) return;
+        $three = $this->wizPath === 'requal_three';
+        $retrain = $this->wizRetrain;
+        $q->qa_recommendation = $this->wizPath;
+        $q->qa_recommendation_note = $this->wizNote ?: null;
+        $q->type = $three ? \App\Enums\QualificationType::Initial : \App\Enums\QualificationType::Annual;
+        $q->runs_required = $three ? (int) Setting::get('initial_runs_required', 3) : (int) Setting::get('annual_runs_required', 1);
+        $q->runs_completed = 0;
+        $q->status = \App\Enums\QualificationStatus::Pending;
+        $q->qualified_date = null;
+        $q->due_date = null;
+        $q->cycle_started_at = now()->toDateString();
+        $q->workflow_stage = $retrain ? WorkflowStage::ClassPending : WorkflowStage::ClassComplete;
+        if ($retrain) { $q->class_on_file = false; $q->class_on_file_date = null; }
+        $q->stage_changed_at = now();
+        $q->save();
+        ElectronicSignature::create([
+            'signable_type' => Qualification::class, 'signable_id' => $q->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'QA Determination',
+            'statement' => 'Requalification: ' . ($three ? '3 runs' : '1 run') . ($retrain ? ', class retraining required' : ', class stays on file') . '. ' . $this->wizNote,
+            'signed_at' => now(),
+        ]);
+        $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
+        if ($failedRun) {
+            $failedRun->update([
+                'qa_determination' => $three ? 'fail_requalify' : ($retrain ? 'fail_retrain' : 'fail_redo'),
+                'qa_determined_at' => now(), 'is_complete' => true,
+                'qa_signed_by' => Auth::id(), 'qa_notes' => $this->wizNote ?: null,
+            ]);
+            $q->pending_parent_run_id = $failedRun->id;
+            $q->save();
+        }
+        $existingNc = $failedRun ? \App\Models\NonConformance::where('qualification_run_id', $failedRun->id)->exists() : false;
+        if (! $existingNc) {
+            \App\Models\NonConformance::create([
+                'qualification_id' => $q->id, 'qualification_run_id' => $failedRun?->id, 'personnel_id' => $q->personnel_id,
+                'nc_type' => 'failed_run', 'status' => 'open', 'observed_date' => now()->toDateString(), 'created_by' => Auth::id(),
+                'summary' => 'Opened from QA determination (' . ($three ? '3-run' : '1-run') . ' requalification' . ($retrain ? ', retraining required' : '') . '). ' . $this->wizNote,
+            ]);
+            \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
+        }
+        $bookedMsg = '';
+        if (! $retrain && app(\App\Services\AutoScheduler::class)->bookNext($q->fresh())) {
+            $bookedMsg = ' Auto-booked for the next available run day.';
+        }
+        $this->wizQid = null;
+        Notification::make()->success()->title('Determination Recorded')
+            ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run') . ($retrain ? ' + class retraining.' : '.') . $bookedMsg)->send();
+    }
+
     public function recommendAction(): Action
     {
         return Action::make('recommend')

@@ -105,10 +105,10 @@
                             @endforeach
                         </select>
                         @if($canApprove)
-                            {{ ($this->signOffAction)(['id' => $q->id]) }}
-                            <button wire:click="markFailed({{ $q->id }})" class="sb-act sb-act-red">Fail</button>
+                            <button type="button" wire:click="openSignoff({{ $q->id }})" class="gqs-btn gqs-btn-primary" style="padding:7px 14px;">Review / Sign-off</button>
+                        @else
+                            <span class="gqs-pill gqs-pill-purple">Pending QA</span>
                         @endif
-                        <a href="{{ route('print.approval', $q->id) }}" target="_blank" class="sb-act" style="background:#1C1C21;color:#fff;text-decoration:none;">Approval Form</a>
                     </div>
                 </div>
             @empty<div class="gqs-empty">Nothing Awaiting Sign-off.</div>@endforelse
@@ -129,7 +129,7 @@
                         @if($nc)<span class="gqs-pill gqs-pill-red" style="margin-left:6px;">NC {{ $nc->nc_number }}@if($nc->trackwise_id) · TW {{ $nc->trackwise_id }}@endif</span>@endif
                     </span>
                     @if($canApprove)
-                        {{ ($this->recommendAction)(['id' => $q->id]) }}
+                        <button type="button" wire:click="openDetermination({{ $q->id }})" class="gqs-btn" style="background:#C8102E;color:#fff;padding:6px 13px;">QA Determination</button>
                     @else
                         <span class="gqs-pill gqs-pill-red">Determination Pending</span>
                     @endif
@@ -145,6 +145,68 @@
         .sb-act-green{background:#2E7D5B;} .sb-act-green:hover{background:#246148;}
         .sb-act-red{background:#C8102E;} .sb-act-red:hover{background:#9A0C23;}
     </style>
+
+    {{-- QA Sign-off wizard --}}
+    @php $wz = $this->wizData(); @endphp
+    @if($wz)
+        <div class="gqs-modal-overlay" wire:click.self="closeSignoff">
+            <div class="gqs-modal" style="width:560px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-clipboard-document-check"/></span>QA Sign-off · {{ $wz['name'] }}</div>
+                <div class="gqs-modal-body">
+                    {{-- Step indicator --}}
+                    <div style="display:flex;gap:6px;margin-bottom:4px;">
+                        <span class="gqs-pill {{ $wizStep==='review'?'gqs-pill-purple':'' }}">1 · Review</span>
+                        <span class="gqs-pill {{ in_array($wizStep,['pass','fail'])?'gqs-pill-purple':'' }}">2 · Decision</span>
+                    </div>
+
+                    @if($wizStep === 'review')
+                        <div class="gqs-tbl" style="display:block;">
+                            <div style="display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:13px;">
+                                <div style="color:var(--gqs-text-dim,#6A6A72);">Employee</div><div>{{ $wz['employee_id'] }}</div>
+                                <div style="color:var(--gqs-text-dim,#6A6A72);">Cycle</div><div>{{ $wz['type'] }} · {{ $wz['progress'] }} runs</div>
+                                <div style="color:var(--gqs-text-dim,#6A6A72);">Run</div><div>{{ $wz['run_uid'] ?: '—' }}</div>
+                                <div style="color:var(--gqs-text-dim,#6A6A72);">Veeva</div><div>@if($wz['veeva'])@if($wz['veeva_url'])<a href="{{ $wz['veeva_url'] }}" target="_blank" style="color:#A4123F;font-weight:700;">{{ $wz['veeva'] }} ↗</a>@else {{ $wz['veeva'] }} @endif @else <span style="color:#C8102E;">Not entered</span> @endif</div>
+                                <div style="color:var(--gqs-text-dim,#6A6A72);">LMS Number</div><div>{{ $wz['lms'] ?: '—' }}</div>
+                                @if($wz['nc'])<div style="color:var(--gqs-text-dim,#6A6A72);">Non-Conformance</div><div><span class="gqs-pill gqs-pill-red">{{ $wz['nc'] }}</span></div>@endif
+                            </div>
+                        </div>
+                        @if($wz['is_subject'])
+                            <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;">Two-person rule: you cannot sign off your own qualification.</div>
+                        @endif
+                    @elseif($wizStep === 'pass')
+                        <div style="font-size:13px;line-height:1.5;">By signing, I, <strong>{{ auth()->user()->name }}</strong>, certify I have reviewed this qualification record and approve it as complete. This electronic signature is the legally binding equivalent of my handwritten signature.</div>
+                        <div><label class="gqs-flbl">Signature Meaning</label><input type="text" wire:model="wizMeaning" class="gqs-fld"></div>
+                        @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
+                    @else
+                        <div><label class="gqs-flbl">Requalification Path</label>
+                            <select wire:model="wizPath" class="gqs-fld">
+                                <option value="requal_three">Full requalification · 3 successful runs</option>
+                                <option value="requal_one">Annual requalification · 1 successful run</option>
+                            </select>
+                        </div>
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" wire:model="wizRetrain"> Require Gowning Class Retraining (clears class on file)</label>
+                        <div><label class="gqs-flbl">Determination Note</label><input type="text" wire:model="wizNote" class="gqs-fld"></div>
+                        @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeSignoff" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <span style="display:flex;gap:8px;">
+                        @if($wizStep === 'review')
+                            <button type="button" wire:click="wizSetStep('fail')" class="gqs-btn" style="background:#C8102E;color:#fff;" @disabled($wz['is_subject'])>Fail</button>
+                            <button type="button" wire:click="wizSetStep('pass')" class="gqs-btn gqs-btn-primary" @disabled($wz['is_subject'])>Pass · Sign Off</button>
+                        @elseif($wizStep === 'pass')
+                            <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
+                            <button type="button" wire:click="finalizeSignoff" class="gqs-btn gqs-btn-primary">Sign Off → Qualified</button>
+                        @else
+                            <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
+                            <button type="button" wire:click="finalizeFail" class="gqs-btn" style="background:#C8102E;color:#fff;">Record Determination</button>
+                        @endif
+                    </span>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <x-filament-actions::modals />
 </x-filament-panels::page>
