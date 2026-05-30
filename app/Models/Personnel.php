@@ -18,12 +18,13 @@ class Personnel extends Model
 
     protected $fillable = [
         'employee_id', 'first_name', 'last_name', 'email',
+        'phone', 'shift', 'supervisor', 'hire_date', 'badge_id', 'notes',
         'department', 'job_title', 'is_active', 'user_id',
     ];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return ['is_active' => 'boolean', 'hire_date' => 'date'];
     }
 
     public function getFullNameAttribute(): string

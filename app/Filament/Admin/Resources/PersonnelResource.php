@@ -7,6 +7,9 @@ use App\Models\Personnel;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\IconColumn;
@@ -52,12 +55,52 @@ class PersonnelResource extends Resource
                     TextInput::make('first_name')->required(),
                     TextInput::make('last_name')->required(),
                     TextInput::make('email')->email(),
+                    TextInput::make('phone')->tel(),
+                    TextInput::make('badge_id')->label('Badge ID'),
+                    DatePicker::make('hire_date')->label('Hire Date'),
                 ]),
             Section::make('Assignment')->icon('heroicon-o-link')
                 ->columns(2)
                 ->schema([
-                    TextInput::make('department'),
-                    TextInput::make('job_title')->label('Job Title'),
+                    Select::make('department')->label('Department')
+                        ->options(fn () => \App\Models\Department::where('is_active', true)->orderBy('sort')->pluck('name', 'name')->all())
+                        ->searchable()->createOptionForm([TextInput::make('name')->required()])
+                        ->createOptionUsing(fn (array $data) => \App\Models\Department::create($data + ['is_active' => true])->name),
+                    Select::make('job_title')->label('Job Title')
+                        ->options(fn () => \App\Models\JobTitle::where('is_active', true)->orderBy('sort')->pluck('name', 'name')->all())
+                        ->searchable()->createOptionForm([TextInput::make('name')->required()])
+                        ->createOptionUsing(fn (array $data) => \App\Models\JobTitle::create($data + ['is_active' => true])->name),
+                    TextInput::make('shift'),
+                    TextInput::make('supervisor'),
+                    Textarea::make('notes')->rows(2)->columnSpanFull(),
+                ]),
+            Section::make('Qualification Setup')->icon('heroicon-o-shield-check')
+                ->description('Seed current status manually for first-time setup (before import). Updates the run engine.')
+                ->columns(2)
+                ->relationship('qualification')
+                ->schema([
+                    Select::make('type')->label('Qualification Type')
+                        ->options(['initial' => 'Initial', 'annual' => 'Annual'])->default('initial'),
+                    Select::make('status')->label('Current Status')
+                        ->options([
+                            'pending' => 'Pending', 'in_progress' => 'In Progress',
+                            'qualified' => 'Qualified', 'lapsed' => 'Lapsed',
+                        ])->default('pending'),
+                    Select::make('workflow_stage')->label('Workflow Stage')
+                        ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
+                        ->default('class_pending')
+                        ->helperText('Where they currently sit in the pipeline.'),
+                    DatePicker::make('due_date')->label('Qualification Due Date')
+                        ->helperText('Next requalification due date.'),
+                    TextInput::make('runs_required')->label('Runs Required')->numeric()->default(3),
+                    TextInput::make('runs_completed')->label('Runs Already Completed')->numeric()->default(0)
+                        ->helperText('How many successful runs are already on file.'),
+                    DatePicker::make('qualified_date')->label('Date Last Qualified'),
+                    Toggle::make('class_on_file')->label('Gowning Class Already Completed')
+                        ->helperText('On = class is on file (will not be flagged to retake). Set for anyone who already took it.')
+                        ->live(),
+                    DatePicker::make('class_on_file_date')->label('Class Completion Date')
+                        ->visible(fn ($get) => $get('class_on_file')),
                 ]),
         ]);
     }
