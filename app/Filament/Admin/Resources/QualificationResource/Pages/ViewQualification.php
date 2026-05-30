@@ -1,8 +1,151 @@
 <?php
+
 namespace App\Filament\Admin\Resources\QualificationResource\Pages;
+
+use App\Enums\Capability;
 use App\Filament\Admin\Resources\QualificationResource;
+use App\Models\QualificationRun;
+use App\Models\Setting;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Infolists\Components\IconEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+
 class ViewQualification extends ViewRecord
 {
     protected static string $resource = QualificationResource::class;
+
+    public function getTitle(): string
+    {
+        return $this->record->personnel?->full_name ?? 'Qualification';
+    }
+
+    public function infolist(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Person')->columns(3)->schema([
+                TextEntry::make('personnel.full_name')->label('Name')->weight('bold'),
+                TextEntry::make('personnel.employee_id')->label('Employee ID')->placeholder('—'),
+                TextEntry::make('personnel.department')->label('Department')->placeholder('—'),
+                TextEntry::make('personnel.job_title')->label('Job Title')->placeholder('—'),
+                TextEntry::make('personnel.email')->label('Email')->placeholder('—')->copyable(),
+                IconEntry::make('class_on_file')->label('Class On File')->boolean(),
+            ]),
+
+            Section::make('Qualification')->columns(3)->schema([
+                TextEntry::make('type')->label('Type')->badge()
+                    ->formatStateUsing(fn ($s) => $s?->label())
+                    ->color(fn ($s) => match ($s?->value) { 'annual' => 'success', 'initial' => 'info', default => 'gray' }),
+                TextEntry::make('status')->label('Status')->badge()
+                    ->formatStateUsing(fn ($s) => $s?->label())
+                    ->color(fn ($s) => $s?->color() ?? 'gray'),
+                TextEntry::make('workflow_stage')->label('Workflow Stage')->badge()
+                    ->formatStateUsing(fn ($s) => $s?->label())
+                    ->color(fn ($s) => $s?->color() ?? 'gray'),
+                TextEntry::make('passes')->label('Passes This Cycle')
+                    ->state(fn ($record) => $record->runs_completed . ' / ' . $record->runs_required)
+                    ->badge()->color('warning'),
+                TextEntry::make('qualified_date')->label('Last Qualified')
+                    ->state(fn ($record) => $record->qualified_date?->gmp() ?? '—'),
+                TextEntry::make('due_date')->label('Next Due')
+                    ->state(fn ($record) => $record->due_date?->gmp() ?? '—')
+                    ->badge()->color(fn ($record) => $record->isPastDue() ? 'danger' : 'gray'),
+                TextEntry::make('class_on_file_date')->label('Class Date')
+                    ->state(fn ($record) => $record->class_on_file_date?->gmp() ?? '—'),
+                TextEntry::make('cycle_started_at')->label('Cycle Started')
+                    ->state(fn ($record) => $record->cycle_started_at?->gmp() ?? '—'),
+                TextEntry::make('qa_recommendation')->label('Last QA Determination')->placeholder('—')
+                    ->formatStateUsing(fn ($s) => $s ? Str::title(str_replace('_', ' ', $s)) : null),
+            ]),
+
+            Section::make('Run History')->schema([
+                RepeatableEntry::make('runHistory')
+                    ->label('')
+                    ->state(fn ($record) => QualificationRun::where('personnel_id', $record->personnel_id)
+                        ->orderByDesc('run_date')->orderByDesc('id')->limit(20)->get()
+                        ->map(fn ($r) => [
+                            'date' => $r->run_date?->gmp() ?? '—',
+                            'cycle' => $r->cycle_type instanceof \BackedEnum ? ucfirst($r->cycle_type->value) : (string) $r->cycle_type,
+                            'result' => ucfirst($r->result?->value ?? (string) $r->result),
+                            'worklist' => $r->lims_worklist_id ?: '—',
+                            'veeva' => $r->veeva_doc_number ?: '—',
+                        ])->all())
+                    ->columns(5)
+                    ->schema([
+                        TextEntry::make('date')->label('Date'),
+                        TextEntry::make('cycle')->label('Cycle'),
+                        TextEntry::make('result')->label('Result')->badge()
+                            ->color(fn ($s) => match (strtolower($s)) { 'pass' => 'success', 'fail' => 'danger', default => 'warning' }),
+                        TextEntry::make('worklist')->label('LIMS Worklist'),
+                        TextEntry::make('veeva')->label('Veeva'),
+                    ]),
+            ])->collapsible(),
+        ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $canApprove = fn () => (bool) (Auth::user()?->hasCapability(Capability::QaApprove));
+
+        return [
+            Action::make('override_due')
+                ->label('Override Due Date')
+                ->icon('heroicon-m-calendar')
+                ->color('warning')
+                ->visible($canApprove)
+                ->schema([
+                    DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('New Due Date')->required(),
+                    Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
+                ])
+                ->fillForm(fn ($record) => ['due_date' => $record->due_date])
+                ->action(function ($record, array $data) {
+                    $old = $record->due_date?->toDateString();
+                    $record->update(['due_date' => $data['due_date']]);
+                    $record->comments()->create([
+                        'user_id' => Auth::id(),
+                        'author_name' => Auth::user()?->name,
+                        'body' => "QA overrode due date ({$old} to {$data['due_date']}). Reason: {$data['reason']}",
+                    ]);
+                    Notification::make()->success()->title('Due date updated')->send();
+                }),
+
+            Action::make('determination')
+                ->label('QA Determination')
+                ->icon('heroicon-m-clipboard-document-check')
+                ->color('info')
+                ->visible($canApprove)
+                ->schema([
+                    Select::make('outcome')->label('Determination')->options([
+                        'retrain' => 'Require retraining (gowning class again)',
+                        'requalify' => 'Requalify (reset to 3 initial runs)',
+                        'continue' => 'Continue current cycle (no change)',
+                    ])->required(),
+                    Textarea::make('note')->label('QA Note')->required()->rows(3),
+                ])
+                ->action(function ($record, array $data) {
+                    $record->comments()->create([
+                        'user_id' => Auth::id(),
+                        'author_name' => Auth::user()?->name,
+                        'body' => "QA determination: {$data['outcome']}. {$data['note']}",
+                    ]);
+                    if ($data['outcome'] === 'requalify') {
+                        $record->update([
+                            'status' => 'pending',
+                            'runs_completed' => 0,
+                            'runs_required' => (int) Setting::get('initial_runs_required', 3),
+                        ]);
+                    }
+                    Notification::make()->success()->title('Determination recorded')->send();
+                }),
+        ];
+    }
 }
