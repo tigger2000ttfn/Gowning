@@ -26,6 +26,30 @@ class QualificationSeeder
         $status = $q->status instanceof \BackedEnum ? $q->status->value : $q->status;
         $wanted = max(0, (int) $q->runs_completed);
 
+        // If the admin entered individual real runs (via the Run History repeater),
+        // those are the source of truth. Recompute from them and do NOT lay down
+        // synthetic seed passes from the count (which would otherwise duplicate history).
+        $realRuns = QualificationRun::where('personnel_id', $q->personnel_id)
+            ->where(function ($w) { $w->whereNull('is_seed')->orWhere('is_seed', false); })
+            ->count();
+        if ($realRuns > 0) {
+            // Remove any old synthetic seeds so they don't double-count with real runs.
+            QualificationRun::where('personnel_id', $q->personnel_id)->where('is_seed', true)->delete();
+            // Anchor the cycle at the earliest real run so the engine replays the whole history.
+            $first = QualificationRun::where('personnel_id', $q->personnel_id)->orderBy('run_date')->orderBy('id')->first();
+            if ($first && ! $q->cycle_started_at) {
+                $q->cycle_started_at = $first->run_date?->toDateString();
+            }
+            // Entering real passes implies the class was done.
+            if (! $q->class_on_file) {
+                $q->class_on_file = true;
+                if (! $q->class_on_file_date) $q->class_on_file_date = now()->toDateString();
+            }
+            $q->save();
+            $this->finish($q);
+            return;
+        }
+
         // Nothing to seed for a fresh/pending person with zero runs.
         if ($wanted === 0 && ! in_array($status, ['qualified', 'lapsed'], true)) {
             return;

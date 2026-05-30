@@ -11,6 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
@@ -113,16 +114,48 @@ class PersonnelResource extends Resource
                                     ->default('class_pending')
                                     ->helperText('Where they currently sit in the pipeline.'),
                                 DatePicker::make('due_date')->label('Qualification Due Date')
-                                    ->helperText('Calculated from the last qualifying run (Date Last Qualified + cycle). Set Date Last Qualified to drive this.'),
+                                    ->helperText('Auto-fills as Date Last Qualified + the cycle length. You can override it.'),
                                 TextInput::make('runs_required')->label('Runs Required')->numeric()->default(3),
                                 TextInput::make('runs_completed')->label('Runs Already Completed')->numeric()->default(0)
-                                    ->helperText('Successful runs on file for the current cycle. Saving creates that many run-history entries dated within the last year, so you do not back-enter older runs. Entering anyone as qualified/in-progress marks their gowning class as on file.'),
-                                DatePicker::make('qualified_date')->label('Date Last Qualified'),
+                                    ->helperText('Quick count for the current cycle if you are not entering each run below. Saving creates that many run-history entries. Leave at 0 if you use the Run History list below instead.'),
+                                DatePicker::make('qualified_date')->label('Date Last Qualified')
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if (! $state) return;
+                                        $cycle = (int) \App\Models\Setting::get('cycle_months', 12);
+                                        $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
+                                    })
+                                    ->helperText('Entering this auto-calculates the Due Date (this date + cycle).'),
                                 Toggle::make('class_on_file')->label('Gowning Class Already Completed')
                                     ->helperText('On = class is on file (will not be flagged to retake). Set for anyone who already took it.')
                                     ->live(),
                                 DatePicker::make('class_on_file_date')->label('Class Completion Date')
                                     ->visible(fn ($get) => $get('class_on_file')),
+                            ]),
+                        Section::make('Run History')
+                            ->description('Enter each historical qualification run to build a true per-person history. The engine recomputes status and due date from these passes.')
+                            ->schema([
+                                Repeater::make('runs')
+                                    ->label(false)
+                                    ->relationship('runs')
+                                    ->columns(3)
+                                    ->itemLabel(fn (array $state): ?string => ($state['run_date'] ?? 'New run') . ' · ' . ucfirst($state['result'] ?? 'pass'))
+                                    ->addActionLabel('Add A Past Run')
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->defaultItems(0)
+                                    ->helperText('Use this instead of the quick "Runs Already Completed" count above when you want real dates. Each pass counts toward qualification.')
+                                    ->schema([
+                                        DatePicker::make('run_date')->label('Run Date')->required(),
+                                        Select::make('result')->label('Result')
+                                            ->options(['pass' => 'Pass', 'fail' => 'Fail'])
+                                            ->default('pass')->required(),
+                                        Select::make('cycle_type')->label('Cycle')
+                                            ->options(['initial' => 'Initial', 'annual' => 'Annual'])
+                                            ->default('initial'),
+                                        TextInput::make('lims_worklist_id')->label('LIMS Worklist (Optional)'),
+                                        TextInput::make('notes')->label('Notes (Optional)')->columnSpan(2),
+                                    ]),
                             ]),
                     ]),
             ])->columnSpanFull()->skippable(),
