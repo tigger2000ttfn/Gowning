@@ -10,8 +10,8 @@ namespace App\Filament\Admin\Concerns;
  */
 trait GqsListHero
 {
-    protected string $view = 'filament.resource-list';
+    public function getView(): string { return 'filament.resource-list'; }
 
-    public function getHeading(): string { return ''; }     // hide default heading (hero replaces it)
-    public function getSubheading(): ?string { return null; } // hero carries the subtitle
+    public function getHeading(): string { return ''; }       // hide default heading (hero replaces it)
+    public function getSubheading(): ?string { return null; }  // hero carries the subtitle
 }
