@@ -27,9 +27,9 @@ class QaQueue extends Page
     public static function canViewAny(): bool { return static::allowed(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
-    protected static ?string $navigationLabel = 'QA Sign-off Queue';
-    protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 4;
+    protected static ?string $navigationLabel = 'QA Run Sign-off';
+    protected static string|\UnitEnum|null $navigationGroup = 'Review';
+    protected static ?int $navigationSort = 2;
     protected static ?string $title = 'QA Sign-off Queue';
     public function getHeading(): string { return ''; }
 

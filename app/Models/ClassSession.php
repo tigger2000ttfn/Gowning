@@ -14,7 +14,7 @@ class ClassSession extends Model
 
     protected $fillable = [
         'training_class_id', 'session_date', 'start_time', 'end_time',
-        'location', 'instructor', 'capacity', 'status', 'assigned_instructor_id',
+        'location', 'instructor', 'capacity', 'status', 'assigned_instructor_id', 'attendance_submitted_at', 'attendance_submitted_by',
     ];
 
     protected function casts(): array
@@ -22,6 +22,7 @@ class ClassSession extends Model
         return [
             'session_date' => 'date',
             'capacity' => 'integer',
+            'attendance_submitted_at' => 'datetime',
         ];
     }
 
@@ -46,4 +47,5 @@ class ClassSession extends Model
     }
 
     public function instructorUser() { return $this->belongsTo(\App\Models\User::class, 'assigned_instructor_id'); }
+    public function submittedBy() { return $this->belongsTo(\App\Models\User::class, 'attendance_submitted_by'); }
 }

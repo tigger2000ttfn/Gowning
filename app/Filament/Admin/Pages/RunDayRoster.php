@@ -485,6 +485,71 @@ class RunDayRoster extends Page
         Notification::make()->success()->title('Marked no-show')->send();
     }
 
+    /**
+     * Submit a whole run day: verify every still-scheduled attendee has a LIMS worklist,
+     * then mark them present (performed) in one action and lock the day. This is the gate
+     * that checks the worklist entry was done before the run is recorded.
+     */
+    public function submitRunDay(int $slotId): void
+    {
+        $slot = RunSlot::with('reservations.personnel')->find($slotId);
+        if (! $slot) return;
+        if ($slot->attendance_submitted_at) {
+            Notification::make()->warning()->title('Already submitted')->send();
+            return;
+        }
+
+        // Only people still scheduled (not yet present / no-show / rescheduled) need processing.
+        $pending = $slot->reservations->filter(function ($r) {
+            $st = $r->status instanceof \BackedEnum ? $r->status->value : $r->status;
+            return ! in_array($st, ['completed', 'no_show', 'rescheduled'], true);
+        });
+
+        // Verify each has a worklist before submitting.
+        $missing = [];
+        foreach ($pending as $r) {
+            $wl = $this->normalizeWorklist($this->worklists[$r->id] ?? $r->lims_worklist_id ?? '');
+            if ($wl === '') $missing[] = $r->personnel?->full_name ?? ('#' . $r->id);
+        }
+        if (! empty($missing)) {
+            Notification::make()->warning()->title('LIMS worklist missing')
+                ->body('Enter a worklist for: ' . implode(', ', $missing) . ' before submitting.')
+                ->persistent()->send();
+            return;
+        }
+
+        // Mark each present (markPerformed enforces the classroom-QA gate per person).
+        $blocked = [];
+        foreach ($pending as $r) {
+            $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
+            if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
+            $this->markPerformed($r->id);
+        }
+        if (! empty($blocked)) {
+            Notification::make()->warning()->title('Some not classroom-complete')
+                ->body('Not submitted (classroom not QA-approved): ' . implode(', ', $blocked) . '. Others were submitted.')
+                ->persistent()->send();
+        }
+
+        $slot->attendance_submitted_at = now();
+        $slot->attendance_submitted_by = Auth::id();
+        $slot->save();
+
+        Notification::make()->success()->title('Run day submitted')
+            ->body('Attendees marked present and the day is locked.')->send();
+    }
+
+    /** Reopen a submitted run day to correct attendance. */
+    public function reopenRunDay(int $slotId): void
+    {
+        $slot = RunSlot::find($slotId);
+        if (! $slot) return;
+        $slot->attendance_submitted_at = null;
+        $slot->attendance_submitted_by = null;
+        $slot->save();
+        Notification::make()->success()->title('Run day reopened')->send();
+    }
+
     public function markPerformed(int $reservationId): void
     {
         $res = Reservation::with('personnel')->find($reservationId);

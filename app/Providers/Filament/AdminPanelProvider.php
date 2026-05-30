@@ -86,6 +86,7 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 'Qualifications',
                 'Classroom',
+                'Review',
             ])
             ->widgets([])
             ->middleware([

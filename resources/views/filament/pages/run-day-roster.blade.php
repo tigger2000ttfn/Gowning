@@ -287,11 +287,26 @@
                         <x-filament::icon icon="heroicon-m-beaker"/>
                         {{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }}@endif
                     </span>
-                    <span style="font-size:12px;font-weight:600;opacity:.92;">{{ $slot->reservations->count() }} attending · cap {{ $slot->capacity }}</span>
+                    <span style="font-size:12px;font-weight:600;opacity:.92;display:flex;align-items:center;gap:10px;">
+                        {{ $slot->reservations->count() }} attending · cap {{ $slot->capacity }}
+                        @if($slot->attendance_submitted_at)
+                            <span class="gqs-pill gqs-pill-green">Submitted</span>
+                        @endif
+                    </span>
                 </div>
                 <div class="gqs-panel-body">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
-                        <div style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:10px;">Each person has their own unique LIMS worklist (EM-...); all of that person's runs batch onto it. Enter it once and it carries across their runs. Required before marking present.</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+                            <div style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Each person has their own unique LIMS worklist (EM-...); all of that person's runs batch onto it. Enter it once and it carries across their runs. Required before marking present.</div>
+                            @if(! $slot->attendance_submitted_at)
+                                <button type="button" wire:click="submitRunDay({{ $slot->id }})"
+                                        wire:confirm="Submit this run day? Everyone scheduled with a worklist will be marked present and the day will be locked."
+                                        class="rd-act rd-act-magenta" style="height:34px;">Submit Attendance</button>
+                            @else
+                                <button type="button" wire:click="reopenRunDay({{ $slot->id }})"
+                                        wire:confirm="Reopen this run day to correct attendance?" class="rd-act" style="background:#6A6A72;height:34px;">Reopen</button>
+                            @endif
+                        </div>
                         <table class="gqs-tbl">
                             <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>LIMS Worklist</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
