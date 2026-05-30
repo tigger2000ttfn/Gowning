@@ -75,12 +75,14 @@ class StatusBoard extends Page
                 'cards' => $cards,
             ];
         }
-        // Failed lane at the end
-        $failed = ($byStage['failed'] ?? collect())->map(fn ($q) => [
-            'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
-            'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
-        ])->values()->all();
-        $out[] = ['key' => 'failed', 'label' => WorkflowStage::Failed->label(), 'color' => WorkflowStage::Failed->color(), 'cards' => $failed];
+        // Failed lane at the end (toggleable in Settings)
+        if ((bool) \App\Models\Setting::get('board_show_failed', true)) {
+            $failed = ($byStage['failed'] ?? collect())->map(fn ($q) => [
+                'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
+                'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
+            ])->values()->all();
+            $out[] = ['key' => 'failed', 'label' => WorkflowStage::Failed->label(), 'color' => WorkflowStage::Failed->color(), 'cards' => $failed];
+        }
 
         return $out;
     }

@@ -61,6 +61,8 @@ class Settings extends Page implements HasForms
             'esig_required'         => (bool) Setting::get('esig_required', true),
             'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
             'email_enabled'         => (bool) Setting::get('email_enabled', false),
+            'board_group_by'        => Setting::get('board_group_by', 'none'),
+            'board_show_failed'     => (bool) Setting::get('board_show_failed', true),
             'mail_from_address'     => Setting::get('mail_from_address', ''),
             'mail_from_name'        => Setting::get('mail_from_name', 'MATC Gowning Qualification'),
             'mail_host'             => Setting::get('mail_host', ''),
@@ -128,6 +130,16 @@ class Settings extends Page implements HasForms
                     TextInput::make('notify_days_before')->label('Due-date Reminder Days')
                         ->helperText('Comma-separated days before due to remind (e.g. 60,30,7).'),
                 ]),
+                Section::make('Board & Display')->icon('heroicon-o-view-columns')->columns(2)
+                    ->description('Defaults for the Status Board kanban.')
+                    ->schema([
+                        \Filament\Forms\Components\Select::make('board_group_by')->label('Default Swimlane Grouping')
+                            ->options(['none' => 'None (single board)', 'department' => 'By Department', 'cycle_type' => 'By Cycle Type (Initial / Annual)'])
+                            ->default('none')
+                            ->helperText('How the Status Board groups cards into horizontal swimlanes by default.'),
+                        Toggle::make('board_show_failed')->label('Show Failed Lane')->default(true)
+                            ->helperText('Include the off-pipeline Failed column on the board.'),
+                    ]),
                 Section::make('Email Delivery')->icon('heroicon-o-at-symbol')->columns(2)
                     ->description('Outbound mail relay. Emails queue until this is reachable, then send automatically.')
                     ->schema([
