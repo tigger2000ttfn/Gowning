@@ -167,8 +167,9 @@ class ClassBoard extends Page
     /** Drag an enrollment to a new status. 'completed' advances the person's workflow stage. */
     public ?array $detail = null;
 
-    public function showDetail(int $id): void
+    public function showDetail(?int $id): void
     {
+        if (! $id) { $this->detail = null; return; }
         $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass', 'classSession.instructorUser'])->find($id);
         if (! $e) { $this->detail = null; return; }
         $p = $e->personnel;

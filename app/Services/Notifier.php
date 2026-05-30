@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Enums\Capability;
 use App\Models\User;
 use Filament\Notifications\Notification;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 
 /**
  * Sends Filament database notifications to all users holding a given capability.

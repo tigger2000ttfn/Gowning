@@ -20,7 +20,7 @@
                                 <td>{{ $res->personnel?->employee_id }}</td>
                                 <td>{{ $res->personnel?->full_name }}</td>
                                 <td>{{ $res->personnel?->department }}</td>
-                                <td>{{ ucfirst($res->status) }}</td>
+                                <td>{{ $res->status?->label() ?? ucfirst((string)($res->status?->value ?? $res->status)) }}</td>
                                 <td>{{ $res->lims_worklist_id ?? '' }}</td>
                                 <td>{{ $lr?->veeva_doc_number ?? '' }}</td>
                                 <td>&nbsp;</td>
