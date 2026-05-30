@@ -136,17 +136,24 @@ class RunDayRoster extends Page
                         ]
                     );
                 }
-                // advance the person's workflow stage to Samples Taken
+                // advance the person's workflow stage to Incubating and start the timer
                 if ($res->personnel) {
                     $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
-                    if ($q && in_array($q->workflow_stage?->value, ['run_scheduled', 'run_performed'], true)) {
-                        $q->workflow_stage = \App\Enums\WorkflowStage::SamplesTaken;
+                    if ($q && in_array($q->workflow_stage?->value, ['run_scheduled', 'run_performed', 'samples_taken'], true)) {
+                        $q->workflow_stage = \App\Enums\WorkflowStage::Incubating;
                         $q->stage_changed_at = now();
                         $q->save();
+                        // stamp incubation start on the latest run
+                        $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
+                            ->latest('run_date')->latest('id')->first();
+                        if ($run && ! $run->incubation_started_at) {
+                            $run->incubation_started_at = now();
+                            $run->save();
+                        }
                     }
                 }
                 Notification::make()->success()->title('Samples recorded')
-                    ->body(($res->personnel?->full_name ?? 'Operator') . ', ' . count($this->samplingSites()) . ' sites logged.')->send();
+                    ->body(($res->personnel?->full_name ?? 'Operator') . ', ' . count($this->samplingSites()) . ' sites logged. Incubation started.')->send();
             });
     }
 }
