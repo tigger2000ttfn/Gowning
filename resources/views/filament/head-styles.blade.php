@@ -20,6 +20,10 @@
         border-radius: 9px;
     }
     .fi-topbar .fi-icon-btn:hover { background-color: rgba(255,255,255,.12) !important; }
+    /* Brand text MUST be #444 - override the topbar 'a' color rule above */
+    .fi-topbar a .gqs-brand-text,
+    .fi-topbar .gqs-brand-text,
+    .gqs-brand-text { color: #444 !important; }
 
     /* Narrower sidebar (was 320px) + smaller nav font */
     :root, .fi-layout { --sidebar-width: 14rem !important; }
