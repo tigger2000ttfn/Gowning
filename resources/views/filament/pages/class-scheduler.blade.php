@@ -57,10 +57,14 @@
                                 @foreach($this->openSessionOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
                             </select>
                         </div>
+                        <div style="display:flex;align-items:center;gap:10px;color:var(--gqs-text-dim,#9A9AA2);font-size:11.5px;font-weight:600;">
+                            <span style="flex:1;height:1px;background:var(--gqs-border,#E2E2E6);"></span> OR <span style="flex:1;height:1px;background:var(--gqs-border,#E2E2E6);"></span>
+                        </div>
+                        <button type="button" wire:click="scheduleNextAvailable" class="gqs-btn gqs-btn-ghost" style="width:100%;justify-content:center;">Book Next Available</button>
                     </div>
                     <div class="gqs-modal-foot">
                         <button type="button" wire:click="$set('showSchedule', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
-                        <button type="button" wire:click="saveSchedule" class="gqs-btn gqs-btn-primary">Schedule</button>
+                        <button type="button" wire:click="saveSchedule" class="gqs-btn gqs-btn-primary">Schedule Selected Date</button>
                     </div>
                 </div>
             </div>
@@ -284,7 +288,7 @@
                             @if($submitted)<span class="gqs-pill gqs-pill-green">Submitted</span>@endif
                         </span>
                     </div>
-                    <div class="gqs-panel-body">
+                    <div class="gqs-panel-body" style="padding:14px 16px;">
                         @if(empty($attendees))
                             <div class="gqs-empty">No One Enrolled Yet. Enrollments Are Managed On Class Reservations.</div>
                         @else
@@ -338,7 +342,8 @@
                             </div>
 
                             @if(! $submitted)
-                                <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
+                                    <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">Save &amp; Close</button>
                                     <button type="button" class="gqs-btn gqs-btn-primary"
                                             wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance To QA</button>
                                 </div>
@@ -456,7 +461,7 @@
         .att-list{display:flex;flex-direction:column;gap:8px;}
         .att-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--gqs-border,#E6E6EA);border-radius:10px;background:var(--gqs-surface,#fff);}
         .dark .att-row{background:#23232B;border-color:#34343E;}
-        .att-who{min-width:170px;}
+        .att-who{flex:1;min-width:170px;}
         .att-name{font-weight:700;font-size:13.5px;color:var(--gqs-text,#1A1A1F);}
         .att-eid{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);}
         .att-toggles{display:flex;gap:6px;}
@@ -468,7 +473,7 @@
         .att-tog.att-att.on:hover,.att-tog.att-no.on:hover{color:#fff;}
         .att-tog.att-res{border-style:dashed;}
         .att-tog.att-res:hover{border-color:#A4123F;color:#A4123F;}
-        .att-note{flex:1;min-width:160px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
+        .att-note{flex:0 1 240px;min-width:150px;max-width:260px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
         .dark .att-note{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
         .att-state{min-width:110px;}
         .att-note-ro{flex:1;font-size:12px;color:var(--gqs-text-dim,#6A6A72);font-style:italic;}

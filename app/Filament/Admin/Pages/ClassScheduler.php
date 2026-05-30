@@ -123,14 +123,29 @@ class ClassScheduler extends Page
             Notification::make()->warning()->title('Pick A Class Date')->send();
             return;
         }
-        $session = \App\Models\ClassSession::find($this->scheduleSessionId);
+        $this->enrollPersonIntoSession((int) $this->scheduleSessionId);
+    }
+
+    public function scheduleNextAvailable(): void
+    {
+        $next = \App\Models\ClassSession::where('status', '!=', 'cancelled')
+            ->whereNull('attendance_submitted_at')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')->get()
+            ->first(fn ($s) => $s->seatsLeft() > 0);
+        if (! $next) { Notification::make()->warning()->title('No Open Session')->body('No future class session has an open seat.')->send(); return; }
+        $this->enrollPersonIntoSession($next->id);
+    }
+
+    protected function enrollPersonIntoSession(int $sessionId): void
+    {
+        $session = \App\Models\ClassSession::find($sessionId);
         $p = \App\Models\Personnel::find($this->schedulePersonnelId);
         if (! $session || ! $p) return;
         if ($session->seatsLeft() <= 0) {
             Notification::make()->warning()->title('Session Full')->send();
             return;
         }
-        // already enrolled in this session?
         $exists = \App\Models\ClassEnrollment::where('class_session_id', $session->id)
             ->where('personnel_id', $p->id)->whereNotIn('status', ['cancelled'])->exists();
         if ($exists) {
