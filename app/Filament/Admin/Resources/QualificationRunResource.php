@@ -73,6 +73,13 @@ class QualificationRunResource extends Resource
                         ->default('Recorded and verified cleanroom qualification run result')
                         ->required(),
                 ]),
+            Section::make('Attachments')->icon('heroicon-o-paper-clip')
+                ->description('Plate photos, signed records, or supporting documents for this run.')
+                ->schema([
+                    \Filament\Forms\Components\SpatieMediaLibraryFileUpload::make('records')
+                        ->collection('records')->multiple()->downloadable()->reorderable()
+                        ->columnSpanFull(),
+                ]),
         ]);
     }
 
