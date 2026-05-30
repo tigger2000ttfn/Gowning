@@ -122,7 +122,8 @@ class ReservationResource extends Resource
                 Action::make('no_show')->icon('heroicon-m-user-minus')->color('danger')
                     ->label('No-show')
                     ->visible(fn (Reservation $r) => $r->status === ReservationStatus::Approved)
-                    ->action(fn (Reservation $r) => $r->update(['status' => ReservationStatus::NoShow])),
+                    ->requiresConfirmation()
+                    ->action(fn (Reservation $r) => app(\App\Services\AutoScheduler::class)->handleNoShow($r)),
                 Action::make('reschedule')->icon('heroicon-m-arrows-right-left')->color('warning')
                     ->label('Reschedule')
                     ->visible(fn (Reservation $r) => in_array($r->status, [ReservationStatus::Requested, ReservationStatus::Approved]))

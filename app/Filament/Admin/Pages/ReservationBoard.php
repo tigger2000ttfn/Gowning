@@ -163,8 +163,12 @@ class ReservationBoard extends Page
         if (! $r) {
             return;
         }
+        if ($toStatus === 'no_show') {
+            app(\App\Services\AutoScheduler::class)->handleNoShow($r);
+            return;
+        }
         $r->status = $toStatus;
-        if (in_array($toStatus, ['approved', 'completed', 'no_show'])) {
+        if (in_array($toStatus, ['approved', 'completed'])) {
             $r->decided_by = Auth::id();
             $r->decided_at = now();
         }

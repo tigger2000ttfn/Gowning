@@ -111,6 +111,60 @@ class AutoScheduler
         return $booked;
     }
 
+    /**
+     * Handle a no-show: mark the reservation, alert scheduling, return the person
+     * to a bookable state, and auto-rebook them into the next available run day.
+     */
+    public function handleNoShow(Reservation $res): void
+    {
+        $res->status = 'no_show';
+        $res->decided_at = now();
+        $res->save();
+
+        $q = Qualification::with('personnel')->where('personnel_id', $res->personnel_id)->first();
+        $person = $res->personnel;
+
+        // return them to ready-to-book (respect class on file)
+        if ($q) {
+            $q->workflow_stage = $q->class_on_file
+                ? \App\Enums\WorkflowStage::ClassComplete
+                : \App\Enums\WorkflowStage::ClassPending;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+
+        // alert the scheduling team
+        \App\Services\Notifier::toCapability(
+            \App\Enums\Capability::ManageScheduling,
+            'No-show recorded',
+            ($person?->full_name ?? 'An operator') . ' did not attend their run day. They have been returned for rebooking.'
+        );
+
+        // auto-rebook if class is on file and a slot is available
+        $rebooked = null;
+        if ($q && $q->class_on_file) {
+            $rebooked = $this->bookNext($q->fresh());
+        }
+
+        // notify the person
+        if ($person) {
+            $this->notifier->toPersonnel(
+                $person,
+                'Run day missed',
+                $rebooked
+                    ? 'You missed your scheduled run. You have been automatically rebooked for the next available run day.'
+                    : 'You missed your scheduled run. Please schedule a new run day.',
+                \App\Enums\NotificationEvent::RunScheduled
+            );
+        }
+
+        // automation hook
+        \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::StageChanged, [
+            'personnel' => $person, 'qualification' => $q,
+            'stage' => $q?->workflow_stage instanceof \BackedEnum ? $q->workflow_stage->value : ($q?->workflow_stage),
+        ]);
+    }
+
     /** Cancel a run day: reschedule everyone on it to the next available day + notify. */
     public function cancelSlot(RunSlot $slot): int
     {
