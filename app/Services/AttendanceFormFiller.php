@@ -38,7 +38,7 @@ class AttendanceFormFiller
 
     /**
      * @param array $header  ['training_date'=>'', 'document_no'=>'', 'revision_no'=>'', 'title'=>'',
-     *                        'trainer_name'=>'', 'coordinator_name'=>'']
+     *                        'trainer_name'=>'']
      * @param array $trainees  list of ['name'=>'', 'employee_id'=>'', 'department'=>'', 'date'=>'']
      *                         (name printed + department prefilled; signature left blank to sign)
      * @return string  raw PDF bytes
@@ -83,9 +83,8 @@ class AttendanceFormFiller
                 $this->row($pdf, $y, $t);
             }
 
-            // Section 3 Trainer name, Section 4 Coordinator name
+            // Section 3 Trainer name only (coordinator is filled at training time on paper)
             if (! empty($header['trainer_name']))     $this->text($pdf, 42, 437, $header['trainer_name']);
-            if (! empty($header['coordinator_name'])) $this->text($pdf, 42, 505, $header['coordinator_name']);
         }
 
         return $pdf->Output('S');

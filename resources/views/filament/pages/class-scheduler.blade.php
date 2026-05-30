@@ -147,7 +147,9 @@
                                     <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
                                     <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
                                     <td style="text-align:right;">
-                                        <a href="{{ route('print.class-attendance', $s->id) }}" target="_blank" class="rd-act rd-act-magenta" style="text-decoration:none;">Attendance Form</a>
+                                        <a href="{{ route('print.class-attendance', $s->id) }}"
+                                           onclick="event.preventDefault(); var d=@js($s->instructorUser?->name ?? $s->instructor ?? ''); var t=window.prompt('Trainer name for this form (change if the trainer differs):', d); if(t!==null){ window.open(this.href + '?trainer=' + encodeURIComponent(t), '_blank'); }"
+                                           class="rd-act rd-act-magenta" style="text-decoration:none;cursor:pointer;">Attendance Form</a>
                                         <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel</button>
                                     </td>
                                 </tr>

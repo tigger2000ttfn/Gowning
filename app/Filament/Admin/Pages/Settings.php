@@ -61,6 +61,9 @@ class Settings extends Page implements HasForms
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
+            'attendance_form_document_no' => Setting::get('attendance_form_document_no', ''),
+            'attendance_form_revision_no' => Setting::get('attendance_form_revision_no', ''),
+            'attendance_form_title'       => Setting::get('attendance_form_title', ''),
             'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
             'email_enabled'         => (bool) Setting::get('email_enabled', false),
             'board_group_by'        => Setting::get('board_group_by', 'none'),
@@ -136,6 +139,16 @@ class Settings extends Page implements HasForms
                         ->helperText('A run is only Completed after QA approval.'),
                     Toggle::make('esig_required')->label('Require Electronic Signature On QA Sign-off'),
                 ]),
+                Section::make('Attendance Form (FORM-AST-36513)')->icon('heroicon-o-document-text')->columns(2)
+                    ->description('Prefilled onto the Class Training Form. Update these as the controlled document version changes.')
+                    ->schema([
+                        TextInput::make('attendance_form_document_no')->label('Document #')
+                            ->helperText('Controlled document number printed in the Training Item row.'),
+                        TextInput::make('attendance_form_revision_no')->label('Revision #'),
+                        TextInput::make('attendance_form_title')->label('Title / Description')
+                            ->columnSpanFull()
+                            ->helperText('Leave blank to use the class name.'),
+                    ]),
 ]),
                 Tab::make('Notifications')->icon('heroicon-o-bell')->schema([
                 Section::make('Notifications')->icon('heroicon-o-bell')->schema([

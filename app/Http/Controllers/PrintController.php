@@ -23,16 +23,17 @@ class PrintController extends Controller
                 'name' => $e->personnel?->full_name ?? $e->name ?? '',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
-                'date' => '',  // trainees date their own signature
+                'date' => $session->session_date?->format('d M Y'),  // date of training, prefilled
             ])->values()->all();
 
         $header = [
             'training_date' => $session->session_date?->format('d M Y'),
-            'document_no' => $session->trainingClass?->code,
-            'revision_no' => '',
-            'title' => $session->trainingClass?->name,
-            'trainer_name' => $session->instructorUser?->name ?? $session->instructor,
-            'coordinator_name' => '',
+            'document_no' => \App\Models\Setting::get('attendance_form_document_no', ''),
+            'revision_no' => \App\Models\Setting::get('attendance_form_revision_no', ''),
+            'title' => \App\Models\Setting::get('attendance_form_title', '') ?: $session->trainingClass?->name,
+            // Trainer prefills from the assigned instructor, overridable at print time via ?trainer=
+            'trainer_name' => $request->query('trainer')
+                ?: ($session->instructorUser?->name ?? $session->instructor ?? ''),
         ];
 
         $bytes = app(\App\Services\AttendanceFormFiller::class)->fill($header, $trainees);
