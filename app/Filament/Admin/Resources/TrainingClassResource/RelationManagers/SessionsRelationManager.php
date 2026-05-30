@@ -32,17 +32,31 @@ class SessionsRelationManager extends RelationManager
     public function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Session')->icon('heroicon-o-calendar')->columns(2)->schema([
-                DatePicker::make('session_date')->required()->native(false),
-                Select::make('status')->options([
-                    'open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled',
-                ])->default('open')->required(),
-                TimePicker::make('start_time')->seconds(false),
-                TimePicker::make('end_time')->seconds(false),
-                TextInput::make('location')->maxLength(255),
-                TextInput::make('instructor')->maxLength(255),
-                TextInput::make('capacity')->numeric()->default(20)->required()->minValue(1),
-            ]),
+            \Filament\Schemas\Components\Wizard::make([
+                \Filament\Schemas\Components\Wizard\Step::make('Schedule')
+                    ->icon('heroicon-o-calendar')->description('Date, time, capacity')
+                    ->columns(2)->schema([
+                        DatePicker::make('session_date')->required()->native(false),
+                        Select::make('status')->options([
+                            'open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled',
+                        ])->default('open')->required(),
+                        TimePicker::make('start_time')->seconds(false),
+                        TimePicker::make('end_time')->seconds(false),
+                        TextInput::make('capacity')->numeric()->default(20)->required()->minValue(1),
+                        TextInput::make('location')->maxLength(255),
+                    ]),
+                \Filament\Schemas\Components\Wizard\Step::make('Instructor')
+                    ->icon('heroicon-o-user')->description('Who teaches it')
+                    ->columns(2)->schema([
+                        Select::make('assigned_instructor_id')->label('Assigned Instructor')
+                            ->options(fn () => \App\Models\User::where('is_active', true)->get()
+                                ->filter(fn ($u) => $u->hasCapability(\App\Enums\Capability::ManageClasses) || $u->hasCapability(\App\Enums\Capability::ManageAttendance))
+                                ->pluck('name', 'id')->all())
+                            ->searchable()->placeholder('Unassigned'),
+                        TextInput::make('instructor')->label('Instructor (Free Text)')->maxLength(255)
+                            ->helperText('Optional, if not a system user.'),
+                    ]),
+            ])->columnSpanFull()->skippable(),
         ]);
     }
 

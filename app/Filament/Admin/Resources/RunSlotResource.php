@@ -38,20 +38,30 @@ class RunSlotResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Weekly Run Slot')->icon('heroicon-o-calendar-days')->columns(2)->schema([
-                TextInput::make('cleanroom')->required(),
-                Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),
-                DatePicker::make('slot_date')->label('Date')->required(),
-                TextInput::make('capacity')->numeric()->minValue(1)->default(1)->required(),
-                TimePicker::make('start_time'),
-                TimePicker::make('end_time'),
-                Select::make('assigned_analyst_id')->label('Assigned QC Micro Analyst')
-                    ->options(fn () => \App\Models\User::where('is_active', true)->get()
-                        ->filter(fn ($u) => $u->hasCapability(\App\Enums\Capability::RecordRuns) || $u->hasCapability(\App\Enums\Capability::ManageScheduling))
-                        ->pluck('name', 'id')->all())
-                    ->searchable()->placeholder('Unassigned'),
-                Textarea::make('notes')->columnSpanFull(),
-            ]),
+            \Filament\Schemas\Components\Wizard::make([
+                \Filament\Schemas\Components\Wizard\Step::make('Day & Capacity')
+                    ->icon('heroicon-o-calendar-days')->description('When and how many')
+                    ->columns(2)->schema([
+                        TextInput::make('cleanroom')->required(),
+                        Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),
+                        DatePicker::make('slot_date')->label('Date')->required(),
+                        TextInput::make('capacity')->numeric()->minValue(1)
+                            ->default(fn () => (int) \App\Models\Setting::get('runs_per_day_capacity', 6))->required()
+                            ->helperText('Defaults to the per-day capacity from Settings.'),
+                        TimePicker::make('start_time'),
+                        TimePicker::make('end_time'),
+                    ]),
+                \Filament\Schemas\Components\Wizard\Step::make('Assignment & Notes')
+                    ->icon('heroicon-o-user')->description('Who runs it')
+                    ->schema([
+                        Select::make('assigned_analyst_id')->label('Assigned QC Micro Analyst')
+                            ->options(fn () => \App\Models\User::where('is_active', true)->get()
+                                ->filter(fn ($u) => $u->hasCapability(\App\Enums\Capability::RecordRuns) || $u->hasCapability(\App\Enums\Capability::ManageScheduling))
+                                ->pluck('name', 'id')->all())
+                            ->searchable()->placeholder('Unassigned'),
+                        Textarea::make('notes')->columnSpanFull(),
+                    ]),
+            ])->columnSpanFull()->skippable(),
         ]);
     }
 
