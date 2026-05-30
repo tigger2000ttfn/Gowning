@@ -24,17 +24,14 @@
     /* Back To Login link on reset page - force Title Case appearance */
     .fi-simple-main a[href*="login"] { text-transform: capitalize; }
 
-    /* DASHBOARD: zero the content padding/max-width + kill header gap so hero connects to header & spans full width */
-    .fi-page-dashboard .fi-page-content,
-    .fi-page-dashboard section.fi-page-content,
-    .fi-page-dashboard > section {
-        padding: 0 !important;
-        max-width: none !important;
-        width: 100% !important;
-        gap: 0 !important;
-    }
-    .fi-page-dashboard .fi-header { display: none !important; }
-    .fi-page-dashboard .fi-main { max-width: none !important; }
+    /* DASHBOARD full-bleed: target the ACTUAL wrappers (from DOM inspection) */
+    /* .fi-main has 0 32px padding -> the left/right gap */
+    .fi-page-dashboard .fi-main { padding-left: 0 !important; padding-right: 0 !important; }
+    /* .fi-page-header-main-ctn has 32px top padding -> the gap above the hero */
+    .fi-page-dashboard .fi-page-header-main-ctn { padding-top: 0 !important; }
+    /* re-pad the non-hero content so it isn't edge-to-edge (hero handles its own full width) */
+    .fi-page-dashboard .dash-pad { padding: 0 32px !important; }
+    @media (max-width: 640px){ .fi-page-dashboard .dash-pad { padding: 0 16px !important; } }
 
     /* Smaller sidebar font + narrower so it takes less space, esp on small screens */
     .fi-sidebar-nav .fi-sidebar-item-label { font-size: 13px !important; }
