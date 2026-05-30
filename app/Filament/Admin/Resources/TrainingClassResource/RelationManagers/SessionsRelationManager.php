@@ -36,12 +36,12 @@ class SessionsRelationManager extends RelationManager
                 \Filament\Schemas\Components\Wizard\Step::make('Schedule')
                     ->icon('heroicon-o-calendar')->description('Date, time, capacity')
                     ->columns(2)->schema([
-                        DatePicker::make('session_date')->required()->native(false),
+                        DatePicker::make('session_date')->native(false)->displayFormat('d M Y')->required()->native(false),
                         Select::make('status')->options([
                             'open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled',
                         ])->default('open')->required(),
-                        TimePicker::make('start_time')->seconds(false),
-                        TimePicker::make('end_time')->seconds(false),
+                        TimePicker::make('start_time')->native(false)->displayFormat('H:i')->seconds(false),
+                        TimePicker::make('end_time')->native(false)->displayFormat('H:i')->seconds(false),
                         TextInput::make('capacity')->numeric()->default(20)->required()->minValue(1),
                         TextInput::make('location')->maxLength(255),
                     ]),

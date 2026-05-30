@@ -46,12 +46,12 @@ class RunSlotResource extends Resource
                     ->columns(2)->schema([
                         TextInput::make('cleanroom')->required(),
                         Select::make('status')->options(['open' => 'Open', 'closed' => 'Closed'])->default('open')->required(),
-                        DatePicker::make('slot_date')->label('Date')->required(),
+                        DatePicker::make('slot_date')->native(false)->displayFormat('d M Y')->label('Date')->required(),
                         TextInput::make('capacity')->numeric()->minValue(1)
                             ->default(fn () => (int) \App\Models\Setting::get('runs_per_day_capacity', 6))->required()
                             ->helperText('Defaults to the per-day capacity from Settings.'),
-                        TimePicker::make('start_time'),
-                        TimePicker::make('end_time'),
+                        TimePicker::make('start_time')->native(false)->displayFormat('H:i'),
+                        TimePicker::make('end_time')->native(false)->displayFormat('H:i'),
                     ]),
                 \Filament\Schemas\Components\Wizard\Step::make('Assignment & Notes')
                     ->icon('heroicon-o-user')->description('Who runs it')

@@ -128,7 +128,7 @@ class QualificationResource extends Resource
                     ->icon('heroicon-m-calendar')
                     ->color('warning')
                     ->schema([
-                        \Filament\Forms\Components\DatePicker::make('due_date')->label('New Due Date')->required()->native(false),
+                        \Filament\Forms\Components\DatePicker::make('due_date')->native(false)->displayFormat('d M Y')->label('New Due Date')->required()->native(false),
                         \Filament\Forms\Components\Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
                     ])
                     ->fillForm(fn ($record) => ['due_date' => $record->due_date])

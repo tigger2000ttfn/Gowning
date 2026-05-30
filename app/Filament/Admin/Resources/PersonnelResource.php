@@ -63,7 +63,7 @@ class PersonnelResource extends Resource
                         TextInput::make('lims_username')->label('LIMS Username')
                             ->helperText('Used To Match This Person On A LIMS Upload.'),
                         TextInput::make('badge_id')->label('Badge ID'),
-                        DatePicker::make('hire_date')->label('Hire Date'),
+                        DatePicker::make('hire_date')->native(false)->displayFormat('d M Y')->label('Hire Date'),
                     ]),
                 Step::make('Assignment')->icon('heroicon-o-link')
                     ->description('Department, role, shift')
@@ -98,7 +98,7 @@ class PersonnelResource extends Resource
                                 Toggle::make('class_on_file')->label('Gowning Class Completed')
                                     ->helperText('On = Gowning Class / OJT Is On File.')
                                     ->live()->columnSpanFull(),
-                                DatePicker::make('class_on_file_date')->label('Class Completion Date')
+                                DatePicker::make('class_on_file_date')->native(false)->displayFormat('d M Y')->label('Class Completion Date')
                                     ->visible(fn ($get) => $get('class_on_file')),
                                 Select::make('type')->label('Qualification Type')
                                     ->options(['initial' => 'Initial', 'annual' => 'Annual (Requalification)'])->default('initial')
@@ -111,7 +111,7 @@ class PersonnelResource extends Resource
                                 Select::make('workflow_stage')->label('Workflow Stage')
                                     ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
                                     ->default('class_pending'),
-                                DatePicker::make('qualified_date')->label('Date Last Qualified')
+                                DatePicker::make('qualified_date')->native(false)->displayFormat('d M Y')->label('Date Last Qualified')
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set) {
                                         if (! $state) return;
@@ -119,7 +119,7 @@ class PersonnelResource extends Resource
                                         $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
                                     })
                                     ->helperText('Auto-Calculates The Due Date.'),
-                                DatePicker::make('due_date')->label('Qualification Due Date')
+                                DatePicker::make('due_date')->native(false)->displayFormat('d M Y')->label('Qualification Due Date')
                                     ->helperText('Auto-Fills From Last Qualified + Cycle Length.'),
                             ]),
                         Section::make('Run History')
@@ -136,7 +136,7 @@ class PersonnelResource extends Resource
                                     ->defaultItems(0)
                                     ->reorderable(false)
                                     ->schema([
-                                        DatePicker::make('run_date')->label('Run Date')->required(),
+                                        DatePicker::make('run_date')->native(false)->displayFormat('d M Y')->label('Run Date')->required(),
                                         Select::make('result')->label('Result')
                                             ->options(['pass' => 'Pass', 'fail' => 'Fail'])
                                             ->default('pass')->required(),
