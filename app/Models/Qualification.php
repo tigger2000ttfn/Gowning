@@ -34,6 +34,7 @@ class Qualification extends Model
         'personnel_id', 'type', 'status', 'runs_required',
         'runs_completed', 'qualified_date', 'due_date',
         'workflow_stage', 'stage_changed_at', 'qa_recommendation', 'qa_recommendation_note', 'class_on_file', 'class_on_file_date', 'qa_owner_id', 'cycle_started_at', 'archived_at', 'pending_parent_run_id', 'lims_worklist_id', 'lms_number',
+        'parent_qualification_id', 'cycle_number', 'superseded_at',
     ];
 
     protected function casts(): array
@@ -51,6 +52,8 @@ class Qualification extends Model
             'due_date' => 'date',
             'cycle_started_at' => 'date',
             'archived_at' => 'datetime',
+            'cycle_number' => 'integer',
+            'superseded_at' => 'datetime',
         ];
     }
 
@@ -62,6 +65,33 @@ class Qualification extends Model
     public function runs(): HasMany
     {
         return $this->hasMany(QualificationRun::class);
+    }
+
+    /** The session that spawned this one (a failed initial/annual that triggered this requal). */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Qualification::class, 'parent_qualification_id');
+    }
+
+    /** Requalification sessions spawned from this one. */
+    public function children(): HasMany
+    {
+        return $this->hasMany(Qualification::class, 'parent_qualification_id');
+    }
+
+    /**
+     * The person's current (active, not superseded) qualification session. This is the single
+     * point every lookup will route through as the per-cycle session model is adopted. Today,
+     * with no superseded rows, it resolves to the same single row as the legacy
+     * where('personnel_id')->first(), so adopting it is behaviour-preserving until a determination
+     * actually spawns a child and supersedes the prior cycle.
+     */
+    public static function currentFor(int $personnelId): ?self
+    {
+        return static::where('personnel_id', $personnelId)
+            ->whereNull('superseded_at')
+            ->orderByDesc('cycle_number')->orderByDesc('id')
+            ->first();
     }
 
     public function comments(): HasMany
