@@ -21,6 +21,14 @@
     }
     .fi-topbar .fi-icon-btn:hover { background-color: rgba(255,255,255,.12) !important; }
 
+    /* Narrower sidebar (was 320px) + smaller nav font */
+    :root, .fi-layout { --sidebar-width: 14rem !important; }
+    .fi-sidebar.fi-main-sidebar { width: 14rem !important; }
+    .fi-main-ctn-sidebar-open { --sidebar-width: 14rem !important; }
+    .fi-sidebar-item-label { font-size: 12.5px !important; }
+    .fi-sidebar-group-label { font-size: 10.5px !important; letter-spacing: .04em; }
+    .fi-sidebar-item-icon, .fi-sidebar-item-icon svg { width: 18px !important; height: 18px !important; }
+
     /* Dropdown menu items: readable dark text on white (light theme) */
     html:not(.dark) .fi-dropdown-list-item,
     html:not(.dark) .fi-dropdown-list-item-label,
@@ -33,14 +41,14 @@
     /* Move the sidebar-collapse button OUT of the topbar and onto the sidebar edge */
     .fi-topbar-collapse-sidebar-btn-ctn {
         position: fixed !important;
-        top: 12px !important;
-        left: 0 !important;
-        z-index: 41 !important;
+        top: 14px !important;
+        z-index: 60 !important;
     }
     /* nudge it to sit at the right edge of the open sidebar */
     .fi-body-has-sidebar-collapsible-on-desktop .fi-topbar-collapse-sidebar-btn-ctn {
-        left: calc(var(--sidebar-width, 16rem) - 38px) !important;
+        left: calc(var(--sidebar-width, 16rem) - 34px) !important;
         transition: left .2s;
+        z-index: 60 !important;
     }
     .fi-topbar-collapse-sidebar-btn-ctn .fi-icon-btn {
         background: #A4123F !important;
@@ -63,6 +71,15 @@
     /* re-pad the non-hero content so it isn't edge-to-edge (hero handles its own full width) */
     .dash-pad { padding: 0 32px !important; }
     @media (max-width: 640px){ .dash-pad { padding: 0 16px !important; } }
+    /* footer widgets (Qual Status + Runs Trend charts) escaped margins when we zeroed .fi-main padding; re-pad + top space */
+    .fi-main:has(.dash-hero) .fi-page-footer-widgets-ctn,
+    .fi-main:has(.dash-hero) .fi-page-footer-widgets {
+        padding: 24px 32px 0 !important;
+    }
+    @media (max-width: 640px){
+        .fi-main:has(.dash-hero) .fi-page-footer-widgets-ctn,
+        .fi-main:has(.dash-hero) .fi-page-footer-widgets { padding: 20px 16px 0 !important; }
+    }
 
     /* Smaller sidebar font + narrower so it takes less space, esp on small screens */
     .fi-sidebar-nav .fi-sidebar-item-label { font-size: 13px !important; }

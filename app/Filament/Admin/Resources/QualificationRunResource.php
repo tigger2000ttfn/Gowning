@@ -37,7 +37,7 @@ class QualificationRunResource extends Resource
     protected static ?string $model = QualificationRun::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
-    protected static string|\UnitEnum|null $navigationGroup = 'Personnel & Qualifications';
+    protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 3;
     protected static ?string $modelLabel = 'Qualification Run';
 

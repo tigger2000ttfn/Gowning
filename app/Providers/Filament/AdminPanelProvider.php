@@ -65,7 +65,7 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render('@include("filament.topbar-manage")'),
             )
             ->navigationGroups([
-                'Personnel & Qualifications',
+                'Qualifications',
                 'Scheduling',
             ])
             ->widgets([])
