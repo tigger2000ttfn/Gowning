@@ -4,7 +4,6 @@
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-squares-2x2" /></span>
             <div class="pg-head-tx" style="min-width:0;">
                 <h1>Qualification Status Board</h1>
-                <p>Drag each person through the GMP pipeline, class to QA sign-off.</p>
             </div>
         </div>
         <div class="sb-headrow-filters">

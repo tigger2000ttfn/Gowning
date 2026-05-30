@@ -192,7 +192,7 @@
 
     /* ===== KANBAN HEADER ROW: hero + filters on ONE line (filters are secondary) ===== */
     .sb-headrow { display:flex; align-items:center; justify-content:space-between; gap:18px;
-        flex-wrap:wrap; padding:6px 32px 12px; margin-bottom:12px;
+        flex-wrap:wrap; padding:6px 0 12px; margin-bottom:14px; margin-top:4px;
         border-bottom:2px solid var(--gqs-border,#DADADF); }
     .sb-headrow-title { display:flex; align-items:center; gap:14px; min-width:0; flex:1; }
     .sb-headrow-filters { display:flex; align-items:center; gap:8px; flex:0 0 auto; flex-wrap:wrap; }

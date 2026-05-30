@@ -4,7 +4,6 @@
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-academic-cap" /></span>
             <div class="pg-head-tx" style="min-width:0;">
                 <h1>Gowning Class Board</h1>
-                <p>Track class enrollments. Completing a class advances the person to the run pipeline.</p>
             </div>
         </div>
         <div class="sb-headrow-filters">
