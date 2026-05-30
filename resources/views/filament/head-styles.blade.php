@@ -54,6 +54,11 @@
     /* primary links/text also magenta not pink */
     .fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
 
+    /* ===== HIDE EMPTY FILAMENT PAGE HEADER (we use the .pg-head partial instead) =====
+       Pages return getHeading('') but Filament still renders an empty .fi-header taking space
+       and sometimes a duplicate h1. Hide it on pages that have our own .pg-head. */
+    .fi-page:has(.pg-head) .fi-header { display: none !important; }
+
     /* ===== TIGHTEN top-of-page wasted space ===== */
     .fi-page-header-main-ctn { padding-top: 12px !important; }
     .fi-main { padding-top: 8px !important; }

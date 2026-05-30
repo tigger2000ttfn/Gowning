@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Import Personnel', 'subtitle' => 'Bulk-load people from CSV with column mapping and preview.', 'icon' => 'heroicon-o-arrow-up-tray'])
+    @include('filament.page-hero', ['title' => 'Import Personnel', 'subtitle' => 'Bulk-load people from CSV.', 'icon' => 'heroicon-o-arrow-up-tray'])
     <form wire:submit.prevent>
         {{ $this->form }}
         <div style="margin-top:14px;">

@@ -15,6 +15,7 @@ class RolePermissions extends Page
     protected static ?string $navigationLabel = 'Roles & Permissions';
     protected static string|\UnitEnum|null $navigationGroup = 'Administration';
     protected static ?string $title = 'Roles & Permissions';
+    public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.role-permissions';
 

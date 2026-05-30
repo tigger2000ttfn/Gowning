@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Qualification Run Day', 'subtitle' => 'See who is scheduled to gown through and sample each run slot.', 'icon' => 'heroicon-o-clipboard-document-list'])
+    @include('filament.page-hero', ['title' => 'Qualification Run Day', 'subtitle' => 'Who's scheduled for each run slot.', 'icon' => 'heroicon-o-clipboard-document-list'])
     <div style="margin-bottom:18px;max-width:260px;">
         <label style="font-weight:600;font-size:13px;display:block;margin-bottom:6px;">Select date</label>
         <input type="date" wire:model.live="date"

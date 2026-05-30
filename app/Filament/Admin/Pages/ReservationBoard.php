@@ -28,6 +28,7 @@ class ReservationBoard extends Page
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
     protected static ?int $navigationSort = 3;
     protected static ?string $title = 'Reservation Board';
+    public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.reservation-board';
 
