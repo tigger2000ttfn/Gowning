@@ -26,9 +26,11 @@
     .gqs-brand-text { color: #444 !important; }
 
     /* Narrower sidebar (was 320px) + smaller nav font */
-    :root, .fi-layout { --sidebar-width: 14rem !important; }
-    .fi-sidebar.fi-main-sidebar { width: 14rem !important; }
-    .fi-main-ctn-sidebar-open { --sidebar-width: 14rem !important; }
+    /* Narrow the OPEN sidebar via Filament's width variable only.
+       Do NOT force width on .fi-sidebar itself - that blocks the collapsed (icon-only) state. */
+    .fi-sidebar.fi-sidebar-open { --sidebar-width: 14rem; }
+    .fi-main-ctn-sidebar-open { --sidebar-width: 14rem; }
+    :root { --sidebar-width: 14rem; }
     .fi-sidebar-item-label { font-size: 12.5px !important; }
     .fi-sidebar-group-label { font-size: 10.5px !important; letter-spacing: .04em; }
     .fi-sidebar-item-icon, .fi-sidebar-item-icon svg { width: 18px !important; height: 18px !important; }
@@ -56,14 +58,13 @@
     /* re-pad the non-hero content so it isn't edge-to-edge (hero handles its own full width) */
     .dash-pad { padding: 0 32px !important; }
     @media (max-width: 640px){ .dash-pad { padding: 0 16px !important; } }
-    /* footer widgets (Qual Status + Runs Trend charts) escaped margins when we zeroed .fi-main padding; re-pad + top space */
-    .fi-main:has(.dash-hero) .fi-page-footer-widgets-ctn,
-    .fi-main:has(.dash-hero) .fi-page-footer-widgets {
+    /* Chart widgets live in .fi-page-content (no footer-widgets class exists).
+       Zeroing .fi-main padding made them edge-to-edge; re-pad + top space. */
+    .fi-main:has(.dash-hero) .fi-page-content {
         padding: 24px 32px 0 !important;
     }
     @media (max-width: 640px){
-        .fi-main:has(.dash-hero) .fi-page-footer-widgets-ctn,
-        .fi-main:has(.dash-hero) .fi-page-footer-widgets { padding: 20px 16px 0 !important; }
+        .fi-main:has(.dash-hero) .fi-page-content { padding: 20px 16px 0 !important; }
     }
 
     /* Smaller sidebar font + narrower so it takes less space, esp on small screens */
