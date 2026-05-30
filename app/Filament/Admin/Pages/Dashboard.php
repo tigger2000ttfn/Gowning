@@ -94,7 +94,7 @@ class Dashboard extends BaseDashboard
                                 ->orderBy('session_date')->limit(5)->get(),
             'classSignupList' => \App\Models\ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
                                 ->where('status', 'signed_up')->latest('signed_up_at')->limit(6)->get(),
-            'failedRuns'  => QualificationRun::with('personnel')
+            'failedRuns'  => \App\Models\QualificationRun::with('personnel')
                                 ->where('result', 'fail')->latest('run_date')->limit(5)->get(),
             'runRequests' => Reservation::with(['personnel', 'runSlot'])
                                 ->where('status', 'requested')->latest()->limit(5)->get(),
