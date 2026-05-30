@@ -27,11 +27,13 @@
         <div class="tabs" x-data="{ tab: 'classes' }">
             <div class="tabbar">
                 <button :class="{ 'active': tab==='classes' }" @click="tab='classes'">
-                    <span class="dot dot-magenta"></span> Gowning Classes
+                    <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    Gowning Classes
                     <span class="count">{{ $sessions->count() }}</span>
                 </button>
                 <button :class="{ 'active': tab==='runs' }" @click="tab='runs'">
-                    <span class="dot dot-gold"></span> Qualification Run Slots
+                    <svg class="tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-8.5V3"/><path d="M7.5 14h9"/></svg>
+                    Qualification Run Slots
                     <span class="count">{{ $runSlots->count() }}</span>
                 </button>
             </div>
@@ -50,7 +52,7 @@
                                     <span class="dy">{{ $session->session_date->format('j') }}</span>
                                 </div>
                                 <div class="ccard-body">
-                                    <h3>{{ $session->trainingClass->name }}</h3>
+                                    <h3><svg class="ccard-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>{{ $session->trainingClass->name }}</h3>
                                     <div class="ccard-meta">
                                         @if($session->start_time){{ \Illuminate\Support\Carbon::parse($session->start_time)->format('g:i A') }} &middot; @endif
                                         {{ $session->location ?? 'TBD' }}
@@ -80,7 +82,7 @@
                                     <span class="dy">{{ $slot->slot_date->format('j') }}</span>
                                 </div>
                                 <div class="ccard-body">
-                                    <h3>{{ $slot->cleanroom }}</h3>
+                                    <h3><svg class="ccard-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5 18a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 18l-5-8.5V3"/><path d="M7.5 14h9"/></svg>{{ $slot->cleanroom }}</h3>
                                     <div class="ccard-meta">
                                         @if($slot->start_time){{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }} &middot; @endif
                                         Cleanroom Run

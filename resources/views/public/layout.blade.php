@@ -72,6 +72,8 @@
         .sec-head h2{display:flex;align-items:center;gap:10px;font-size:22px;}
         .sec-head .sub{color:var(--muted);font-size:14px;margin-top:4px;}
         .dot{width:11px;height:11px;border-radius:3px;display:inline-block;transform:rotate(45deg);}
+        .tab-ico{width:18px;height:18px;flex-shrink:0;}
+        .ccard-ico{width:15px;height:15px;flex-shrink:0;color:var(--magenta);vertical-align:-2px;margin-right:6px;}
         .dot-magenta{background:var(--magenta);}
         .dot-gold{background:var(--gold);}
 
