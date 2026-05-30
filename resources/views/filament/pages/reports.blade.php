@@ -73,6 +73,39 @@
         </div>
     </div>
 
+    @php $nc = $this->ncTrend(); @endphp
+    <div class="gqs-panel">
+        <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-chart-bar-square"/> Non-Conformance Trending (Last 12 Months)</div>
+        <div class="gqs-panel-body" style="padding:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+                <div>
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);margin-bottom:8px;">By Type</div>
+                    @forelse($nc['type'] as $type => $n)
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                            <span>{{ \Illuminate\Support\Str::headline(str_replace('_',' ',$type)) }}</span><strong>{{ $n }}</strong>
+                        </div>
+                    @empty<div class="gqs-empty">No NCs.</div>@endforelse
+                </div>
+                <div>
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);margin-bottom:8px;">Top Organisms</div>
+                    @forelse($nc['organism'] as $org => $n)
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                            <span>{{ $org }}</span><strong>{{ $n }}</strong>
+                        </div>
+                    @empty<div class="gqs-empty">No organism data.</div>@endforelse
+                </div>
+                <div>
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);margin-bottom:8px;">By Site</div>
+                    @forelse($nc['site'] as $site => $n)
+                        <div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                            <span>{{ $site }}</span><strong>{{ $n }}</strong>
+                        </div>
+                    @empty<div class="gqs-empty">No site data.</div>@endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="gqs-panel">
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-down-tray"/> LIMS Handoff Export</div>
         <div class="gqs-panel-body" style="padding:16px;">

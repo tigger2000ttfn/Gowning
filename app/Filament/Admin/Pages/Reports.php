@@ -54,6 +54,22 @@ class Reports extends Page
         return ClassCompletion::selectRaw('class_name, count(*) as n')->groupBy('class_name')->orderByDesc('n')->get();
     }
 
+    /** Non-conformance trending: counts by type and by organism (last 12 months). */
+    public function ncTrend(): array
+    {
+        $since = now()->subMonths(12);
+        $byType = \App\Models\NonConformance::where('observed_date', '>=', $since->toDateString())
+            ->selectRaw('nc_type, count(*) as n')->groupBy('nc_type')->pluck('n', 'nc_type')->all();
+        $byOrganism = \App\Models\NonConformance::where('observed_date', '>=', $since->toDateString())
+            ->whereNotNull('organism')->where('organism', '!=', '')
+            ->selectRaw('organism, count(*) as n')->groupBy('organism')->orderByDesc('n')->limit(10)->pluck('n', 'organism')->all();
+        $bySite = \App\Models\NonConformance::where('observed_date', '>=', $since->toDateString())
+            ->whereNotNull('site')->where('site', '!=', '')
+            ->selectRaw('site, count(*) as n')->groupBy('site')->orderByDesc('n')->pluck('n', 'site')->all();
+        return ['type' => $byType, 'organism' => $byOrganism, 'site' => $bySite,
+                'open' => \App\Models\NonConformance::where('status', 'open')->count()];
+    }
+
     /** CSV export for LIMS handoff (recent run results). */
     public function exportRuns(): StreamedResponse
     {
