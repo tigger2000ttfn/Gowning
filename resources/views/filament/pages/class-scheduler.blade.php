@@ -147,6 +147,7 @@
                                     <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
                                     <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
                                     <td style="text-align:right;">
+                                        <a href="{{ route('print.class-attendance', $s->id) }}" target="_blank" class="rd-act rd-act-magenta" style="text-decoration:none;">Attendance Form</a>
                                         <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel</button>
                                     </td>
                                 </tr>

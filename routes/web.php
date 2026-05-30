@@ -31,4 +31,5 @@ Route::post('/register', [PublicController::class, 'storeRegister'])->name('publ
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/print/run-day', [\App\Http\Controllers\PrintController::class, 'runDay'])->name('print.run-day');
     Route::get('/print/report', [\App\Http\Controllers\PrintController::class, 'report'])->name('print.report');
+    Route::get('/print/class-attendance/{session}', [\App\Http\Controllers\PrintController::class, 'classAttendanceForm'])->name('print.class-attendance');
 });

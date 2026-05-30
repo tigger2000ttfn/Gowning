@@ -10,6 +10,40 @@ use Illuminate\Support\Carbon;
 
 class PrintController extends Controller
 {
+    /** Astellas Class Training Form (FORM-AST-36513), prefilled for a class session. */
+    public function classAttendanceForm(\Illuminate\Http\Request $request, \App\Models\ClassSession $session)
+    {
+        $this->guard();
+        $session->load(['trainingClass', 'instructorUser', 'enrollments.personnel']);
+
+        $trainees = $session->enrollments
+            ->filter(fn ($e) => in_array(($e->status instanceof \BackedEnum ? $e->status->value : $e->status), ['signed_up', 'attended', 'completed', 'historical'], true))
+            ->sortBy(fn ($e) => $e->personnel?->last_name ?? $e->name)
+            ->map(fn ($e) => [
+                'name' => $e->personnel?->full_name ?? $e->name ?? '',
+                'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
+                'department' => $e->personnel?->department,
+                'date' => '',  // trainees date their own signature
+            ])->values()->all();
+
+        $header = [
+            'training_date' => $session->session_date?->format('d M Y'),
+            'document_no' => $session->trainingClass?->code,
+            'revision_no' => '',
+            'title' => $session->trainingClass?->name,
+            'trainer_name' => $session->instructorUser?->name ?? $session->instructor,
+            'coordinator_name' => '',
+        ];
+
+        $bytes = app(\App\Services\AttendanceFormFiller::class)->fill($header, $trainees);
+        $fname = 'FORM-AST-36513-' . ($session->session_date?->format('Y-m-d') ?? 'session') . '.pdf';
+
+        return response($bytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fname . '"',
+        ]);
+    }
+
     private function guard(): void
     {
         abort_unless(Auth::check(), 403);
