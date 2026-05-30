@@ -428,6 +428,11 @@ class RunDayRoster extends Page
     public ?int $moveResId = null;
     public ?int $moveResSlotId = null;
     public ?string $moveResName = null;
+    /** Special one-off (VIP) run day created inline from the move modal. */
+    public bool $moveSpecial = false;
+    public ?string $moveSpecialDate = null;
+    public ?string $moveSpecialCleanroom = null;
+    public ?int $moveSpecialAnalystId = null;
 
     public function openMoveRes(int $id): void
     {
@@ -443,7 +448,32 @@ class RunDayRoster extends Page
     {
         if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
         $r = Reservation::find($this->moveResId);
-        if (! $r || ! $this->moveResSlotId) { $this->showMoveRes = false; return; }
+        if (! $r) { $this->showMoveRes = false; return; }
+
+        // Special one-off date (the VIP case): create a dedicated run day and move the booking
+        // onto it. Optional analyst means a different analyst can own that day.
+        if ($this->moveSpecial) {
+            if (! $this->moveSpecialDate) {
+                Notification::make()->warning()->title('Pick a date for the special run day')->send();
+                return;
+            }
+            $special = RunSlot::create([
+                'slot_date' => \Illuminate\Support\Carbon::parse($this->moveSpecialDate)->toDateString(),
+                'cleanroom' => $this->moveSpecialCleanroom ?: null,
+                'capacity' => 1,
+                'assigned_analyst_id' => $this->moveSpecialAnalystId ?: null,
+                'status' => 'open',
+                'notes' => 'Special one-off run day (created from a reschedule).',
+            ]);
+            $r->update(['run_slot_id' => $special->id, 'status' => 'approved']);
+            $when = \Illuminate\Support\Carbon::parse($this->moveSpecialDate)->format('d M Y');
+            $this->reset(['showMoveRes', 'moveSpecial', 'moveSpecialDate', 'moveSpecialCleanroom', 'moveSpecialAnalystId']);
+            Notification::make()->success()->title('Moved to a special run day')
+                ->body($when . ($special->cleanroom ? ' · ' . $special->cleanroom : '') . '.')->send();
+            return;
+        }
+
+        if (! $this->moveResSlotId) { $this->showMoveRes = false; return; }
         $slot = RunSlot::find($this->moveResSlotId);
         $scheduler = app(\App\Services\AutoScheduler::class);
         // allow move if the target has a seat (or it is the same slot)
@@ -451,7 +481,7 @@ class RunDayRoster extends Page
             Notification::make()->warning()->title('That run day is full')->send();
             return;
         }
-        $r->update(['run_slot_id' => $this->moveResSlotId]);
+        $r->update(['run_slot_id' => $this->moveResSlotId, 'status' => 'approved']);
         $this->showMoveRes = false;
         Notification::make()->success()->title('Reservation moved')->send();
     }

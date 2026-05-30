@@ -288,6 +288,7 @@
                     <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-arrows-right-left"/></span>Move Reservation</div>
                     <div class="gqs-modal-body">
                         <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0;">{{ $moveResName }}</p>
+                        @if(! $moveSpecial)
                         <div>
                             <label class="gqs-flbl">Move To Run Day</label>
                             <select wire:model="moveResSlotId" class="gqs-fld">
@@ -295,6 +296,25 @@
                                 @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
                             </select>
                         </div>
+                        @endif
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-top:4px;">
+                            <input type="checkbox" wire:model.live="moveSpecial"> Special One-Off Date (VIP)
+                        </label>
+                        @if($moveSpecial)
+                            <div><label class="gqs-flbl">Special Date</label>@include('filament.partials.fp-date',['model'=>'moveSpecialDate'])</div>
+                            <div>
+                                <label class="gqs-flbl">Cleanroom (Optional)</label>
+                                <select wire:model="moveSpecialCleanroom" class="gqs-fld"><option value="">Select...</option>
+                                    @foreach($this->cleanroomOptions() as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="gqs-flbl">Assigned Analyst (Optional)</label>
+                                <select wire:model="moveSpecialAnalystId" class="gqs-fld"><option value="">Unassigned</option>
+                                    @foreach($this->analystOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                                </select>
+                            </div>
+                        @endif
                     </div>
                     <div class="gqs-modal-foot">
                         <button type="button" wire:click="$set('showMoveRes', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
