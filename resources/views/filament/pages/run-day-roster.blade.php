@@ -7,7 +7,7 @@
                 <p>@switch($tab)
                     @case('overview')Who needs a run, and the state of the pipeline. Book waiting people here.@break
                     @case('schedule')Create and manage cleanroom run days. Set capacity, analyst, and repeat dates.@break
-                    @case('reservations')Approve requests and book people onto run days.@break
+                    @case('reservations')See, approve, move, or remove run-day reservations. This is where you manage who is booked.@break
                     @case('roster')Take attendance on the day: mark Present, No-Show, or Reschedule, then enter results.@break
                 @endswitch</p>
             </div>
@@ -101,7 +101,7 @@
                                     <td>{{ $d->analyst?->name ?? 'Unassigned' }}</td>
                                     <td><span class="gqs-pill {{ $d->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $d->booked }} / {{ $d->capacity }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
-                                        <button wire:click="viewRoster('{{ $d->slot_date->toDateString() }}')" class="rd-act rd-act-magenta">Open Roster</button>
+                                        <button wire:click="viewRoster('{{ $d->slot_date->toDateString() }}')" class="rd-act rd-act-magenta">Open Attendance</button>
                                         <button wire:click="cancelSlotDay({{ $d->id }})" wire:confirm="Cancel this run day? Booked operators will be rescheduled or flagged." class="rd-act" style="background:#C8102E;">Cancel</button>
                                     </td>
                                 </tr>
@@ -196,7 +196,9 @@
                                             <button wire:click="approveReservation({{ $r['id'] }})" class="rd-act rd-act-green">Approve</button>
                                         @endif
                                         @if(in_array($r['status'], ['requested','approved']))
-                                            <button wire:click="markNoShow({{ $r['id'] }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C8102E;">No-Show</button>
+                                            <button wire:click="openMoveRes({{ $r['id'] }})" class="rd-act" style="background:#1F6FB2;">Move</button>
+                                            <button wire:click="markNoShow({{ $r['id'] }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C79A2E;">No-Show</button>
+                                            <button wire:click="cancelReservation({{ $r['id'] }})" wire:confirm="Remove this reservation entirely?" class="rd-act" style="background:#C8102E;">Remove</button>
                                         @endif
                                     </td>
                                 </tr>
@@ -233,6 +235,27 @@
                 </div>
             </div>
         @endif
+
+        {{-- Move reservation modal --}}
+        @if($showMoveRes)
+            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showMoveRes', false)">
+                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Move Reservation</div>
+                    <div style="padding:18px 20px;">
+                        <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0 0 14px;">{{ $moveResName }}</p>
+                        <label class="gqs-flbl">Move To Run Day</label>
+                        <select wire:model="moveResSlotId" class="gqs-fld">
+                            <option value="">Select a run day...</option>
+                            @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                        </select>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                            <button type="button" wire:click="$set('showMoveRes', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
+                            <button type="button" wire:click="moveReservation" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Move</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     @else
         {{-- ROSTER TAB --}}
         <div>
@@ -244,7 +267,7 @@
             </div>
             <a href="{{ route('print.run-day', ['date' => $date]) }}" target="_blank"
                style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:#A4123F;color:#fff;border-radius:9px;font-weight:700;font-size:13px;text-decoration:none;">
-                <x-filament::icon icon="heroicon-m-printer" style="width:16px;height:16px;"/> Print Roster (PDF)
+                <x-filament::icon icon="heroicon-m-printer" style="width:16px;height:16px;"/> Print Attendance (PDF)
             </a>
         </div>
 

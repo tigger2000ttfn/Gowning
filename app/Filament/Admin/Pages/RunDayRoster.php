@@ -290,6 +290,59 @@ class RunDayRoster extends Page
         if ($r) app(\App\Services\AutoScheduler::class)->handleNoShow($r);
     }
 
+    // ----- Move / edit a reservation to a different run day -----
+    public bool $showMoveRes = false;
+    public ?int $moveResId = null;
+    public ?int $moveResSlotId = null;
+    public ?string $moveResName = null;
+
+    public function openMoveRes(int $id): void
+    {
+        $r = Reservation::with('personnel')->find($id);
+        if (! $r) return;
+        $this->moveResId = $id;
+        $this->moveResSlotId = $r->run_slot_id;
+        $this->moveResName = $r->personnel?->full_name ?? 'Reservation';
+        $this->showMoveRes = true;
+    }
+
+    public function moveReservation(): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $r = Reservation::find($this->moveResId);
+        if (! $r || ! $this->moveResSlotId) { $this->showMoveRes = false; return; }
+        $slot = RunSlot::find($this->moveResSlotId);
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        // allow move if the target has a seat (or it is the same slot)
+        if ($slot && $r->run_slot_id !== $slot->id && $scheduler->seatsLeft($slot) <= 0) {
+            Notification::make()->warning()->title('That run day is full')->send();
+            return;
+        }
+        $r->update(['run_slot_id' => $this->moveResSlotId]);
+        $this->showMoveRes = false;
+        Notification::make()->success()->title('Reservation moved')->send();
+    }
+
+    public function cancelReservation(int $id): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $r = Reservation::find($id);
+        if (! $r) return;
+        $personId = $r->personnel_id;
+        $r->delete();
+        // if the person was Run Scheduled only because of this, drop them back so they can rebook
+        $q = \App\Models\Qualification::where('personnel_id', $personId)->first();
+        if ($q && $q->workflow_stage === \App\Enums\WorkflowStage::RunScheduled) {
+            $stillBooked = Reservation::where('personnel_id', $personId)->whereIn('status', ['requested', 'approved'])->exists();
+            if (! $stillBooked) {
+                $q->workflow_stage = $q->class_on_file ? \App\Enums\WorkflowStage::ClassComplete : \App\Enums\WorkflowStage::ClassPending;
+                $q->stage_changed_at = now();
+                $q->save();
+            }
+        }
+        Notification::make()->success()->title('Reservation removed')->send();
+    }
+
     // ===== Overview tab (mini-dashboard) =====
     public function overviewStats(): array
     {
