@@ -31,6 +31,11 @@ class ImportPersonnel extends Command
     /** PERSONNEL values that are system/role accounts, not people. */
     protected array $skipKeys = ['SCHEDULER', 'SCHEDULER_EM', 'SYSTEM', 'ME_SCHED01'];
 
+    /** Manual name corrections by LIMS username (source data was ambiguous). */
+    protected array $nameOverrides = [
+        'FKUMAR' => ['first' => 'Praveen', 'last' => 'Kumar'],
+    ];
+
     public function handle(): int
     {
         $path = $this->option('path') ?: database_path('seed/personnel.csv');
@@ -50,13 +55,21 @@ class ImportPersonnel extends Command
 
             // Job title reference list
             if ($r['title'] !== '') {
-                $jt = JobTitle::firstOrCreate(['name' => $r['title']], ['is_active' => true]);
-                if ($jt->wasRecentlyCreated) $titles++;
+                if ($dry) {
+                    if (! JobTitle::where('name', $r['title'])->exists()) $titles++;
+                } else {
+                    $jt = JobTitle::firstOrCreate(['name' => $r['title']], ['is_active' => true]);
+                    if ($jt->wasRecentlyCreated) $titles++;
+                }
             }
 
-            if ($dry) { continue; }
-
             $existing = Personnel::withTrashed()->where('employee_id', $r['employee_id'])->first();
+
+            if ($dry) {
+                $existing ? $updated++ : $created++;
+                continue;
+            }
+
             $data = [
                 'first_name'    => $r['first_name'],
                 'last_name'     => $r['last_name'],
@@ -74,8 +87,8 @@ class ImportPersonnel extends Command
             }
         }
 
-        $this->info(($dry ? '[DRY RUN] ' : '') . "Personnel: {$created} created, {$updated} updated, {$skipped} system/role rows skipped.");
-        $this->info("Job titles added to reference list: {$titles}.");
+        $this->info(($dry ? '[DRY RUN] ' : '') . "Personnel: {$created} " . ($dry ? 'to create' : 'created') . ", {$updated} " . ($dry ? 'to update' : 'updated') . ", {$skipped} system/role rows skipped.");
+        $this->info("Job titles " . ($dry ? 'to add' : 'added') . " to reference list: {$titles}.");
         return self::SUCCESS;
     }
 
@@ -130,6 +143,10 @@ class ImportPersonnel extends Command
             $skip = $this->isSystemAccount($lims, $r['TITLE'], $r['FULLNAME']);
             $provided = strtolower(trim($r['EMAIL']));
             [$first, $last] = $this->splitName($r['FULLNAME'], $lims, $provided);
+            if (isset($this->nameOverrides[strtoupper($lims)])) {
+                $first = $this->nameOverrides[strtoupper($lims)]['first'] ?? $first;
+                $last = $this->nameOverrides[strtoupper($lims)]['last'] ?? $last;
+            }
             $email = $provided;
             if ($email === '' && $first !== '' && $last !== '') {
                 $email = $this->generateEmail($first, $last);
