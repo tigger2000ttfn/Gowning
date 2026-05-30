@@ -160,7 +160,12 @@
             <div class="gqs-panel" style="margin-bottom:14px;">
                 <div class="gqs-panel-head" style="justify-content:space-between;">
                     <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $g['day'] }}</span>
-                    <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} booked</span>
+                    <span style="display:flex;align-items:center;gap:10px;">
+                        <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} booked</span>
+                        @if($g['date'] !== 'unscheduled')
+                            <button type="button" wire:click="viewRoster('{{ $g['date'] }}')" class="rd-act rd-act-magenta">Attendance Sheet</button>
+                        @endif
+                    </span>
                 </div>
                 <div class="gqs-panel-body" style="padding:0;">
                     <table class="gqs-tbl">

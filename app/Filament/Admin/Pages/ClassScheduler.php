@@ -36,6 +36,16 @@ class ClassScheduler extends Page
     public function focusSession(int $id): void { $this->focusSessionId = $id; }
     public function unfocusSession(): void { $this->focusSessionId = null; }
 
+    public function mount(): void
+    {
+        // deep-link from Class Reservations: ?attend=SESSION_ID opens the Attendance tab on that session
+        $attend = request()->integer('attend');
+        if ($attend) {
+            $this->tab = 'attendance';
+            $this->focusSessionId = $attend;
+        }
+    }
+
     // reusable in-app confirmation modal (no native system prompts)
     public array $confirm = [];
     public function askConfirm(string $method, $arg, string $title, string $body, ?string $confirmLabel = null, bool $danger = false): void
