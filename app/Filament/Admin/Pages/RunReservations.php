@@ -21,12 +21,36 @@ class RunReservations extends Page
     protected static function allowed(): bool
     {
         $u = Auth::user();
-        return (bool) ($u && ($u->hasCapability(Capability::ManageScheduling)
-            || $u->hasCapability(Capability::ViewQualifications)));
+        if (! $u) return false;
+        return $u->hasCapability(Capability::ManageScheduling)
+            || $u->hasCapability(Capability::ViewQualifications)
+            || static::viewerPersonnel() !== null;
     }
     public static function canAccessNavigation(): bool { return static::allowed(); }
     public static function shouldRegisterNavigation(): bool { return static::allowed(); }
     public static function canViewAny(): bool { return static::allowed(); }
+
+    /** True when the viewer can manage everyone's bookings (vs self-serve only). */
+    public function viewerIsManager(): bool
+    {
+        $u = Auth::user();
+        return (bool) ($u && ($u->hasCapability(Capability::ManageScheduling) || $u->hasCapability(Capability::ViewQualifications)));
+    }
+
+    /** The personnel record for the current viewer (operator self-serve), if any. */
+    public static function viewerPersonnel(): ?\App\Models\Personnel
+    {
+        $u = Auth::user();
+        if (! $u) return null;
+        return \App\Models\Personnel::where('user_id', $u->id)->orWhere('email', $u->email)->first();
+    }
+
+    protected function mayManageReservation(?Reservation $r): bool
+    {
+        if (! $r) return false;
+        if ($this->viewerIsManager()) return true;
+        return $r->personnel_id && $r->personnel_id === static::viewerPersonnel()?->id;
+    }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Reservations';
@@ -42,9 +66,12 @@ class RunReservations extends Page
     /** Reservations grouped by run day, booking-management view. */
     public function getGroupedByDay(): array
     {
+        $manager = $this->viewerIsManager();
+        $mineId = $manager ? null : (static::viewerPersonnel()?->id);
         return Reservation::with(['personnel', 'runSlot'])
             ->whereHas('runSlot')
             ->whereIn('status', ['requested', 'approved'])
+            ->when(! $manager, fn ($q) => $q->where('personnel_id', $mineId))
             ->get()
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
@@ -99,7 +126,7 @@ class RunReservations extends Page
     public function openMove(int $reservationId): void
     {
         $r = Reservation::with('personnel')->find($reservationId);
-        if (! $r) return;
+        if (! $this->mayManageReservation($r)) return;
         $this->moveReservationId = $reservationId;
         $this->moveName = $r->personnel?->full_name ?? 'Trainee';
         $this->moveSlotId = null;
@@ -113,6 +140,7 @@ class RunReservations extends Page
             Notification::make()->warning()->title('Pick A Run Day')->send();
             return;
         }
+        if (! $this->mayManageReservation($r)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         $slot = RunSlot::find($this->moveSlotId);
         if (! $slot) return;
         if ($this->scheduler()->seatsLeft($slot) <= 0) {
@@ -128,7 +156,7 @@ class RunReservations extends Page
     public function reschedule(int $reservationId): void
     {
         $r = Reservation::find($reservationId);
-        if (! $r) return;
+        if (! $this->mayManageReservation($r)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         $slot = $this->scheduler()->nextAvailableSlot();
         if (! $slot) {
             Notification::make()->warning()->title('No Open Run Day')->body('No run day with space was found.')->send();
@@ -142,7 +170,7 @@ class RunReservations extends Page
     public function cancelBooking(int $reservationId): void
     {
         $r = Reservation::find($reservationId);
-        if (! $r) return;
+        if (! $this->mayManageReservation($r)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         // ReservationStatus has no 'cancelled'; 'rejected' removes it from the active booking list.
         $r->update(['status' => 'rejected']);
         Notification::make()->success()->title('Booking Cancelled')->send();

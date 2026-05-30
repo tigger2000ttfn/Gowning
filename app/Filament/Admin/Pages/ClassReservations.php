@@ -14,12 +14,32 @@ class ClassReservations extends Page
     protected static function allowed(): bool
     {
         $u = Auth::user();
-        return (bool) ($u && ($u->hasCapability(Capability::ManageClasses)
-            || $u->hasCapability(Capability::ManageAttendance)));
+        if (! $u) return false;
+        // Managers (manage caps) OR any operator with a linked personnel record (self-serve).
+        return $u->hasCapability(Capability::ManageClasses)
+            || $u->hasCapability(Capability::ManageAttendance)
+            || static::viewerPersonnel() !== null;
     }
     public static function canAccessNavigation(): bool { return static::allowed(); }
     public static function shouldRegisterNavigation(): bool { return static::allowed(); }
     public static function canViewAny(): bool { return static::allowed(); }
+
+    /** True when the viewer can manage everyone's bookings (vs self-serve only). */
+    public function viewerIsManager(): bool
+    {
+        $u = Auth::user();
+        return (bool) ($u && ($u->hasCapability(Capability::ManageClasses) || $u->hasCapability(Capability::ManageAttendance)));
+    }
+
+    /** The personnel record for the current viewer (operator self-serve), if any. */
+    public static function viewerPersonnel(): ?\App\Models\Personnel
+    {
+        $u = Auth::user();
+        if (! $u) return null;
+        return \App\Models\Personnel::where('user_id', $u->id)
+            ->orWhere('email', $u->email)
+            ->first();
+    }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Class Reservations';
@@ -33,6 +53,9 @@ class ClassReservations extends Page
     /** Enrollments grouped by class session, booking-management view. */
     public function getGroupedBySession(): array
     {
+        $manager = $this->viewerIsManager();
+        $mineId = $manager ? null : (static::viewerPersonnel()?->id);
+
         return ClassSession::with(['trainingClass', 'enrollments.personnel'])
             ->orderBy('session_date')
             ->get()
@@ -46,13 +69,17 @@ class ClassReservations extends Page
                 'submitted' => (bool) $s->attendance_submitted_at,
                 'rows' => $s->enrollments
                     ->whereNotIn('status', ['cancelled'])
+                    ->when(! $manager, fn ($c) => $c->where('personnel_id', $mineId))
                     ->map(fn ($e) => [
                         'id' => $e->id,
                         'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
                         'employee_id' => $e->employee_id,
                         'status' => $e->status,
                     ])->values()->all(),
-            ])->values()->all();
+            ])
+            // operators only see sessions they're actually in
+            ->filter(fn ($g) => $this->viewerIsManager() || ! empty($g['rows']))
+            ->values()->all();
     }
 
     /** Open future sessions a booking can be moved to (id => label). */
@@ -68,6 +95,14 @@ class ClassReservations extends Page
     }
 
     // ---- Booking management: move / reschedule / cancel (NOT attendance) ----
+
+    /** Operators may only act on their own booking; managers on anyone's. */
+    protected function mayManageEnrollment(?\App\Models\ClassEnrollment $e): bool
+    {
+        if (! $e) return false;
+        if ($this->viewerIsManager()) return true;
+        return $e->personnel_id && $e->personnel_id === static::viewerPersonnel()?->id;
+    }
 
     public bool $showMove = false;
     public ?int $moveEnrollmentId = null;
@@ -94,7 +129,7 @@ class ClassReservations extends Page
     public function openMove(int $enrollmentId): void
     {
         $e = ClassEnrollment::with('personnel')->find($enrollmentId);
-        if (! $e) return;
+        if (! $this->mayManageEnrollment($e)) return;
         $this->moveEnrollmentId = $enrollmentId;
         $this->moveName = $e->personnel?->full_name ?? $e->name ?? 'Trainee';
         $this->moveSessionId = null;
@@ -108,6 +143,7 @@ class ClassReservations extends Page
             Notification::make()->warning()->title('Pick A Session')->send();
             return;
         }
+        if (! $this->mayManageEnrollment($e)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         if ($e->classSession?->attendance_submitted_at) {
             Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
             return;
@@ -129,7 +165,7 @@ class ClassReservations extends Page
     public function reschedule(int $enrollmentId): void
     {
         $e = ClassEnrollment::with('classSession')->find($enrollmentId);
-        if (! $e) return;
+        if (! $this->mayManageEnrollment($e)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         if ($e->classSession?->attendance_submitted_at) {
             Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
             return;
@@ -153,7 +189,7 @@ class ClassReservations extends Page
     public function cancelBooking(int $enrollmentId): void
     {
         $e = ClassEnrollment::with('classSession')->find($enrollmentId);
-        if (! $e) return;
+        if (! $this->mayManageEnrollment($e)) { Notification::make()->danger()->title('Not Your Booking')->send(); return; }
         if ($e->classSession?->attendance_submitted_at) {
             Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
             return;
