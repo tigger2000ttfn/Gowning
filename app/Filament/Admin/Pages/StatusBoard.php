@@ -31,6 +31,15 @@ class StatusBoard extends Page
 
     protected string $view = 'filament.pages.status-board';
 
+    public string $search = '';
+    public string $deptFilter = '';
+    public string $typeFilter = '';
+
+    public function departmentOptions(): array
+    {
+        return \App\Models\Department::where('is_active', true)->orderBy('name')->pluck('name', 'name')->all();
+    }
+
     public function getStages(): array
     {
         // keep the board current: lapse overdue quals, then promote anything past incubation
@@ -38,6 +47,13 @@ class StatusBoard extends Page
         app(\App\Services\IncubationAdvancer::class)->run();
         $out = [];
         $byStage = Qualification::with('personnel')
+            ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
+            ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
+                $p->where('first_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('last_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('employee_id', 'ilike', '%' . $this->search . '%')))
+            ->when($this->deptFilter !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
+                $p->where('department', $this->deptFilter)))
             ->get()
             ->groupBy(fn ($q) => $q->workflow_stage?->value ?? 'class_pending');
 
