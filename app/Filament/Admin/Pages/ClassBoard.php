@@ -56,6 +56,27 @@ class ClassBoard extends Page
     }
 
     /** Drag an enrollment to a new status. 'completed' advances the person's workflow stage. */
+    public ?array $detail = null;
+
+    public function showDetail(int $id): void
+    {
+        $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])->find($id);
+        if (! $e) { $this->detail = null; return; }
+        $this->detail = [
+            'id' => $e->id,
+            'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
+            'employee_id' => $e->employee_id,
+            'class' => $e->classSession?->trainingClass?->name,
+            'session_date' => $e->classSession?->session_date?->format('l, M j, Y'),
+            'status' => ucfirst(str_replace('_', ' ', (string) $e->status)),
+            'edit_url' => $e->personnel_id
+                ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
+                : null,
+        ];
+    }
+
+    public function closeDetail(): void { $this->detail = null; }
+
     public function moveCard(int $id, string $toStatus): void
     {
         if (! array_key_exists($toStatus, $this->lanes)) {

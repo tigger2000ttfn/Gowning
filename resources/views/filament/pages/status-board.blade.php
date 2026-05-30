@@ -8,11 +8,23 @@
                     if (lane._sortable) return;
                     lane._sortable = Sortable.create(lane, {
                         group: 'stages', animation: 150, ghostClass: 'sb-ghost',
+                        onStart: () => { this._dragging = true; },
                         onEnd: (evt) => {
+                            this._dragging = false;
                             const id = evt.item.getAttribute('data-id');
                             const to = evt.to.getAttribute('data-stage');
+                            if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return; // no move = treat as click elsewhere
                             $wire.moveCard(parseInt(id), to);
                         }
+                    });
+                });
+                // click (not drag) opens the detail modal
+                document.querySelectorAll('.sb-card').forEach(card => {
+                    if (card._clickWired) return;
+                    card._clickWired = true;
+                    card.addEventListener('click', (e) => {
+                        if (this._dragging) return;
+                        $wire.showDetail(parseInt(card.getAttribute('data-id')));
                     });
                 });
             }
@@ -48,6 +60,51 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+    {{-- Click-to-view detail modal --}}
+    @if($detail)
+        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="closeDetail">
+            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:460px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <div style="font-weight:800;font-size:17px;">{{ $detail['name'] }}</div>
+                        <div style="font-size:12px;opacity:.8;">{{ $detail['employee_id'] }}@if($detail['department']) · {{ $detail['department'] }}@endif</div>
+                    </div>
+                    <button wire:click="closeDetail" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.7;">&times;</button>
+                </div>
+                <div style="padding:18px 20px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;font-size:13px;">
+                        <div><div class="dm-l">Stage</div><div class="dm-v">{{ $detail['stage'] }}</div></div>
+                        <div><div class="dm-l">Status</div><div class="dm-v">{{ $detail['status'] }}</div></div>
+                        <div><div class="dm-l">Type</div><div class="dm-v">{{ $detail['type'] }}</div></div>
+                        <div><div class="dm-l">Runs</div><div class="dm-v">{{ $detail['runs'] }}</div></div>
+                        <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $detail['due'] ?? '—' }}</div></div>
+                        <div><div class="dm-l">Class On File</div><div class="dm-v">{{ $detail['class_on_file'] ? 'Yes' : 'No' }}</div></div>
+                        <div><div class="dm-l">QA Owner</div><div class="dm-v">{{ $detail['qa_owner'] ?? 'Unassigned' }}</div></div>
+                    </div>
+
+                    @if(count($detail['recent_runs']))
+                        <div class="dm-l" style="margin-top:18px;">Recent Runs</div>
+                        <table class="gqs-tbl" style="margin-top:6px;">
+                            <thead><tr><th>Date</th><th>Result</th><th>Worklist</th></tr></thead>
+                            <tbody>@foreach($detail['recent_runs'] as $r)
+                                <tr><td>{{ $r['date'] }}</td><td>{{ $r['result'] }}</td><td>{{ $r['worklist'] ?? '—' }}</td></tr>
+                            @endforeach</tbody>
+                        </table>
+                    @endif
+
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                        <button wire:click="closeDetail" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Close</button>
+                        <a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Edit</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+    <style>
+        .dm-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
+        .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
+    </style>
     <style>
         .sb-fullbleed{width:100%;}
         .sb-wrap{display:flex;gap:12px;overflow-x:auto;padding:0 32px 14px;align-items:stretch;min-height:calc(100vh - 260px);}

@@ -70,6 +70,43 @@ class StatusBoard extends Page
     }
 
     /** Drag a person's card to a new workflow stage. QA sign-off requires QaApprove. */
+    /** Detail payload for the click-to-view modal. */
+    public ?array $detail = null;
+
+    public function showDetail(int $id): void
+    {
+        $q = Qualification::with('personnel', 'qaOwner')->find($id);
+        if (! $q) { $this->detail = null; return; }
+
+        $runs = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
+            ->latest('run_date')->latest('id')->limit(5)->get()
+            ->map(fn ($r) => [
+                'date' => $r->run_date?->format('M j, Y'),
+                'result' => ucfirst($r->result?->value ?? (string) $r->result),
+                'worklist' => $r->lims_worklist_id,
+            ])->all();
+
+        $this->detail = [
+            'id' => $q->id,
+            'name' => $q->personnel?->full_name ?? 'Unknown',
+            'employee_id' => $q->personnel?->employee_id,
+            'department' => $q->personnel?->department,
+            'stage' => $q->workflow_stage?->label(),
+            'status' => ucfirst((string) ($q->status?->value ?? $q->status ?? '')),
+            'type' => ucfirst((string) ($q->type ?? '')),
+            'runs' => $q->runs_completed . ' / ' . $q->runs_required,
+            'due' => $q->due_date?->format('M j, Y'),
+            'class_on_file' => (bool) $q->class_on_file,
+            'qa_owner' => $q->qaOwner?->name,
+            'recent_runs' => $runs,
+            'edit_url' => $q->personnel_id
+                ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $q->personnel_id])
+                : \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
+        ];
+    }
+
+    public function closeDetail(): void { $this->detail = null; }
+
     public function moveCard(int $id, string $toStage): void
     {
         $stage = WorkflowStage::tryFrom($toStage);
