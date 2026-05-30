@@ -44,7 +44,7 @@ class StatusBoard extends Page
     {
         // keep the board current: lapse overdue quals, then promote anything past incubation
         app(\App\Services\LifecycleAdvancer::class)->run();
-        app(\App\Services\IncubationAdvancer::class)->run();
+        app(\App\Services\RunCycleAdvancer::class)->sweep();
         $out = [];
         $byStage = Qualification::with('personnel')
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
@@ -59,16 +59,19 @@ class StatusBoard extends Page
 
         foreach (WorkflowStage::pipeline() as $stage) {
             $cards = ($byStage[$stage->value] ?? collect())->map(function ($q) {
-                $lastRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
-                    ->orderByDesc('run_date')->orderByDesc('id')->first();
+                // Cycle-aware: only count runs in the CURRENT cycle, so a fresh cycle
+                // doesn't show prior-cycle runs or an old worklist/date.
+                $cycleRuns = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q);
+                $lastRun = $cycleRuns->last();
+                $passes = $cycleRuns->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
                 return [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
                 'department' => $q->personnel?->department,
                 'type' => $q->type?->label(),
-                'meta' => $q->runs_completed . '/' . $q->runs_required . ' runs',
-                'runs_done' => (int) $q->runs_completed,
+                'meta' => $passes . '/' . $q->runs_required . ' runs',
+                'runs_done' => (int) $passes,
                 'runs_req' => (int) $q->runs_required,
                 'due' => $q->due_date?->format('M j, Y'),
                 'last_run_date' => $lastRun?->run_date?->format('M j'),
@@ -172,7 +175,7 @@ class StatusBoard extends Page
             'stage' => $q->workflow_stage?->label(),
             'status' => ucfirst((string) ($q->status?->value ?? $q->status ?? '')),
             'type' => ucfirst((string) ($q->type?->value ?? $q->type ?? '')),
-            'runs' => $q->runs_completed . ' / ' . $q->runs_required,
+            'runs' => app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count() . ' / ' . $q->runs_required,
             'due' => $q->due_date?->format('M j, Y'),
             'class_on_file' => (bool) $q->class_on_file,
             'qa_owner' => $q->qaOwner?->name,

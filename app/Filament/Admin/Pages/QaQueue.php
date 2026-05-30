@@ -55,7 +55,7 @@ class QaQueue extends Page
                 'submitted_at' => $s->attendance_submitted_at?->format('M j, Y g:i A'),
                 'submitted_by' => $s->submittedBy?->name,
                 'trainer' => $s->instructorUser?->name ?? $s->instructor,
-                'form_url' => route('print.class-attendance', $s->id),
+                'form_url' => route('print.class-attendance', [$s->id, 'FORM-AST-36513-' . ($s->session_uid ?: 'Class') . '.pdf']),
                 'rows' => $s->enrollments->where('status', 'pending_qa')->map(fn ($e) => [
                     'id' => $e->id,
                     'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',

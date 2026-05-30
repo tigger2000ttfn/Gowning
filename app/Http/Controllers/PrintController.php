@@ -11,7 +11,7 @@ use Illuminate\Support\Carbon;
 class PrintController extends Controller
 {
     /** Astellas Class Training Form (FORM-AST-36513), prefilled for a class session. */
-    public function classAttendanceForm(\Illuminate\Http\Request $request, \App\Models\ClassSession $session)
+    public function classAttendanceForm(\Illuminate\Http\Request $request, \App\Models\ClassSession $session, ?string $file = null)
     {
         $this->guard();
         $session->load(['trainingClass', 'instructorUser', 'enrollments.personnel']);

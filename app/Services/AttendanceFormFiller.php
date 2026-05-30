@@ -61,10 +61,10 @@ class AttendanceFormFiller
         $pdf->SetFont('Helvetica', '', 8);
         // "Training Date:" label sits at row 92-116; value cell is right of the x=216 divider.
         if (! empty($header['training_date'])) $this->text($pdf, 230, 110, $header['training_date']);
-        // Columns (from the grid): Document # 36-283, Revision # 283-328, Title 328-760.
+        // Columns (measured from FORM-AST-36513): Document # 36-214, Revision # 220-283, Title 283-760.
         if (! empty($header['document_no']))   $this->text($pdf, 42, 162, $header['document_no']);
-        if (! empty($header['revision_no']))   $this->text($pdf, 290, 162, $header['revision_no']);
-        if (! empty($header['title']))         $this->text($pdf, 333, 162, $header['title']);
+        if (! empty($header['revision_no']))   $this->text($pdf, 230, 162, $header['revision_no']);
+        if (! empty($header['title']))         $this->text($pdf, 290, 162, $header['title']);
         $pdf->SetFont('Helvetica', '', 9);
 
         // Section 2 trainees, page 1 (rows 0..15)

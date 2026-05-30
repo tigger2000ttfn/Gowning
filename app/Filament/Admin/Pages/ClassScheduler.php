@@ -305,7 +305,8 @@ class ClassScheduler extends Page
         $trainer = $this->attendanceTrainerId
             ? (\App\Models\User::find($this->attendanceTrainerId)?->name ?? '')
             : '';
-        $url = route('print.class-attendance', $this->attendanceSessionId) . '?trainer=' . urlencode($trainer);
+        $sess = \App\Models\ClassSession::find($this->attendanceSessionId);
+        $url = route('print.class-attendance', [$this->attendanceSessionId, 'FORM-AST-36513-' . ($sess?->session_uid ?: 'Class') . '.pdf']) . '?trainer=' . urlencode($trainer);
         $this->showAttendanceForm = false;
         $this->dispatch('open-url', url: $url);
     }
@@ -558,7 +559,17 @@ class ClassScheduler extends Page
         if (! static::allowed()) return;
         $s = ClassSession::find($id);
         if (! $s) return;
+        if ($s->attendance_submitted_at) {
+            Notification::make()->warning()->title('Locked')->body('Attendance is submitted; cannot cancel.')->send();
+            return;
+        }
+        // Return active enrollees to the queue so they can be rebooked.
+        $moved = \App\Models\ClassEnrollment::where('class_session_id', $s->id)
+            ->whereNotIn('status', ['cancelled', 'completed', 'historical'])
+            ->update(['status' => 'cancelled']);
         $s->update(['status' => 'cancelled']);
-        Notification::make()->success()->title('Session cancelled')->send();
+        $this->detailSessionId = null;
+        Notification::make()->success()->title('Session Cancelled')
+            ->body($moved > 0 ? $moved . ' enrolled trainee(s) returned to the queue to be rescheduled.' : 'No enrollees to move.')->send();
     }
 }

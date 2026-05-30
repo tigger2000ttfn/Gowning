@@ -221,6 +221,7 @@
                             @if($dlocked)
                                 <div style="padding:10px 12px;background:#E9F7EF;border:1px solid #BFE6CE;border-radius:8px;font-size:12.5px;color:#1C5E3A;">Attendance Submitted · {{ count($this->sessionAttendees($detailSessionId)) }} enrolled. This session is locked from editing.</div>
                             @else
+                                @php $enrolled = $this->sessionAttendees($detailSessionId); @endphp
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                     <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSession.session_date" class="gqs-fld"></div>
                                     <div><label class="gqs-flbl">Location</label><input type="text" wire:model="editSession.location" class="gqs-fld"></div>
@@ -232,9 +233,17 @@
                                             @foreach($this->instructorOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
                                         </select></div>
                                 </div>
+                                <div style="margin-top:4px;padding:10px 12px;background:var(--gqs-surface-2,#F4F4F7);border-radius:8px;">
+                                    <div style="font-size:12px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-bottom:4px;">{{ count($enrolled) }} Enrolled · Rescheduling This Session Moves Them All To The New Date</div>
+                                    @if(count($enrolled))
+                                        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ collect($enrolled)->pluck('name')->implode(', ') }}</div>
+                                    @else
+                                        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">No one enrolled yet.</div>
+                                    @endif
+                                </div>
                             @endif
                             <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;">
-                                <a href="{{ route('print.class-attendance', $ds->id) }}@if($ds->instructorUser)?trainer={{ urlencode($ds->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
+                                <a href="{{ route('print.class-attendance', [$ds->id, 'FORM-AST-36513-' . ($ds->session_uid ?: 'Class') . '.pdf']) }}@if($ds->instructorUser)?trainer={{ urlencode($ds->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
                                 <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}?attend={{ $ds->id }}" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Take Attendance</a>
                             </div>
                         </div>
@@ -242,7 +251,7 @@
                             <button type="button" wire:click="askConfirm('cancelSession', {{ $ds->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="gqs-btn" style="background:#C8102E;color:#fff;">Cancel Session</button>
                             <span style="display:flex;gap:9px;">
                                 <button type="button" wire:click="closeSessionDetail" class="gqs-btn gqs-btn-ghost">Close</button>
-                                @if(! $dlocked)<button type="button" wire:click="saveSessionDetail" class="gqs-btn gqs-btn-primary">Save Changes</button>@endif
+                                @if(! $dlocked)<button type="button" wire:click="saveSessionDetail" class="gqs-btn gqs-btn-primary">Save / Reschedule</button>@endif
                             </span>
                         </div>
                     </div>
@@ -276,7 +285,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">&larr; Back To Sessions</button>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <a href="{{ route('print.class-attendance', $s->id) }}@if($s->instructorUser)?trainer={{ urlencode($s->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
+                        <a href="{{ route('print.class-attendance', [$s->id, 'FORM-AST-36513-' . ($s->session_uid ?: 'Class') . '.pdf']) }}@if($s->instructorUser)?trainer={{ urlencode($s->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
                     </div>
                 </div>
                 <div class="gqs-panel">
