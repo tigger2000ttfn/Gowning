@@ -1,11 +1,15 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'QC Micro Team & Assignments', 'subtitle' => 'Analyst workload across run days and class sessions.', 'icon' => 'heroicon-o-user-group'])
-
     @php
         $analysts = $this->getAnalysts();
         $unassigned = $this->getUnassignedRunDays();
         $manager = $this->manager();
+        $tabActions = '';
+        foreach (['overview' => 'Overview', 'table' => 'Table', 'cards' => 'Cards', 'calendar' => 'Calendar'] as $k => $lbl) {
+            $tabActions .= '<button type="button" wire:click="$set(\'tab\', \'' . $k . '\')" class="gqs-tab ' . ($tab === $k ? 'active' : '') . '">' . $lbl . '</button>';
+        }
     @endphp
+
+    @include('filament.page-hero', ['title' => 'QC Micro Team & Assignments', 'icon' => 'heroicon-o-user-group', 'actions' => $tabActions])
 
     {{-- Manager + summary stats --}}
     <div class="gqs-stats">
@@ -13,13 +17,6 @@
         <div class="gqs-stat magenta"><div class="n">{{ $analysts->count() }}</div><div class="l">Analysts</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
         <div class="gqs-stat gold"><div class="n">{{ $unassigned->count() }}</div><div class="l">Unassigned Run Days</div><span class="wm"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span></div>
         <div class="gqs-stat purple"><div class="n">{{ $analysts->sum('load') }}</div><div class="l">Total Assignments</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-list"/></span></div>
-    </div>
-
-    {{-- Tabs --}}
-    <div class="gqs-tabs">
-        @foreach(['overview' => 'Overview', 'table' => 'Table', 'cards' => 'Cards', 'calendar' => 'Calendar'] as $key => $label)
-            <button type="button" wire:click="$set('tab', '{{ $key }}')" class="gqs-tab {{ $tab === $key ? 'on' : '' }}">{{ $label }}</button>
-        @endforeach
     </div>
 
     {{-- Unassigned alert (all tabs) --}}

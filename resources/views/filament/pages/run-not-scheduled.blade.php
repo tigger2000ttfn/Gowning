@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Awaiting Run Booking', 'subtitle' => 'Class complete but no qualification run booked yet.', 'icon' => 'heroicon-o-calendar'])
+    @include('filament.page-hero', ['title' => 'Awaiting Run Booking', 'icon' => 'heroicon-o-calendar'])
 
     @php $waiting = $this->getWaiting(); @endphp
 

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Audit Trail', 'subtitle' => 'Computer-generated record of every change. Part 11 / ALCOA+.', 'icon' => 'heroicon-o-document-magnifying-glass'])
+    @include('filament.page-hero', ['title' => 'Audit Trail', 'icon' => 'heroicon-o-document-magnifying-glass'])
 
     @php
         $todayCount = \Spatie\Activitylog\Models\Activity::whereDate('created_at', now()->toDateString())->count();

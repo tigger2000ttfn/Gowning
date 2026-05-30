@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Reports', 'subtitle' => 'Compliance reports and exports.', 'icon' => 'heroicon-o-chart-bar'])
+    @include('filament.page-hero', ['title' => 'Reports', 'icon' => 'heroicon-o-chart-bar'])
 
     <div style="margin-bottom:16px;">
         <a href="{{ route('print.report') }}" target="_blank"

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Notification Settings', 'subtitle' => 'Choose which events notify you, and how.', 'icon' => 'heroicon-o-bell-alert'])
+    @include('filament.page-hero', ['title' => 'Notification Settings', 'icon' => 'heroicon-o-bell-alert'])
 
     <div class="gqs-panel">
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-bell"/> My Notification Preferences</div>

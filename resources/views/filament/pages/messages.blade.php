@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Messages', 'subtitle' => 'Direct messages with your colleagues.', 'icon' => 'heroicon-o-chat-bubble-left-right'])
+    @include('filament.page-hero', ['title' => 'Messages', 'icon' => 'heroicon-o-chat-bubble-left-right'])
 
     <div class="gqs-tabs">
         @php $unread = $this->unreadCount(); @endphp

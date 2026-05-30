@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Roles & Permissions', 'subtitle' => 'What each role can do.', 'icon' => 'heroicon-o-shield-check'])
+    @include('filament.page-hero', ['title' => 'Roles & Permissions', 'icon' => 'heroicon-o-shield-check'])
 
     <style>
         .perm-wrap{overflow-x:auto;border:1px solid var(--gqs-border,#DADADF);border-radius:14px;background:var(--gqs-surface,#fff);}

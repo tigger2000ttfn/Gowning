@@ -1,24 +1,9 @@
 <x-filament-panels::page>
-    <div class="sb-headrow">
-        <div class="sb-headrow-title">
-            <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-academic-cap" /></span>
-            <div class="pg-head-tx" style="min-width:0;">
-                <h1>Class Scheduler</h1>
-                <p>@switch($tab)
-                    @case('overview')Who needs the gowning class, and the state of class scheduling.@break
-                    @case('classes')Class templates: the reusable definitions you generate dated sessions from.@break
-                    @case('sessions')Individual dated class sessions. Generate from a template, cancel one at a time.@break
-                @endswitch</p>
-            </div>
-        </div>
-        <div class="sb-headrow-filters">
-            <div class="gqs-tabs">
-                <button type="button" wire:click="$set('tab','overview')" class="gqs-tab @if($tab==='overview') on @endif">Overview</button>
-                <button type="button" wire:click="$set('tab','classes')" class="gqs-tab @if($tab==='classes') on @endif">Classes</button>
-                <button type="button" wire:click="$set('tab','sessions')" class="gqs-tab @if($tab==='sessions') on @endif">Sessions</button>
-            </div>
-        </div>
-    </div>
+    @include('filament.page-hero', ['title' => 'Class Scheduler', 'icon' => 'heroicon-o-academic-cap', 'actions' => '
+        <button type="button" wire:click="$set(\'tab\',\'overview\')" class="gqs-tab ' . ($tab==='overview' ? 'active' : '') . '">Overview</button>
+        <button type="button" wire:click="$set(\'tab\',\'classes\')" class="gqs-tab ' . ($tab==='classes' ? 'active' : '') . '">Classes</button>
+        <button type="button" wire:click="$set(\'tab\',\'sessions\')" class="gqs-tab ' . ($tab==='sessions' ? 'active' : '') . '">Sessions</button>
+    '])
 
     @if($tab === 'overview')
         @php $stats = $this->overviewStats(); $need = $this->needingClass(); @endphp

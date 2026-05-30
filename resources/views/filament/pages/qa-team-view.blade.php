@@ -1,24 +1,22 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'QA Team & Approval Ownership', 'subtitle' => 'Who owns which pending sign-offs, and review workload.', 'icon' => 'heroicon-o-clipboard-document-check'])
-
     @php
         $reviewers = $this->getReviewers();
         $unassigned = $this->getUnassigned();
         $manager = $this->manager();
         $total = $this->totalPending();
+        $tabActions = '';
+        foreach (['overview' => 'Overview', 'table' => 'Workload Table', 'unassigned' => 'Unassigned'] as $k => $lbl) {
+            $tabActions .= '<button type="button" wire:click="$set(\'tab\', \'' . $k . '\')" class="gqs-tab ' . ($tab === $k ? 'active' : '') . '">' . $lbl . '</button>';
+        }
     @endphp
+
+    @include('filament.page-hero', ['title' => 'QA Team & Approval Ownership', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => $tabActions])
 
     <div class="gqs-stats">
         <div class="gqs-stat charcoal"><div class="n" style="font-size:18px;">{{ $manager?->name ?? 'Unassigned' }}</div><div class="l">QA Manager</div><span class="wm"><x-filament::icon icon="heroicon-o-user-circle"/></span></div>
         <div class="gqs-stat magenta"><div class="n">{{ $reviewers->count() }}</div><div class="l">Reviewers</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
         <div class="gqs-stat gold"><div class="n">{{ $unassigned->count() }}</div><div class="l">Unassigned Approvals</div><span class="wm"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span></div>
         <div class="gqs-stat purple"><div class="n">{{ $total }}</div><div class="l">Total Pending</div><span class="wm"><x-filament::icon icon="heroicon-o-inbox-stack"/></span></div>
-    </div>
-
-    <div class="gqs-tabs">
-        @foreach(['overview' => 'Overview', 'table' => 'Workload Table', 'unassigned' => 'Unassigned'] as $key => $label)
-            <button type="button" wire:click="$set('tab', '{{ $key }}')" class="gqs-tab {{ $tab === $key ? 'on' : '' }}">{{ $label }}</button>
-        @endforeach
     </div>
 
     @if($unassigned->isNotEmpty() && $tab !== 'unassigned')

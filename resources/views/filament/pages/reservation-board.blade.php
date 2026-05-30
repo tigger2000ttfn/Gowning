@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Qualification Run Reservations', 'subtitle' => 'Reservations grouped by run day. Click status to advance.', 'icon' => 'heroicon-o-calendar-days'])
+    @include('filament.page-hero', ['title' => 'Qualification Run Reservations', 'icon' => 'heroicon-o-calendar-days'])
 
     {{-- Filter / search bar + manual add --}}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;">

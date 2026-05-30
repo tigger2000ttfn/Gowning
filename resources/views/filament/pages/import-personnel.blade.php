@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Import Personnel', 'subtitle' => 'Bulk-load people from CSV.', 'icon' => 'heroicon-o-arrow-up-tray'])
+    @include('filament.page-hero', ['title' => 'Import Personnel', 'icon' => 'heroicon-o-arrow-up-tray'])
 
     <div class="gqs-panel">
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> 1. Upload CSV</div>

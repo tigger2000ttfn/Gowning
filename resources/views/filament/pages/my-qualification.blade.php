@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'My Qualification', 'subtitle' => 'Your status and run history.', 'icon' => 'heroicon-o-identification'])
+    @include('filament.page-hero', ['title' => 'My Qualification', 'icon' => 'heroicon-o-identification'])
 
     @if($this->rescheduleAction->isVisible())
         <div style="margin-bottom:16px;">{{ $this->rescheduleAction }}</div>
