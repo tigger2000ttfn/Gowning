@@ -282,7 +282,7 @@ class QaQueue extends Page
             'name' => $q->personnel?->full_name ?? 'Unknown',
             'employee_id' => $q->personnel?->employee_id,
             'progress' => $q->runs_completed . ' / ' . $q->runs_required,
-            'type' => $q->type?->label(),
+            'type' => $q->sessionLabel(),
             'run_uid' => $run?->run_uid,
             'veeva' => $run?->veeva_doc_number,
             'veeva_url' => $run?->veeva_url,

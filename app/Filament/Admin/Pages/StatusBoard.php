@@ -76,7 +76,7 @@ class StatusBoard extends Page
                 'employee_id' => $q->personnel?->employee_id,
                 'department' => $q->personnel?->department,
                 'job_title' => $q->personnel?->job_title,
-                'type' => $q->type?->label(),
+                'type' => $q->sessionLabel(),
                 'due_bucket' => (function () use ($q) {
                     $d = $q->due_date;
                     if (! $d) return 'No Due Date';
@@ -112,7 +112,7 @@ class StatusBoard extends Page
                 'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
                 'department' => $q->personnel?->department, 'job_title' => $q->personnel?->job_title,
-                'type' => $q->type?->label(), 'due_bucket' => $q->due_date ? 'Later' : 'No Due Date',
+                'type' => $q->sessionLabel(), 'due_bucket' => $q->due_date ? 'Later' : 'No Due Date',
             ])->values()->all();
             $out[] = ['key' => 'failed', 'label' => \App\Models\WorkflowStatus::labelFor('run', 'failed', WorkflowStage::Failed->label()), 'color' => \App\Models\WorkflowStatus::colorFor('run', 'failed', WorkflowStage::Failed->color()), 'cards' => $failed];
         }

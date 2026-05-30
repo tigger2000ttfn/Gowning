@@ -393,6 +393,7 @@
                                         <div class="att-eid">
                                             <span>{{ $res->personnel?->employee_id }}</span>
                                             <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}@if($ctx['tag']) · {{ $ctx['tag'] }}@endif</span>
+                                            @if($ctx['retrain'] ?? false)<span class="gqs-pill gqs-pill-red" style="margin-left:4px;">Retraining Required First</span>@endif
                                             <span class="run-pips" title="Run {{ $runNo }} of {{ $required }}">
                                                 @for($k = 1; $k <= $required; $k++)
                                                     <span class="run-pip {{ $k <= $performed ? 'done' : ($k == $runNo ? 'cur' : '') }}"></span>

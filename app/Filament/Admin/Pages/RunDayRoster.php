@@ -304,22 +304,16 @@ class RunDayRoster extends Page
         $this->tab = 'roster';
     }
 
-    /** Human label for a person's current qualification cycle, for the roster. */
+    /** Human label for a person's current qualification cycle, for the roster (single source of truth on the model). */
     public function runContext(?\App\Models\Qualification $q): array
     {
-        if (! $q) return ['label' => 'Qualification', 'tag' => '', 'pill' => 'gqs-pill-purple'];
-        $rec = $q->qa_recommendation;
-        $qualified = $q->status === \App\Enums\QualificationStatus::Qualified;
-        if (! $qualified && $rec === 'requal_one') {
-            return ['label' => 'QA-Mandated Requalification', 'tag' => '1 Run', 'pill' => 'gqs-pill-gold'];
-        }
-        if (! $qualified && $rec === 'requal_three') {
-            return ['label' => 'Full Requalification', 'tag' => '3 Runs · Post-Failure', 'pill' => 'gqs-pill-red'];
-        }
-        if ($q->type === \App\Enums\QualificationType::Initial) {
-            return ['label' => 'Initial Qualification', 'tag' => '3 Runs', 'pill' => 'gqs-pill-purple'];
-        }
-        return ['label' => 'Annual Requalification', 'tag' => '1 Run', 'pill' => 'gqs-pill-green'];
+        if (! $q) return ['label' => 'Qualification', 'tag' => '', 'pill' => 'gqs-pill-purple', 'retrain' => false];
+        return [
+            'label' => $q->sessionLabel(),
+            'tag' => $q->sessionTag(),
+            'pill' => $q->sessionPill(),
+            'retrain' => $q->needsRetrainingFirst(),
+        ];
     }
 
     // ===== Reservations tab =====

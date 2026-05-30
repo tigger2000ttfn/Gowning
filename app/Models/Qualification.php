@@ -94,6 +94,51 @@ class Qualification extends Model
             ->first();
     }
 
+    /**
+     * The session type as a single source of truth, reflecting the real states:
+     *  - Initial Qual / Annual Requal  (system- or date-driven)
+     *  - QA Initial Requal             (QA disposition of a failure: full 3 consecutive runs)
+     *  - QA Requal 2                   (QA disposition of a failed annual: 1 additional run, REQUAL2)
+     */
+    public function sessionLabel(): string
+    {
+        return match ($this->qa_recommendation) {
+            'requal_three' => 'QA Initial Requal',
+            'requal_one' => 'QA Requal 2',
+            default => $this->type === \App\Enums\QualificationType::Initial ? 'Initial Qual' : 'Annual Requal',
+        };
+    }
+
+    public function sessionTag(): string
+    {
+        return match ($this->qa_recommendation) {
+            'requal_three' => '3 Runs · Post-Failure',
+            'requal_one' => '1 Additional Run · REQUAL2',
+            default => $this->type === \App\Enums\QualificationType::Initial ? '3 Runs' : '1 Run',
+        };
+    }
+
+    public function sessionPill(): string
+    {
+        return match ($this->qa_recommendation) {
+            'requal_three' => 'gqs-pill-red',
+            'requal_one' => 'gqs-pill-gold',
+            default => $this->type === \App\Enums\QualificationType::Initial ? 'gqs-pill-purple' : 'gqs-pill-green',
+        };
+    }
+
+    /**
+     * The fifth path: a QA disposition that mandated gowning class retraining. The person cannot
+     * reperform any qualification run until a NEW classroom training is recorded and QA-approved
+     * (markPerformed enforces the class-on-file gate). True only while they still owe that class.
+     */
+    public function needsRetrainingFirst(): bool
+    {
+        return $this->qa_recommendation !== null
+            && ! $this->class_on_file
+            && $this->workflow_stage === \App\Enums\WorkflowStage::ClassPending;
+    }
+
     public function comments(): HasMany
     {
         return $this->hasMany(QualificationComment::class)->latest();
