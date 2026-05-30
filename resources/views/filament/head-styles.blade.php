@@ -59,6 +59,21 @@
     .fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
 
 
+    /* ===== FIX CARD-WITHIN-CARD: a Filament Section inside a modal already sits in the
+       modal's card, so the section's own border/background creates a nested card. Flatten
+       sections when they're inside a modal/slide-over window. ===== */
+    .fi-modal-window .fi-section,
+    .fi-modal-window .fi-section-content-ctn,
+    .fi-modal-window section.fi-section {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        --tw-ring-color: transparent !important;
+    }
+    .fi-modal-window .fi-section-content { padding: 0 !important; }
+    /* keep the section heading (icon+label) but tighten it */
+    .fi-modal-window .fi-section-header { padding: 0 0 10px !important; }
+
     /* ===== GQS SHARED PAGE COMPONENTS (match dashboard look across all pages) ===== */
     .gqs-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
     .gqs-stat { position:relative; overflow:hidden; color:#fff; border-radius:14px; padding:18px 18px 16px; box-shadow:0 3px 12px rgba(0,0,0,.12); }
