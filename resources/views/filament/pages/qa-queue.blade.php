@@ -175,7 +175,7 @@
     @if($wz)
         <div class="gqs-modal-overlay" wire:click.self="closeSignoff">
             <div class="gqs-modal" style="width:560px;">
-                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-clipboard-document-check"/></span>QA Sign-off · {{ $wz['name'] }}</div>
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-clipboard-document-check"/></span>QA Review · {{ $wz['name'] }}</div>
                 <div class="gqs-modal-body">
                     {{-- Step indicator --}}
                     <div style="display:flex;gap:6px;margin-bottom:4px;">
@@ -199,32 +199,37 @@
                         @endif
                     @elseif($wizStep === 'pass')
                         <div style="font-size:13px;line-height:1.5;">By signing, I, <strong>{{ auth()->user()->name }}</strong>, certify I have reviewed this qualification record and approve it as complete. This electronic signature is the legally binding equivalent of my handwritten signature.</div>
+                        @if(! $wz['veeva'])<div style="font-size:12px;color:#C8102E;font-weight:600;">No Veeva report number is recorded for this run. Per SOP the report should be linked before sign-off.</div>@endif
                         <div><label class="gqs-flbl">Signature Meaning</label><input type="text" wire:model="wizMeaning" class="gqs-fld"></div>
                         @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
                     @else
+                        <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;line-height:1.5;">
+                            <strong>Failed qualification ({{ $wz['type'] }}).</strong> Recording this opens a new <strong>requalification session</strong> for {{ $wz['name'] }}, linked to the failed run. A nonconformance is opened (SOP-AST-28480), and <strong>cleanroom access stays restricted until the requalification is successfully completed</strong> (SOP-AST-30419 §8.5).
+                        </div>
                         <div><label class="gqs-flbl">Requalification Path</label>
                             <select wire:model="wizPath" class="gqs-fld">
-                                <option value="requal_three">Full requalification · 3 successful runs</option>
-                                <option value="requal_one">Annual requalification · 1 successful run</option>
+                                <option value="requal_three">Full Requalification · 3 Consecutive Passing Runs</option>
+                                <option value="requal_one">Annual Requalification · 1 Additional Run (REQUAL2)</option>
                             </select>
+                            <div style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:5px;line-height:1.45;">Per SOP: an excursion on an <strong>initial</strong> qualification requires the full 3-run requalification. An excursion on an <strong>annual</strong> requalification may be a single additional run (REQUAL2) <em>or</em> a full 3-run requalification, per the nonconformance evaluation.</div>
                         </div>
-                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" wire:model="wizRetrain"> Require Gowning Class Retraining (clears class on file)</label>
-                        <div><label class="gqs-flbl">Determination Note</label><input type="text" wire:model="wizNote" class="gqs-fld"></div>
-                        @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;"><input type="checkbox" wire:model="wizRetrain"> Require Gowning Class Retraining First (clears class on file)</label>
+                        <div><label class="gqs-flbl">Determination / Nonconformance Note</label><input type="text" wire:model="wizNote" class="gqs-fld" placeholder="Microbial ID, NC rationale, refresher required..."></div>
+                        @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password (E-Signature)</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
                     @endif
                 </div>
                 <div class="gqs-modal-foot" style="justify-content:space-between;">
                     <button type="button" wire:click="closeSignoff" class="gqs-btn gqs-btn-ghost">Cancel</button>
                     <span style="display:flex;gap:8px;">
                         @if($wizStep === 'review')
-                            <button type="button" wire:click="wizSetStep('fail')" class="gqs-btn" style="background:#C8102E;color:#fff;" @disabled($wz['is_subject'])>Fail</button>
-                            <button type="button" wire:click="wizSetStep('pass')" class="gqs-btn gqs-btn-primary" @disabled($wz['is_subject'])>Pass · Sign Off</button>
+                            <button type="button" wire:click="wizSetStep('fail')" class="gqs-btn" style="background:#C8102E;color:#fff;" @disabled($wz['is_subject'])>Fail · Determination</button>
+                            <button type="button" wire:click="wizSetStep('pass')" class="gqs-btn" style="background:#2E7D5B;color:#fff;" @disabled($wz['is_subject'])>Pass · Sign Off</button>
                         @elseif($wizStep === 'pass')
                             <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
-                            <button type="button" wire:click="finalizeSignoff" class="gqs-btn gqs-btn-primary">Sign Off → Qualified</button>
+                            <button type="button" wire:click="finalizeSignoff" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Sign Off → Qualified</button>
                         @else
                             <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
-                            <button type="button" wire:click="finalizeFail" class="gqs-btn" style="background:#C8102E;color:#fff;">Record Determination</button>
+                            <button type="button" wire:click="finalizeFail" class="gqs-btn" style="background:#C8102E;color:#fff;">Record Determination → Requal</button>
                         @endif
                     </span>
                 </div>

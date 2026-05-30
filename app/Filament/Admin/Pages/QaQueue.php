@@ -362,7 +362,7 @@ class QaQueue extends Page
         ElectronicSignature::create([
             'signable_type' => Qualification::class, 'signable_id' => $q->id,
             'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'QA Determination',
-            'statement' => 'Requalification: ' . ($three ? '3 runs' : '1 run') . ($retrain ? ', class retraining required' : ', class stays on file') . '. ' . $this->wizNote,
+            'statement' => 'QA determination on failed qualification: opened ' . ($three ? 'a full 3-run requalification' : 'an annual requalification (1 additional run, REQUAL2)') . ($retrain ? ' with mandatory gowning class retraining' : '') . '. Access remains restricted until requalification is successfully completed. ' . $this->wizNote,
             'signed_at' => now(),
         ]);
         $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
@@ -390,7 +390,7 @@ class QaQueue extends Page
         }
         $this->wizQid = null;
         Notification::make()->success()->title('Determination Recorded')
-            ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run') . ($retrain ? ' + class retraining.' : '.') . $bookedMsg)->send();
+            ->body(($q->personnel?->full_name ?? 'Operator') . ': requalification session opened (' . ($three ? '3 runs' : '1 additional run · REQUAL2') . ($retrain ? ' + class retraining' : '') . '). Access restricted until complete.' . $bookedMsg)->send();
     }
 
 
