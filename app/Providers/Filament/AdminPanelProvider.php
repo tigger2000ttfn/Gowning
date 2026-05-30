@@ -52,6 +52,10 @@ class AdminPanelProvider extends PanelProvider
             ->pages([])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
             ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render('@include("filament.head-styles")'),
+            )
+            ->renderHook(
                 PanelsRenderHook::BODY_START,
                 fn (): string => Blade::render('@include("filament.login-extras")'),
             )
