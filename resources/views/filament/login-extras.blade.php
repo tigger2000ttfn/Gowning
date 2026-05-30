@@ -59,7 +59,7 @@
     /* bigger logo inside the sign-in card */
     .fi-simple-main img{height:56px !important;}
     /* breathing room ABOVE the card content (pushes logo down from card top) */
-    .fi-simple-main{padding-top:40px !important;}
+    .fi-simple-main{padding-top:56px !important;}
     .fi-simple-main{padding-top:30px;}
 
     /* solid magenta sign-in button (no pink) + padding */

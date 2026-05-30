@@ -39,6 +39,7 @@ class Login extends BaseLogin
     {
         return TextInput::make('password')
             ->label('Password')
+            ->hint(filament()->hasPasswordReset() ? new \Illuminate\Support\HtmlString('<a class="fi-link" href="' . filament()->getRequestPasswordResetUrl() . '">' . 'Forgot Your Password?' . '</a>') : null)
             ->password()
             ->revealable(filament()->arePasswordsRevealable())
             ->required()
