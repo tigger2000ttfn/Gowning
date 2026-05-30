@@ -57,11 +57,13 @@ class Notifier
             $wantsEmail = \App\Models\NotificationPreference::wants($userId, $event, 'email');
         }
 
-        // in-app notification to their linked user, if any
+        // in-app notification to their linked user, if any (strip any HTML from the body,
+        // since templates store HTML which is fine for email but shows tags in-app)
         if ($userId && $wantsInApp) {
             $user = User::find($userId);
             if ($user) {
-                Notification::make()->title($title)->body($body)
+                $inApp = trim(html_entity_decode(strip_tags(str_replace(['</p>', '<br>', '<br/>', '<br />'], "\n", $body)), ENT_QUOTES));
+                Notification::make()->title($title)->body($inApp)
                     ->icon('heroicon-o-calendar-days')->color('success')
                     ->sendToDatabase($user);
             }
