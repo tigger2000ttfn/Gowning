@@ -66,6 +66,8 @@ class StatusBoard extends Page
                 'runs_done' => (int) $q->runs_completed,
                 'runs_req' => (int) $q->runs_required,
                 'due' => $q->due_date?->format('M j'),
+                'status' => ucfirst(str_replace('_', ' ', ($q->status?->value ?? (string) $q->status ?? ''))),
+                'status_key' => $q->status?->value ?? (string) $q->status,
             ])->values()->all();
 
             $out[] = [

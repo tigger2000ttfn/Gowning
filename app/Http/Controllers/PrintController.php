@@ -54,13 +54,21 @@ class PrintController extends Controller
     public function runDay(\Illuminate\Http\Request $request)
     {
         $this->guard();
-        $date = $request->query('date', now()->toDateString());
+        $raw = (string) $request->query('date', now()->toDateString());
+        // Be defensive: strip anything after the date (e.g. a stray ':1' suffix) and validate.
+        $raw = trim(explode(':', $raw)[0]);
+        try {
+            $dateC = Carbon::parse($raw);
+        } catch (\Throwable $e) {
+            $dateC = Carbon::now();
+        }
+        $date = $dateC->toDateString();
         $slots = RunSlot::with(['reservations' => fn ($q) => $q->whereIn('status', ['approved', 'completed'])->with('personnel'), 'analyst'])
             ->whereDate('slot_date', $date)
             ->orderBy('start_time')->get();
 
         $data = [
-            'date' => Carbon::parse($date),
+            'date' => $dateC,
             'slots' => $slots,
             'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
             'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),

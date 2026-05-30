@@ -55,6 +55,9 @@
                                 <div class="sb-card-body" @click="openCard({{ $card['id'] }})">
                                     <div class="sb-name">{{ $card['name'] }}</div>
                                     <div class="sb-meta">{{ $card['employee_id'] }}</div>
+                                    @if(!empty($card['status']))
+                                        <span class="sb-pill sb-pill-{{ $card['status_key'] }}">{{ $card['status'] }}</span>
+                                    @endif
                                     @if(($card['runs_req'] ?? 0) > 0)
                                         <div class="sb-runs" title="{{ $card['runs_done'] }} of {{ $card['runs_req'] }} runs">
                                             @for($r = 0; $r < $card['runs_req']; $r++)
@@ -224,6 +227,11 @@
         .sb-selected .sb-check{opacity:1;}
         .sb-check input{width:15px;height:15px;accent-color:#A4123F;cursor:pointer;}
         .sb-card-body{flex:1;min-width:0;cursor:pointer;}
+        .sb-pill{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:#E6E6EA;color:#3A3A42;}
+        .sb-pill-qualified{background:#2E7D5B;color:#fff;}
+        .sb-pill-in_progress{background:#C79A2E;color:#fff;}
+        .sb-pill-pending{background:#6B6B73;color:#fff;}
+        .sb-pill-lapsed{background:#C8102E;color:#fff;}
         /* lane header is the grab handle for reordering columns */
         .sb-head-grab{cursor:grab;}
         .sb-head-grab:active{cursor:grabbing;}
