@@ -20,4 +20,23 @@
         border-radius: 9px;
     }
     .fi-topbar .fi-icon-btn:hover { background-color: rgba(255,255,255,.12) !important; }
+
+    /* subtle star shimmer across the dark header */
+    .fi-topbar { position: relative; overflow: hidden; }
+    .fi-topbar::before {
+        content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+        background-image:
+            radial-gradient(1.5px 1.5px at 12% 40%, rgba(255,255,255,.9), transparent),
+            radial-gradient(1px 1px at 28% 70%, rgba(232,194,74,.9), transparent),
+            radial-gradient(1.5px 1.5px at 45% 30%, rgba(255,255,255,.8), transparent),
+            radial-gradient(1px 1px at 63% 60%, rgba(185,140,224,.9), transparent),
+            radial-gradient(1.5px 1.5px at 78% 35%, rgba(255,255,255,.85), transparent),
+            radial-gradient(1px 1px at 90% 65%, rgba(232,194,74,.8), transparent);
+        animation: gqsHeadTw 4s ease-in-out infinite;
+    }
+    @keyframes gqsHeadTw { 0%,100%{opacity:.35} 50%{opacity:.9} }
+    .fi-topbar > * { position: relative; z-index: 1; }
+
+    /* Back To Login link on reset page - force Title Case appearance */
+    .fi-simple-main a[href*="login"] { text-transform: capitalize; }
 </style>

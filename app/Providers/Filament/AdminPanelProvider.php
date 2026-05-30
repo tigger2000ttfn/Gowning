@@ -28,6 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->login(\App\Filament\Admin\Auth\Login::class)  // custom login (Title Case labels)
             ->passwordReset(requestAction: \App\Filament\Admin\Auth\RequestPasswordReset::class)  // Title Case labels
             ->spa()                     // SPA navigation: persistent sidebar/header, no full reloads
+            ->sidebarCollapsibleOnDesktop()  // collapsible sidebar
             ->databaseNotifications()   // bell icon + notifications in header
             ->databaseNotificationsPolling('60s')
             ->path('admin')
