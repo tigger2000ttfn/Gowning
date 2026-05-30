@@ -17,6 +17,9 @@
                 <option value="initial">Initial</option>
                 <option value="annual">Annual</option>
             </select>
+            <select wire:model.live="groupBy" class="gqs-fld sb-hf-sel" title="Group cards into swimlanes">
+                @foreach($this->groupByOptions() as $k => $label)<option value="{{ $k }}">{{ $k === '' ? 'No Grouping' : 'Group: ' . $label }}</option>@endforeach
+            </select>
         </div>
     </div>
 
@@ -37,48 +40,11 @@
             <span style="font-size:11.5px;opacity:.7;">Hover a card and tick its box to select. Drag cards to move stage.</span>
         </div>
 
+        @if($this->groupBy === '')
+        {{-- Ungrouped: single row, column drag-reorder enabled --}}
         <div class="sb-fullbleed"><div class="sb-wrap" x-ref="board">
             @foreach ($this->getStages() as $stage)
-                <div class="sb-col" data-lane="{{ $stage['key'] }}">
-                    <div class="sb-head" style="background:{{ $stage['color'] }};" :class="canReorder ? 'sb-head-grab' : ''">
-                        <span class="sb-head-label">{{ $stage['label'] }}</span>
-                        <span class="sb-count">{{ count($stage['cards']) }}</span>
-                    </div>
-                    <div class="sb-lane" data-stage="{{ $stage['key'] }}">
-                        @foreach ($stage['cards'] as $card)
-                            <div class="sb-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $stage['color'] }};"
-                                 :class="{ 'sb-selected': isSelected({{ $card['id'] }}) }">
-                                @if(auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
-                                <label class="sb-check" @click.stop>
-                                    <input type="checkbox" :checked="isSelected({{ $card['id'] }})" @change="toggleSelect({{ $card['id'] }})">
-                                </label>
-                                @endif
-                                <div class="sb-card-body" @click="openCard({{ $card['id'] }})">
-                                    <div class="sb-name">{{ $card['name'] }}</div>
-                                    <div class="sb-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
-                                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
-                                        @if(!empty($card['status']))
-                                            <span class="sb-pill sb-pill-{{ $card['status_key'] }}">{{ $card['status'] }}</span>
-                                        @endif
-                                        @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
-                                    </div>
-                                    @if(($card['runs_req'] ?? 0) > 0)
-                                        <div class="sb-runs" title="{{ $card['runs_done'] }} of {{ $card['runs_req'] }} runs">
-                                            @for($r = 0; $r < $card['runs_req']; $r++)
-                                                <span class="sb-pip {{ $r < $card['runs_done'] ? 'on' : '' }}"></span>
-                                            @endfor
-                                            <span class="sb-runs-lbl">{{ $card['runs_done'] }}/{{ $card['runs_req'] }} runs</span>
-                                        </div>
-                                    @endif
-                                    @if(!empty($card['last_run_date']))
-                                        <div class="sb-line"><span class="sb-line-l">Last run</span> {{ $card['last_run_date'] }}@if($card['last_run_worklist']) · {{ $card['last_run_worklist'] }}@endif</div>
-                                    @endif
-                                    @if($card['due'])<div class="sb-line"><span class="sb-line-l">Next due</span> {{ $card['due'] }}</div>@endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                @include('filament.partials.sb-column', ['stage' => $stage])
             @endforeach
 
             {{-- Archive: far-right collapsed lane (fully-done records; automation moves these to run history) --}}
@@ -104,9 +70,24 @@
                 </div>
             </div>
         </div></div>
+        @else
+        {{-- Grouped: horizontal swimlanes stacked in one scroll pane (horizontal scrollbar pinned at the bottom) --}}
+        <div class="sb-fullbleed"><div class="sb-gpane"><div class="sb-gboard">
+            @foreach($this->getSwimlanes() as $swim)
+                <div class="sb-swim">
+                    <div class="sb-glabel"><span>{{ $swim['label'] }}</span><span class="sb-gcount">{{ $swim['count'] ?? 0 }}</span></div>
+                    <div class="sb-grow">
+                        @foreach($swim['stages'] as $stage)
+                            @include('filament.partials.sb-column', ['stage' => $stage])
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div></div></div>
+        @endif
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ asset('vendor/sortable/Sortable.min.js') }}"></script>
     <script>
         function sbBoard({ canReorder, canMove }) {
             return {
@@ -210,6 +191,18 @@
     </style>
     <style>
         .sb-fullbleed{width:100%;}
+        /* Grouped (swimlane) layout: one scroll pane, horizontal scrollbar pinned at its bottom (viewport bottom) */
+        .sb-gpane{overflow:auto;height:calc(100vh - 220px);min-height:380px;padding:0 32px 0;}
+        .sb-gboard{display:flex;flex-direction:column;gap:20px;width:max-content;min-width:100%;padding-bottom:16px;}
+        .sb-swim{display:flex;flex-direction:column;gap:8px;}
+        .sb-glabel{position:sticky;left:0;display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:13.5px;
+            color:var(--gqs-text,#1A1A1F);padding:5px 12px;background:linear-gradient(90deg,rgba(164,18,63,.10),rgba(164,18,63,0));
+            border-left:4px solid #A4123F;border-radius:5px;width:max-content;}
+        .dark .sb-glabel{color:#ECECF0;background:linear-gradient(90deg,rgba(164,18,63,.28),rgba(164,18,63,0));}
+        .sb-gcount{min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:#A4123F;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;}
+        .sb-grow{display:flex;gap:12px;align-items:flex-start;}
+        .sb-grow .sb-col{max-height:none;}
+        .sb-grow .sb-lane{overflow:visible;}
         .sb-wrap{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:0 32px 14px;align-items:stretch;height:calc(100vh - 230px);min-height:360px;}
         .sb-col{flex:0 0 230px;background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:10px;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.05);max-height:100%;}
         .dark .sb-col{background:#121216;border-color:#34343E;}

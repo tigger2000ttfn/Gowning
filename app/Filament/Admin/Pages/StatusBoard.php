@@ -34,6 +34,12 @@ class StatusBoard extends Page
     public string $search = '';
     public string $deptFilter = '';
     public string $typeFilter = '';
+    public string $groupBy = '';
+
+    public function groupByOptions(): array
+    {
+        return ['' => 'No Grouping', 'department' => 'Department', 'type' => 'Cycle Type'];
+    }
 
     public function departmentOptions(): array
     {
@@ -112,7 +118,41 @@ class StatusBoard extends Page
         return $out;
     }
 
-    /** Fully-done (Archived) records, shown in a collapsed far-right Archive lane. */
+    /**
+     * Swimlanes: the same stage columns, split into horizontal bands by a grouping
+     * field (department or cycle type). Returns [['label','key','stages'=>[...]], ...].
+     * With no grouping, a single band containing the full board.
+     */
+    public function getSwimlanes(): array
+    {
+        $stages = $this->getStages();
+        if ($this->groupBy === '' || ! array_key_exists($this->groupBy, $this->groupByOptions())) {
+            return [['label' => null, 'key' => '_all', 'stages' => $stages]];
+        }
+        $field = $this->groupBy; // 'department' | 'type'
+        $values = collect($stages)
+            ->flatMap(fn ($l) => collect($l['cards'])->pluck($field))
+            ->map(fn ($v) => ($v === null || $v === '') ? '—' : $v)
+            ->unique()->sort()->values()->all();
+        if (empty($values)) {
+            return [['label' => null, 'key' => '_all', 'stages' => $stages]];
+        }
+        $lanes = [];
+        foreach ($values as $val) {
+            $count = 0;
+            $forGroup = array_map(function ($lane) use ($field, $val, &$count) {
+                $lane['cards'] = array_values(array_filter($lane['cards'], function ($c) use ($field, $val) {
+                    $cv = $c[$field] ?? null;
+                    $cv = ($cv === null || $cv === '') ? '—' : $cv;
+                    return $cv === $val;
+                }));
+                $count += count($lane['cards']);
+                return $lane;
+            }, $stages);
+            $lanes[] = ['label' => $val, 'count' => $count, 'key' => \Illuminate\Support\Str::slug($val) ?: 'na', 'stages' => $forGroup];
+        }
+        return $lanes;
+    }
     public function getArchive(): array
     {
         $signed = Qualification::with('personnel')

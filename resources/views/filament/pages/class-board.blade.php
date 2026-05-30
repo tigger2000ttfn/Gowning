@@ -134,7 +134,7 @@
         </div></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="{{ asset('vendor/sortable/Sortable.min.js') }}"></script>
 
     @if($detail)
         <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="closeDetail">
