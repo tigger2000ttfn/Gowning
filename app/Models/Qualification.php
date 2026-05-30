@@ -17,6 +17,7 @@ class Qualification extends Model
     protected $fillable = [
         'personnel_id', 'type', 'status', 'runs_required',
         'runs_completed', 'qualified_date', 'due_date',
+        'workflow_stage', 'stage_changed_at',
     ];
 
     protected function casts(): array
@@ -24,6 +25,8 @@ class Qualification extends Model
         return [
             'type' => QualificationType::class,
             'status' => QualificationStatus::class,
+            'workflow_stage' => \App\Enums\WorkflowStage::class,
+            'stage_changed_at' => 'datetime',
             'runs_required' => 'integer',
             'runs_completed' => 'integer',
             'qualified_date' => 'date',
