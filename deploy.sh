@@ -26,6 +26,9 @@ fi
 echo "==> Running migrations"
 php artisan migrate --force
 
+echo "==> Ensuring storage symlink (for media library uploads / public files)"
+php artisan storage:link 2>/dev/null || true
+
 echo "==> Building front-end assets (theme + JS)"
 # clear stale build output so a failed build can't silently serve old CSS
 rm -rf public/build
