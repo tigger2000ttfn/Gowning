@@ -35,6 +35,11 @@
     .fi-sidebar-group-label { font-size: 10.5px !important; letter-spacing: .04em; }
     .fi-sidebar-item-icon, .fi-sidebar-item-icon svg { width: 18px !important; height: 18px !important; }
 
+    /* Manage dropdown links: dark text in light theme (the --gqs-text var resolves too light) */
+    html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
+    html:not(.dark) .gqs-manage-menu { background: #fff !important; }
+    html:not(.dark) .gqs-manage-link:hover { background: #F1F1F4 !important; }
+
     /* Dropdown menu items: readable dark text on white (light theme) */
     html:not(.dark) .fi-dropdown-list-item,
     html:not(.dark) .fi-dropdown-list-item-label,
