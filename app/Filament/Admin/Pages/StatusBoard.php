@@ -337,6 +337,24 @@ class StatusBoard extends Page
                 $latest->save();
             }
         }
+        // Keep the status pill honest: it must reflect the lane the card now sits in,
+        // not a stale value from a prior cycle. (QA Sign-off already set Qualified above.)
+        if ($stage === WorkflowStage::Archived) {
+            $q->status = \App\Enums\QualificationStatus::Qualified;
+        } elseif ($stage !== WorkflowStage::QaSignoff) {
+            $passes = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)
+                ->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
+            if ($q->due_date && $q->due_date->isPast()) {
+                $q->status = \App\Enums\QualificationStatus::Lapsed;
+            } elseif ($q->runs_required > 0 && $passes >= (int) $q->runs_required && $q->due_date) {
+                $q->status = \App\Enums\QualificationStatus::Qualified;
+            } elseif ($passes > 0) {
+                $q->status = \App\Enums\QualificationStatus::InProgress;
+            } else {
+                $q->status = \App\Enums\QualificationStatus::Pending;
+            }
+        }
+
         $q->save();
         // No success toast on drag-move: the card visibly moving is the confirmation.
         // (Errors/auth failures above still notify, and the workflow automations still fire.)
