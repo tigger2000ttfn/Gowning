@@ -161,7 +161,7 @@ class ClassScheduler extends Page
     public function runConfirm(): void
     {
         $m = $this->confirm['method'] ?? null;
-        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession'];
+        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession', 'rescheduleEnrollment'];
         if ($m && in_array($m, $allowed, true)) {
             $this->{$m}($this->confirm['arg']);
         }
@@ -308,6 +308,7 @@ class ClassScheduler extends Page
                 'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
                 'employee_id' => $e->employee_id,
                 'status' => $e->status,
+                'note' => $e->attendance_note,
             ])->values()->all();
     }
 
@@ -317,12 +318,44 @@ class ClassScheduler extends Page
         $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
         if (! $e) return;
         if ($e->classSession?->attendance_submitted_at) {
-            Notification::make()->warning()->title('Attendance already submitted')
+            Notification::make()->warning()->title('Attendance Already Submitted')
                 ->body('Reopen the session to change attendance.')->send();
             return;
         }
-        $e->markStatus($status, \Illuminate\Support\Facades\Auth::id());
-        Notification::make()->success()->title('Attendance updated')->send();
+        // toggle off if the same status is tapped again -> back to signed_up
+        $new = ($e->status === $status) ? 'signed_up' : $status;
+        $e->markStatus($new, \Illuminate\Support\Facades\Auth::id());
+        // no toast: the highlighted button is the save confirmation
+    }
+
+    public function saveAttendanceNote(int $enrollmentId, ?string $note): void
+    {
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e || $e->classSession?->attendance_submitted_at) return;
+        $e->attendance_note = $note;
+        $e->save();
+    }
+
+    /** Reschedule one attendee to the next available open session. */
+    public function rescheduleEnrollment(int $enrollmentId): void
+    {
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e || $e->classSession?->attendance_submitted_at) return;
+        $next = \App\Models\ClassSession::where('status', '!=', 'cancelled')
+            ->whereNull('attendance_submitted_at')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->where('id', '!=', $e->class_session_id)
+            ->orderBy('session_date')->get()
+            ->first(fn ($s) => $s->seatsLeft() > 0);
+        if (! $next) {
+            Notification::make()->warning()->title('No Open Session')->body('No future session has an open seat to move them to.')->send();
+            return;
+        }
+        $e->class_session_id = $next->id;
+        $e->status = 'signed_up';
+        $e->save();
+        Notification::make()->success()->title('Rescheduled')
+            ->body($e->name . ' moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('M j, Y') . '.')->send();
     }
 
     /** Submit a session's attendance: lock it and push attendees to QA classroom approval. */

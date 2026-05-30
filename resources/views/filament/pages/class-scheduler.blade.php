@@ -272,7 +272,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">&larr; Back To Sessions</button>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <a href="{{ route('print.class-attendance', $s->id) }}@if($s->instructorUser)?trainer={{ urlencode($s->instructorUser->name) }}@endif" target="_blank" class="rd-act rd-act-magenta" style="text-decoration:none;">Print Attendance Form</a>
+                        <a href="{{ route('print.class-attendance', $s->id) }}@if($s->instructorUser)?trainer={{ urlencode($s->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
                     </div>
                 </div>
                 <div class="gqs-panel">
@@ -288,39 +288,58 @@
                         @if(empty($attendees))
                             <div class="gqs-empty">No One Enrolled Yet. Enrollments Are Managed On Class Reservations.</div>
                         @else
-                            @if(! $submitted)
-                                <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-                                    <button type="button" class="gqs-btn gqs-btn-primary"
-                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance</button>
-                                </div>
-                            @else
-                                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                            @if($submitted)
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
                                     <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('M j, Y g:i A') }} · awaiting QA classroom approval.</span>
                                     <button type="button" class="gqs-btn gqs-btn-ghost"
                                             wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft.', 'Reopen')">Reopen</button>
                                 </div>
+                            @else
+                                <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:12px;">Tap a status to mark each person. Changes save automatically. Submit at the bottom when everyone is marked.</div>
                             @endif
-                            <table class="gqs-tbl">
-                                <thead><tr><th>Employee</th><th>Name</th><th>Status</th><th style="text-align:right;">Attendance</th></tr></thead>
-                                <tbody>
-                                    @foreach($attendees as $row)
-                                        <tr>
-                                            <td style="font-weight:600;">{{ $row['employee_id'] }}</td>
-                                            <td>{{ $row['name'] }}</td>
-                                            <td><span class="gqs-pill {{ [
-                                                'signed_up' => 'gqs-pill-purple', 'attended' => 'gqs-pill-gold',
-                                                'pending_qa' => 'gqs-pill-purple', 'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
-                                            ][$row['status']] ?? 'gqs-pill-purple' }}">{{ ucwords(str_replace('_',' ',$row['status'])) }}</span></td>
-                                            <td style="text-align:right;white-space:nowrap;">
-                                                @if(! $submitted && in_array($row['status'], ['signed_up','attended','no_show']))
-                                                    <button wire:click="markAttendance({{ $row['id'] }}, 'attended')" class="sb-act sb-act-green">Attended</button>
-                                                    <button wire:click="markAttendance({{ $row['id'] }}, 'no_show')" class="sb-act sb-act-red">No-Show</button>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+
+                            <div class="att-list">
+                                @foreach($attendees as $row)
+                                    <div class="att-row">
+                                        <div class="att-who">
+                                            <div class="att-name">{{ $row['name'] }}</div>
+                                            <div class="att-eid">{{ $row['employee_id'] }}</div>
+                                        </div>
+                                        @if($submitted)
+                                            <div class="att-state">
+                                                <span class="gqs-pill {{ [
+                                                    'attended' => 'gqs-pill-green', 'pending_qa' => 'gqs-pill-purple',
+                                                    'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
+                                                ][$row['status']] ?? 'gqs-pill-purple' }}">{{ ucwords(str_replace('_',' ',$row['status'])) }}</span>
+                                            </div>
+                                            @if(! empty($row['note']))<div class="att-note-ro">{{ $row['note'] }}</div>@endif
+                                        @else
+                                            <div class="att-toggles">
+                                                <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'attended')"
+                                                        class="att-tog att-att {{ $row['status'] === 'attended' ? 'on' : '' }}">
+                                                    @if($row['status'] === 'attended')&check; @endif Attended
+                                                </button>
+                                                <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'no_show')"
+                                                        class="att-tog att-no {{ $row['status'] === 'no_show' ? 'on' : '' }}">
+                                                    @if($row['status'] === 'no_show')&check; @endif No-Show
+                                                </button>
+                                                <button type="button" class="att-tog att-res"
+                                                        wire:click="askConfirm('rescheduleEnrollment', {{ $row['id'] }}, 'Reschedule', 'Move {{ addslashes($row['name']) }} to the next available class session?', 'Reschedule')">Reschedule</button>
+                                            </div>
+                                            <input type="text" class="att-note" placeholder="Notes (optional)"
+                                                   value="{{ $row['note'] }}"
+                                                   wire:change="saveAttendanceNote({{ $row['id'] }}, $event.target.value)">
+                                        @endif
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            @if(! $submitted)
+                                <div style="display:flex;justify-content:flex-end;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
+                                    <button type="button" class="gqs-btn gqs-btn-primary"
+                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance To QA</button>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -404,6 +423,25 @@
     </script>
 
     <style>
+        .att-list{display:flex;flex-direction:column;gap:8px;}
+        .att-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--gqs-border,#E6E6EA);border-radius:10px;background:var(--gqs-surface,#fff);}
+        .dark .att-row{background:#23232B;border-color:#34343E;}
+        .att-who{min-width:170px;}
+        .att-name{font-weight:700;font-size:13.5px;color:var(--gqs-text,#1A1A1F);}
+        .att-eid{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);}
+        .att-toggles{display:flex;gap:6px;}
+        .att-tog{font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:8px;border:1.5px solid var(--gqs-border,#D6D6DC);background:transparent;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;}
+        .att-tog.att-att.on{background:#2E7D5B;border-color:#2E7D5B;color:#fff;}
+        .att-tog.att-no.on{background:#C8102E;border-color:#C8102E;color:#fff;}
+        .att-tog.att-att:hover{border-color:#2E7D5B;color:#2E7D5B;}
+        .att-tog.att-no:hover{border-color:#C8102E;color:#C8102E;}
+        .att-tog.att-att.on:hover,.att-tog.att-no.on:hover{color:#fff;}
+        .att-tog.att-res{border-style:dashed;}
+        .att-tog.att-res:hover{border-color:#A4123F;color:#A4123F;}
+        .att-note{flex:1;min-width:160px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
+        .dark .att-note{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
+        .att-state{min-width:110px;}
+        .att-note-ro{flex:1;font-size:12px;color:var(--gqs-text-dim,#6A6A72);font-style:italic;}
         .rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
         .rs-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
         .dark .rs-stat{background:#1A1A20;border-color:#2A2A32;}
