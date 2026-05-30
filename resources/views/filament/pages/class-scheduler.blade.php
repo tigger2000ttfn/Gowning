@@ -147,9 +147,7 @@
                                     <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
                                     <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
                                     <td style="text-align:right;">
-                                        <a href="{{ route('print.class-attendance', $s->id) }}"
-                                           onclick="event.preventDefault(); var d=@js($s->instructorUser?->name ?? $s->instructor ?? ''); var t=window.prompt('Trainer name for this form (change if the trainer differs):', d); if(t!==null){ window.open(this.href + '?trainer=' + encodeURIComponent(t), '_blank'); }"
-                                           class="rd-act rd-act-magenta" style="text-decoration:none;cursor:pointer;">Attendance Form</a>
+                                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Attendance Form</button>
                                         <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel</button>
                                     </td>
                                 </tr>
@@ -204,8 +202,35 @@
         @endif
     @endif
 
-    <style>
-        .rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+    {{-- Attendance Form: pick trainer (teach-qualified staff), then open prefilled PDF --}}
+    @if($showAttendanceForm)
+        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAttendanceForm', false)">
+            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Attendance Form Trainer</div>
+                <div style="padding:18px 20px;">
+                    <label class="gqs-flbl">Trainer (Qualified To Teach)</label>
+                    <select wire:model="attendanceTrainerId" class="gqs-fld">
+                        <option value="">Select a trainer...</option>
+                        @foreach($this->instructorOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                    </select>
+                    <p style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin:10px 0 0;">Only staff designated as qualified for classroom training appear here. Set designations on the user's profile.</p>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                        <button type="button" wire:click="$set('showAttendanceForm', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
+                        <button type="button" wire:click="generateAttendanceForm" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Open Form</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('open-url', (e) => {
+                const url = Array.isArray(e) ? e[0]?.url : e?.url;
+                if (url) window.open(url, '_blank');
+            });
+        });
+    </script>
         .rs-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
         .dark .rs-stat{background:#1A1A20;border-color:#2A2A32;}
         .rs-stat-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}

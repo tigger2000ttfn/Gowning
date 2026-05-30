@@ -38,6 +38,53 @@ class RunDayRoster extends Page
     public ?string $date = null;
     public string $tab = 'overview';   // overview | schedule | reservations | roster
 
+    // Per-reservation LIMS worklist inputs on the Attendance tab (keyed by reservation id).
+    public array $worklists = [];
+    // Quick "apply to all" worklist value for a run day.
+    public string $bulkWorklist = '';
+
+    /** Force an EM- prefix and trim; empty stays empty. */
+    public function normalizeWorklist(?string $v): string
+    {
+        $v = trim((string) $v);
+        if ($v === '') return '';
+        $v = strtoupper($v);
+        if (! str_starts_with($v, 'EM-')) {
+            // allow them to type just the number, or 'EM 123', etc.
+            $v = 'EM-' . ltrim(preg_replace('/^EM[-\s]*/i', '', $v), '-');
+        }
+        return $v;
+    }
+
+    /** Save a single attendee's worklist without marking present (e.g. pre-entering). */
+    public function saveWorklist(int $reservationId): void
+    {
+        $res = Reservation::find($reservationId);
+        if (! $res) return;
+        $wl = $this->normalizeWorklist($this->worklists[$reservationId] ?? '');
+        $res->update(['lims_worklist_id' => $wl]);
+        $this->worklists[$reservationId] = $wl;
+    }
+
+    /** Apply one EM- worklist to every attendee on the given run day (quick entry). */
+    public function applyWorklistToAll(int $slotId): void
+    {
+        $wl = $this->normalizeWorklist($this->bulkWorklist);
+        if ($wl === '') {
+            Notification::make()->warning()->title('Enter a worklist first')->send();
+            return;
+        }
+        $slot = RunSlot::with('reservations')->find($slotId);
+        if (! $slot) return;
+        foreach ($slot->reservations as $res) {
+            $res->update(['lims_worklist_id' => $wl]);
+            $this->worklists[$res->id] = $wl;
+        }
+        $this->bulkWorklist = '';
+        Notification::make()->success()->title('Worklist applied to all attendees')->body($wl)->send();
+    }
+
+
     // new-run-day form fields
     public ?string $newDate = null;
     public ?string $newStart = '09:00';
@@ -114,8 +161,9 @@ class RunDayRoster extends Page
 
     public function analystOptions(): array
     {
+        // Only staff designated as qualified for run sampling are assignable to run days.
         return \App\Models\User::where('is_active', true)
-            ->where(fn ($q) => $q->where('team', 'qcm')->orWhere('is_team_manager', true))
+            ->where('can_sample', true)
             ->orderBy('name')->pluck('name', 'id')->all();
     }
 
@@ -448,12 +496,20 @@ class RunDayRoster extends Page
             Notification::make()->danger()->title('Reservation not found')->send();
             return;
         }
-        $res->update(['status' => 'completed']);
+        // Require a LIMS worklist (EM-...) before the run can be marked performed.
+        $wl = $this->normalizeWorklist($this->worklists[$reservationId] ?? $res->lims_worklist_id ?? '');
+        if ($wl === '') {
+            Notification::make()->warning()->title('LIMS worklist required')
+                ->body('Enter the EM- worklist for this person before marking present.')->send();
+            return;
+        }
+        $res->update(['status' => 'completed', 'lims_worklist_id' => $wl]);
         // record the run as PENDING (result unknown until incubation plates are read)
         app(\App\Services\QualificationEngine::class)
             ->recordRun($res->personnel, \App\Enums\RunResult::Pending, [
                 'run_date' => now()->toDateString(),
                 'recorded_by' => Auth::id(),
+                'lims_worklist_id' => $wl,
             ]);
         // stamp THIS run's incubation start (= performed date)
         $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();

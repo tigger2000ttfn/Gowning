@@ -100,7 +100,7 @@
     .gqs-panel-head svg { width:17px; height:17px; }
     .gqs-panel-body { padding:6px 0; }
     .gqs-tbl { width:100%; border-collapse:collapse; font-size:13.5px; }
-    .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:linear-gradient(135deg,#2A2A31,#1C1C21); border-bottom:none; }
+    .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:#26262C; border-bottom:none; }
     .gqs-tbl thead th:first-child { border-top-left-radius:0; }
     .gqs-tbl td { padding:10px 16px; border-bottom:1px solid var(--gqs-border,#F2F2F4); color:var(--gqs-text,#1A1A1F); }
     .gqs-tbl tbody tr:hover { background:rgba(164,18,63,.04); }

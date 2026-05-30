@@ -83,6 +83,10 @@ class UserResource extends Resource
                     ->helperText('Which working team this staff member belongs to.'),
                 Toggle::make('is_team_manager')->label('Team Manager')
                     ->helperText('Managers can assign work and see their team view.'),
+                Toggle::make('can_sample')->label('Qualified: Run Sampling')
+                    ->helperText('Can be assigned to perform qualification-run sampling on run days.'),
+                Toggle::make('can_teach')->label('Qualified: Classroom Training')
+                    ->helperText('Can be assigned as the instructor for gowning class sessions.'),
             ]),
         ]);
     }
@@ -102,6 +106,8 @@ class UserResource extends Resource
                     ->formatStateUsing(fn ($s) => $s ? \App\Enums\Team::tryFrom($s)?->label() : '-')
                     ->color(fn ($s) => $s === 'qcm' ? 'info' : ($s === 'qa' ? 'warning' : 'gray'))->toggleable(),
                 IconColumn::make('is_team_manager')->boolean()->label('Mgr')->toggleable(),
+                IconColumn::make('can_sample')->boolean()->label('Sampling')->toggleable(),
+                IconColumn::make('can_teach')->boolean()->label('Teach')->toggleable(),
                 IconColumn::make('is_active')->boolean()->label('Active'),
                 TextColumn::make('created_at')->dateTime()->since()->label('Requested')->toggleable(),
             ])

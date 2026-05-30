@@ -35,7 +35,7 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name', 'email', 'password', 'role', 'is_active',
         'approval_status', 'approved_at', 'approved_by',
-        'team', 'is_team_manager', 'reminder_days_before',
+        'team', 'is_team_manager', 'reminder_days_before', 'can_sample', 'can_teach',
     ];
 
     protected $hidden = [
@@ -50,6 +50,8 @@ class User extends Authenticatable implements FilamentUser
             'role' => Role::class,
             'is_active' => 'boolean',
             'is_team_manager' => 'boolean',
+            'can_sample' => 'boolean',
+            'can_teach' => 'boolean',
             'approved_at' => 'datetime',
         ];
     }

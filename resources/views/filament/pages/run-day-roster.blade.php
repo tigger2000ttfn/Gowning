@@ -285,8 +285,16 @@
                 </div>
                 <div class="gqs-panel-body">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
+                        <div style="display:flex;align-items:end;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+                            <div>
+                                <label class="gqs-flbl">Apply One LIMS Worklist To All</label>
+                                <input type="text" wire:model="bulkWorklist" placeholder="EM-..." class="gqs-fld" style="max-width:220px;">
+                            </div>
+                            <button type="button" wire:click="applyWorklistToAll({{ $slot->id }})" class="rd-act rd-act-magenta" style="height:38px;">Apply To All</button>
+                            <span style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Worklists always start with EM-. Each attendee needs one before being marked present.</span>
+                        </div>
                         <table class="gqs-tbl">
-                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>LIMS Worklist</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
                                 @php
                                     $rq = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
@@ -295,11 +303,23 @@
                                     $required = max(1, (int) ($rq->runs_required ?? 1));
                                     $readyForResults = $rq && $rq->workflow_stage === \App\Enums\WorkflowStage::AwaitingResults;
                                     $st = $res->status instanceof \BackedEnum ? $res->status->value : $res->status;
+                                    if (! array_key_exists($res->id, $this->worklists) && $res->lims_worklist_id) {
+                                        $this->worklists[$res->id] = $res->lims_worklist_id;
+                                    }
                                 @endphp
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
                                     <td style="font-weight:600;">{{ $res->personnel?->employee_id }}</td>
                                     <td>{{ $res->personnel?->full_name }}</td>
+                                    <td>
+                                        @if($st === 'completed')
+                                            <span style="font-weight:600;">{{ $res->lims_worklist_id ?: '—' }}</span>
+                                        @else
+                                            <input type="text" wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})"
+                                                   placeholder="EM-..."
+                                                   style="width:130px;padding:5px 8px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:6px;font-size:12px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
+                                        @endif
+                                    </td>
                                     <td>
                                         <span class="gqs-pill {{ $st === 'completed' ? 'gqs-pill-green' : ($st === 'no_show' ? 'gqs-pill-red' : ($st === 'rescheduled' ? 'gqs-pill-gold' : '')) }}">
                                             {{ $st === 'completed' ? 'Present' : ($st === 'no_show' ? 'No-Show' : ($st === 'rescheduled' ? 'Rescheduled' : 'Scheduled')) }}

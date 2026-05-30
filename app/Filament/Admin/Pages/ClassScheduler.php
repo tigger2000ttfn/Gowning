@@ -125,10 +125,37 @@ class ClassScheduler extends Page
     }
     public function instructorOptions(): array
     {
+        // Only staff designated as qualified to deliver classroom training are selectable.
         return \App\Models\User::where('is_active', true)
-            ->where(fn ($q) => $q->where('team', 'qcm')->orWhere('is_team_manager', true))
+            ->where('can_teach', true)
             ->orderBy('name')->pluck('name', 'id')->all();
     }
+
+    // ----- Attendance form: pick the trainer in a modal, then open the prefilled PDF -----
+    public bool $showAttendanceForm = false;
+    public ?int $attendanceSessionId = null;
+    public ?int $attendanceTrainerId = null;
+
+    public function openAttendanceForm(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::find($sessionId);
+        $this->attendanceSessionId = $sessionId;
+        // default to the assigned instructor if they are teach-qualified
+        $this->attendanceTrainerId = $s?->assigned_instructor_id;
+        $this->showAttendanceForm = true;
+    }
+
+    public function generateAttendanceForm(): void
+    {
+        if (! $this->attendanceSessionId) return;
+        $trainer = $this->attendanceTrainerId
+            ? (\App\Models\User::find($this->attendanceTrainerId)?->name ?? '')
+            : '';
+        $url = route('print.class-attendance', $this->attendanceSessionId) . '?trainer=' . urlencode($trainer);
+        $this->showAttendanceForm = false;
+        $this->dispatch('open-url', url: $url);
+    }
+
 
     public function sessions()
     {
