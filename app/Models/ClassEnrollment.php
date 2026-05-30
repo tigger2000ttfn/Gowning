@@ -24,7 +24,7 @@ class ClassEnrollment extends Model
      */
     public function markStatus(string $status, ?int $byUserId = null): void
     {
-        if (! in_array($status, ['signed_up', 'attended', 'completed', 'no_show', 'cancelled'], true)) {
+        if (! in_array($status, ['signed_up', 'attended', 'completed', 'no_show', 'cancelled', 'historical'], true)) {
             return;
         }
         $this->status = $status;
@@ -57,7 +57,7 @@ class ClassEnrollment extends Model
 
     protected function casts(): array
     {
-        return ['signed_up_at' => 'datetime'];
+        return ['signed_up_at' => 'datetime', 'attended_at' => 'datetime', 'completed_at' => 'datetime'];
     }
 
     public function classSession(): BelongsTo

@@ -33,6 +33,21 @@ Artisan::command('gqs:auto-schedule', function () {
 
 Schedule::command('gqs:auto-schedule')->dailyAt('06:10');
 
+// Move Completed class enrollments to Historical after a retention period (Settings: class_history_days, default 30).
+Artisan::command('gqs:archive-class-completions', function () {
+    $days = (int) \App\Models\Setting::get('class_history_days', 30);
+    $cutoff = now()->subDays($days);
+    $n = \App\Models\ClassEnrollment::where('status', 'completed')
+        ->where(function ($q) use ($cutoff) {
+            $q->where('completed_at', '<=', $cutoff)
+              ->orWhere(function ($q2) use ($cutoff) { $q2->whereNull('completed_at')->where('updated_at', '<=', $cutoff); });
+        })
+        ->update(['status' => 'historical']);
+    $this->info("Archived {$n} completed class enrollment(s) to Historical.");
+})->purpose('Move old Completed class enrollments into the Historical lane');
+
+Schedule::command('gqs:archive-class-completions')->dailyAt('06:15');
+
 // Flush queued emails once the mail relay (Postfix) is configured.
 // Until then rows sit in queued_emails with sent_at = null.
 Artisan::command('gqs:flush-emails', function () {

@@ -33,14 +33,16 @@ class ClassBoard extends Page
     public array $lanes = [
         'signed_up' => ['label' => 'Signed Up', 'color' => '#1F6FB2'],
         'attended'  => ['label' => 'Attended',  'color' => '#C79A2E'],
+        'completed' => ['label' => 'Completed', 'color' => '#2E7D5B'],
         'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
     ];
 
-    /** Completed enrollments, shown in a collapsed far-right Archive lane. */
+    /** Historical (archived completed) enrollments, shown in a collapsed far-right lane.
+     *  An automation will move Completed -> Historical after a retention period. */
     public function getArchive(): array
     {
         $cards = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
-            ->where('status', 'completed')
+            ->where('status', 'historical')
             ->latest('updated_at')->get()
             ->map(fn ($e) => [
                 'id' => $e->id,
@@ -50,8 +52,8 @@ class ClassBoard extends Page
                 'date' => $e->classSession?->session_date?->format('M j'),
             ])->values()->all();
         return [
-            'label' => \App\Models\WorkflowStatus::labelFor('class', 'completed', 'Completed'),
-            'color' => \App\Models\WorkflowStatus::colorFor('class', 'completed', '#2E7D5B'),
+            'label' => \App\Models\WorkflowStatus::labelFor('class', 'historical', 'Historical'),
+            'color' => \App\Models\WorkflowStatus::colorFor('class', 'historical', '#5A5A62'),
             'cards' => $cards,
         ];
     }
@@ -78,18 +80,24 @@ class ClassBoard extends Page
     {
         $out = [];
         $byStatus = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
+            ->whereNotIn('status', ['historical', 'cancelled'])
             ->get()->groupBy('status');
         foreach ($this->lanes as $key => $meta) {
+            $label = \App\Models\WorkflowStatus::labelFor('class', $key, $meta['label']);
+            $color = \App\Models\WorkflowStatus::colorFor('class', $key, $meta['color']);
             $cards = ($byStatus[$key] ?? collect())->map(fn ($e) => [
                 'id' => $e->id,
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
                 'employee_id' => $e->employee_id,
+                'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
                 'date' => $e->classSession?->session_date?->format('M j'),
+                'status_label' => $label,
+                'status_color' => $color,
             ])->values()->all();
             $out[$key] = [
-                'label' => \App\Models\WorkflowStatus::labelFor('class', $key, $meta['label']),
-                'color' => \App\Models\WorkflowStatus::colorFor('class', $key, $meta['color']),
+                'label' => $label,
+                'color' => $color,
                 'cards' => $cards,
             ];
         }
@@ -101,15 +109,34 @@ class ClassBoard extends Page
 
     public function showDetail(int $id): void
     {
-        $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])->find($id);
+        $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass', 'classSession.instructorUser'])->find($id);
         if (! $e) { $this->detail = null; return; }
+        $p = $e->personnel;
+        $q = $p ? \App\Models\Qualification::where('personnel_id', $p->id)->first() : null;
+        $statusVal = $e->status instanceof \BackedEnum ? $e->status->value : $e->status;
+        $qStatusVal = $q ? ($q->status instanceof \BackedEnum ? $q->status->value : $q->status) : null;
         $this->detail = [
             'id' => $e->id,
-            'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
+            'name' => $p?->full_name ?? $e->employee_id ?? 'Unknown',
             'employee_id' => $e->employee_id,
+            'email' => $p?->email,
+            'department' => $p?->department,
+            'job_title' => $p?->job_title,
             'class' => $e->classSession?->trainingClass?->name,
             'session_date' => $e->classSession?->session_date?->format('l, M j, Y'),
-            'status' => ucfirst(str_replace('_', ' ', (string) $e->status)),
+            'session_time' => $e->classSession?->start_time ? \Illuminate\Support\Carbon::parse($e->classSession->start_time)->format('g:i A') : null,
+            'instructor' => $e->classSession?->instructorUser?->name ?? $e->classSession?->instructor,
+            'location' => $e->classSession?->location,
+            'status' => ucwords(str_replace('_', ' ', (string) $statusVal)),
+            'status_color' => \App\Models\WorkflowStatus::colorFor('class', $statusVal, '#6A6A72'),
+            'signed_up_at' => $e->signed_up_at?->format('M j, Y'),
+            'attended_at' => $e->attended_at?->format('M j, Y'),
+            'completed_at' => $e->completed_at?->format('M j, Y'),
+            'qual_status' => $qStatusVal ? ucwords(str_replace('_', ' ', $qStatusVal)) : null,
+            'qual_stage' => $q?->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label()) : null,
+            'qual_runs' => $q ? ((int) $q->runs_completed . ' / ' . (int) $q->runs_required) : null,
+            'qual_due' => $q?->due_date?->format('M j, Y'),
+            'class_on_file' => (bool) ($q?->class_on_file),
             'edit_url' => $e->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
                 : null,
@@ -166,7 +193,7 @@ class ClassBoard extends Page
     public function moveCard(int $id, string $toStatus): void
     {
         // active lanes + the Archive (completed) lane
-        if (! array_key_exists($toStatus, $this->lanes) && $toStatus !== 'completed') {
+        if (! array_key_exists($toStatus, $this->lanes) && $toStatus !== 'historical') {
             return;
         }
         $e = ClassEnrollment::with('personnel')->find($id);
