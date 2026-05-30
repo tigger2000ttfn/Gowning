@@ -63,6 +63,34 @@ class AutomationEngine
             $body = $rule->name . ($person ? " ({$name})" : '');
         }
 
+        // If the rule references an email template, render it (subject + HTML body) with
+        // the available tokens. A disabled/missing template sends nothing (respects the
+        // template's on/off toggle). Rules without a template_key behave exactly as before.
+        if (! empty($cfg['template_key'])) {
+            $q = $ctx['qualification'] ?? null;
+            $tokens = [
+                'name' => $name,
+                'employee_id' => $person?->employee_id ?? '',
+                'stage' => $ctx['stage'] ?? '',
+                'date' => $ctx['date'] ?? '',
+                'time' => $ctx['time'] ?? '',
+                'due_date' => $q && $q->due_date ? $q->due_date->format('d M Y') : ($ctx['due_date'] ?? ''),
+                'class' => $ctx['class'] ?? '',
+                'trainer' => $ctx['trainer'] ?? '',
+                'result' => $ctx['result'] ?? '',
+                'worklist' => $ctx['worklist'] ?? '',
+                'veeva' => $ctx['veeva'] ?? '',
+                'nc_number' => $ctx['nc_number'] ?? '',
+                'reset_link' => $ctx['reset_link'] ?? '',
+            ];
+            $rendered = \App\Models\EmailTemplate::render($cfg['template_key'], $tokens);
+            if ($rendered === null) {
+                return; // template disabled or missing -> respect the toggle, send nothing
+            }
+            $title = $rendered['subject'];
+            $body = $rendered['body_html'];
+        }
+
         match ($action) {
             AutomationAction::NotifyCapability => self::notifyCapability($cfg, $title, $body),
             AutomationAction::NotifyPerson     => app(Notifier::class)->toPersonnel($person, $title, $body),

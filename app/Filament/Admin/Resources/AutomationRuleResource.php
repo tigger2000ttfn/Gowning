@@ -67,6 +67,14 @@ class AutomationRuleResource extends Resource
                     ]))->columnSpanFull(),
                 Textarea::make('action_config.message')->label('Message')->rows(2)->columnSpanFull()
                     ->helperText('Tokens: {name}, {employee_id}, {stage} are replaced when the rule fires.'),
+                Select::make('action_config.template_key')->label('Use Email Template (optional)')
+                    ->options(fn () => \App\Models\EmailTemplate::orderBy('name')->pluck('name', 'key')->all())
+                    ->searchable()->preload()->columnSpanFull()
+                    ->visible(fn ($get) => in_array($get('action'), [
+                        AutomationAction::QueueEmail->value,
+                        AutomationAction::NotifyPerson->value,
+                    ]))
+                    ->helperText('When set, the rule sends this template (subject + body) instead of the message above. A disabled template sends nothing, so you can turn each one on or off under Manage > Email Templates.'),
             ]),
         ]);
     }
