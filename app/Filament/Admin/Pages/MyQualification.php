@@ -34,6 +34,79 @@ class MyQualification extends Page
             ->first();
     }
 
+    /** Whether this operator may self-request a run right now (class on file, no active booking). */
+    public function canRequestRun(): bool
+    {
+        if (! $this->person) return false;
+        if (! (bool) \App\Models\Setting::get('allow_self_request_run', true)) return false;
+        if ($this->myActiveReservation() !== null) return false;
+        // SOP prereq: the gowning class must be on file before a run can be requested.
+        return (bool) $this->person->qualification?->class_on_file;
+    }
+
+    /** Self-serve: request the next available run day (or a specific open day). */
+    public function requestRunAction(): Action
+    {
+        return Action::make('requestRun')
+            ->label('Request A Run')
+            ->icon('heroicon-m-plus-circle')
+            ->color('primary')
+            ->visible(fn () => $this->canRequestRun())
+            ->modalHeading('Request A Qualification Run')
+            ->modalDescription('Book yourself onto a cleanroom run day. Choose the next available day or pick a specific open day.')
+            ->form([
+                \Filament\Forms\Components\Radio::make('mode')
+                    ->label('Choose')
+                    ->options([
+                        'next' => 'Next Available Run Day (Soonest With Space)',
+                        'pick' => 'Pick A Specific Open Day',
+                    ])->default('next')->live()->required(),
+                Select::make('run_slot_id')
+                    ->label('Pick A Day')
+                    ->visible(fn ($get) => $get('mode') === 'pick')
+                    ->required(fn ($get) => $get('mode') === 'pick')
+                    ->options(function () {
+                        $scheduler = app(\App\Services\AutoScheduler::class);
+                        return RunSlot::query()
+                            ->where('status', 'open')
+                            ->whereDate('slot_date', '>=', now()->toDateString())
+                            ->orderBy('slot_date')->get()
+                            ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
+                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')]);
+                    }),
+            ])
+            ->action(function (array $data) {
+                if (! $this->canRequestRun()) {
+                    Notification::make()->warning()->title('Cannot Request A Run')
+                        ->body('You may already be booked, or the gowning class is not yet on file.')->send();
+                    return;
+                }
+                $scheduler = app(\App\Services\AutoScheduler::class);
+                if (($data['mode'] ?? 'next') === 'next') {
+                    $slot = $scheduler->nextAvailableSlot();
+                } else {
+                    $slot = RunSlot::find($data['run_slot_id'] ?? null);
+                    if ($slot && $scheduler->seatsLeft($slot) <= 0) $slot = null;
+                }
+                if (! $slot) {
+                    Notification::make()->warning()->title('No Open Day Available')
+                        ->body('No run day with space was found. Please try again later or contact scheduling.')->send();
+                    return;
+                }
+                Reservation::create([
+                    'run_slot_id' => $slot->id,
+                    'personnel_id' => $this->person->id,
+                    'status' => 'approved',
+                    'requested_at' => now(),
+                    'decided_at' => now(),
+                    'notes' => 'Self-requested',
+                ]);
+                Notification::make()->success()->title('Run Requested')
+                    ->body('You are booked for ' . $slot->slot_date->format('l, M j, Y') . '.')->send();
+            });
+    }
+
     /** Operator self-reschedule: move their own reservation to another open slot with capacity. */
     public function rescheduleAction(): Action
     {

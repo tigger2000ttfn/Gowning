@@ -1,8 +1,17 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'My Qualification', 'icon' => 'heroicon-o-identification'])
 
-    @if($this->rescheduleAction->isVisible())
-        <div style="margin-bottom:16px;">{{ $this->rescheduleAction }}</div>
+    <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        @if($this->requestRunAction->isVisible()){{ $this->requestRunAction }}@endif
+        @if($this->rescheduleAction->isVisible()){{ $this->rescheduleAction }}@endif
+    </div>
+    @php $needsClass = $person && ! $person->qualification?->class_on_file; @endphp
+    @if($needsClass)
+        <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:#FFF6E5;border:1px solid #F0D08A;border-radius:10px;">
+            <x-filament::icon icon="heroicon-o-academic-cap" style="width:20px;height:20px;color:#9A6B00;"/>
+            <span style="font-size:13.5px;color:#6B4A00;">You Need To Complete The Gowning Class Before A Run Can Be Requested.
+                <a href="{{ url('/') }}" style="color:#A4123F;font-weight:700;">Schedule Class →</a></span>
+        </div>
     @endif
     @php $activeRes = $this->myActiveReservation(); @endphp
     @if($activeRes && $activeRes->runSlot)

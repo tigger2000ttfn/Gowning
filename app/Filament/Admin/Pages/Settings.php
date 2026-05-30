@@ -59,6 +59,7 @@ class Settings extends Page implements HasForms
             'auto_schedule_weeks_out' => (int) Setting::get('auto_schedule_weeks_out', 2),
             'lapsed_runs_required'  => (int) Setting::get('lapsed_runs_required', 3),
             'allow_self_reschedule' => (bool) Setting::get('allow_self_reschedule', true),
+            'allow_self_request_run' => (bool) Setting::get('allow_self_request_run', true),
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
@@ -135,8 +136,10 @@ class Settings extends Page implements HasForms
                     TextInput::make('lapsed_runs_required')->label('Runs For Lapsed Requalification')
                         ->numeric()->minValue(1)
                         ->helperText('How many runs a lapsed (overdue) person must redo. Default 3 (treat as initial).'),
-                    Toggle::make('allow_self_reschedule')->label('Allow Operator Self-reschedule')
-                        ->helperText('Let operators move their own run from My Qualification.'),
+                    Toggle::make('allow_self_reschedule')->label('Allow Operator Self-Reschedule')
+                        ->helperText('Let Operators Move Their Own Run From My Qualification.'),
+                    Toggle::make('allow_self_request_run')->label('Allow Operator Self-Request Run')
+                        ->helperText('Let Operators Book Their Own Run From My Qualification (After The Class Is On File).'),
                 ]),
 ]),
                 Tab::make('Quality')->icon('heroicon-o-shield-check')->schema([
