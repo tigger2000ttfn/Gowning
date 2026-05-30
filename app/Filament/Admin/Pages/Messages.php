@@ -90,7 +90,7 @@ class Messages extends Page
     public function mount(): void
     {
         $tab = request()->query('tab');
-        if (in_array($tab, ['inbox', 'sent', 'compose'], true)) {
+        if (in_array($tab, ['inbox', 'sent', 'activity', 'compose'], true)) {
             $this->tab = $tab;
         }
         $openId = request()->query('openMessageId');

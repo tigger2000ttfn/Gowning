@@ -8,6 +8,8 @@
         ->where('recipient_id', auth()->id())
         ->latest()->limit(8)->get();
     $msgUrl = \App\Filament\Admin\Pages\Messages::getUrl();
+    $recentActivity = \App\Models\QualificationComment::with(['qualification.personnel', 'user'])->latest()->limit(5)->get();
+    $activityUrl = $msgUrl . '?tab=activity';
 @endphp
 {{-- Direct messages flyout inbox --}}
 <div x-data="{ open: false }" class="gqs-msg" style="position:relative;">
@@ -37,6 +39,20 @@
             </a>
         @empty
             <div style="padding:18px 10px;text-align:center;color:#9A9AA4;font-size:13px;">No messages yet.</div>
+        @endforelse
+        {{-- Recent qualification activity (comments, QA notes, determinations) --}}
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 10px 8px;margin-top:4px;border-top:1px solid #EEE;">
+            <span style="font-weight:800;font-size:13px;color:#1A1A1F;">Recent Activity</span>
+            <a href="{{ $activityUrl }}" style="font-size:12px;font-weight:700;color:#A4123F;text-decoration:none;">View All</a>
+        </div>
+        @forelse($recentActivity as $c)
+            @php $cp = $c->qualification?->personnel; $cUrl = $c->qualification_id ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $c->qualification_id]) : $activityUrl; @endphp
+            <a href="{{ $cUrl }}" style="display:block;text-decoration:none;padding:9px 10px;border-bottom:1px solid #F2F2F4;border-radius:7px;">
+                <div style="font-size:12.5px;color:#5A5A62;line-height:1.45;">{{ \Illuminate\Support\Str::limit($c->body, 90) }}</div>
+                <div style="font-size:11px;color:#9A9AA4;margin-top:4px;">{{ $c->author_name ?: ($c->user?->name ?? 'System') }} on {{ $cp?->full_name ?? 'Unknown' }} · {{ $c->created_at?->diffForHumans() }}</div>
+            </a>
+        @empty
+            <div style="padding:12px 10px;text-align:center;color:#9A9AA4;font-size:12.5px;">No recent activity.</div>
         @endforelse
         <a href="{{ $msgUrl }}?tab=compose" style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px;padding:10px;background:#A4123F;color:#fff;border-radius:8px;font-weight:700;font-size:13px;text-decoration:none;">
             <x-filament::icon icon="heroicon-m-pencil-square" style="width:15px;height:15px;" /> New Message
