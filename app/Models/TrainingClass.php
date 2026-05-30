@@ -13,6 +13,12 @@ class TrainingClass extends Model
 
     protected $fillable = [
         'name', 'code', 'description', 'is_gowning_prerequisite', 'is_published',
+        'category',
+        'validity_months',
+        'default_instructor',
+        'default_location',
+        'duration_minutes',
+        'default_capacity',
     ];
 
     protected function casts(): array

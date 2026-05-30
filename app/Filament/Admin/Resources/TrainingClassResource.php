@@ -55,9 +55,19 @@ class TrainingClassResource extends Resource
             Section::make('Class Details')->icon('heroicon-o-academic-cap')->columns(2)->schema([
                 TextInput::make('name')->required()->maxLength(255)->columnSpanFull(),
                 TextInput::make('code')->label('Class Code')->maxLength(50),
+                TextInput::make('category')->label('Category')->maxLength(80)
+                    ->placeholder('e.g. Aseptic Gowning'),
                 Toggle::make('is_gowning_prerequisite')->label('Counts As Gowning Prerequisite')->default(true),
                 Toggle::make('is_published')->label('Published (Visible On Public Site)')->default(true),
                 Textarea::make('description')->rows(3)->columnSpanFull(),
+            ]),
+            Section::make('Defaults & Validity')->icon('heroicon-o-cog-6-tooth')->columns(2)->schema([
+                FormTextInput::make('default_capacity')->label('Default Capacity')->numeric()->minValue(1)->default(20),
+                FormTextInput::make('duration_minutes')->label('Duration (Minutes)')->numeric()->minValue(1),
+                FormTextInput::make('default_location')->label('Default Location')->maxLength(255),
+                FormTextInput::make('default_instructor')->label('Default Instructor')->maxLength(255),
+                FormTextInput::make('validity_months')->label('Completion Valid For (Months)')->numeric()->minValue(1)
+                    ->helperText('Leave blank if the class completion does not expire.'),
             ]),
         ]);
     }
