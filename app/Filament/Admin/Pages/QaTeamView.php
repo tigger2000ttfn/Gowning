@@ -28,7 +28,7 @@ class QaTeamView extends Page
 
     protected string $view = 'filament.pages.qa-team-view';
 
-    public string $tab = 'overview';   // overview | table | unassigned
+    public string $tab = 'overview';   // overview | table | unassigned | calendar
     public ?int $assignQualId = null;
     public ?int $assignOwnerId = null;
     public bool $showAssign = false;
@@ -77,6 +77,28 @@ class QaTeamView extends Page
     }
 
     public function totalPending(): int { return $this->pendingApprovals()->count(); }
+
+    /** Sign-off forecast: qualifications coming due over the next 6 weeks, grouped by date. */
+    public function getCalendar(): array
+    {
+        $today = now()->toDateString();
+        $quals = Qualification::with('personnel', 'qaOwner')
+            ->whereNotNull('due_date')
+            ->whereDate('due_date', '>=', $today)
+            ->whereDate('due_date', '<=', now()->addDays(42)->toDateString())
+            ->orderBy('due_date')->get();
+
+        return $quals->groupBy(fn ($q) => $q->due_date->format('Y-m-d'))
+            ->map(fn ($group, $day) => [
+                'date' => \Illuminate\Support\Carbon::parse($day)->gmpDDM(),
+                'rows' => $group->map(fn ($q) => [
+                    'qual_id' => $q->id,
+                    'name' => $q->personnel?->full_name,
+                    'employee_id' => $q->personnel?->employee_id,
+                    'owner' => $q->qaOwner?->name,
+                ])->all(),
+            ])->values()->all();
+    }
 
     public function reviewerOptions(): array
     {

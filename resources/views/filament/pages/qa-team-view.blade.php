@@ -5,7 +5,7 @@
         $manager = $this->manager();
         $total = $this->totalPending();
         $tabActions = '';
-        foreach (['overview' => 'Overview', 'table' => 'Workload Table', 'unassigned' => 'Unassigned'] as $k => $lbl) {
+        foreach (['overview' => 'Overview', 'table' => 'Workload Table', 'unassigned' => 'Unassigned', 'calendar' => 'Calendar'] as $k => $lbl) {
             $tabActions .= '<button type="button" wire:click="$set(\'tab\', \'' . $k . '\')" class="gqs-tab ' . ($tab === $k ? 'active' : '') . '">' . $lbl . '</button>';
         }
     @endphp
@@ -99,6 +99,32 @@
                     </div>
                 @empty
                     <div class="gqs-empty">All Approvals Have Owners.</div>
+                @endforelse
+            </div>
+        </div>
+    @endif
+
+    {{-- CALENDAR: sign-off forecast, qualifications coming due over the next 6 weeks --}}
+    @if($tab === 'calendar')
+        @php $cal = $this->getCalendar(); @endphp
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-calendar-days"/> Sign-off Forecast (Next 6 Weeks)</div>
+            <div class="gqs-panel-body">
+                @forelse($cal as $day)
+                    <div style="padding:10px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                        <div style="font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);margin-bottom:5px;">{{ $day['date'] }}</div>
+                        @foreach($day['rows'] as $r)
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;">
+                                <span>{{ $r['name'] }} <span style="color:var(--gqs-text-dim,#9A9AA4);">({{ $r['employee_id'] }})</span></span>
+                                <span style="display:flex;align-items:center;gap:8px;">
+                                    @if($r['owner'])<span class="gqs-pill gqs-pill-green">{{ $r['owner'] }}</span>@else<span class="gqs-pill gqs-pill-gold">Unassigned</span>@endif
+                                    <button wire:click="openAssign({{ $r['qual_id'] }})" class="gqs-mini-btn">Assign Owner</button>
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @empty
+                    <div class="gqs-empty">No Qualifications Due In The Next 6 Weeks.</div>
                 @endforelse
             </div>
         </div>
