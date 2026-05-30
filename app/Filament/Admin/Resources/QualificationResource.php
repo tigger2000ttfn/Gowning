@@ -62,7 +62,7 @@ class QualificationResource extends Resource
                     collect(QualificationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
                 ),
                 SelectFilter::make('workflow_stage')->label('Stage')->options(
-                    collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
+                    collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($c) => [$c->value => \App\Models\WorkflowStatus::labelFor('run', $c->value, $c->label())])->all()
                 ),
             ])
             ->recordActions([
