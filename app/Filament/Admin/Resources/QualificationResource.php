@@ -53,8 +53,13 @@ class QualificationResource extends Resource
             ->columns([
                 TextColumn::make('personnel.employee_id')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
-                TextColumn::make('type')->badge()->sortable()->formatStateUsing(fn ($s) => $s?->label())
-                    ->color(fn ($s) => match ($s?->value) { 'annual' => 'success', 'initial' => 'info', default => 'gray' }),
+                TextColumn::make('type')->label('Session Type')->badge()->sortable()
+                    ->formatStateUsing(fn ($state, $record) => $record->sessionLabel())
+                    ->color(fn ($state, $record) => match ($record->qa_recommendation) {
+                        'requal_three' => 'danger',
+                        'requal_one' => 'warning',
+                        default => $record->type?->value === 'initial' ? 'info' : 'success',
+                    }),
                 TextColumn::make('status')->badge()->sortable()
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->icon(fn ($s) => match($s?->value) {
@@ -70,6 +75,9 @@ class QualificationResource extends Resource
                 TextColumn::make('qualified_date')->date()->placeholder('—')->sortable(),
                 TextColumn::make('due_date')->icon('heroicon-m-calendar-days')->label('Due')->date()->placeholder('—')->sortable()
                     ->color(fn ($record) => $record->isPastDue() ? 'danger' : null),
+                TextColumn::make('cycle_number')->label('Cycle')->badge()->toggleable()
+                    ->formatStateUsing(fn ($state, $record) => 'Cycle ' . ($state ?: 1) . ($record->superseded_at ? ' · history' : ''))
+                    ->color(fn ($record) => $record->superseded_at ? 'gray' : 'success'),
             ])
             ->filters([
                 SelectFilter::make('type')->label('Type')->options(
@@ -94,6 +102,15 @@ class QualificationResource extends Resource
                         ->whereDate('due_date', '>=', today())->whereDate('due_date', '<=', today()->addDays(30))),
                 Filter::make('class_on_file')->label('Class On File')->toggle()
                     ->query(fn ($query) => $query->where('class_on_file', true)),
+                SelectFilter::make('cycle_state')->label('Cycle')
+                    ->options(['active' => 'Active Cycle', 'history' => 'Superseded (History)'])
+                    ->default('active')
+                    ->query(function ($query, array $data) {
+                        $v = $data['value'] ?? null;
+                        if ($v === 'history') return $query->whereNotNull('superseded_at');
+                        if ($v === 'active') return $query->whereNull('superseded_at');
+                        return $query;
+                    }),
             ])
             ->filtersFormColumns(3)
             ->recordUrl(fn ($record) => QualificationResource::getUrl('view', ['record' => $record]))
