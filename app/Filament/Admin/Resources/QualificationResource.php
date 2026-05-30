@@ -8,6 +8,7 @@ use App\Models\Qualification;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use App\Enums\QualificationStatus;
 
@@ -69,13 +70,30 @@ class QualificationResource extends Resource
                     ->color(fn ($record) => $record->isPastDue() ? 'danger' : null),
             ])
             ->filters([
+                SelectFilter::make('type')->label('Type')->options(
+                    collect(\App\Enums\QualificationType::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
+                ),
                 SelectFilter::make('status')->options(
                     collect(QualificationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
                 ),
                 SelectFilter::make('workflow_stage')->label('Stage')->options(
                     collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($c) => [$c->value => \App\Models\WorkflowStatus::labelFor('run', $c->value, $c->label())])->all()
                 ),
+                SelectFilter::make('department')->label('Department')
+                    ->options(fn () => \App\Models\Personnel::query()->whereNotNull('department')->where('department', '!=', '')
+                        ->distinct()->orderBy('department')->pluck('department', 'department')->all())
+                    ->query(fn ($query, array $data) => filled($data['value'] ?? null)
+                        ? $query->whereHas('personnel', fn ($q) => $q->where('department', $data['value']))
+                        : $query),
+                Filter::make('overdue')->label('Overdue')->toggle()
+                    ->query(fn ($query) => $query->whereNotNull('due_date')->whereDate('due_date', '<', today())),
+                Filter::make('due_soon')->label('Due Within 30 Days')->toggle()
+                    ->query(fn ($query) => $query->whereNotNull('due_date')
+                        ->whereDate('due_date', '>=', today())->whereDate('due_date', '<=', today()->addDays(30))),
+                Filter::make('class_on_file')->label('Class On File')->toggle()
+                    ->query(fn ($query) => $query->where('class_on_file', true)),
             ])
+            ->filtersFormColumns(3)
             ->recordActions([
                 \Filament\Actions\Action::make('viewDetails')
                     ->label('View')
@@ -123,48 +141,6 @@ class QualificationResource extends Resource
                                 ]),
                         ])->collapsible(),
                     ]),
-                \Filament\Actions\Action::make('override_due')
-                    ->label('Override Due Date')
-                    ->icon('heroicon-m-calendar')
-                    ->color('warning')
-                    ->schema([
-                        \Filament\Forms\Components\DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('New Due Date')->required()->native(false),
-                        \Filament\Forms\Components\Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
-                    ])
-                    ->fillForm(fn ($record) => ['due_date' => $record->due_date])
-                    ->action(function ($record, array $data) {
-                        $old = $record->due_date?->toDateString();
-                        $record->update(['due_date' => $data['due_date']]);
-                        $record->comments()->create([
-                            'user_id' => \Illuminate\Support\Facades\Auth::id(),
-                            'author_name' => \Illuminate\Support\Facades\Auth::user()?->name,
-                            'body' => "QA overrode due date ({$old} → {$data['due_date']}). Reason: {$data['reason']}",
-                        ]);
-                        \Filament\Notifications\Notification::make()->success()->title('Due date updated')->send();
-                    }),
-                \Filament\Actions\Action::make('determination')
-                    ->label('QA Determination')
-                    ->icon('heroicon-m-clipboard-document-check')
-                    ->color('info')
-                    ->schema([
-                        \Filament\Forms\Components\Select::make('outcome')->label('Determination')->options([
-                            'retrain' => 'Require retraining (gowning class again)',
-                            'requalify' => 'Requalify (reset to 3 initial runs)',
-                            'continue' => 'Continue current cycle (no change)',
-                        ])->required(),
-                        \Filament\Forms\Components\Textarea::make('note')->label('QA Note')->required()->rows(3),
-                    ])
-                    ->action(function ($record, array $data) {
-                        $record->comments()->create([
-                            'user_id' => \Illuminate\Support\Facades\Auth::id(),
-                            'author_name' => \Illuminate\Support\Facades\Auth::user()?->name,
-                            'body' => "QA determination: {$data['outcome']}. {$data['note']}",
-                        ]);
-                        if ($data['outcome'] === 'requalify') {
-                            $record->update(['status' => 'pending', 'runs_completed' => 0, 'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3)]);
-                        }
-                        \Filament\Notifications\Notification::make()->success()->title('Determination recorded')->send();
-                    }),
             ])
             ->defaultSort('due_date');
     }
