@@ -215,4 +215,15 @@
     .pg-head-ico svg{width:24px;height:24px;color:#fff;}
     .pg-head-tx h1{font-size:22px;font-weight:800;margin:0;color:var(--gqs-text,#1A1A1F);}
     .pg-head-tx p{margin:3px 0 0;color:var(--gqs-text-dim,#5A5A62);font-size:14px;}
+    /* Tabs (team views, messages, notification settings) */
+    .gqs-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--gqs-border,#E2E2E6);flex-wrap:wrap;}
+    .gqs-tab{background:none;border:none;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
+    .gqs-tab.on{color:#A4123F;border-bottom-color:#A4123F;}
+    /* Form controls (modals, messages, notification settings, calendar) */
+    .gqs-flbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);margin-bottom:5px;}
+    .gqs-fld{width:100%;padding:9px 11px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:8px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);font-size:14px;font-family:inherit;}
+    .gqs-fld:focus{outline:none;border-color:#A4123F;box-shadow:0 0 0 3px rgba(164,18,63,.12);}
+    .dark .gqs-fld{background:#23232B;border-color:#3A3A44;color:#ECECF0;}
+    .gqs-mini-btn{background:#A4123F;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
+    .gqs-mini-btn:hover{background:#850F33;}
 </style>
