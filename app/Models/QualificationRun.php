@@ -11,6 +11,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QualificationRun extends Model
 {
+    protected static function booted(): void
+    {
+        static::created(function ($run) {
+            if (($run->result->value ?? $run->result) === 'fail') {
+                $name = $run->personnel?->full_name ?? 'A trainee';
+                \App\Services\Notifier::toCapability(
+                    \App\Enums\Capability::QaReview,
+                    'Failed Qualification Run',
+                    "{$name} had a failed run on {$run->run_date?->format('M j, Y')} — QA determination needed.",
+                    \App\Filament\Admin\Resources\QualificationResource::getUrl(),
+                    'danger',
+                );
+            }
+        });
+    }
+
     use Auditable, SoftDeletes;
 
     protected $fillable = [

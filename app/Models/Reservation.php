@@ -10,6 +10,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
+    protected static function booted(): void
+    {
+        static::created(function ($reservation) {
+            if (($reservation->status->value ?? $reservation->status) === 'requested') {
+                $name = $reservation->personnel?->full_name ?? 'Someone';
+                \App\Services\Notifier::toCapability(
+                    \App\Enums\Capability::ManageScheduling,
+                    'New Run Request',
+                    "{$name} requested a qualification run slot.",
+                    \App\Filament\Admin\Resources\ReservationResource::getUrl(),
+                );
+            }
+        });
+    }
+
     use Auditable, SoftDeletes;
 
     protected $fillable = [

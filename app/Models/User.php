@@ -14,6 +14,20 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser
 {
+
+    protected static function booted(): void
+    {
+        static::created(function ($user) {
+            if (($user->approval_status ?? null) === 'pending') {
+                \App\Services\Notifier::toCapability(
+                    \App\Enums\Capability::ManageUsers,
+                    'New Account Pending Approval',
+                    "{$user->name} ({$user->email}) requested access.",
+                    \App\Filament\Admin\Resources\UserResource::getUrl(),
+                );
+            }
+        });
+    }
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use Auditable, HasFactory, Notifiable;
 
