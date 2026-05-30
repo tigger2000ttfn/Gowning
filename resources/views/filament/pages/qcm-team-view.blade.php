@@ -118,6 +118,42 @@
         </div>
     @endif
 
+    {{-- Unassigned classes alert --}}
+    @php $unClasses = $this->getUnassignedClasses(); @endphp
+    @if($unClasses->isNotEmpty())
+        <div class="gqs-panel">
+            <div class="gqs-panel-head" style="background:linear-gradient(135deg,#6B2C91,#4E2069);"><x-filament::icon icon="heroicon-m-academic-cap"/> Classes Without An Instructor</div>
+            <div class="gqs-panel-body">
+                @foreach($unClasses as $cs)
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);font-size:13.5px;">
+                        <span>{{ $cs->session_date?->format('l, M j') }} · {{ $cs->trainingClass?->name }}</span>
+                        <button wire:click="openAssignInstructor({{ $cs->id }})" class="gqs-mini-btn">Assign Instructor</button>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    {{-- Assign instructor modal --}}
+    @if($showAssignInstructor)
+        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAssignInstructor', false)">
+            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:400px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Assign Instructor</div>
+                <div style="padding:18px 20px;">
+                    <label class="gqs-flbl">Instructor</label>
+                    <select wire:model="assignInstructorId" class="gqs-fld">
+                        <option value="">Unassigned</option>
+                        @foreach($this->analystOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                    </select>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                        <button type="button" wire:click="$set('showAssignInstructor', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
+                        <button type="button" wire:click="saveAssignInstructor" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Assign analyst modal --}}
     @if($showAssign)
         <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAssign', false)">

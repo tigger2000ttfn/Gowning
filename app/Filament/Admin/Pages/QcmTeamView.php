@@ -77,6 +77,37 @@ class QcmTeamView extends Page
             ->where('status', 'open')->orderBy('slot_date')->get();
     }
 
+    public function getUnassignedClasses()
+    {
+        return ClassSession::with('trainingClass')
+            ->whereNull('assigned_instructor_id')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->where('status', 'open')->orderBy('session_date')->get();
+    }
+
+    // Assign instructor to a class session
+    public ?int $assignSessionId = null;
+    public ?int $assignInstructorId = null;
+    public bool $showAssignInstructor = false;
+
+    public function openAssignInstructor(int $sessionId): void
+    {
+        $this->assignSessionId = $sessionId;
+        $this->assignInstructorId = ClassSession::find($sessionId)?->assigned_instructor_id;
+        $this->showAssignInstructor = true;
+    }
+
+    public function saveAssignInstructor(): void
+    {
+        $s = ClassSession::find($this->assignSessionId);
+        if ($s) {
+            $s->assigned_instructor_id = $this->assignInstructorId ?: null;
+            $s->save();
+            \Filament\Notifications\Notification::make()->success()->title('Instructor assigned')->send();
+        }
+        $this->showAssignInstructor = false;
+    }
+
     /** Calendar data: upcoming run days with their assigned analyst, grouped by date. */
     public function getCalendar(): array
     {
