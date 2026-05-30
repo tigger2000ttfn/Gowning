@@ -117,7 +117,7 @@
                         <thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Location</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>
                         <tbody>
                             @foreach($sessions as $s)
-                                <tr>
+                                <tr style="cursor:pointer;" wire:click="openSessionDetail({{ $s->id }})">
                                     <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
                                     <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
                                     <td>{{ $s->trainingClass?->name }}</td>
@@ -126,8 +126,8 @@
                                     <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
                                     <td>@if($s->attendance_submitted_at)<span class="gqs-pill gqs-pill-green">Submitted</span>@else<span class="gqs-pill gqs-pill-purple">Open</span>@endif</td>
                                     <td style="text-align:right;white-space:nowrap;">
-                                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Form</button>
-                                        <button type="button" wire:click="askConfirm('cancelSession', {{ $s->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="rd-act" style="background:#C8102E;">Cancel</button>
+                                        <button type="button" wire:click.stop="openSessionDetail({{ $s->id }})" class="rd-act rd-act-magenta">Details</button>
+                                        <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}?attend={{ $s->id }}" wire:click.stop class="rd-act rd-act-green" style="text-decoration:none;">Attendance</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -180,6 +180,46 @@
             </div>
         @endif
 
+        {{-- Session detail / reschedule modal --}}
+        @if($detailSessionId)
+            @php $ds = \App\Models\ClassSession::with('trainingClass')->find($detailSessionId); $dlocked = (bool) $ds?->attendance_submitted_at; @endphp
+            @if($ds)
+                <div class="gqs-modal-overlay" wire:click.self="closeSessionDetail">
+                    <div class="gqs-modal" style="width:520px;">
+                        <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-academic-cap"/></span>{{ $ds->trainingClass?->name }} · Session</div>
+                        <div class="gqs-modal-body">
+                            @if($dlocked)
+                                <div style="padding:10px 12px;background:#E9F7EF;border:1px solid #BFE6CE;border-radius:8px;font-size:12.5px;color:#1C5E3A;">Attendance Submitted · {{ count($this->sessionAttendees($detailSessionId)) }} enrolled. This session is locked from editing.</div>
+                            @else
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSession.session_date" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Location</label><input type="text" wire:model="editSession.location" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Start</label><input type="time" wire:model="editSession.start_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">End</label><input type="time" wire:model="editSession.end_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="editSession.capacity" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Instructor</label>
+                                        <select wire:model="editSession.assigned_instructor_id" class="gqs-fld"><option value="">Unassigned</option>
+                                            @foreach($this->instructorOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                                        </select></div>
+                                </div>
+                            @endif
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;">
+                                <a href="{{ route('print.class-attendance', $ds->id) }}@if($ds->instructorUser)?trainer={{ urlencode($ds->instructorUser->name) }}@endif" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Print Attendance Form</a>
+                                <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}?attend={{ $ds->id }}" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">Take Attendance</a>
+                            </div>
+                        </div>
+                        <div class="gqs-modal-foot" style="justify-content:space-between;">
+                            <button type="button" wire:click="askConfirm('cancelSession', {{ $ds->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="gqs-btn" style="background:#C8102E;color:#fff;">Cancel Session</button>
+                            <span style="display:flex;gap:9px;">
+                                <button type="button" wire:click="closeSessionDetail" class="gqs-btn gqs-btn-ghost">Close</button>
+                                @if(! $dlocked)<button type="button" wire:click="saveSessionDetail" class="gqs-btn gqs-btn-primary">Save Changes</button>@endif
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        @endif
+
         {{-- in-app confirmation modal (replaces native confirm prompts) --}}
         @if(! empty($confirm))
             <div class="gqs-modal-overlay" wire:click.self="cancelConfirm">
@@ -206,7 +246,7 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">&larr; Back To Sessions</button>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Attendance Form</button>
+                        <a href="{{ route('print.class-attendance', $s->id) }}@if($s->instructorUser)?trainer={{ urlencode($s->instructorUser->name) }}@endif" target="_blank" class="rd-act rd-act-magenta" style="text-decoration:none;">Print Attendance Form</a>
                     </div>
                 </div>
                 <div class="gqs-panel">

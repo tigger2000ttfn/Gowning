@@ -46,6 +46,46 @@ class ClassScheduler extends Page
         }
     }
 
+    // ----- Session detail / reschedule modal (Sessions tab: move & adjust) -----
+    public ?int $detailSessionId = null;
+    public array $editSession = [];
+
+    public function openSessionDetail(int $id): void
+    {
+        $s = \App\Models\ClassSession::with('trainingClass')->find($id);
+        if (! $s) return;
+        $this->detailSessionId = $id;
+        $this->editSession = [
+            'session_date' => $s->session_date?->toDateString(),
+            'start_time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : null,
+            'end_time' => $s->end_time ? \Illuminate\Support\Carbon::parse($s->end_time)->format('H:i') : null,
+            'location' => $s->location,
+            'capacity' => $s->capacity,
+            'assigned_instructor_id' => $s->assigned_instructor_id,
+        ];
+    }
+    public function closeSessionDetail(): void { $this->detailSessionId = null; $this->editSession = []; }
+
+    public function saveSessionDetail(): void
+    {
+        $s = \App\Models\ClassSession::find($this->detailSessionId);
+        if (! $s) return;
+        if ($s->attendance_submitted_at) {
+            Notification::make()->warning()->title('Locked')->body('Attendance has been submitted for this session.')->send();
+            return;
+        }
+        $s->update([
+            'session_date' => $this->editSession['session_date'] ?: $s->session_date,
+            'start_time' => $this->editSession['start_time'] ?: null,
+            'end_time' => $this->editSession['end_time'] ?: null,
+            'location' => $this->editSession['location'] ?: null,
+            'capacity' => $this->editSession['capacity'] ?: $s->capacity,
+            'assigned_instructor_id' => $this->editSession['assigned_instructor_id'] ?: null,
+        ]);
+        $this->closeSessionDetail();
+        Notification::make()->success()->title('Session Updated')->send();
+    }
+
     // reusable in-app confirmation modal (no native system prompts)
     public array $confirm = [];
     public function askConfirm(string $method, $arg, string $title, string $body, ?string $confirmLabel = null, bool $danger = false): void
