@@ -21,17 +21,28 @@
     }
     .fi-topbar .fi-icon-btn:hover { background-color: rgba(255,255,255,.12) !important; }
 
+    /* Dropdown menu items: readable dark text on white (light theme) */
+    html:not(.dark) .fi-dropdown-list-item,
+    html:not(.dark) .fi-dropdown-list-item-label,
+    html:not(.dark) .fi-dropdown-list a,
+    html:not(.dark) .fi-dropdown-panel .fi-dropdown-list-item-label {
+        color: #1A1A1F !important;
+    }
+    html:not(.dark) .fi-dropdown-list-item:hover { background-color: #F1F1F4 !important; }
+
     /* Back To Login link on reset page - force Title Case appearance */
     .fi-simple-main a[href*="login"] { text-transform: capitalize; }
 
     /* DASHBOARD full-bleed: target the ACTUAL wrappers (from DOM inspection) */
     /* .fi-main has 0 32px padding -> the left/right gap */
+    .fi-main:has(.dash-hero) { padding-left: 0 !important; padding-right: 0 !important; }
     .fi-page-dashboard .fi-main { padding-left: 0 !important; padding-right: 0 !important; }
     /* .fi-page-header-main-ctn has 32px top padding -> the gap above the hero */
+    .fi-main:has(.dash-hero) .fi-page-header-main-ctn { padding-top: 0 !important; }
     .fi-page-dashboard .fi-page-header-main-ctn { padding-top: 0 !important; }
     /* re-pad the non-hero content so it isn't edge-to-edge (hero handles its own full width) */
-    .fi-page-dashboard .dash-pad { padding: 0 32px !important; }
-    @media (max-width: 640px){ .fi-page-dashboard .dash-pad { padding: 0 16px !important; } }
+    .dash-pad { padding: 0 32px !important; }
+    @media (max-width: 640px){ .dash-pad { padding: 0 16px !important; } }
 
     /* Smaller sidebar font + narrower so it takes less space, esp on small screens */
     .fi-sidebar-nav .fi-sidebar-item-label { font-size: 13px !important; }
