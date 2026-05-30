@@ -46,8 +46,16 @@ class Settings extends Page implements HasForms
             'cycle_months'          => (int) Setting::get('cycle_months', 12),
             'grace_days'            => (int) Setting::get('grace_days', 0),
             'class_required'        => (bool) Setting::get('class_required', true),
+            'class_repeats_annually'=> (bool) Setting::get('class_repeats_annually', false),
             'self_register_open'    => (bool) Setting::get('self_register_open', true),
             'auto_approve'          => (bool) Setting::get('auto_approve', false),
+            'incubation_days'       => (int) Setting::get('incubation_days', 5),
+            'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
+            'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
+            'esig_required'         => (bool) Setting::get('esig_required', true),
+            'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
+            'org_name'              => Setting::get('org_name', 'MATC — Astellas'),
+            'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
         ]);
     }
 
@@ -69,9 +77,31 @@ class Settings extends Page implements HasForms
                 ]),
                 Section::make('Class & Access')->icon('heroicon-o-lock-closed')->columns(2)->schema([
                     Toggle::make('class_required')->label('Gowning Class Required Before Initial Runs'),
+                    Toggle::make('class_repeats_annually')->label('Gowning Class Repeats Annually')
+                        ->helperText('Off = taken once at initial qualification.'),
                     Toggle::make('self_register_open')->label('Public Self-registration Open'),
                     Toggle::make('auto_approve')->label('Auto-approve New Registrations')
                         ->helperText('Off is recommended for Part 11 (admin approves each account).'),
+                ]),
+                Section::make('Sampling & Incubation')->icon('heroicon-o-beaker')->columns(2)->schema([
+                    TextInput::make('incubation_days')->label('Incubation Period (Days)')
+                        ->numeric()->minValue(1)->required()
+                        ->helperText('Days plates incubate before results are released.'),
+                    TextInput::make('sampling_sites')->label('Sampling Sites')
+                        ->helperText('Comma-separated body sites sampled per run.'),
+                ]),
+                Section::make('Quality / Part 11')->icon('heroicon-o-shield-check')->columns(2)->schema([
+                    Toggle::make('require_qa_signoff')->label('Require QA Sign-off To Complete')
+                        ->helperText('A run is only Completed after QA approval.'),
+                    Toggle::make('esig_required')->label('Require Electronic Signature On QA Sign-off'),
+                ]),
+                Section::make('Notifications')->icon('heroicon-o-bell')->schema([
+                    TextInput::make('notify_days_before')->label('Due-date Reminder Days')
+                        ->helperText('Comma-separated days before due to remind (e.g. 60,30,7).'),
+                ]),
+                Section::make('Organization')->icon('heroicon-o-building-office-2')->columns(2)->schema([
+                    TextInput::make('org_name')->label('Organization Name'),
+                    TextInput::make('site_name')->label('Site Name'),
                 ]),
             ]);
     }

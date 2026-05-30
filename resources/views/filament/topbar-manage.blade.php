@@ -19,6 +19,14 @@
     if ($can(\App\Enums\Capability::ManageClasses) || $can(\App\Enums\Capability::ManageUsers)) {
         $links[] = ['Announcements', \App\Filament\Admin\Resources\AnnouncementResource::getUrl(), 'heroicon-o-megaphone'];
     }
+    if ($can(\App\Enums\Capability::ManagePersonnel)) {
+        $links[] = ['Departments', \App\Filament\Admin\Resources\DepartmentResource::getUrl(), 'heroicon-o-building-office'];
+        $links[] = ['Job Titles', \App\Filament\Admin\Resources\JobTitleResource::getUrl(), 'heroicon-o-briefcase'];
+    }
+    if ($can(\App\Enums\Capability::ManageScheduling)) {
+        $links[] = ['Cleanrooms', \App\Filament\Admin\Resources\CleanroomResource::getUrl(), 'heroicon-o-beaker'];
+        $links[] = ['Sampling Sites', \App\Filament\Admin\Resources\SamplingSiteResource::getUrl(), 'heroicon-o-hand-raised'];
+    }
 @endphp
 @if (count($links))
 <div x-data="{ open: false }" class="gqs-manage">
