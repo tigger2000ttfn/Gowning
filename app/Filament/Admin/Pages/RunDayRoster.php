@@ -62,9 +62,9 @@ class RunDayRoster extends Page
             return;
         }
         $res->update(['status' => 'completed']);
-        // record the run through the engine (advances workflow_stage to RunPerformed)
+        // record the run as PENDING (result unknown until incubation plates are read)
         app(\App\Services\QualificationEngine::class)
-            ->recordRun($res->personnel, \App\Enums\RunResult::Pass, [
+            ->recordRun($res->personnel, \App\Enums\RunResult::Pending, [
                 'run_date' => now()->toDateString(),
                 'recorded_by' => Auth::id(),
             ]);
@@ -108,7 +108,22 @@ class RunDayRoster extends Page
             $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
             $run->save();
         }
+
+        // now that the real result is known, recompute the qualification so the pass
+        // actually counts (the run was Pending from Mark Performed until this point)
         if ($q) {
+            app(\App\Services\QualificationEngine::class)->recompute($q->fresh());
+            $q = $q->fresh();
+        }
+
+        // fire the run-outcome automation at the real result moment
+        \App\Services\AutomationEngine::fire(
+            $overall === 'fail' ? \App\Enums\AutomationTrigger::RunFailed : \App\Enums\AutomationTrigger::RunPassed,
+            ['personnel' => $res->personnel, 'qualification' => $q]
+        );
+
+        if ($q) {
+            // recompute may have advanced/qualified; only set QA stages if still mid-cycle
             $q->workflow_stage = $overall === 'fail'
                 ? \App\Enums\WorkflowStage::Failed
                 : \App\Enums\WorkflowStage::QaReview;

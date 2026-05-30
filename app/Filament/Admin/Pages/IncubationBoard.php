@@ -100,6 +100,13 @@ class IncubationBoard extends Page
                     $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
                     $run->save();
                 }
+                // count the pass now that the real result is known (run was Pending)
+                app(\App\Services\QualificationEngine::class)->recompute($q->fresh());
+                $q = $q->fresh();
+                \App\Services\AutomationEngine::fire(
+                    $overall === 'fail' ? \App\Enums\AutomationTrigger::RunFailed : \App\Enums\AutomationTrigger::RunPassed,
+                    ['personnel' => $q->personnel, 'qualification' => $q]
+                );
                 $q->workflow_stage = $overall === 'fail' ? WorkflowStage::Failed : WorkflowStage::QaReview;
                 $q->stage_changed_at = now();
                 $q->save();
@@ -116,6 +123,7 @@ class IncubationBoard extends Page
                             'summary' => 'Auto-created from failed qualification run. Link TrackWise NC.',
                         ]
                     );
+                    \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
                 }
                 Notification::make()->success()->title('Results released')
                     ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail' ? ', sent to QA determination.' : ', sent to QA review.'))->send();
