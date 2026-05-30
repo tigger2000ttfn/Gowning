@@ -36,7 +36,7 @@ class NonConformanceResource extends Resource
         return (bool) ($u && ($u->hasCapability(Capability::QaReview) || $u->hasCapability(Capability::QaApprove)));
     }
     public static function canAccessNavigation(): bool { return static::allowed(); }
-    public static function shouldRegisterNavigation(): bool { return static::allowed(); }
+    public static function shouldRegisterNavigation(): bool { return false; } // moved to Manage menu
     public static function canViewAny(): bool { return static::allowed(); }
     public static function canCreate(): bool { return static::allowed(); }
 

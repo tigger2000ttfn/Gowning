@@ -48,7 +48,7 @@ class TrainingClassResource extends Resource
     protected static ?int $navigationSort = 3;
     protected static ?string $modelLabel = 'Gowning Class';
     protected static ?string $pluralModelLabel = 'Gowning Classes';
-    protected static ?string $navigationLabel = 'Gowning Classes & Dates';
+    protected static ?string $navigationLabel = 'Class Scheduler';
 
     public static function form(Schema $schema): Schema
     {

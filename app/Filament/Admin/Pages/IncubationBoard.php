@@ -26,7 +26,7 @@ class IncubationBoard extends Page
         return (bool) ($u && ($u->hasCapability(Capability::ManageScheduling) || $u->hasCapability(Capability::QaReview)));
     }
     public static function canAccessNavigation(): bool { return static::allowed(); }
-    public static function shouldRegisterNavigation(): bool { return static::allowed(); }
+    public static function shouldRegisterNavigation(): bool { return false; } // moved to Manage menu
     public static function canViewAny(): bool { return static::allowed(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';

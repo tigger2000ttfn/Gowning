@@ -64,6 +64,10 @@
 
     // Compliance (rare but important)
     $compliance = [];
+    if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::RecordRuns) || $can(\App\Enums\Capability::ManageScheduling)) {
+        $compliance[] = ['Incubation', \App\Filament\Admin\Pages\IncubationBoard::getUrl(), 'heroicon-o-beaker'];
+        $compliance[] = ['Non-Conformances', \App\Filament\Admin\Resources\NonConformanceResource::getUrl(), 'heroicon-o-exclamation-triangle'];
+    }
     if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::SystemSettings)) {
         $compliance[] = ['Audit Trail', \App\Filament\Admin\Pages\AuditTrail::getUrl(), 'heroicon-o-document-magnifying-glass'];
     }

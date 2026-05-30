@@ -34,7 +34,7 @@ class RunSlotResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
     protected static ?int $navigationSort = 1;
     protected static ?string $modelLabel = 'Run Slot';
-    protected static ?string $navigationLabel = 'Run Day Setup';
+    protected static ?string $navigationLabel = 'Run Scheduler';
     protected static ?string $pluralModelLabel = 'Run Days';
 
     public static function form(Schema $schema): Schema
