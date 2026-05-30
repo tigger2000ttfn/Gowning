@@ -262,24 +262,40 @@
                     <span style="font-size:12px;font-weight:600;opacity:.92;">{{ $slot->reservations->count() }} attending · cap {{ $slot->capacity }}</span>
                 </div>
                 <div class="gqs-panel-body">
-                    @if ($slot->reservations->isEmpty())<div class="gqs-empty">No One Scheduled Yet.</div>@else
+                    @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
                         <table class="gqs-tbl">
-                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Run</th><th>Results</th></tr></thead>
+                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
+                                @php
+                                    $rq = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+                                    $adv = app(\App\Services\RunCycleAdvancer::class);
+                                    $performed = $rq ? $adv->cycleRuns($rq)->count() : 0;
+                                    $required = max(1, (int) ($rq->runs_required ?? 1));
+                                    $readyForResults = $rq && $rq->workflow_stage === \App\Enums\WorkflowStage::AwaitingResults;
+                                    $st = $res->status instanceof \BackedEnum ? $res->status->value : $res->status;
+                                @endphp
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
                                     <td style="font-weight:600;">{{ $res->personnel?->employee_id }}</td>
                                     <td>{{ $res->personnel?->full_name }}</td>
-                                    <td><span class="gqs-pill {{ $res->status === 'completed' ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ ucfirst($res->status) }}</span></td>
                                     <td>
-                                        @if($res->status !== 'completed')
-                                            <button wire:click="markPerformed({{ $res->id }})" class="rd-act rd-act-green">Mark Performed</button>
-                                        @else
-                                            <span style="color:#2E7D5B;font-weight:600;font-size:12.5px;">Performed</span>
-                                        @endif
+                                        <span class="gqs-pill {{ $st === 'completed' ? 'gqs-pill-green' : ($st === 'no_show' ? 'gqs-pill-red' : ($st === 'rescheduled' ? 'gqs-pill-gold' : '')) }}">
+                                            {{ $st === 'completed' ? 'Present' : ($st === 'no_show' ? 'No-Show' : ($st === 'rescheduled' ? 'Rescheduled' : 'Scheduled')) }}
+                                        </span>
                                     </td>
-                                    <td>
-                                        <button type="button" @click="open({{ $res->id }}, '{{ addslashes($res->personnel?->full_name ?? 'Operator') }}')" class="rd-act rd-act-magenta">Enter Results</button>
+                                    <td style="white-space:nowrap;">{{ $performed }} / {{ $required }}</td>
+                                    <td style="white-space:nowrap;">
+                                        @if($st !== 'completed' && $st !== 'no_show' && $st !== 'rescheduled')
+                                            <button wire:click="markPerformed({{ $res->id }})" class="rd-act rd-act-green">Present</button>
+                                            <button wire:click="rosterNoShow({{ $res->id }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C8102E;">No-Show</button>
+                                            <button wire:click="rosterReschedule({{ $res->id }})" wire:confirm="Reschedule to the next available run day?" class="rd-act" style="background:#C79A2E;">Reschedule</button>
+                                        @elseif($readyForResults)
+                                            <button type="button" @click="open({{ $res->id }}, '{{ addslashes($res->personnel?->full_name ?? 'Operator') }}')" class="rd-act rd-act-magenta">Enter Results</button>
+                                        @elseif($st === 'completed')
+                                            <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">{{ $performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates' }}</span>
+                                        @else
+                                            <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">{{ $st === 'no_show' ? 'No-show' : 'Rescheduled' }}</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach</tbody>

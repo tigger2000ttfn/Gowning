@@ -364,6 +364,30 @@ class RunDayRoster extends Page
 
 
     /** Mark a run as performed (the run attendance sheet). Records the run + advances the stage. */
+    /** Roster attendance: reschedule a booked person (returns them for rebooking). */
+    public function rosterReschedule(int $reservationId): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $res = Reservation::find($reservationId);
+        if (! $res) return;
+        // free the seat; auto-scheduler / operator can rebook
+        $res->update(['status' => 'requested', 'run_slot_id' => $res->run_slot_id]);
+        // detach from this day so it leaves the roster: set to a 'rescheduled' marker then rebook
+        $res->update(['status' => 'rescheduled']);
+        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        if ($q) app(\App\Services\AutoScheduler::class)->bookNext($q->fresh());
+        Notification::make()->success()->title('Rescheduled')->send();
+    }
+
+    /** Roster attendance: no-show (returns them for rebooking via the scheduler). */
+    public function rosterNoShow(int $reservationId): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $res = Reservation::find($reservationId);
+        if ($res) app(\App\Services\AutoScheduler::class)->handleNoShow($res);
+        Notification::make()->success()->title('Marked no-show')->send();
+    }
+
     public function markPerformed(int $reservationId): void
     {
         $res = Reservation::with('personnel')->find($reservationId);
@@ -378,7 +402,7 @@ class RunDayRoster extends Page
                 'run_date' => now()->toDateString(),
                 'recorded_by' => Auth::id(),
             ]);
-        // move straight into Incubating and stamp the incubation start (= performed date)
+        // stamp THIS run's incubation start (= performed date)
         $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
         $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
             ->latest('run_date')->latest('id')->first();
@@ -386,14 +410,22 @@ class RunDayRoster extends Page
             $run->incubation_started_at = now();
             $run->save();
         }
+        // Holistic, multi-run aware: the person moves to Incubating now; they only advance
+        // to results once the LAST required run's plates clear (handled by RunCycleAdvancer).
         if ($q) {
             $q->workflow_stage = \App\Enums\WorkflowStage::Incubating;
             $q->stage_changed_at = now();
             $q->save();
+            app(\App\Services\RunCycleAdvancer::class)->advance($q->fresh());
         }
+        $required = max(1, (int) ($q->runs_required ?? 1));
+        $performed = $q ? app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q->fresh())->count() : 1;
         $days = (int) \App\Models\Setting::get('incubation_days', 8);
+        $msg = $performed < $required
+            ? "Run {$performed} of {$required} performed, incubating. " . ($required - $performed) . ' more run(s) needed.'
+            : "Final run performed, all {$required} run(s) incubating. Plates ready in {$days} days.";
         Notification::make()->success()->title('Run performed, incubation started')
-            ->body(($res->personnel->full_name ?? 'Operator') . ': plates ready to read in ' . $days . ' days.')->send();
+            ->body(($res->personnel->full_name ?? 'Operator') . ': ' . $msg)->send();
     }
 
     /** Enter LIMS results (worklist ID + overall pass/fail) for one reservation.
@@ -409,14 +441,20 @@ class RunDayRoster extends Page
         $res->update(['lims_worklist_id' => $worklist]);
 
         $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
-        $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
-            ->latest('run_date')->latest('id')->first();
-        if ($run) {
-            $run->lims_worklist_id = $worklist;
-            $run->results_entered_at = now();
-            $run->results_released_at = now();
-            $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
-            $run->save();
+        // Release results for ALL pending runs in this cycle (plates all came in together).
+        $adv = app(\App\Services\RunCycleAdvancer::class);
+        $cycleRuns = $q ? $adv->cycleRuns($q) : collect();
+        $pendingRuns = $cycleRuns->filter(fn ($r) => $r->result === \App\Enums\RunResult::Pending);
+        if ($pendingRuns->isEmpty() && $cycleRuns->isNotEmpty()) {
+            $pendingRuns = collect([$cycleRuns->last()]); // fallback to latest
+        }
+        $run = $cycleRuns->last();
+        foreach ($pendingRuns as $r) {
+            $r->lims_worklist_id = $r->lims_worklist_id ?: $worklist;
+            $r->results_entered_at = now();
+            $r->results_released_at = now();
+            $r->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
+            $r->save();
         }
 
         // now that the real result is known, recompute the qualification so the pass
