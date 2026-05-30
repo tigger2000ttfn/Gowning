@@ -38,22 +38,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // GMP date display: 11-MAY-2026 (uppercase month, hyphenated) and 24-hour time.
-        // Used app-wide via $carbon->gmp() / $carbon->gmpDt().
-        \Carbon\Carbon::macro('gmp', function () {
-            /** @var \Carbon\Carbon $this */
-            return strtoupper($this->format('d-M-Y'));
-        });
-        \Carbon\Carbon::macro('gmpDt', function () {
-            /** @var \Carbon\Carbon $this */
-            return strtoupper($this->format('d-M-Y')) . ' ' . $this->format('H:i');
-        });
-        // Weekday + GMP date and calendar-label variants, all uppercase.
-        \Carbon\Carbon::macro('gmpL', fn () => strtoupper($this->format('l, d-M-Y')));   // MONDAY, 11-MAY-2026
-        \Carbon\Carbon::macro('gmpD', fn () => strtoupper($this->format('D, d-M-Y')));   // MON, 11-MAY-2026
-        \Carbon\Carbon::macro('gmpLDM', fn () => strtoupper($this->format('l, d-M')));    // MONDAY, 11-MAY
-        \Carbon\Carbon::macro('gmpDDM', fn () => strtoupper($this->format('D, d-M')));    // MON, 11-MAY
-        \Carbon\Carbon::macro('gmpDM', fn () => strtoupper($this->format('d-M')));        // 11-MAY
-        \Carbon\Carbon::macro('gmpMY', fn () => strtoupper($this->gmpMY()));        // MAY 2026
+        // Registered on BOTH Carbon and CarbonImmutable so $carbon->gmp() works on either
+        // (model date casts are mutable Carbon; some pages build CarbonImmutable explicitly).
+        $registerGmp = function (string $name, \Closure $fn): void {
+            \Carbon\Carbon::macro($name, $fn);
+            \Carbon\CarbonImmutable::macro($name, $fn);
+        };
+        $registerGmp('gmp', function () { return strtoupper($this->format('d-M-Y')); });                       // 11-MAY-2026
+        $registerGmp('gmpDt', function () { return strtoupper($this->format('d-M-Y')) . ' ' . $this->format('H:i'); }); // 11-MAY-2026 14:30
+        $registerGmp('gmpL', function () { return strtoupper($this->format('l, d-M-Y')); });                   // MONDAY, 11-MAY-2026
+        $registerGmp('gmpD', function () { return strtoupper($this->format('D, d-M-Y')); });                   // MON, 11-MAY-2026
+        $registerGmp('gmpLDM', function () { return strtoupper($this->format('l, d-M')); });                   // MONDAY, 11-MAY
+        $registerGmp('gmpDDM', function () { return strtoupper($this->format('D, d-M')); });                   // MON, 11-MAY
+        $registerGmp('gmpDM', function () { return strtoupper($this->format('d-M')); });                       // 11-MAY
+        $registerGmp('gmpMY', function () { return strtoupper($this->format('M Y')); });                       // MAY 2026
 
         // Bind relay settings (Settings page) onto the live mail config at runtime.
         \App\Support\MailConfig::apply();
