@@ -553,13 +553,16 @@ class RunDayRoster extends Page
         if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
         $res = Reservation::find($reservationId);
         if (! $res) return;
-        // free the seat; auto-scheduler / operator can rebook
-        $res->update(['status' => 'requested', 'run_slot_id' => $res->run_slot_id]);
-        // detach from this day so it leaves the roster: set to a 'rescheduled' marker then rebook
+        // Detach from this day (leaves the roster) and let the scheduler self-find the next open day.
         $res->update(['status' => 'rescheduled']);
         $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
-        if ($q) app(\App\Services\AutoScheduler::class)->bookNext($q->fresh());
-        Notification::make()->success()->title('Rescheduled')->send();
+        $rebooked = $q ? app(\App\Services\AutoScheduler::class)->bookNext($q->fresh()) : null;
+        if ($rebooked) {
+            Notification::make()->success()->title('Rescheduled')->body('Re-booked into the next open run day.')->send();
+        } else {
+            Notification::make()->warning()->title('Rescheduled, awaiting a day')
+                ->body('No open run day right now. They are in the unscheduled queue and will be booked automatically when a day opens.')->send();
+        }
     }
 
     /** Roster attendance: no-show (returns them for rebooking via the scheduler). */
