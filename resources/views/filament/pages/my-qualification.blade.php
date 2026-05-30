@@ -17,7 +17,7 @@
     @if($activeRes && $activeRes->runSlot)
         <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:var(--gqs-surface-2,#F4F4F6);border-radius:10px;">
             <x-filament::icon icon="heroicon-o-calendar-days" style="width:20px;height:20px;color:#A4123F;"/>
-            <span style="font-size:13.5px;color:var(--gqs-text,#1A1A1F);">Your next run: <strong>{{ $activeRes->runSlot->slot_date->format('l, M j, Y') }}</strong>{{ $activeRes->runSlot->cleanroom ? ' · ' . $activeRes->runSlot->cleanroom : '' }}</span>
+            <span style="font-size:13.5px;color:var(--gqs-text,#1A1A1F);">Your next run: <strong>{{ $activeRes->runSlot->slot_date->format('l, d M Y') }}</strong>{{ $activeRes->runSlot->cleanroom ? ' · ' . $activeRes->runSlot->cleanroom : '' }}</span>
             <a href="{{ route('public.run.ics', $activeRes->runSlot) }}"
                style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:#A4123F;color:#fff;border-radius:8px;font-weight:700;font-size:12.5px;text-decoration:none;">
                 <x-filament::icon icon="heroicon-m-arrow-down-tray" style="width:15px;height:15px;"/> Add To Calendar
@@ -46,13 +46,13 @@
                 <span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span>
             </div>
             <div class="gqs-stat {{ $qualification?->isPastDue() ? 'red' : 'magenta' }}">
-                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->format('M j, Y') ?? '-' }}</div>
+                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->format('d M Y') ?? '-' }}</div>
                 <div class="l">Due Date @if($qualification?->due_date)· {{ $qualification->isPastDue() ? 'Overdue' : 'Current' }}@endif</div>
                 <span class="wm"><x-filament::icon icon="heroicon-o-calendar-days"/></span>
             </div>
             <div class="gqs-stat {{ $hasClass ? 'green' : 'gold' }}">
                 <div class="n" style="font-size:22px;">{{ $hasClass ? 'Completed' : 'Not On File' }}</div>
-                <div class="l">Gowning Class @if($hasClass)· {{ $classes->first()->completion_date?->format('M j, Y') }}@endif</div>
+                <div class="l">Gowning Class @if($hasClass)· {{ $classes->first()->completion_date?->format('d M Y') }}@endif</div>
                 <span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span>
             </div>
         </div>
@@ -64,7 +64,7 @@
                     <table class="gqs-tbl">
                         <thead><tr><th>Date</th><th>Result</th><th>Cycle</th></tr></thead>
                         <tbody>@foreach ($runs as $run)
-                            <tr><td>{{ $run->run_date?->format('M j, Y') }}</td>
+                            <tr><td>{{ $run->run_date?->format('d M Y') }}</td>
                                 <td><span class="gqs-pill {{ $run->result?->value === 'pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $run->result?->label() }}</span></td>
                                 <td>{{ $run->cycle_type?->label() }}</td></tr>
                         @endforeach</tbody>
@@ -83,7 +83,7 @@
                     @foreach ($enrollments as $e)
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                             <span><strong>{{ $e->classSession?->trainingClass?->name }}</strong>
-                                <span style="color:var(--gqs-text-dim,#6A6A72);"> · {{ $e->classSession?->session_date?->format('M j, Y') }}</span></span>
+                                <span style="color:var(--gqs-text-dim,#6A6A72);"> · {{ $e->classSession?->session_date?->format('d M Y') }}</span></span>
                             <span class="gqs-pill gqs-pill-purple">{{ str_replace('_',' ',$e->status) }}</span>
                         </div>
                     @endforeach

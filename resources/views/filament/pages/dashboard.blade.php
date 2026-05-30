@@ -138,7 +138,7 @@
         </div>
         <div class="my-status-r">
             <span class="my-status-badge my-{{ $myQual->status }}">{{ str_replace('_',' ',$myQual->status instanceof \BackedEnum ? $myQual->status->value : $myQual->status) }}</span>
-            @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->format('M j, Y') }}</span>@endif
+            @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->format('d M Y') }}</span>@endif
         </div>
     </div>
 </div>
@@ -208,7 +208,7 @@
         <h3>Overdue Qualifications</h3>
         @forelse($overdueList as $q)
             <div class="dash-row"><span>{{ $q->personnel?->full_name ?? $q->personnel?->employee_id }}</span>
-                <span class="pill pill-red">{{ $q->due_date?->format('M j, Y') }}</span></div>
+                <span class="pill pill-red">{{ $q->due_date?->format('d M Y') }}</span></div>
         @empty<div class="dash-empty">No Overdue Qualifications.</div>@endforelse
     </div>
 
@@ -216,7 +216,7 @@
         <h3>Upcoming Classes</h3>
         @forelse($upcomingRuns as $s)
             <div class="dash-row"><span>{{ $s->trainingClass?->name }}</span>
-                <span class="muted">{{ $s->session_date?->format('M j') }}</span></div>
+                <span class="muted">{{ $s->session_date?->format('d M') }}</span></div>
         @empty<div class="dash-empty">No Upcoming Sessions.</div>@endforelse
     </div>
 
@@ -232,7 +232,7 @@
         <h3><x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:17px;height:17px;"/> Failed Runs</h3>
         @forelse($failedRuns as $r)
             <div class="dash-row"><span>{{ $r->personnel?->full_name }}</span>
-                <span class="pill pill-red">{{ $r->run_date?->format('M j') }}</span></div>
+                <span class="pill pill-red">{{ $r->run_date?->format('d M') }}</span></div>
         @empty<div class="dash-empty">No Failed Runs Awaiting Review.</div>@endforelse
     </div>
 
@@ -240,7 +240,7 @@
         <h3><x-filament::icon icon="heroicon-m-ticket" style="width:17px;height:17px;"/> Run Requests</h3>
         @forelse($runRequests as $res)
             <div class="dash-row"><span>{{ $res->personnel?->full_name }}</span>
-                <span class="muted">{{ $res->runSlot?->slot_date?->format('M j') }}</span></div>
+                <span class="muted">{{ $res->runSlot?->slot_date?->format('d M') }}</span></div>
         @empty<div class="dash-empty">No Pending Run Requests.</div>@endforelse
     </div>
 </div>

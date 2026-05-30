@@ -148,8 +148,8 @@
                         <tbody>
                             @foreach($sessions as $s)
                                 <tr style="cursor:pointer;" wire:click="openSessionDetail({{ $s->id }})">
-                                    <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}@if($s->session_uid)<div style="font-size:11px;font-weight:600;color:#A4123F;">{{ $s->session_uid }}</div>@endif</td>
-                                    <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
+                                    <td style="font-weight:700;">{{ $s->session_date->format('D, d M Y') }}@if($s->session_uid)<div style="font-size:11px;font-weight:600;color:#A4123F;">{{ $s->session_uid }}</div>@endif</td>
+                                    <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : '—' }}</td>
                                     <td>{{ $s->trainingClass?->name }}</td>
                                     <td>{{ $s->location ?: '—' }}</td>
                                     <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
@@ -299,7 +299,7 @@
                 <div class="gqs-panel">
                     <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <x-filament::icon icon="heroicon-m-academic-cap"/>
-                        <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('l, M j, Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</span>
+                        <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('l, d M Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') }}@endif</span>
                         <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
                             @if($submitted)
                                 <span style="font-size:12px;font-weight:600;opacity:.9;">Trainer: {{ $s->instructorUser?->name ?? $s->instructor ?? 'None' }}</span>
@@ -322,7 +322,7 @@
                         @else
                             @if($submitted)
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('M j, Y g:i A') }} · awaiting QA classroom approval.</span>
+                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('d M Y H:i') }} · awaiting QA classroom approval.</span>
                                     <button type="button" class="gqs-btn gqs-btn-ghost"
                                             wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft.', 'Reopen')">Reopen</button>
                                 </div>
@@ -392,7 +392,7 @@
                             <tbody>
                                 @foreach($sessions as $s)
                                     <tr style="cursor:pointer;" wire:click="focusSession({{ $s->id }})">
-                                        <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
+                                        <td style="font-weight:700;">{{ $s->session_date->format('D, d M Y') }}</td>
                                         <td>{{ $s->trainingClass?->name }}</td>
                                         <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
                                         <td>{{ $s->booked }}</td>

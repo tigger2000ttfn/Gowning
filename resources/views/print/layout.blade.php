@@ -48,7 +48,7 @@
                     </tr></table>
                 </td>
                 <td class="hd-meta">
-                    Generated {{ ($generated ?? now()->setTimezone('America/New_York'))->format('M j, Y g:i A') }}<br>
+                    Generated {{ ($generated ?? now()->setTimezone('America/New_York'))->format('d M Y H:i') }}<br>
                     21 CFR Part 11 Controlled Record
                 </td>
             </tr>

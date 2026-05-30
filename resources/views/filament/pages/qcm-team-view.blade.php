@@ -26,7 +26,7 @@
             <div class="gqs-panel-body">
                 @foreach($unassigned as $s)
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);font-size:13.5px;">
-                        <span>{{ $s->slot_date?->format('l, M j') }} · {{ $s->cleanroom }}</span>
+                        <span>{{ $s->slot_date?->format('l, d M') }} · {{ $s->cleanroom }}</span>
                         <button wire:click="openAssign({{ $s->id }})" class="gqs-mini-btn">Assign</button>
                     </div>
                 @endforeach
@@ -50,10 +50,10 @@
                             <thead><tr><th>Type</th><th>Date</th><th>Detail</th></tr></thead>
                             <tbody>
                                 @foreach($a->run_days as $s)
-                                    <tr><td><span class="gqs-pill gqs-pill-purple">Run Day</span></td><td>{{ $s->slot_date?->format('M j, Y') }}</td><td>{{ $s->cleanroom }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</td></tr>
+                                    <tr><td><span class="gqs-pill gqs-pill-purple">Run Day</span></td><td>{{ $s->slot_date?->format('d M Y') }}</td><td>{{ $s->cleanroom }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') }}@endif</td></tr>
                                 @endforeach
                                 @foreach($a->classes as $cs)
-                                    <tr><td><span class="gqs-pill gqs-pill-green">Class</span></td><td>{{ $cs->session_date?->format('M j, Y') }}</td><td>{{ $cs->trainingClass?->name }}</td></tr>
+                                    <tr><td><span class="gqs-pill gqs-pill-green">Class</span></td><td>{{ $cs->session_date?->format('d M Y') }}</td><td>{{ $cs->trainingClass?->name }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>
@@ -123,7 +123,7 @@
             <div class="gqs-panel-body">
                 @foreach($unClasses as $cs)
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);font-size:13.5px;">
-                        <span>{{ $cs->session_date?->format('l, M j') }} · {{ $cs->trainingClass?->name }}</span>
+                        <span>{{ $cs->session_date?->format('l, d M') }} · {{ $cs->trainingClass?->name }}</span>
                         <button wire:click="openAssignInstructor({{ $cs->id }})" class="gqs-mini-btn">Assign Instructor</button>
                     </div>
                 @endforeach

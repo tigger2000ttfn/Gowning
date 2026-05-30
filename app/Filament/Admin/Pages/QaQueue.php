@@ -51,7 +51,7 @@ class QaQueue extends Page
             ->map(fn ($s) => [
                 'id' => $s->id,
                 'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class'),
-                'signed_at' => $s->qa_signed_at?->format('M j, Y g:i A'),
+                'signed_at' => $s->qa_signed_at?->format('d M Y H:i'),
                 'veeva' => $s->veeva_doc_number,
             ])->all();
     }
@@ -65,8 +65,8 @@ class QaQueue extends Page
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, M j, Y'),
-                'submitted_at' => $s->attendance_submitted_at?->format('M j, Y g:i A'),
+                'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, d M Y'),
+                'submitted_at' => $s->attendance_submitted_at?->format('d M Y H:i'),
                 'submitted_by' => $s->submittedBy?->name,
                 'trainer' => $s->instructorUser?->name ?? $s->instructor,
                 'form_url' => route('print.class-attendance', [$s->id, 'FORM-AST-36513-' . ($s->session_uid ?: 'Class') . '.pdf']),

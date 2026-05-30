@@ -101,8 +101,8 @@ class ClassScheduler extends Page
             ->whereDate('session_date', '>=', now()->toDateString())
             ->orderBy('session_date')->get()
             ->filter(fn ($s) => $s->seatsLeft() > 0)
-            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')
-                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('d M Y')
+                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')
                 . ' · ' . $s->seatsLeft() . ' seats'])
             ->all();
     }
@@ -164,7 +164,7 @@ class ClassScheduler extends Page
         ]);
         $this->showSchedule = false;
         Notification::make()->success()->title('Scheduled')
-            ->body($p->full_name . ' booked into ' . ($session->trainingClass?->name ?? 'class') . ' on ' . $session->session_date?->format('M j, Y') . '.')->send();
+            ->body($p->full_name . ' booked into ' . ($session->trainingClass?->name ?? 'class') . ' on ' . $session->session_date?->format('d M Y') . '.')->send();
     }
 
     // reusable in-app confirmation modal (no native system prompts)
@@ -418,7 +418,7 @@ class ClassScheduler extends Page
         $e->status = 'signed_up';
         $e->save();
         Notification::make()->success()->title('Rescheduled')
-            ->body($e->name . ' moved to ' . ($target->trainingClass?->name ?? 'class') . ' on ' . $target->session_date?->format('M j, Y') . '.')->send();
+            ->body($e->name . ' moved to ' . ($target->trainingClass?->name ?? 'class') . ' on ' . $target->session_date?->format('d M Y') . '.')->send();
     }
 
     protected function moveEnrollmentToNextOpen(?int $enrollmentId): void
@@ -439,7 +439,7 @@ class ClassScheduler extends Page
         $e->status = 'signed_up';
         $e->save();
         Notification::make()->success()->title('Rescheduled')
-            ->body($e->name . ' moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('M j, Y') . '.')->send();
+            ->body($e->name . ' moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('d M Y') . '.')->send();
     }
 
     /** Submit a session's attendance: lock it and push attendees to QA classroom approval. */

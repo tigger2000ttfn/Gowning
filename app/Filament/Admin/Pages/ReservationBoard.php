@@ -46,8 +46,8 @@ class ReservationBoard extends Page
         return \App\Models\RunSlot::where('status', 'open')
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->orderBy('slot_date')->get()
-            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
-                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')])
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')])
             ->all();
     }
 
@@ -111,13 +111,13 @@ class ReservationBoard extends Page
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
             ->map(fn ($group, $day) => [
-                'day' => $day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, M j, Y'),
+                'day' => $day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, d M Y'),
                 'rows' => $group->map(fn ($r) => [
                     'id' => $r->id,
                     'name' => $r->personnel?->full_name ?? 'Unknown',
                     'employee_id' => $r->personnel?->employee_id,
                     'cleanroom' => $r->runSlot?->cleanroom,
-                    'time' => $r->runSlot?->start_time ? \Illuminate\Support\Carbon::parse($r->runSlot->start_time)->format('g:i A') : null,
+                    'time' => $r->runSlot?->start_time ? \Illuminate\Support\Carbon::parse($r->runSlot->start_time)->format('H:i') : null,
                     'status' => $r->status instanceof \BackedEnum ? $r->status->value : $r->status,
                 ])->values()->all(),
             ])->values()->all();
@@ -145,7 +145,7 @@ class ReservationBoard extends Page
                         'name' => $r->personnel?->full_name ?? 'Unknown',
                         'employee_id' => $r->personnel?->employee_id,
                         'slot' => $r->runSlot?->cleanroom,
-                        'date' => $r->runSlot?->slot_date?->format('M j, Y'),
+                        'date' => $r->runSlot?->slot_date?->format('d M Y'),
                     ])->all(),
             ];
         }

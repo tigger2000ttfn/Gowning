@@ -73,8 +73,8 @@ class StatusBoard extends Page
                 'meta' => $passes . '/' . $q->runs_required . ' runs',
                 'runs_done' => (int) $passes,
                 'runs_req' => (int) $q->runs_required,
-                'due' => $q->due_date?->format('M j, Y'),
-                'last_run_date' => $lastRun?->run_date?->format('M j'),
+                'due' => $q->due_date?->format('d M Y'),
+                'last_run_date' => $lastRun?->run_date?->format('d M'),
                 'last_run_worklist' => $lastRun?->lims_worklist_id,
                 'status' => ucfirst(str_replace('_', ' ', ($q->status?->value ?? (string) $q->status ?? ''))),
                 'status_key' => $q->status?->value ?? (string) $q->status,
@@ -128,7 +128,7 @@ class StatusBoard extends Page
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
-                'due' => $q->due_date?->format('M j, Y'),
+                'due' => $q->due_date?->format('d M Y'),
             ])->values()->all();
 
         return [
@@ -162,7 +162,7 @@ class StatusBoard extends Page
         $runs = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
             ->latest('run_date')->latest('id')->limit(5)->get()
             ->map(fn ($r) => [
-                'date' => $r->run_date?->format('M j, Y'),
+                'date' => $r->run_date?->format('d M Y'),
                 'result' => ucfirst($r->result?->value ?? (string) $r->result),
                 'worklist' => $r->lims_worklist_id,
             ])->all();
@@ -176,7 +176,7 @@ class StatusBoard extends Page
             'status' => ucfirst((string) ($q->status?->value ?? $q->status ?? '')),
             'type' => ucfirst((string) ($q->type?->value ?? $q->type ?? '')),
             'runs' => app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count() . ' / ' . $q->runs_required,
-            'due' => $q->due_date?->format('M j, Y'),
+            'due' => $q->due_date?->format('d M Y'),
             'class_on_file' => (bool) $q->class_on_file,
             'qa_owner' => $q->qaOwner?->name,
             'recent_runs' => $runs,

@@ -35,7 +35,7 @@
             </div>
             <div class="gqs-panel-body" style="padding:18px 20px;">
                 <div style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:12px;">
-                    From <strong>{{ $m->sender?->name }}</strong> to <strong>{{ $m->recipient?->name }}</strong> · {{ $m->created_at?->format('M j, Y g:i A') }}
+                    From <strong>{{ $m->sender?->name }}</strong> to <strong>{{ $m->recipient?->name }}</strong> · {{ $m->created_at?->format('d M Y H:i') }}
                 </div>
                 <div style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:var(--gqs-text,#1A1A1F);">{{ $m->body }}</div>
                 @if($m->sender_id !== auth()->id())

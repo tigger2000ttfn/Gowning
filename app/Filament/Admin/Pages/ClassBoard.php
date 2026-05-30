@@ -50,7 +50,7 @@ class ClassBoard extends Page
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
                 'employee_id' => $e->employee_id,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->format('M j'),
+                'date' => $e->classSession?->session_date?->format('d M'),
             ])->values()->all();
         return [
             'label' => \App\Models\WorkflowStatus::labelFor('class', 'historical', 'Historical'),
@@ -92,7 +92,7 @@ class ClassBoard extends Page
                 'employee_id' => $e->employee_id,
                 'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->format('M j'),
+                'date' => $e->classSession?->session_date?->format('d M'),
                 'status_label' => $label,
                 'status_color' => $color,
             ])->values()->all();
@@ -124,19 +124,19 @@ class ClassBoard extends Page
             'department' => $p?->department,
             'job_title' => $p?->job_title,
             'class' => $e->classSession?->trainingClass?->name,
-            'session_date' => $e->classSession?->session_date?->format('l, M j, Y'),
-            'session_time' => $e->classSession?->start_time ? \Illuminate\Support\Carbon::parse($e->classSession->start_time)->format('g:i A') : null,
+            'session_date' => $e->classSession?->session_date?->format('l, d M Y'),
+            'session_time' => $e->classSession?->start_time ? \Illuminate\Support\Carbon::parse($e->classSession->start_time)->format('H:i') : null,
             'instructor' => $e->classSession?->instructorUser?->name ?? $e->classSession?->instructor,
             'location' => $e->classSession?->location,
             'status' => ucwords(str_replace('_', ' ', (string) $statusVal)),
             'status_color' => \App\Models\WorkflowStatus::colorFor('class', $statusVal, '#6A6A72'),
-            'signed_up_at' => $e->signed_up_at?->format('M j, Y'),
-            'attended_at' => $e->attended_at?->format('M j, Y'),
-            'completed_at' => $e->completed_at?->format('M j, Y'),
+            'signed_up_at' => $e->signed_up_at?->format('d M Y'),
+            'attended_at' => $e->attended_at?->format('d M Y'),
+            'completed_at' => $e->completed_at?->format('d M Y'),
             'qual_status' => $qStatusVal ? ucwords(str_replace('_', ' ', $qStatusVal)) : null,
             'qual_stage' => $q?->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label()) : null,
             'qual_runs' => $q ? ((int) $q->runs_completed . ' / ' . (int) $q->runs_required) : null,
-            'qual_due' => $q?->due_date?->format('M j, Y'),
+            'qual_due' => $q?->due_date?->format('d M Y'),
             'class_on_file' => (bool) ($q?->class_on_file),
             'edit_url' => $e->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
@@ -157,7 +157,7 @@ class ClassBoard extends Page
             ->where('status', 'open')
             ->whereDate('session_date', '>=', now()->toDateString())
             ->orderBy('session_date')->get()
-            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')])
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('d M Y')])
             ->all();
     }
 

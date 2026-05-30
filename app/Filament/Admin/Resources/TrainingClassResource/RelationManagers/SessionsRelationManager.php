@@ -82,7 +82,7 @@ class SessionsRelationManager extends RelationManager
                     ->label('Attendance')
                     ->icon('heroicon-m-clipboard-document-check')
                     ->color('success')
-                    ->modalHeading(fn (ClassSession $record) => 'Attendance, ' . $record->session_date->format('M j, Y'))
+                    ->modalHeading(fn (ClassSession $record) => 'Attendance, ' . $record->session_date->format('d M Y'))
                     ->modalWidth('xl')
                     ->fillForm(function (ClassSession $record) {
                         return [

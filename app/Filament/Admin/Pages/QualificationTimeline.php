@@ -110,7 +110,7 @@ class QualificationTimeline extends Page
                 'progress' => $progress,
                 'start' => $start->format('Y-m-d'),
                 'end' => $end->format('Y-m-d'),
-                'due' => $due?->format('M j, Y'),
+                'due' => $due?->format('d M Y'),
                 'class' => $overdue ? 'overdue' : $class,
             ];
         }
@@ -162,7 +162,7 @@ class QualificationTimeline extends Page
             'stage' => \App\Models\WorkflowStatus::labelFor('run', (string) ($q->workflow_stage?->value), $q->workflow_stage?->label() ?? ''),
             'status' => ucfirst(str_replace('_', ' ', (string) $statusVal)),
             'runs' => (int) $q->runs_completed . ' / ' . (int) $q->runs_required,
-            'due' => $q->due_date?->format('M j, Y'),
+            'due' => $q->due_date?->format('d M Y'),
             'edit_url' => $q->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $q->personnel_id])
                 : null,

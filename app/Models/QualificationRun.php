@@ -27,7 +27,7 @@ class QualificationRun extends Model implements HasMedia
                 \App\Services\Notifier::toCapability(
                     \App\Enums\Capability::QaReview,
                     'Failed Qualification Run',
-                    "{$name} had a failed run on {$run->run_date?->format('M j, Y')} — QA determination needed.",
+                    "{$name} had a failed run on {$run->run_date?->format('d M Y')} — QA determination needed.",
                     \App\Filament\Admin\Resources\QualificationResource::getUrl(),
                     'danger',
                 );

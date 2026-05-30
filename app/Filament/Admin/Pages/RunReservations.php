@@ -76,7 +76,7 @@ class RunReservations extends Page
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
             ->map(fn ($group, $day) => [
-                'title' => ($day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, M j, Y'))
+                'title' => ($day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, d M Y'))
                     . ' · ' . ($group->first()->runSlot?->cleanroom ?? ''),
                 'rows' => $group->map(fn ($r) => [
                     'id' => $r->id,
@@ -95,8 +95,8 @@ class RunReservations extends Page
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->orderBy('slot_date')->get()
             ->filter(fn ($s) => $sch->seatsLeft($s) > 0)
-            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
-                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')])
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')])
             ->all();
     }
 
@@ -164,7 +164,7 @@ class RunReservations extends Page
         }
         $r->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Rescheduled']);
         Notification::make()->success()->title('Rescheduled')
-            ->body('Moved to ' . $slot->slot_date->format('M j, Y') . '.')->send();
+            ->body('Moved to ' . $slot->slot_date->format('d M Y') . '.')->send();
     }
 
     public function cancelBooking(int $reservationId): void

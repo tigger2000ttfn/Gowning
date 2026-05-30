@@ -1,10 +1,10 @@
 @extends('print.layout', ['title' => 'Run Day Roster', 'org' => $org, 'site' => $site])
 @section('body')
-    <div class="doc-title">Qualification Run Day Roster, {{ $date->format('l, F j, Y') }}</div>
+    <div class="doc-title">Qualification Run Day Roster, {{ $date->format('l, d F Y') }}</div>
 
     @forelse($slots as $slot)
         <div class="sec">
-            <div class="sec-h">{{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }}@endif
+            <div class="sec-h">{{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') }}@endif
                 @if($slot->analyst) · Analyst: {{ $slot->analyst->name }} @endif
                 · {{ $slot->reservations->count() }} of {{ $slot->capacity }}</div>
             @if($slot->reservations->isEmpty())

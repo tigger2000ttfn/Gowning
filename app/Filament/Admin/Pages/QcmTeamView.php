@@ -120,10 +120,10 @@ class QcmTeamView extends Page
 
         return $slots->groupBy(fn ($s) => $s->slot_date->format('Y-m-d'))
             ->map(fn ($group, $day) => [
-                'date' => \Illuminate\Support\Carbon::parse($day)->format('D, M j'),
+                'date' => \Illuminate\Support\Carbon::parse($day)->format('D, d M'),
                 'rows' => $group->map(fn ($s) => [
                     'cleanroom' => $s->cleanroom,
-                    'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : null,
+                    'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : null,
                     'analyst' => $s->analyst?->name,
                     'slot_id' => $s->id,
                 ])->all(),

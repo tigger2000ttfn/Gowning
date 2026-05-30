@@ -152,10 +152,10 @@ Artisan::command('gqs:send-run-reminders', function () {
         \App\Models\QueuedEmail::create([
             'to_email' => $person->email,
             'to_name' => $person->full_name,
-            'subject' => 'Reminder: your gowning run on ' . $slot->slot_date->format('M j'),
+            'subject' => 'Reminder: your gowning run on ' . $slot->slot_date->format('d M'),
             'body_html' => '<p style="margin:0 0 14px;">Hi ' . e($person->first_name ?: $person->full_name) . ',</p>'
                 . '<p style="margin:0 0 14px;">This is a reminder that your cleanroom gowning qualification run is on <strong>'
-                . $slot->slot_date->format('l, M j, Y') . '</strong>' . ($slot->cleanroom ? ' in ' . e($slot->cleanroom) : '') . '.</p>'
+                . $slot->slot_date->format('l, d M Y') . '</strong>' . ($slot->cleanroom ? ' in ' . e($slot->cleanroom) : '') . '.</p>'
                 . '<p style="margin:0 0 14px;">A calendar invite is attached so you can add it to Outlook or your phone.</p>',
             'ics' => $ics,
             'ics_filename' => 'gowning-run.ics',

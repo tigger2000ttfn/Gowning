@@ -21,7 +21,7 @@
                         <div class="ccard-body">
                             <h3>{{ $slot->cleanroom }}</h3>
                             <div class="ccard-meta">
-                                @if($slot->start_time){{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }} &middot; @endif
+                                @if($slot->start_time){{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') }} &middot; @endif
                                 Cleanroom Run
                             </div>
                             <div class="ccard-foot">

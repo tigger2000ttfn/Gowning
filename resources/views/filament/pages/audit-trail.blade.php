@@ -56,7 +56,7 @@
                         <strong style="color:var(--gqs-text,#1A1A1F);">{{ $a->log_name }}</strong>
                         <span style="color:var(--gqs-text-dim,#6A6A72);font-size:13px;">#{{ $a->subject_id }}</span>
                         <span style="margin-left:auto;font-size:12px;color:var(--gqs-text-dim,#9A9AA4);">
-                            {{ $a->causer?->name ?? 'System' }} · {{ $a->created_at?->setTimezone('America/New_York')?->format('M j, Y g:i A') }}
+                            {{ $a->causer?->name ?? 'System' }} · {{ $a->created_at?->setTimezone('America/New_York')?->format('d M Y H:i') }}
                         </span>
                         @if($this->canDeleteAudit())
                             <button type="button" wire:click="deleteEntry({{ $a->id }})"

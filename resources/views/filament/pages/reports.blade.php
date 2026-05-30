@@ -38,7 +38,7 @@
                     <thead><tr><th>Employee</th><th>Name</th><th>Due</th></tr></thead>
                     <tbody>@foreach ($this->overdue as $q)
                         <tr><td>{{ $q->personnel?->employee_id }}</td><td>{{ $q->personnel?->full_name }}</td>
-                            <td><span class="gqs-pill gqs-pill-red">{{ $q->due_date?->format('M j, Y') }}</span></td></tr>
+                            <td><span class="gqs-pill gqs-pill-red">{{ $q->due_date?->format('d M Y') }}</span></td></tr>
                     @endforeach</tbody>
                 </table>
             @endif
@@ -55,7 +55,7 @@
                     <thead><tr><th>Employee</th><th>Name</th><th>Due</th></tr></thead>
                     <tbody>@foreach ($this->upcoming as $q)
                         <tr><td>{{ $q->personnel?->employee_id }}</td><td>{{ $q->personnel?->full_name }}</td>
-                            <td><span class="gqs-pill gqs-pill-purple">{{ $q->due_date?->format('M j, Y') }}</span></td></tr>
+                            <td><span class="gqs-pill gqs-pill-purple">{{ $q->due_date?->format('d M Y') }}</span></td></tr>
                     @endforeach</tbody>
                 </table>
             @endif

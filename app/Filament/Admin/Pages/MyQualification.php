@@ -72,8 +72,8 @@ class MyQualification extends Page
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
-                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
-                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')]);
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')]);
                     }),
             ])
             ->action(function (array $data) {
@@ -103,7 +103,7 @@ class MyQualification extends Page
                     'notes' => 'Self-requested',
                 ]);
                 Notification::make()->success()->title('Run Requested')
-                    ->body('You are booked for ' . $slot->slot_date->format('l, M j, Y') . '.')->send();
+                    ->body('You are booked for ' . $slot->slot_date->format('l, d M Y') . '.')->send();
             });
     }
 
@@ -135,8 +135,8 @@ class MyQualification extends Page
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
-                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
-                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')]);
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')]);
                     }),
             ])
             ->action(function (array $data) {
@@ -156,7 +156,7 @@ class MyQualification extends Page
                     }
                     $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
                     Notification::make()->success()->title('Run rescheduled')
-                        ->body('You are now booked for ' . $slot->slot_date->format('M j, Y') . '.')->send();
+                        ->body('You are now booked for ' . $slot->slot_date->format('d M Y') . '.')->send();
                     return;
                 }
 
@@ -169,7 +169,7 @@ class MyQualification extends Page
                 }
                 $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
                 Notification::make()->success()->title('Run rescheduled')
-                    ->body('You are now booked for ' . $slot->slot_date->format('M j, Y') . '.')->send();
+                    ->body('You are now booked for ' . $slot->slot_date->format('d M Y') . '.')->send();
             });
     }
 

@@ -61,12 +61,12 @@ class ScheduleCalendar extends Page
         foreach (RunSlot::with('analyst')->where('status', '!=', 'cancelled')
             ->whereBetween('slot_date', [$from->toDateString(), $to->toDateString()])->get() as $s) {
             $push($s->slot_date, ['color' => '#A4123F', 'title' => 'Run: ' . ($s->cleanroom ?: 'Run Day'),
-                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '']);
+                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : '']);
         }
         foreach (ClassSession::with('trainingClass')->where('status', '!=', 'cancelled')
             ->whereBetween('session_date', [$from->toDateString(), $to->toDateString()])->get() as $s) {
             $push($s->session_date, ['color' => '#2E7D5B', 'title' => 'Class: ' . ($s->trainingClass?->name ?? 'Gowning'),
-                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '']);
+                'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : '']);
         }
         foreach (Qualification::with('personnel')->where('status', 'qualified')->whereNotNull('due_date')
             ->whereBetween('due_date', [$from->toDateString(), $to->toDateString()])->get() as $q) {
@@ -113,7 +113,7 @@ class ScheduleCalendar extends Page
                 'type' => 'Run Day', 'color' => '#A4123F',
                 'date' => $s->slot_date, 'sort' => $s->slot_date->toDateString() . ($s->start_time ?? '00:00'),
                 'title' => $s->cleanroom ?: 'Run Day',
-                'sub' => ($s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : 'All day')
+                'sub' => ($s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : 'All day')
                     . ($s->analyst ? ' · ' . $s->analyst->name : ''),
             ];
         }
@@ -123,7 +123,7 @@ class ScheduleCalendar extends Page
                 'type' => 'Class', 'color' => '#2E7D5B',
                 'date' => $s->session_date, 'sort' => $s->session_date->toDateString() . ($s->start_time ?? '00:00'),
                 'title' => $s->trainingClass?->name ?? 'Gowning Class',
-                'sub' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : 'All day',
+                'sub' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : 'All day',
             ];
         }
         usort($items, fn ($a, $b) => strcmp($a['sort'], $b['sort']));

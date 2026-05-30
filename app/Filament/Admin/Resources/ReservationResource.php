@@ -55,7 +55,7 @@ class ReservationResource extends Resource
                             ->get()
                             ->filter(fn ($s) => $s->hasCapacity())
                             ->mapWithKeys(fn ($s) => [
-                                $s->id => "{$s->slot_date->format('M j, Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity} filled)",
+                                $s->id => "{$s->slot_date->format('d M Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity} filled)",
                             ]);
                     })
                     ->searchable()->required()
@@ -136,7 +136,7 @@ class ReservationResource extends Resource
                                     ->whereDate('slot_date', '>=', now()->toDateString())
                                     ->orderBy('slot_date')->get()
                                     ->filter(fn ($s) => $s->hasCapacity())
-                                    ->mapWithKeys(fn ($s) => [$s->id => "{$s->slot_date->format('M j, Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity})"]);
+                                    ->mapWithKeys(fn ($s) => [$s->id => "{$s->slot_date->format('d M Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity})"]);
                             })->searchable()->required(),
                     ])
                     ->action(function (Reservation $r, array $data) {

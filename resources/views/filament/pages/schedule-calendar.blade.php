@@ -24,7 +24,7 @@
                         <tbody>
                             @foreach($items as $it)
                                 <tr>
-                                    <td style="font-weight:700;white-space:nowrap;">{{ $it['date']->format('D, M j, Y') }}</td>
+                                    <td style="font-weight:700;white-space:nowrap;">{{ $it['date']->format('D, d M Y') }}</td>
                                     <td><span class="gqs-pill" style="background:{{ $it['color'] }};color:#fff;">{{ $it['type'] }}</span></td>
                                     <td>{{ $it['title'] }}</td>
                                     <td style="color:var(--gqs-text-dim,#6A6A72);">{{ $it['sub'] }}</td>

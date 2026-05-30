@@ -110,7 +110,7 @@ class QualificationResource extends Resource
                                 ->state(fn ($record) => \App\Models\QualificationRun::where('personnel_id', $record->personnel_id)
                                     ->orderByDesc('run_date')->orderByDesc('id')->limit(6)->get()
                                     ->map(fn ($r) => [
-                                        'date' => $r->run_date?->format('M j, Y'),
+                                        'date' => $r->run_date?->format('d M Y'),
                                         'result' => ucfirst($r->result?->value ?? (string) $r->result),
                                         'worklist' => $r->lims_worklist_id ?: '—',
                                     ])->all())

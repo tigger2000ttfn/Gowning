@@ -61,8 +61,8 @@ class ClassReservations extends Page
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'title' => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, M j, Y')
-                    . ($s->start_time ? ' · ' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : ''),
+                'title' => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, d M Y')
+                    . ($s->start_time ? ' · ' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : ''),
                 'location' => $s->location,
                 'seats' => $s->seatsLeft(),
                 'capacity' => $s->capacity,
@@ -90,7 +90,7 @@ class ClassReservations extends Page
             ->whereDate('session_date', '>=', now()->toDateString())
             ->orderBy('session_date')
             ->get()
-            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')])
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('d M Y')])
             ->all();
     }
 
@@ -183,7 +183,7 @@ class ClassReservations extends Page
         $e->status = 'signed_up';
         $e->save();
         Notification::make()->success()->title('Rescheduled')
-            ->body('Moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('M j, Y') . '.')->send();
+            ->body('Moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('d M Y') . '.')->send();
     }
 
     public function cancelBooking(int $enrollmentId): void

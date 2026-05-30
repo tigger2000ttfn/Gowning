@@ -77,8 +77,8 @@
                         <tbody>
                             @foreach($days as $d)
                                 <tr>
-                                    <td style="font-weight:700;">{{ $d->slot_date->format('D, M j, Y') }}</td>
-                                    <td>{{ $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('g:i A') : '—' }}@if($d->end_time) – {{ \Illuminate\Support\Carbon::parse($d->end_time)->format('g:i A') }}@endif</td>
+                                    <td style="font-weight:700;">{{ $d->slot_date->format('D, d M Y') }}</td>
+                                    <td>{{ $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('H:i') : '—' }}@if($d->end_time) – {{ \Illuminate\Support\Carbon::parse($d->end_time)->format('H:i') }}@endif</td>
                                     <td>{{ $d->cleanroom ?: '—' }}</td>
                                     <td>{{ $d->analyst?->name ?? 'Unassigned' }}</td>
                                     <td><span class="gqs-pill {{ $d->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $d->booked }} / {{ $d->capacity }}</span></td>
@@ -328,7 +328,7 @@
                 <div class="gqs-panel-head" style="justify-content:space-between;">
                     <span style="display:flex;align-items:center;gap:9px;">
                         <x-filament::icon icon="heroicon-m-beaker"/>
-                        {{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }}@endif
+                        {{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') }}@endif
                     </span>
                     <span style="font-size:12px;font-weight:600;opacity:.92;display:flex;align-items:center;gap:10px;">
                         {{ $slot->reservations->count() }} Attending · Cap {{ $slot->capacity }}
@@ -343,7 +343,7 @@
                             <div class="att-hint" style="margin-bottom:12px;">Enter each person's LIMS worklist, then mark Present, No-Show, or Reschedule. Changes save automatically. Submit the day at the bottom when done.</div>
                         @else
                             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                                <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->format('M j, Y g:i A') }} · locked.</span>
+                                <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->format('d M Y H:i') }} · locked.</span>
                                 <button type="button" wire:click="reopenRunDay({{ $slot->id }})"
                                         wire:confirm="Reopen this run day to correct attendance?" class="gqs-btn gqs-btn-ghost">Reopen</button>
                             </div>
