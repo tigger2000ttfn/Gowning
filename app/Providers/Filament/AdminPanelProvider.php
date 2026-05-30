@@ -52,6 +52,16 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\Filament\Admin\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\Filament\Admin\Pages')
             ->pages([])
+            ->userMenuItems([
+                \Filament\Navigation\MenuItem::make()
+                    ->label('Messages')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->url(fn () => \App\Filament\Admin\Pages\Messages::getUrl()),
+                \Filament\Navigation\MenuItem::make()
+                    ->label('Notification Settings')
+                    ->icon('heroicon-o-bell-alert')
+                    ->url(fn () => \App\Filament\Admin\Pages\NotificationSettings::getUrl()),
+            ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\Filament\Admin\Widgets')
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
