@@ -10,9 +10,7 @@
         </div>
         @if(count($this->getCachedHeaderActions()))
             <div style="display:flex;gap:8px;flex:0 0 auto;align-items:center;">
-                @foreach($this->getCachedHeaderActions() as $action)
-                    {{ $action }}
-                @endforeach
+                <x-filament::actions :actions="$this->getCachedHeaderActions()" />
             </div>
         @endif
     </div>
