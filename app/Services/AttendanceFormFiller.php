@@ -33,7 +33,9 @@ class AttendanceFormFiller
 
     public function __construct()
     {
-        $this->template = resource_path('pdf-templates/FORM-AST-36513.pdf');
+        // Prefer an admin-uploaded replacement (storage) over the bundled template.
+        $uploaded = storage_path('app/pdf-templates/FORM-AST-36513.pdf');
+        $this->template = is_file($uploaded) ? $uploaded : resource_path('pdf-templates/FORM-AST-36513.pdf');
     }
 
     /**

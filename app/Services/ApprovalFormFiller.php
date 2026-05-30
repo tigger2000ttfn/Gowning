@@ -19,7 +19,8 @@ class ApprovalFormFiller
 
     public function __construct()
     {
-        $this->template = resource_path('pdf-templates/FORM-AST-36749.pdf');
+        $uploaded = storage_path('app/pdf-templates/FORM-AST-36749.pdf');
+        $this->template = is_file($uploaded) ? $uploaded : resource_path('pdf-templates/FORM-AST-36749.pdf');
     }
 
     /**

@@ -14,6 +14,7 @@ use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 
 class Settings extends Page implements HasForms
@@ -227,6 +228,46 @@ class Settings extends Page implements HasForms
                 ]),
                 ]), // close last Tab schema, then Tabs::tabs()
             ]); // close components
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            $this->uploadTemplateAction('attendance', 'Upload Training Form', 'FORM-AST-36513'),
+            $this->uploadTemplateAction('approval', 'Upload QA Approval Form', 'FORM-AST-36749'),
+        ];
+    }
+
+    protected function uploadTemplateAction(string $key, string $label, string $docNo): Action
+    {
+        return Action::make('upload_' . $key)
+            ->label($label)
+            ->icon('heroicon-o-arrow-up-tray')
+            ->color('gray')
+            ->modalHeading($label . ' (' . $docNo . ')')
+            ->modalDescription('Replace The Form Template With A Newly Issued Version. The Upload Is Flattened So It Can Be Filled. Note: If The New Version Changes The Layout, The Overlay Positions May Need Adjustment.')
+            ->schema([
+                FileUpload::make('file')->label('PDF File')->acceptedFileTypes(['application/pdf'])
+                    ->required()->storeFiles(false),
+            ])
+            ->action(function (array $data) use ($key) {
+                $upload = $data['file'] ?? null;
+                if (is_array($upload)) $upload = reset($upload) ?: null;
+                if (! $upload || ! method_exists($upload, 'getRealPath')) {
+                    Notification::make()->danger()->title('No File')->send(); return;
+                }
+                $tmp = $upload->getRealPath();
+                $res = app(\App\Services\PdfTemplateStore::class)->store($key, $tmp);
+                if (! $res['ok']) {
+                    Notification::make()->danger()->title('Upload Failed')->body($res['message'])->send();
+                    return;
+                }
+                if ($res['flattened']) {
+                    Notification::make()->success()->title('Template Updated')->body($res['message'])->send();
+                } else {
+                    Notification::make()->warning()->title('Template Saved (Not Flattened)')->body($res['message'])->persistent()->send();
+                }
+            });
     }
 
     public function save(): void
