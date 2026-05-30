@@ -77,6 +77,52 @@ class QualificationResource extends Resource
                 ),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('viewDetails')
+                    ->label('View')
+                    ->icon('heroicon-m-eye')
+                    ->color('gray')
+                    ->modalHeading(fn ($record) => $record->personnel?->full_name ?? 'Qualification')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->infolist([
+                        \Filament\Schemas\Components\Section::make('Qualification')->columns(2)->schema([
+                            \Filament\Infolists\Components\TextEntry::make('personnel.employee_id')->label('Employee ID'),
+                            \Filament\Infolists\Components\TextEntry::make('personnel.department')->label('Department')->placeholder('—'),
+                            \Filament\Infolists\Components\TextEntry::make('type')->label('Type')
+                                ->formatStateUsing(fn ($s) => $s?->label())->badge(),
+                            \Filament\Infolists\Components\TextEntry::make('status')->label('Status')
+                                ->formatStateUsing(fn ($s) => $s?->label())->badge()
+                                ->color(fn ($s) => $s?->color() ?? 'gray'),
+                            \Filament\Infolists\Components\TextEntry::make('workflow_stage')->label('Workflow Stage')
+                                ->formatStateUsing(fn ($s) => $s?->label())->badge(),
+                            \Filament\Infolists\Components\TextEntry::make('runs')->label('Passes This Cycle')
+                                ->state(fn ($record) => $record->runs_completed . ' / ' . $record->runs_required),
+                            \Filament\Infolists\Components\TextEntry::make('qualified_date')->label('Last Qualified')->date()->placeholder('—'),
+                            \Filament\Infolists\Components\TextEntry::make('due_date')->label('Due')->date()->placeholder('—')
+                                ->color(fn ($record) => $record->isPastDue() ? 'danger' : null),
+                            \Filament\Infolists\Components\IconEntry::make('class_on_file')->label('Class On File')->boolean(),
+                            \Filament\Infolists\Components\TextEntry::make('qa_recommendation')->label('Last QA Determination')->placeholder('—')
+                                ->formatStateUsing(fn ($s) => $s ? \Illuminate\Support\Str::title(str_replace('_', ' ', $s)) : null),
+                        ]),
+                        \Filament\Schemas\Components\Section::make('Recent Runs')->schema([
+                            \Filament\Infolists\Components\RepeatableEntry::make('recentRuns')
+                                ->label('')
+                                ->state(fn ($record) => \App\Models\QualificationRun::where('personnel_id', $record->personnel_id)
+                                    ->orderByDesc('run_date')->orderByDesc('id')->limit(6)->get()
+                                    ->map(fn ($r) => [
+                                        'date' => $r->run_date?->format('M j, Y'),
+                                        'result' => ucfirst($r->result?->value ?? (string) $r->result),
+                                        'worklist' => $r->lims_worklist_id ?: '—',
+                                    ])->all())
+                                ->columns(3)
+                                ->schema([
+                                    \Filament\Infolists\Components\TextEntry::make('date')->label('Date'),
+                                    \Filament\Infolists\Components\TextEntry::make('result')->label('Result')->badge()
+                                        ->color(fn ($s) => match (strtolower($s)) { 'pass' => 'success', 'fail' => 'danger', default => 'warning' }),
+                                    \Filament\Infolists\Components\TextEntry::make('worklist')->label('LIMS Worklist'),
+                                ]),
+                        ])->collapsible(),
+                    ]),
                 \Filament\Actions\Action::make('override_due')
                     ->label('Override Due Date')
                     ->icon('heroicon-m-calendar')

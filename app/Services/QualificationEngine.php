@@ -124,13 +124,35 @@ class QualificationEngine
         $startingRequired = $qualification->cycle_started_at ? (int) $qualification->runs_required : null;
         $state = $this->replay($runsQuery->get(), $startingRequired);
 
+        // If the engine derived a qualifying date from runs, use it. Otherwise fall back to a
+        // manually-entered qualified_date (seeded/historic people who have no full run history),
+        // and always compute the due date as qualified_date + cycle so the Due column is correct.
+        $qualifiedDate = $state['qualified_date'] ?? $qualification->qualified_date?->toDateString();
+        $dueDate = $state['due_date'];
+        if ($dueDate === null && $qualifiedDate) {
+            $dueDate = \Illuminate\Support\Carbon::parse($qualifiedDate)
+                ->addMonths($this->cycleMonths())->toDateString();
+        }
+
+        // If the person is qualified by manual entry (status says qualified) but the run replay
+        // produced no qualifying date, keep the qualified status rather than downgrading it.
+        $status = $state['status'];
+        if ($state['qualified_date'] === null && $qualifiedDate
+            && ($qualification->status instanceof \BackedEnum ? $qualification->status->value : $qualification->status) === 'qualified') {
+            $status = \App\Enums\QualificationStatus::Qualified;
+            // re-evaluate lapse against the computed due date
+            if ($dueDate && \Illuminate\Support\Carbon::parse($dueDate)->isPast()) {
+                $status = \App\Enums\QualificationStatus::Lapsed;
+            }
+        }
+
         $qualification->fill([
             'type' => $state['type'],
-            'status' => $state['status'],
+            'status' => $status,
             'runs_required' => $state['required'],
             'runs_completed' => $state['passes'],
-            'qualified_date' => $state['qualified_date'],
-            'due_date' => $state['due_date'],
+            'qualified_date' => $qualifiedDate,
+            'due_date' => $dueDate,
         ])->save();
 
         // AUTOMATION: recording a run advances the GMP workflow stage. A run has been

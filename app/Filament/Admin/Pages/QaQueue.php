@@ -181,11 +181,15 @@ class QaQueue extends Page
                 $retrain = (bool) ($data['require_retraining'] ?? false);
                 $q->qa_recommendation = $data['recommendation'] ?? 'requal_three';
                 $q->qa_recommendation_note = $data['note'] ?? null;
+                // 3-run path = a fresh INITIAL cycle; 1-run path = ANNUAL requalification.
+                $q->type = $three ? \App\Enums\QualificationType::Initial : \App\Enums\QualificationType::Annual;
                 $q->runs_required = $three
                     ? (int) Setting::get('initial_runs_required', 3)
                     : (int) Setting::get('annual_runs_required', 1);
                 $q->runs_completed = 0;
-                $q->status = 'in_progress';
+                $q->status = \App\Enums\QualificationStatus::Pending; // no passes yet in the new cycle
+                $q->qualified_date = null;  // not qualified until the new cycle completes
+                $q->due_date = null;        // recomputed when they pass; no stale due date
                 $q->cycle_started_at = now()->toDateString(); // fresh cycle: don't recount prior runs
 
                 if ($retrain) {
