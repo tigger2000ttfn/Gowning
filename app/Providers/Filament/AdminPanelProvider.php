@@ -83,6 +83,10 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::USER_MENU_BEFORE,
                 fn (): string => Blade::render('@include("filament.topbar-messages")'),
             )
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => Blade::render('@include("filament.topbar-sop")'),
+            )
             ->navigationGroups([
                 'Qualifications',
                 'Classroom',
