@@ -9,6 +9,7 @@ to validation-document updates for QA. Refit to the Astellas change-control form
 
 | # | Date | Baseline (commit) | Code / configuration change | Validation impact | Docs updated |
 |---|---|---|---|---|---|
+| CC-0006 | 30-MAY-2026 | main @ db66ac2 | No code change (documentation). Authored the Operational Qualification protocol. | Provides the scripted OQ (16 test cases, GMP-critical + witnessed e-signature + negative tests) verifying functions against FS-GQS-001. | OQ-GQS-001 created; RTM-GQS-001 note updated. |
 | CC-0005 | 30-MAY-2026 | main @ e9f50bd | No code change (documentation). Authored the Installation Qualification protocol. | Provides the executable IQ verifying the deployed baseline + environment against DS-GQS-001. | IQ-GQS-001 created. |
 | CC-0004 | 30-MAY-2026 | main @ ccd7905 | No code change (documentation). Authored the Functional Specification. | Completes the URS→FS→DS→test chain; RTM FS column now backed by an authored FS. | FS-GQS-001 created; RTM-GQS-001 note updated. |
 | CC-0003 | 30-MAY-2026 | main @ c21df91 | Page header reworked to read like the kanban pages (blank surface, thin bottom rule); QA Team View "Sign-off Forecast" calendar tab added (parallel commit). | UI/usability + a QA workload view; no GMP-control change. | DS §9/§14 reflect current panel/header; URS-TEAM-040 trace confirmed in RTM. |
