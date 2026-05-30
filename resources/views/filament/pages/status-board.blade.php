@@ -24,12 +24,21 @@
     </div>
 
     <div x-data="{
+            selectMode: false,
+            selected: [],
+            toggleSelect(id) {
+                const i = this.selected.indexOf(id);
+                if (i === -1) this.selected.push(id); else this.selected.splice(i, 1);
+            },
+            isSelected(id) { return this.selected.includes(id); },
+            clearSel() { this.selected = []; },
             init() { this.$nextTick(() => this.wire()); },
             wire() {
                 document.querySelectorAll('[data-stage]').forEach(lane => {
                     if (lane._sortable) return;
                     lane._sortable = Sortable.create(lane, {
                         group: 'stages', animation: 150, ghostClass: 'sb-ghost',
+                        disabled: false,
                         onStart: () => { this._dragging = true; },
                         onEnd: (evt) => {
                             this._dragging = false;
@@ -40,17 +49,31 @@
                         }
                     });
                 });
-                // click (not drag) opens the detail modal
+                // click: in select mode toggles selection, otherwise opens the detail modal
                 document.querySelectorAll('.sb-card').forEach(card => {
                     if (card._clickWired) return;
                     card._clickWired = true;
                     card.addEventListener('click', (e) => {
                         if (this._dragging) return;
-                        $wire.showDetail(parseInt(card.getAttribute('data-id')));
+                        const id = parseInt(card.getAttribute('data-id'));
+                        if (this.selectMode) { this.toggleSelect(id); }
+                        else { $wire.showDetail(id); }
                     });
                 });
             }
         }" x-init="init()" wire:key="sb-{{ now()->timestamp }}">
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:0 32px;">
+            <button type="button" @click="selectMode = !selectMode; if(!selectMode) clearSel()"
+                    :style="selectMode ? 'background:#A4123F;color:#fff;' : 'background:transparent;color:var(--gqs-text,#1A1A1F);'"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid #A4123F;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;">
+                <x-filament::icon icon="heroicon-m-check-circle" style="width:16px;height:16px;"/>
+                <span x-text="selectMode ? 'Selecting' : 'Select Multiple'"></span>
+            </button>
+            <span x-show="selectMode" x-cloak style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
+                <span x-text="selected.length"></span> selected. Tap cards to select.
+            </span>
+        </div>
 
         <div class="sb-fullbleed"><div class="sb-wrap">
             @foreach ($this->getStages() as $stage)
@@ -61,7 +84,8 @@
                     </div>
                     <div class="sb-lane" data-stage="{{ $stage['key'] }}">
                         @foreach ($stage['cards'] as $card)
-                            <div class="sb-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $stage['color'] }};">
+                            <div class="sb-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $stage['color'] }};"
+                                 :class="{ 'sb-selected': isSelected({{ $card['id'] }}) }">
                                 <div class="sb-name">{{ $card['name'] }}</div>
                                 <div class="sb-meta">{{ $card['employee_id'] }}</div>
                                 @if(($card['runs_req'] ?? 0) > 0)
@@ -79,6 +103,19 @@
                 </div>
             @endforeach
         </div></div>
+
+        {{-- Floating bulk action bar --}}
+        <div x-show="selectMode && selected.length > 0" x-cloak x-transition
+             style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:12px;background:#1C1C21;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,.35);">
+            <span style="font-weight:700;font-size:13px;"><span x-text="selected.length"></span> selected</span>
+            <button type="button"
+                    @click="$wire.bulkBookRunDay(selected).then(() => { clearSel(); selectMode = false; })"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#A4123F;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;">
+                <x-filament::icon icon="heroicon-m-calendar-days" style="width:15px;height:15px;"/> Assign To Next Run Day
+            </button>
+            <button type="button" @click="clearSel()"
+                    style="padding:8px 12px;background:transparent;color:#ECECF0;border:1px solid #44444E;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;">Clear</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -139,6 +176,7 @@
         .sb-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E6E6EA);border-left:4px solid #A4123F;border-radius:9px;padding:9px 11px;cursor:grab;box-shadow:0 1px 2px rgba(0,0,0,.06);}
         .dark .sb-card{background:#23232B;border-color:#33333D;}
         .sb-card:active{cursor:grabbing;}
+        .sb-selected{outline:3px solid #A4123F;outline-offset:1px;box-shadow:0 0 0 4px rgba(164,18,63,.15) !important;}
         .sb-name{font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);}
         .sb-meta{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:2px;}
         .sb-runs{display:flex;align-items:center;gap:4px;margin-top:5px;}

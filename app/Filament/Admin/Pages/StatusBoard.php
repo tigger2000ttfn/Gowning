@@ -159,4 +159,28 @@ class StatusBoard extends Page
         Notification::make()->success()->title('Stage updated')
             ->body(($q->personnel?->full_name ?? 'Card') . ' → ' . $stage->label())->send();
     }
+
+    /** Bulk action: book the selected people into the next available run day. */
+    public function bulkBookRunDay(array $ids): void
+    {
+        if (! Auth::user()?->hasCapability(Capability::ManageScheduling)) {
+            Notification::make()->danger()->title('Not authorized')
+                ->body('You need scheduling permission to book run days.')->send();
+            return;
+        }
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        $booked = 0; $skipped = 0;
+        foreach ($ids as $id) {
+            $q = Qualification::with('personnel')->find((int) $id);
+            if (! $q) { continue; }
+            // only people who are class-complete / ready (not already scheduled or qualified)
+            if (in_array($q->workflow_stage, [WorkflowStage::ClassComplete, WorkflowStage::ClassPending], true)) {
+                if ($scheduler->bookNext($q)) { $booked++; } else { $skipped++; }
+            } else {
+                $skipped++;
+            }
+        }
+        Notification::make()->success()->title('Bulk scheduling done')
+            ->body("Booked {$booked}. Skipped {$skipped} (not ready or no slot available).")->send();
+    }
 }
