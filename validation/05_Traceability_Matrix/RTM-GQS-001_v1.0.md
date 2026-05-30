@@ -215,8 +215,8 @@ Critical (C) requirements receive full OQ (and PQ where time/scale dependent) pe
 - **Future (not this baseline):** INT-040 (periodic LIMS import — Master Plan Section 10).
 
 ## 4. NOTES
-FS-GQS-001 is authored (v1.0; one functional item per URS requirement). OQ-GQS-001 is authored (v1.0),
-organized as test cases TC-01..TC-16; each "OQ-…" reference in the rows above is realized by the OQ test
-case that covers that requirement (see the OQ traceability mapping in OQ-GQS-001 §8). PQ-GQS-001 is
-forthcoming; its IDs are reserved here. When a requirement changes, update its URS text, the FS item, the
-DS section, this row, and the OQ/PQ test, in the same session, and log it in the change-control log.
+FS-GQS-001 is authored (v1.0). OQ-GQS-001 is authored (v1.0), organized as test cases TC-01..TC-16, and
+PQ-GQS-001 is authored (v1.0), organized as scenarios PQ-01..PQ-10; each "OQ-…/PQ-…" reference in the
+rows above is realized by the OQ test case / PQ scenario that covers that requirement (see OQ §8 and
+PQ §8). When a requirement changes, update its URS text, the FS item, the DS section, this row, and the
+OQ/PQ test, in the same session, and log it in the change-control log.
