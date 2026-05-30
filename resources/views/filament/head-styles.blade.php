@@ -336,12 +336,13 @@
     @media (max-width: 1024px) {
         .fi-sidebar { width: 15rem !important; }
     }
-    /* Page hero header (shared by the partial and resource-list view) */
-    .pg-head{display:flex;align-items:center;gap:16px;padding:8px 0 16px;margin-bottom:18px;margin-top:6px;border-bottom:2px solid var(--gqs-border,#DADADF);}
+    /* Page hero header (shared by the partial and resource-list view) - solid charcoal bar */
+    .pg-head{display:flex;align-items:center;gap:16px;padding:14px 20px;margin-bottom:18px;margin-top:6px;
+        background:#1C1C21;border-radius:10px;border-bottom:3px solid #A4123F;box-shadow:0 2px 8px rgba(0,0,0,.12);}
     .pg-head-ico{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#850F33);box-shadow:0 3px 10px rgba(164,18,63,.28);}
     .pg-head-ico svg{width:24px;height:24px;color:#fff;}
-    .pg-head-tx h1{font-size:22px;font-weight:800;margin:0;color:var(--gqs-text,#1A1A1F);}
-    .pg-head-tx p{margin:3px 0 0;color:var(--gqs-text-dim,#5A5A62);font-size:14px;}
+    .pg-head-tx h1{font-size:22px;font-weight:800;margin:0;color:#fff;}
+    .pg-head-tx p{margin:3px 0 0;color:#C2C2CC;font-size:14px;}
     /* Tabs (team views, messages, notification settings) */
     .gqs-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--gqs-border,#E2E2E6);flex-wrap:wrap;}
     .gqs-tab{background:none;border:none;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
