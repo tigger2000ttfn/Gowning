@@ -30,10 +30,29 @@ echo "==> Ensuring storage symlink (for media library uploads / public files)"
 php artisan storage:link 2>/dev/null || true
 
 echo "==> Building front-end assets (theme + JS)"
-# clear stale build output so a failed build can't silently serve old CSS
+# Back up the current working build so a failed build never leaves the site with a
+# missing Vite manifest (which 500s every Filament page). Only swap in the new build
+# once it succeeds AND produced a manifest.
+if [ -d public/build ]; then
+    rm -rf public/build.bak
+    cp -r public/build public/build.bak
+fi
 rm -rf public/build
 npm install --no-audit --no-fund
-npm run build || { echo "!!! npm run build FAILED - see errors above"; exit 1; }
+if npm run build && [ -f public/build/manifest.json ]; then
+    echo "==> Build succeeded (manifest present)"
+    rm -rf public/build.bak
+else
+    echo "!!! npm run build FAILED or produced no manifest - restoring previous build"
+    rm -rf public/build
+    if [ -d public/build.bak ]; then
+        mv public/build.bak public/build
+        echo "!!! Restored previous build; site stays up but assets are stale. Fix the build error above."
+    else
+        echo "!!! No previous build to restore - Filament pages will 500 until the build succeeds."
+    fi
+    # don't hard-exit: still fix perms/caches below so the restored build is served correctly
+fi
 
 echo "==> Publishing Filament assets"
 php artisan filament:assets

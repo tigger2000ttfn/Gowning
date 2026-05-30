@@ -81,43 +81,37 @@ class PersonnelResource extends Resource
                         Textarea::make('notes')->rows(2)->columnSpanFull(),
                     ]),
                 Step::make('Qualification Setup')->icon('heroicon-o-shield-check')
-                    ->description('Seed current status (manual first-time setup before import)')
+                    ->description('Set the general flags, then build the run history. The engine adds up the runs into the overall record.')
                     ->schema([
-                        Section::make()
-                            ->description(function ($record) {
-                                $isQualified = ($record?->qualification?->status?->value ?? $record?->qualification?->status) === 'qualified';
-                                $u = \Illuminate\Support\Facades\Auth::user();
-                                $isAdmin = $u && ($u->hasCapability(\App\Enums\Capability::ManageUsers) || $u->hasCapability(\App\Enums\Capability::SystemSettings));
-                                return ($isQualified && ! $isAdmin)
-                                    ? 'Locked: this person is qualified. Contact an administrator to change qualification details.'
-                                    : null;
-                            })
+                        Section::make('General')
+                            ->description('Overall facts about this person\'s qualification. Status, type, and due date are computed from the run history below, but can be overridden.')
                             ->columns(2)
                             ->relationship('qualification')
                             ->disabled(function ($record) {
-                                // Once qualified, the qualification is locked. Admins can still edit.
                                 $isQualified = ($record?->qualification?->status?->value ?? $record?->qualification?->status) === 'qualified';
                                 $u = \Illuminate\Support\Facades\Auth::user();
                                 $isAdmin = $u && ($u->hasCapability(\App\Enums\Capability::ManageUsers) || $u->hasCapability(\App\Enums\Capability::SystemSettings));
                                 return $isQualified && ! $isAdmin;
                             })
                             ->schema([
+                                Toggle::make('class_on_file')->label('Gowning Class Completed')
+                                    ->helperText('On = the 3-hour gowning class / OJT is on file (prerequisite met).')
+                                    ->live()->columnSpanFull(),
+                                DatePicker::make('class_on_file_date')->label('Class Completion Date')
+                                    ->visible(fn ($get) => $get('class_on_file')),
                                 Select::make('type')->label('Qualification Type')
-                                    ->options(['initial' => 'Initial', 'annual' => 'Annual'])->default('initial'),
+                                    ->options(['initial' => 'Initial', 'annual' => 'Annual (Requalification)'])->default('initial')
+                                    ->helperText('Initial = 3 runs · Annual = 1 run. Recomputed from the runs below.'),
                                 Select::make('status')->label('Current Status')
                                     ->options([
                                         'pending' => 'Pending', 'in_progress' => 'In Progress',
                                         'qualified' => 'Qualified', 'lapsed' => 'Lapsed',
-                                    ])->default('pending'),
+                                    ])->default('pending')
+                                    ->helperText('Recomputed from the runs below.'),
                                 Select::make('workflow_stage')->label('Workflow Stage')
                                     ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
                                     ->default('class_pending')
                                     ->helperText('Where they currently sit in the pipeline.'),
-                                DatePicker::make('due_date')->label('Qualification Due Date')
-                                    ->helperText('Auto-fills as Date Last Qualified + the cycle length. You can override it.'),
-                                TextInput::make('runs_required')->label('Runs Required')->numeric()->default(3),
-                                TextInput::make('runs_completed')->label('Runs Already Completed')->numeric()->default(0)
-                                    ->helperText('Quick count for the current cycle if you are not entering each run below. Saving creates that many run-history entries. Leave at 0 if you use the Run History list below instead.'),
                                 DatePicker::make('qualified_date')->label('Date Last Qualified')
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set) {
@@ -125,26 +119,23 @@ class PersonnelResource extends Resource
                                         $cycle = (int) \App\Models\Setting::get('cycle_months', 12);
                                         $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
                                     })
-                                    ->helperText('Entering this auto-calculates the Due Date (this date + cycle).'),
-                                Toggle::make('class_on_file')->label('Gowning Class Already Completed')
-                                    ->helperText('On = class is on file (will not be flagged to retake). Set for anyone who already took it.')
-                                    ->live(),
-                                DatePicker::make('class_on_file_date')->label('Class Completion Date')
-                                    ->visible(fn ($get) => $get('class_on_file')),
+                                    ->helperText('Auto-calculates the Due Date. Usually set from the last passing run below.'),
+                                DatePicker::make('due_date')->label('Qualification Due Date')
+                                    ->helperText('Auto-fills as Date Last Qualified + the cycle length. Override if needed.'),
                             ]),
                         Section::make('Run History')
-                            ->description('Enter each historical qualification run to build a true per-person history. The engine recomputes status and due date from these passes.')
+                            ->description('Each qualification run is its own record. Add every historical run here, pass or fail, and the engine adds the passes up into the overall record (runs completed, status, last-qualified, and due date). This is the authoritative source.')
                             ->schema([
                                 Repeater::make('runs')
                                     ->label(false)
                                     ->relationship('runs')
                                     ->columns(3)
-                                    ->itemLabel(fn (array $state): ?string => ($state['run_date'] ?? 'New run') . ' · ' . ucfirst($state['result'] ?? 'pass'))
-                                    ->addActionLabel('Add A Past Run')
+                                    ->itemLabel(fn (array $state): ?string => ($state['run_date'] ?? 'New run') . ' · ' . ucfirst($state['result'] ?? 'pass') . ' · ' . ucfirst($state['cycle_type'] ?? 'initial'))
+                                    ->addActionLabel('Add A Run')
                                     ->collapsible()
                                     ->collapsed()
                                     ->defaultItems(0)
-                                    ->helperText('Use this instead of the quick "Runs Already Completed" count above when you want real dates. Each pass counts toward qualification.')
+                                    ->reorderable(false)
                                     ->schema([
                                         DatePicker::make('run_date')->label('Run Date')->required(),
                                         Select::make('result')->label('Result')
@@ -153,8 +144,8 @@ class PersonnelResource extends Resource
                                         Select::make('cycle_type')->label('Cycle')
                                             ->options(['initial' => 'Initial', 'annual' => 'Annual'])
                                             ->default('initial'),
-                                        TextInput::make('lims_worklist_id')->label('LIMS Worklist (Optional)'),
-                                        TextInput::make('notes')->label('Notes (Optional)')->columnSpan(2),
+                                        TextInput::make('lims_worklist_id')->label('LIMS Worklist')->placeholder('EM-...'),
+                                        TextInput::make('notes')->label('Notes')->columnSpan(2),
                                     ]),
                             ]),
                     ]),
@@ -174,7 +165,9 @@ class PersonnelResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn ($state) => $state?->label() ?? 'None')
                     ->color(fn ($state) => $state?->color() ?? 'gray'),
-                TextColumn::make('qualification.due_date')->label('Due')->date()->sortable()->placeholder('—'),
+                TextColumn::make('qualification.qualified_date')->label('Last Qualified')->date()->sortable()->placeholder('—'),
+                TextColumn::make('qualification.due_date')->label('Next Due')->date()->sortable()->placeholder('—')
+                    ->color(fn ($record) => $record->qualification?->isPastDue() ? 'danger' : null),
                 IconColumn::make('is_active')->label('Active')->boolean(),
             ])
             ->filters([

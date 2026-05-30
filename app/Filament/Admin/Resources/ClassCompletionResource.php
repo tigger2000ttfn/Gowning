@@ -44,7 +44,7 @@ class ClassCompletionResource extends Resource
                 TextInput::make('employee_id')->label('Employee ID')->required(),
                 Select::make('personnel_id')->label('Linked Person')
                     ->relationship('personnel', 'employee_id')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} · {$r->full_name}")
+                    ->getOptionLabelFromRecordUsing(fn ($r) => $r ? trim(($r->employee_id ?? '') . ' · ' . ($r->full_name ?? '')) : '—')
                     ->searchable()->preload(),
                 TextInput::make('class_name')->required(),
                 DatePicker::make('completion_date')->required(),
