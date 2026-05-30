@@ -35,6 +35,10 @@ HOW WE WORK:
   before guessing CSS (ask for a console snippet if a layout fix loops more than twice); one feature
   per commit; deploy = `sudo bash deploy.sh`. Push: 
   `git push https://tigger2000ttfn:<PAT>@github.com/tigger2000ttfn/Gowning.git main`.
+- VALIDATION IS LIVING: at the END OF EVERY SESSION that changed behavior, update the config spec
+  (validation/03_Design_Spec/DS-GQS-001) and the traceability matrix (validation/05_Traceability_Matrix/
+  RTM-GQS-001), update any affected URS/FS items, add a row to validation/CHANGE_CONTROL_LOG.md, and
+  commit, so the validation package never drifts from the code. The owner does final edits in-repo.
 
 WHERE WE ARE: The full GMP pipeline, teams/resourcing, auto-scheduling, lifecycle automation, the
 public portal, the cosmic login + dashboard, CSV import, reports, the Part 11 audit trail +
