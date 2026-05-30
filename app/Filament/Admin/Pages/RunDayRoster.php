@@ -44,6 +44,8 @@ class RunDayRoster extends Page
 
     /** Deferred attendance intent per reservation: 'present' | 'no_show' | 'rescheduled'. Committed on submit. */
     public array $intent = [];
+    /** Per-reservation flag: operator did ALL remaining cycle runs in one day (the common case). */
+    public array $performAll = [];
 
     public function setIntent(int $reservationId, string $status): void
     {
@@ -626,7 +628,14 @@ class RunDayRoster extends Page
             if ($intent === 'present') {
                 $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
                 if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
-                $this->markPerformed($r->id);
+                $runsToday = 1;
+                if (! empty($this->performAll[$r->id])) {
+                    $required = max(1, (int) ($q->runs_required ?? 1));
+                    $done = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
+                    $runsToday = max(1, $required - $done);
+                }
+                $this->markPerformed($r->id, $runsToday);
+                unset($this->performAll[$r->id]);
             } elseif ($intent === 'no_show') {
                 $this->rosterNoShow($r->id);
             } elseif ($intent === 'rescheduled') {
@@ -659,7 +668,7 @@ class RunDayRoster extends Page
         Notification::make()->success()->title('Run day reopened')->send();
     }
 
-    public function markPerformed(int $reservationId): void
+    public function markPerformed(int $reservationId, int $runsToday = 1): void
     {
         $res = Reservation::with('personnel')->find($reservationId);
         if (! $res || ! $res->personnel) {
@@ -684,21 +693,26 @@ class RunDayRoster extends Page
             return;
         }
         $res->update(['status' => 'completed', 'lims_worklist_id' => $wl]);
-        // record the run as PENDING (result unknown until incubation plates are read)
-        app(\App\Services\QualificationEngine::class)
-            ->recordRun($res->personnel, \App\Enums\RunResult::Pending, [
-                'run_date' => now()->toDateString(),
-                'recorded_by' => Auth::id(),
-                'lims_worklist_id' => $wl,
-            ]);
-        // stamp THIS run's incubation start (= performed date)
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
-        $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
-            ->latest('run_date')->latest('id')->first();
-        if ($run && ! $run->incubation_started_at) {
-            $run->incubation_started_at = now();
-            $run->save();
+        // Record the run(s) as PENDING (result unknown until incubation plates are read).
+        // runsToday > 1 means the operator did several consecutive runs in one day; the SOP
+        // allows all of an initial cycle's runs on a single day, each its own sample/incubation.
+        $runsToday = max(1, $runsToday);
+        for ($i = 0; $i < $runsToday; $i++) {
+            app(\App\Services\QualificationEngine::class)
+                ->recordRun($res->personnel, \App\Enums\RunResult::Pending, [
+                    'run_date' => now()->toDateString(),
+                    'recorded_by' => Auth::id(),
+                    'lims_worklist_id' => $wl,
+                ]);
+            // stamp the just-created run's incubation start (= performed date)
+            $newRun = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
+                ->latest('run_date')->latest('id')->first();
+            if ($newRun && ! $newRun->incubation_started_at) {
+                $newRun->incubation_started_at = now();
+                $newRun->save();
+            }
         }
+        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
         // Holistic, multi-run aware: the person moves to Incubating now; they only advance
         // to results once the LAST required run's plates clear (handled by RunCycleAdvancer).
         if ($q) {

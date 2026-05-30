@@ -400,6 +400,13 @@
                                                     class="att-tog att-no {{ $intent === 'no_show' ? 'on' : '' }}"><span class="att-box"></span> No-Show</button>
                                             <button type="button" wire:click="setIntent({{ $res->id }}, 'rescheduled')"
                                                     class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
+                                            @if($required > 1)
+                                                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);margin-left:8px;{{ $intent === 'present' ? '' : 'opacity:.45;' }}"
+                                                       title="Operator performed all remaining runs today (one sample/incubation each)">
+                                                    <input type="checkbox" wire:model="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
+                                                    All {{ $required }} Today
+                                                </label>
+                                            @endif
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>
                                             <span class="att-hint">{{ $readyForResults ? 'Ready · evaluate on Lab Review' : ($performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates') }}</span>
