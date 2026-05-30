@@ -50,7 +50,7 @@ class QualificationSeeder
 
         // How many seed runs already exist for this person?
         $existingSeeds = QualificationRun::where('personnel_id', $q->personnel_id)
-            ->where('notes', self::SEED_NOTE)->orderBy('run_date')->get();
+            ->where('is_seed', true)->orderBy('run_date')->get();
 
         // If the desired count matches existing seeds, just recompute (idempotent re-save).
         if ($existingSeeds->count() === $wanted && $wanted > 0) {
@@ -61,7 +61,7 @@ class QualificationSeeder
         // Rebuild: remove prior seed runs and lay down a clean set (avoids drift on edit).
         if ($existingSeeds->isNotEmpty()) {
             QualificationRun::where('personnel_id', $q->personnel_id)
-                ->where('notes', self::SEED_NOTE)->delete();
+                ->where('is_seed', true)->delete();
         }
 
         if ($wanted <= 0) {
@@ -87,7 +87,7 @@ class QualificationSeeder
                 'run_date' => $date->toDateString(),
                 'result' => RunResult::Pass,
                 'cycle_type' => $cycleType,
-                'notes' => self::SEED_NOTE,
+                'notes' => self::SEED_NOTE, 'is_seed' => true,
             ]);
         }
 

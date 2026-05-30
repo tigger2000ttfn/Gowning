@@ -26,6 +26,10 @@ class CreateQualificationRun extends CreateRecord
             [
                 'run_date' => $data['run_date'],
                 'notes' => $data['notes'] ?? null,
+                'is_seed' => (bool) ($data['is_seed'] ?? false),
+                'lims_worklist_id' => $data['lims_worklist_id'] ?? null,
+                'veeva_doc_number' => $data['veeva_doc_number'] ?? null,
+                'veeva_url' => $data['veeva_url'] ?? null,
                 'recorded_by' => Auth::id(),
                 'signed_by' => Auth::id(),
                 'signed_at' => now(),

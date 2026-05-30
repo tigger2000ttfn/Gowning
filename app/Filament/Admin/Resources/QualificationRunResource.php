@@ -67,6 +67,9 @@ class QualificationRunResource extends Resource
                     TextInput::make('veeva_url')->label('Veeva Link')->url()
                         ->placeholder('https://...')->helperText('Direct link for QA to review in Veeva.'),
                     Textarea::make('notes')->columnSpanFull(),
+                    \Filament\Forms\Components\Toggle::make('is_seed')
+                        ->label('Historical Seed Entry')
+                        ->helperText('On = a back-entered historical run for first-time setup (not a live cleanroom run). Counts toward qualification but is flagged as seeded.'),
                 ]),
             Section::make('Electronic Signature (21 CFR Part 11)')->icon('heroicon-o-finger-print')
                 ->description('Recording a run is an electronic signature: it attributes this result to you.')
@@ -104,6 +107,9 @@ class QualificationRunResource extends Resource
                         default => 'warning',
                     }),
                 TextColumn::make('cycle_type')->label('Cycle')->formatStateUsing(fn ($s) => $s?->label())->toggleable(),
+                \Filament\Tables\Columns\IconColumn::make('is_seed')->label('Seed')->boolean()
+                    ->trueIcon('heroicon-m-archive-box')->falseIcon('heroicon-m-beaker')
+                    ->trueColor('warning')->falseColor('gray')->toggleable(),
                 TextColumn::make('recordedBy.name')->label('Recorded By')->toggleable(),
                 TextColumn::make('signed_at')->dateTime()->label('Signed')->toggleable(isToggledHiddenByDefault: true),
             ])
