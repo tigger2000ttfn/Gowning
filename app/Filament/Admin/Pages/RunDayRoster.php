@@ -27,15 +27,25 @@ class RunDayRoster extends Page
         $u = \Illuminate\Support\Facades\Auth::user();
         return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static ?string $navigationLabel = 'Run Day Roster';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
+    protected static ?string $navigationLabel = 'Run Scheduler';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 2;
-    protected static ?string $title = 'Qualification Run Day Roster';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $title = 'Run Scheduler';
 
     protected string $view = 'filament.pages.run-day-roster';
 
     public ?string $date = null;
+    public string $tab = 'schedule';   // schedule | roster
+
+    // new-run-day form fields
+    public ?string $newDate = null;
+    public ?string $newStart = '09:00';
+    public ?string $newEnd = '11:00';
+    public ?string $newCleanroom = null;
+    public ?int $newCapacity = null;
+    public ?int $newAnalystId = null;
+    public bool $showAddSlot = false;
 
     public function mount(): void
     {
@@ -50,6 +60,71 @@ class RunDayRoster extends Page
             ->whereDate('slot_date', $this->date ?: now()->toDateString())
             ->orderBy('start_time')
             ->get();
+    }
+
+    /** Upcoming + recent run days for the Schedule tab, with seat usage. */
+    public function scheduleDays()
+    {
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        return RunSlot::with('analyst')
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('slot_date', '>=', now()->subDays(7)->toDateString())
+            ->orderBy('slot_date')->orderBy('start_time')
+            ->get()
+            ->map(function ($s) use ($scheduler) {
+                $s->seats_left = $scheduler->seatsLeft($s);
+                $s->booked = $s->reservations()->whereIn('status', ['approved', 'completed', 'requested'])->count();
+                return $s;
+            });
+    }
+
+    public function cleanroomOptions(): array
+    {
+        return \App\Models\Cleanroom::where('is_active', true)->orderBy('name')->pluck('name', 'name')->all();
+    }
+
+    public function analystOptions(): array
+    {
+        return \App\Models\User::where('is_active', true)
+            ->where(fn ($q) => $q->where('team', 'qcm')->orWhere('is_team_manager', true))
+            ->orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    public function addSlot(): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        if (! $this->newDate) {
+            Notification::make()->danger()->title('Pick a date')->send();
+            return;
+        }
+        RunSlot::create([
+            'slot_date' => $this->newDate,
+            'start_time' => $this->newStart ?: null,
+            'end_time' => $this->newEnd ?: null,
+            'cleanroom' => $this->newCleanroom,
+            'capacity' => $this->newCapacity ?: (int) \App\Models\Setting::get('runs_per_day_capacity', 10),
+            'assigned_analyst_id' => $this->newAnalystId ?: null,
+            'status' => 'open',
+        ]);
+        $this->showAddSlot = false;
+        $this->newCleanroom = null; $this->newAnalystId = null; $this->newCapacity = null;
+        Notification::make()->success()->title('Run day added')->send();
+    }
+
+    public function cancelSlotDay(int $slotId): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $slot = RunSlot::find($slotId);
+        if (! $slot) return;
+        $moved = app(\App\Services\AutoScheduler::class)->cancelSlot($slot);
+        Notification::make()->success()->title('Run day cancelled')
+            ->body($moved > 0 ? "{$moved} reservation(s) were rescheduled/notified." : 'No bookings to move.')->send();
+    }
+
+    public function viewRoster(string $date): void
+    {
+        $this->date = $date;
+        $this->tab = 'roster';
     }
 
 
