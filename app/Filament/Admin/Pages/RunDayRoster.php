@@ -28,7 +28,7 @@ class RunDayRoster extends Page
         return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static ?string $navigationLabel = 'Qual Run Day';
+    protected static ?string $navigationLabel = 'Run Day Roster';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
     protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Qualification Run Day Roster';

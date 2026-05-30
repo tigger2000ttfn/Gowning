@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Auth;
 class ListRunSlots extends ListRecords
 {
     use GqsListHero;
-    public ?string $gqsTitle = 'Run Slots';
-    public ?string $gqsSubtitle = 'Run day slots, capacity, and analyst assignment.';
+    public ?string $gqsTitle = 'Run Day Setup';
+    public ?string $gqsSubtitle = 'Create and manage qualification run days, capacity, and assigned analyst. This is where run days are scheduled.';
     public ?string $gqsIcon = 'heroicon-o-calendar-days';
     protected static string $resource = RunSlotResource::class;
     protected function getHeaderActions(): array

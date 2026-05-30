@@ -8,7 +8,7 @@ class ListTrainingClasses extends ListRecords
 {
     use GqsListHero;
     public ?string $gqsTitle = 'Gowning Classes';
-    public ?string $gqsSubtitle = 'Class catalog, sessions, and prerequisites.';
+    public ?string $gqsSubtitle = 'Set up gowning classes and their session dates. Open a class to add or edit its scheduled session dates.';
     public ?string $gqsIcon = 'heroicon-o-academic-cap';
     protected static string $resource = TrainingClassResource::class;
     protected function getHeaderActions(): array
