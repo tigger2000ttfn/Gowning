@@ -207,10 +207,8 @@ class StatusBoard extends Page
             }
         }
         $q->save();
-
-
-        Notification::make()->success()->title('Stage updated')
-            ->body(($q->personnel?->full_name ?? 'Card') . ' → ' . $stage->label())->send();
+        // No success toast on drag-move: the card visibly moving is the confirmation.
+        // (Errors/auth failures above still notify, and the workflow automations still fire.)
     }
 
     /** Bulk action: book the selected people into the next available run day. */
