@@ -60,7 +60,7 @@ class Settings extends Page implements HasForms
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
             'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
-            'org_name'              => Setting::get('org_name', 'MATC — Astellas'),
+            'org_name'              => Setting::get('org_name', 'MATC, Astellas'),
             'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
             'qcm_manager_id'        => Setting::get('qcm_manager_id'),
             'qa_manager_id'         => Setting::get('qa_manager_id'),

@@ -44,7 +44,7 @@ class ReservationResource extends Resource
             Section::make('Reservation Request')->icon('heroicon-o-ticket')->columns(2)->schema([
                 Select::make('personnel_id')->label('Person')
                     ->relationship('personnel', 'employee_id')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} — {$r->full_name}")
+                    ->getOptionLabelFromRecordUsing(fn ($r) => "{$r->employee_id} · {$r->full_name}")
                     ->searchable()->preload()->required(),
                 Select::make('run_slot_id')->label('Open Slot')
                     ->options(function () {
@@ -55,7 +55,7 @@ class ReservationResource extends Resource
                             ->get()
                             ->filter(fn ($s) => $s->hasCapacity())
                             ->mapWithKeys(fn ($s) => [
-                                $s->id => "{$s->slot_date->format('M j, Y')} — {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity} filled)",
+                                $s->id => "{$s->slot_date->format('M j, Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity} filled)",
                             ]);
                     })
                     ->searchable()->required()
@@ -135,7 +135,7 @@ class ReservationResource extends Resource
                                     ->whereDate('slot_date', '>=', now()->toDateString())
                                     ->orderBy('slot_date')->get()
                                     ->filter(fn ($s) => $s->hasCapacity())
-                                    ->mapWithKeys(fn ($s) => [$s->id => "{$s->slot_date->format('M j, Y')} — {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity})"]);
+                                    ->mapWithKeys(fn ($s) => [$s->id => "{$s->slot_date->format('M j, Y')} · {$s->cleanroom} ({$s->approvedCount()}/{$s->capacity})"]);
                             })->searchable()->required(),
                     ])
                     ->action(function (Reservation $r, array $data) {

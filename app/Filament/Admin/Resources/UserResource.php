@@ -65,7 +65,7 @@ class UserResource extends Resource
                 ])->required(),
                 Select::make('linked_personnel')->label('Linked Personnel Record')
                     ->options(fn () => \App\Models\Personnel::orderBy('employee_id')->get()
-                        ->mapWithKeys(fn ($r) => [$r->id => "{$r->employee_id} — {$r->full_name}"]))
+                        ->mapWithKeys(fn ($r) => [$r->id => "{$r->employee_id} · {$r->full_name}"]))
                     ->searchable()
                     ->afterStateHydrated(fn ($component, $record) => $component->state($record?->personnel?->id))
                     ->dehydrated(false)

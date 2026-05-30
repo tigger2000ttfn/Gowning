@@ -50,7 +50,7 @@ class QualificationRunResource extends Resource
                 ->schema([
                     Select::make('personnel_id')->label('Person')
                         ->relationship('personnel', 'employee_id')
-                        ->getOptionLabelFromRecordUsing(fn ($r) => $r ? "{$r->employee_id} — {$r->full_name}" : '')
+                        ->getOptionLabelFromRecordUsing(fn ($r) => $r ? "{$r->employee_id} · {$r->full_name}" : '')
                         ->searchable()->preload()->required(),
                     DatePicker::make('run_date')->required()->default(now()),
                     Select::make('result')->options([
