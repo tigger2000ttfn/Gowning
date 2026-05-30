@@ -24,7 +24,7 @@ class RunNotScheduled extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Run Not Scheduled';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
     protected static ?string $title = 'Awaiting Run Booking';
     public function getHeading(): string { return ''; }
 

@@ -103,6 +103,20 @@ class IncubationBoard extends Page
                 $q->workflow_stage = $overall === 'fail' ? WorkflowStage::Failed : WorkflowStage::QaReview;
                 $q->stage_changed_at = now();
                 $q->save();
+                // every failed run gets a non-conformance record (TrackWise to be linked)
+                if ($overall === 'fail') {
+                    \App\Models\NonConformance::firstOrCreate(
+                        ['qualification_run_id' => $run?->id, 'nc_type' => 'failed_run'],
+                        [
+                            'qualification_id' => $q->id,
+                            'personnel_id' => $q->personnel_id,
+                            'status' => 'open',
+                            'observed_date' => now()->toDateString(),
+                            'created_by' => Auth::id(),
+                            'summary' => 'Auto-created from failed qualification run. Link TrackWise NC.',
+                        ]
+                    );
+                }
                 Notification::make()->success()->title('Results released')
                     ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail' ? ', sent to QA determination.' : ', sent to QA review.'))->send();
             });

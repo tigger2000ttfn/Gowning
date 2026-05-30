@@ -35,7 +35,7 @@ class RunDayRoster extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Qual Run Day';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
     protected static ?string $title = 'Qualification Run Day Roster';
 
     protected string $view = 'filament.pages.run-day-roster';
@@ -184,6 +184,20 @@ class RunDayRoster extends Page
                             : \App\Enums\WorkflowStage::QaReview;
                         $q->stage_changed_at = now();
                         $q->save();
+                    }
+                    // AUTOMATION: every failed run gets a non-conformance record (TrackWise to be linked)
+                    if ($overall === 'fail') {
+                        \App\Models\NonConformance::firstOrCreate(
+                            ['qualification_run_id' => $run?->id, 'nc_type' => 'failed_run'],
+                            [
+                                'qualification_id' => $q?->id,
+                                'personnel_id' => $res->personnel_id,
+                                'status' => 'open',
+                                'observed_date' => now()->toDateString(),
+                                'created_by' => Auth::id(),
+                                'summary' => 'Auto-created from failed qualification run. Link TrackWise NC.',
+                            ]
+                        );
                     }
                 }
                 Notification::make()->success()->title('Results entered')
