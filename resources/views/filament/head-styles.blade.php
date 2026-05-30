@@ -61,7 +61,14 @@
     /* ===== HIDE EMPTY FILAMENT PAGE HEADER (we use the .pg-head partial instead) =====
        Pages return getHeading('') but Filament still renders an empty .fi-header taking space
        and sometimes a duplicate h1. Hide it on pages that have our own .pg-head. */
-    .fi-page:has(.pg-head) .fi-header { display: none !important; }
+    /* Hide Filament's own page header/heading wherever our .pg-head partial is present */
+    .fi-page:has(.pg-head) > .fi-header,
+    .fi-page:has(.pg-head) .fi-page-header,
+    .fi-main:has(.pg-head) > .fi-header,
+    .fi-page-content:has(.pg-head) > .fi-header,
+    section:has(> .pg-head) > header.fi-header { display: none !important; }
+    /* Also kill the top gap the empty header leaves */
+    .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 0 !important; }
 
     /* ===== TIGHTEN top-of-page wasted space ===== */
     .fi-page-header-main-ctn { padding-top: 12px !important; }
