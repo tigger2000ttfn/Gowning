@@ -126,7 +126,7 @@ class RunCycleAdvancer
         $candidates = Qualification::whereIn('workflow_stage', [
             WorkflowStage::Incubating->value,
             WorkflowStage::RunPerformed->value,
-        ])->get();
+        ])->whereNull('superseded_at')->get();
         foreach ($candidates as $q) {
             $before = $q->workflow_stage;
             $after = $this->advance($q);

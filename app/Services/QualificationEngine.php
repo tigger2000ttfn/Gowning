@@ -48,18 +48,22 @@ class QualificationEngine
         return (int) Setting::get('grace_days', 0);
     }
 
-    /** Get or create the single qualification record for a person. */
+    /** The person's active qualification cycle, creating a first one only if none exists. */
     public function qualificationFor(Personnel $personnel): Qualification
     {
-        return $personnel->qualification()->firstOrCreate(
-            ['personnel_id' => $personnel->id],
-            [
-                'type' => QualificationType::Initial,
-                'status' => QualificationStatus::Pending,
-                'runs_required' => $this->initialRunsRequired(),
-                'runs_completed' => 0,
-            ],
-        );
+        // Resolve the active (non-superseded) cycle. After a QA determination spawns a child
+        // session, this returns the child, so newly recorded runs attach to the right cycle.
+        $active = Qualification::currentFor($personnel->id);
+        if ($active) {
+            return $active;
+        }
+
+        return $personnel->qualification()->create([
+            'type' => QualificationType::Initial,
+            'status' => QualificationStatus::Pending,
+            'runs_required' => $this->initialRunsRequired(),
+            'runs_completed' => 0,
+        ]);
     }
 
     /** The gowning class prerequisite for starting initial runs. */

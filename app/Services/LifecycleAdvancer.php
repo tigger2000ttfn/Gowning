@@ -42,6 +42,7 @@ class LifecycleAdvancer
 
         $qualified = Qualification::where('status', 'qualified')
             ->whereNotNull('due_date')
+            ->whereNull('superseded_at')
             ->get();
 
         foreach ($qualified as $q) {

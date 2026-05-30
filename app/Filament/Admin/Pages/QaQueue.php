@@ -208,6 +208,7 @@ class QaQueue extends Page
     {
         return Qualification::with('personnel', 'qaOwner')
             ->whereIn('workflow_stage', [WorkflowStage::QaReview->value, WorkflowStage::ResultsReleased->value])
+            ->whereNull('superseded_at')
             ->orderBy('stage_changed_at')
             ->get();
     }
@@ -216,6 +217,7 @@ class QaQueue extends Page
     {
         return Qualification::with('personnel')
             ->where('workflow_stage', WorkflowStage::Failed->value)
+            ->whereNull('superseded_at')
             ->get();
     }
 
@@ -342,55 +344,78 @@ class QaQueue extends Page
     /** FAIL: QA determination -> requalification path. */
     public function finalizeFail(): void
     {
-        $q = Qualification::with('personnel')->find($this->wizQid);
-        if (! $q || ! $this->wizGuard($q)) return;
+        $parent = Qualification::with('personnel')->find($this->wizQid);
+        if (! $parent || ! $this->wizGuard($parent)) return;
         $three = $this->wizPath === 'requal_three';
         $retrain = $this->wizRetrain;
-        $q->qa_recommendation = $this->wizPath;
-        $q->qa_recommendation_note = $this->wizNote ?: null;
-        $q->type = $three ? \App\Enums\QualificationType::Initial : \App\Enums\QualificationType::Annual;
-        $q->runs_required = $three ? (int) Setting::get('initial_runs_required', 3) : (int) Setting::get('annual_runs_required', 1);
-        $q->runs_completed = 0;
-        $q->status = \App\Enums\QualificationStatus::Pending;
-        $q->qualified_date = null;
-        $q->due_date = null;
-        $q->cycle_started_at = now()->toDateString();
-        $q->workflow_stage = $retrain ? WorkflowStage::ClassPending : WorkflowStage::ClassComplete;
-        if ($retrain) { $q->class_on_file = false; $q->class_on_file_date = null; }
-        $q->stage_changed_at = now();
-        $q->save();
-        ElectronicSignature::create([
-            'signable_type' => Qualification::class, 'signable_id' => $q->id,
-            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'QA Determination',
-            'statement' => 'QA determination on failed qualification: opened ' . ($three ? 'a full 3-run requalification' : 'an annual requalification (1 additional run, REQUAL2)') . ($retrain ? ' with mandatory gowning class retraining' : '') . '. Access remains restricted until requalification is successfully completed. ' . $this->wizNote,
-            'signed_at' => now(),
-        ]);
-        $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
+
+        // The failed run belongs to the parent cycle; record QA's determination on it.
+        $failedRun = \App\Models\QualificationRun::where('personnel_id', $parent->personnel_id)
+            ->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
         if ($failedRun) {
             $failedRun->update([
                 'qa_determination' => $three ? 'fail_requalify' : ($retrain ? 'fail_retrain' : 'fail_redo'),
                 'qa_determined_at' => now(), 'is_complete' => true,
                 'qa_signed_by' => Auth::id(), 'qa_notes' => $this->wizNote ?: null,
             ]);
-            $q->pending_parent_run_id = $failedRun->id;
-            $q->save();
         }
+
+        // E-signature of the determination, recorded against the parent (the cycle QA reviewed).
+        ElectronicSignature::create([
+            'signable_type' => Qualification::class, 'signable_id' => $parent->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'QA Determination',
+            'statement' => 'QA determination on failed qualification: opened ' . ($three ? 'a full 3-run requalification (QA Initial Requal)' : 'an annual requalification (1 additional run, REQUAL2)') . ($retrain ? ' with mandatory gowning class retraining' : '') . '. A new requalification session was created, linked to the failed cycle, and access remains restricted until it is successfully completed. ' . $this->wizNote,
+            'signed_at' => now(),
+        ]);
+
+        // Open the nonconformance against the parent / failed run (once).
         $existingNc = $failedRun ? \App\Models\NonConformance::where('qualification_run_id', $failedRun->id)->exists() : false;
         if (! $existingNc) {
             \App\Models\NonConformance::create([
-                'qualification_id' => $q->id, 'qualification_run_id' => $failedRun?->id, 'personnel_id' => $q->personnel_id,
+                'qualification_id' => $parent->id, 'qualification_run_id' => $failedRun?->id, 'personnel_id' => $parent->personnel_id,
                 'nc_type' => 'failed_run', 'status' => 'open', 'observed_date' => now()->toDateString(), 'created_by' => Auth::id(),
                 'summary' => 'Opened from QA determination (' . ($three ? '3-run' : '1-run') . ' requalification' . ($retrain ? ', retraining required' : '') . '). ' . $this->wizNote,
             ]);
-            \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
+            \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $parent->personnel]);
         }
+
+        // Spawn the requalification as a NEW child session, linked to the failed parent. From here
+        // the child is the active cycle (currentFor resolves to it); the parent stays as read-only
+        // history so the rerun can always be read apart from the original.
+        $child = new Qualification();
+        $child->personnel_id = $parent->personnel_id;
+        $child->parent_qualification_id = $parent->id;
+        $child->cycle_number = ((int) $parent->cycle_number) + 1;
+        $child->type = $three ? \App\Enums\QualificationType::Initial : \App\Enums\QualificationType::Annual;
+        $child->runs_required = $three ? (int) Setting::get('initial_runs_required', 3) : (int) Setting::get('annual_runs_required', 1);
+        $child->runs_completed = 0;
+        $child->status = \App\Enums\QualificationStatus::Pending;
+        $child->qualified_date = null;
+        $child->due_date = null;
+        $child->cycle_started_at = now()->toDateString();
+        $child->qa_recommendation = $this->wizPath;            // drives the QA Initial Requal / QA Requal 2 label
+        $child->qa_recommendation_note = $this->wizNote ?: null;
+        $child->qa_owner_id = $parent->qa_owner_id;
+        $child->workflow_stage = $retrain ? WorkflowStage::ClassPending : WorkflowStage::ClassComplete;
+        $child->class_on_file = $retrain ? false : (bool) $parent->class_on_file;   // retraining clears the gate
+        $child->class_on_file_date = $retrain ? null : $parent->class_on_file_date;
+        $child->stage_changed_at = now();
+        $child->pending_parent_run_id = $failedRun?->id;       // child's first run descends from the failed run
+        $child->save();
+
+        // Close the parent cycle as history.
+        $parent->superseded_at = now();
+        $parent->save();
+
+        // Auto-book the CHILD's next run (unless they owe a retraining class first).
         $bookedMsg = '';
-        if (! $retrain && app(\App\Services\AutoScheduler::class)->bookNext($q->fresh())) {
+        if (! $retrain && app(\App\Services\AutoScheduler::class)->bookNext($child->fresh())) {
             $bookedMsg = ' Auto-booked for the next available run day.';
         }
+
         $this->wizQid = null;
         Notification::make()->success()->title('Determination Recorded')
-            ->body(($q->personnel?->full_name ?? 'Operator') . ': requalification session opened (' . ($three ? '3 runs' : '1 additional run · REQUAL2') . ($retrain ? ' + class retraining' : '') . '). Access restricted until complete.' . $bookedMsg)->send();
+            ->body(($parent->personnel?->full_name ?? 'Operator') . ': new requalification session opened (' . ($three ? 'QA Initial Requal - 3 runs' : 'QA Requal 2 - 1 additional run') . ($retrain ? ' + class retraining required first' : '') . '), linked to the failed cycle. Access restricted until complete.' . $bookedMsg)->send();
     }
 
 

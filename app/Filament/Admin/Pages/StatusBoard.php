@@ -53,6 +53,7 @@ class StatusBoard extends Page
         app(\App\Services\RunCycleAdvancer::class)->sweep();
         $out = [];
         $byStage = Qualification::with('personnel')
+            ->whereNull('superseded_at')
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
             ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('first_name', 'ilike', '%' . $this->search . '%')

@@ -59,6 +59,7 @@ class IncubationBoard extends Page
         $days = $this->incubationDays();
         return Qualification::with('personnel')
             ->where('workflow_stage', WorkflowStage::Incubating->value)
+            ->whereNull('superseded_at')
             ->get()
             ->map(function ($q) use ($days) {
                 $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
@@ -82,6 +83,7 @@ class IncubationBoard extends Page
     {
         return Qualification::with('personnel')
             ->whereIn('workflow_stage', [WorkflowStage::AwaitingResults->value, WorkflowStage::ResultsReleased->value])
+            ->whereNull('superseded_at')
             ->get()
             ->map(function ($q) {
                 $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
