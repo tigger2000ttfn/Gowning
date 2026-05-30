@@ -65,7 +65,7 @@ class QaQueue extends Page
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, d M Y'),
+                'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->gmpL(),
                 'submitted_at' => $s->attendance_submitted_at?->gmpDt(),
                 'submitted_by' => $s->submittedBy?->name,
                 'trainer' => $s->instructorUser?->name ?? $s->instructor,

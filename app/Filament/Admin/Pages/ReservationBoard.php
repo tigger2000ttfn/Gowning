@@ -111,7 +111,7 @@ class ReservationBoard extends Page
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
             ->map(fn ($group, $day) => [
-                'day' => $day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, d M Y'),
+                'day' => $day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->gmpL(),
                 'rows' => $group->map(fn ($r) => [
                     'id' => $r->id,
                     'name' => $r->personnel?->full_name ?? 'Unknown',

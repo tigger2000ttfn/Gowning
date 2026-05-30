@@ -5,7 +5,7 @@
         <a href="{{ route('public.home') }}" class="backlink">&larr; Back to classes</a>
         <div class="formcard">
             <h2>{{ $session->trainingClass->name }}</h2>
-            <p class="sub">{{ $session->session_date->format('l, d M Y') }}
+            <p class="sub">{{ $session->session_date->gmpL() }}
                 @if($session->location) &middot; {{ $session->location }} @endif
                 &middot; {{ $session->seatsLeft() }} seats left</p>
             <form method="POST" action="{{ route('public.signup.store', $session) }}">

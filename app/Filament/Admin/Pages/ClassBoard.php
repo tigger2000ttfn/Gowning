@@ -50,7 +50,7 @@ class ClassBoard extends Page
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->format('d M'),
+                'date' => $e->classSession?->session_date?->gmpDM(),
             ])->values()->all();
         return [
             'label' => \App\Models\WorkflowStatus::labelFor('class', 'historical', 'Historical'),
@@ -92,7 +92,7 @@ class ClassBoard extends Page
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->format('d M'),
+                'date' => $e->classSession?->session_date?->gmpDM(),
                 'status_label' => $label,
                 'status_color' => $color,
             ])->values()->all();
@@ -124,7 +124,7 @@ class ClassBoard extends Page
             'department' => $p?->department,
             'job_title' => $p?->job_title,
             'class' => $e->classSession?->trainingClass?->name,
-            'session_date' => $e->classSession?->session_date?->format('l, d M Y'),
+            'session_date' => $e->classSession?->session_date?->gmpL(),
             'session_time' => $e->classSession?->start_time ? \Illuminate\Support\Carbon::parse($e->classSession->start_time)->format('H:i') : null,
             'instructor' => $e->classSession?->instructorUser?->name ?? $e->classSession?->instructor,
             'location' => $e->classSession?->location,

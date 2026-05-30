@@ -17,7 +17,7 @@
     @if($activeRes && $activeRes->runSlot)
         <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:var(--gqs-surface-2,#F4F4F6);border-radius:10px;">
             <x-filament::icon icon="heroicon-o-calendar-days" style="width:20px;height:20px;color:#A4123F;"/>
-            <span style="font-size:13.5px;color:var(--gqs-text,#1A1A1F);">Your next run: <strong>{{ $activeRes->runSlot->slot_date->format('l, d M Y') }}</strong>{{ $activeRes->runSlot->cleanroom ? ' · ' . $activeRes->runSlot->cleanroom : '' }}</span>
+            <span style="font-size:13.5px;color:var(--gqs-text,#1A1A1F);">Your next run: <strong>{{ $activeRes->runSlot->slot_date->gmpL() }}</strong>{{ $activeRes->runSlot->cleanroom ? ' · ' . $activeRes->runSlot->cleanroom : '' }}</span>
             <a href="{{ route('public.run.ics', $activeRes->runSlot) }}"
                style="display:inline-flex;align-items:center;gap:6px;padding:7px 13px;background:#A4123F;color:#fff;border-radius:8px;font-weight:700;font-size:12.5px;text-decoration:none;">
                 <x-filament::icon icon="heroicon-m-arrow-down-tray" style="width:15px;height:15px;"/> Add To Calendar

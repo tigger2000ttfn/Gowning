@@ -103,7 +103,7 @@ class MyQualification extends Page
                     'notes' => 'Self-requested',
                 ]);
                 Notification::make()->success()->title('Run Requested')
-                    ->body('You are booked for ' . $slot->slot_date->format('l, d M Y') . '.')->send();
+                    ->body('You are booked for ' . $slot->slot_date->gmpL() . '.')->send();
             });
     }
 

@@ -76,7 +76,7 @@ class RunReservations extends Page
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
             ->map(fn ($group, $day) => [
-                'title' => ($day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, d M Y'))
+                'title' => ($day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->gmpL())
                     . ' · ' . ($group->first()->runSlot?->cleanroom ?? ''),
                 'rows' => $group->map(fn ($r) => [
                     'id' => $r->id,

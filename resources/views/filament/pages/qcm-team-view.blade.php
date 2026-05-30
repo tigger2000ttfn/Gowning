@@ -26,7 +26,7 @@
             <div class="gqs-panel-body">
                 @foreach($unassigned as $s)
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);font-size:13.5px;">
-                        <span>{{ $s->slot_date?->format('l, d M') }} · {{ $s->cleanroom }}</span>
+                        <span>{{ $s->slot_date?->gmpLDM() }} · {{ $s->cleanroom }}</span>
                         <button wire:click="openAssign({{ $s->id }})" class="gqs-mini-btn">Assign</button>
                     </div>
                 @endforeach
@@ -123,7 +123,7 @@
             <div class="gqs-panel-body">
                 @foreach($unClasses as $cs)
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);font-size:13.5px;">
-                        <span>{{ $cs->session_date?->format('l, d M') }} · {{ $cs->trainingClass?->name }}</span>
+                        <span>{{ $cs->session_date?->gmpLDM() }} · {{ $cs->trainingClass?->name }}</span>
                         <button wire:click="openAssignInstructor({{ $cs->id }})" class="gqs-mini-btn">Assign Instructor</button>
                     </div>
                 @endforeach

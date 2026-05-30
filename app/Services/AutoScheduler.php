@@ -185,12 +185,12 @@ class AutoScheduler
             if ($newSlot) {
                 $res->run_slot_id = $newSlot->id;
                 $res->status = 'approved';
-                $res->notes = trim(($res->notes ? $res->notes . ' ' : '') . 'Rescheduled from cancelled ' . $slot->slot_date->format('d M') . '.');
+                $res->notes = trim(($res->notes ? $res->notes . ' ' : '') . 'Rescheduled from cancelled ' . $slot->slot_date->gmpDM() . '.');
                 $res->save();
                 $this->notifier->toPersonnel(
                     $res->personnel,
                     'Qualification run rescheduled',
-                    'Your run day on ' . $slot->slot_date->format('d M') . ' was cancelled. You are re-booked for '
+                    'Your run day on ' . $slot->slot_date->gmpDM() . ' was cancelled. You are re-booked for '
                         . $newSlot->slot_date->gmp() . '.',
                     \App\Enums\NotificationEvent::RunScheduled
                 );
@@ -198,7 +198,7 @@ class AutoScheduler
                 // no day available: hold for manual review
                 $res->status = 'requested';
                 $res->run_slot_id = null;
-                $res->notes = trim(($res->notes ? $res->notes . ' ' : '') . 'Needs rebooking (no open day) after cancelled ' . $slot->slot_date->format('d M') . '.');
+                $res->notes = trim(($res->notes ? $res->notes . ' ' : '') . 'Needs rebooking (no open day) after cancelled ' . $slot->slot_date->gmpDM() . '.');
                 $res->save();
                 // return the person to bookable so the auto-scheduler re-picks them
                 if ($res->personnel) {
@@ -214,7 +214,7 @@ class AutoScheduler
                 $this->notifier->toPersonnel(
                     $res->personnel,
                     'Qualification run needs rebooking',
-                    'Your run day on ' . $slot->slot_date->format('d M') . ' was cancelled and no open day was available yet. Scheduling will rebook you.',
+                    'Your run day on ' . $slot->slot_date->gmpDM() . ' was cancelled and no open day was available yet. Scheduling will rebook you.',
                     \App\Enums\NotificationEvent::RunScheduled
                 );
             }

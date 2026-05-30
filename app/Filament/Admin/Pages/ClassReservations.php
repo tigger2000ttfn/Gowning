@@ -61,7 +61,7 @@ class ClassReservations extends Page
             ->get()
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'title' => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('l, d M Y')
+                'title' => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->gmpL()
                     . ($s->start_time ? ' · ' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : ''),
                 'location' => $s->location,
                 'seats' => $s->seatsLeft(),

@@ -47,6 +47,13 @@ class AppServiceProvider extends ServiceProvider
             /** @var \Carbon\Carbon $this */
             return strtoupper($this->format('d-M-Y')) . ' ' . $this->format('H:i');
         });
+        // Weekday + GMP date and calendar-label variants, all uppercase.
+        \Carbon\Carbon::macro('gmpL', fn () => strtoupper($this->format('l, d-M-Y')));   // MONDAY, 11-MAY-2026
+        \Carbon\Carbon::macro('gmpD', fn () => strtoupper($this->format('D, d-M-Y')));   // MON, 11-MAY-2026
+        \Carbon\Carbon::macro('gmpLDM', fn () => strtoupper($this->format('l, d-M')));    // MONDAY, 11-MAY
+        \Carbon\Carbon::macro('gmpDDM', fn () => strtoupper($this->format('D, d-M')));    // MON, 11-MAY
+        \Carbon\Carbon::macro('gmpDM', fn () => strtoupper($this->format('d-M')));        // 11-MAY
+        \Carbon\Carbon::macro('gmpMY', fn () => strtoupper($this->gmpMY()));        // MAY 2026
 
         // Bind relay settings (Settings page) onto the live mail config at runtime.
         \App\Support\MailConfig::apply();

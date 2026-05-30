@@ -1,6 +1,6 @@
 @extends('print.layout', ['title' => 'Run Day Roster', 'org' => $org, 'site' => $site])
 @section('body')
-    <div class="doc-title">Qualification Run Day Roster, {{ $date->format('l, d F Y') }}</div>
+    <div class="doc-title">Qualification Run Day Roster, {{ $date->gmpL() }}</div>
 
     @forelse($slots as $slot)
         <div class="sec">

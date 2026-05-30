@@ -74,7 +74,7 @@ class StatusBoard extends Page
                 'runs_done' => (int) $passes,
                 'runs_req' => (int) $q->runs_required,
                 'due' => $q->due_date?->gmp(),
-                'last_run_date' => $lastRun?->run_date?->format('d M'),
+                'last_run_date' => $lastRun?->run_date?->gmpDM(),
                 'last_run_worklist' => $lastRun?->lims_worklist_id,
                 'status' => ucfirst(str_replace('_', ' ', ($q->status?->value ?? (string) $q->status ?? ''))),
                 'status_key' => $q->status?->value ?? (string) $q->status,

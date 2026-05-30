@@ -13,7 +13,7 @@
         $ticks = [];
         $cur = $axisStart->copy()->startOfMonth();
         while ($cur->lte($axisEnd)) {
-            if ($cur->gte($axisStart)) $ticks[] = ['label' => $cur->format('M Y'), 'left' => ($axisStart->diffInDays($cur, false) / $totalDays) * 100];
+            if ($cur->gte($axisStart)) $ticks[] = ['label' => $cur->gmpMY(), 'left' => ($axisStart->diffInDays($cur, false) / $totalDays) * 100];
             $cur->addMonth();
         }
         $todayLeft = $pct($axis['today']);

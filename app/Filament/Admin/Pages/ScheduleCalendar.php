@@ -47,7 +47,7 @@ class ScheduleCalendar extends Page
     public function nextMonth(): void { $this->calMonth = $this->anchor()->addMonth()->format('Y-m'); }
     public function thisMonth(): void { $this->calMonth = now()->format('Y-m'); }
 
-    public function monthLabel(): string { return $this->anchor()->format('F Y'); }
+    public function monthLabel(): string { return $this->anchor()->gmpMY(); }
 
     /** Events bucketed by Y-m-d for the visible month, each: type,color,title,time. */
     protected function eventsByDate(\Illuminate\Support\Carbon $from, \Illuminate\Support\Carbon $to): array
