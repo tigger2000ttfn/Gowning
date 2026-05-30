@@ -141,7 +141,7 @@ class Dashboard extends BaseDashboard
         $myPersonnel = $me?->personnel
             ?? \App\Models\Personnel::where('email', $me?->email)->first();
         $myQual = $myPersonnel
-            ? \App\Models\Qualification::where('personnel_id', $myPersonnel->id)->first()
+            ? \App\Models\Qualification::currentFor($myPersonnel->id)
             : null;
 
         $role = $this->dashboardRole();

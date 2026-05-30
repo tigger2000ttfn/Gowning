@@ -173,7 +173,7 @@ class ClassBoard extends Page
         $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass', 'classSession.instructorUser'])->find($id);
         if (! $e) { $this->detail = null; return; }
         $p = $e->personnel;
-        $q = $p ? \App\Models\Qualification::where('personnel_id', $p->id)->first() : null;
+        $q = $p ? \App\Models\Qualification::currentFor($p->id) : null;
         $statusVal = $e->status instanceof \BackedEnum ? $e->status->value : $e->status;
         $qStatusVal = $q ? ($q->status instanceof \BackedEnum ? $q->status->value : $q->status) : null;
         $this->detail = [

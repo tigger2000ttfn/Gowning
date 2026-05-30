@@ -85,7 +85,7 @@ class RunDayRoster extends Page
         $this->worklists[$reservationId] = preg_replace('/^EM-/i', '', $wl);
 
         // store on the qualification (the per-person cycle worklist) and stamp all cycle runs
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($res->personnel_id);
         if ($q) {
             $q->lims_worklist_id = $wl;
             $q->save();
@@ -385,7 +385,7 @@ class RunDayRoster extends Page
             'decided_by' => Auth::id(),
             'notes' => 'Added by analyst',
         ]);
-        $q = \App\Models\Qualification::where('personnel_id', $this->addResPersonnelId)->first();
+        $q = \App\Models\Qualification::currentFor($this->addResPersonnelId);
         if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
             $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
             $q->stage_changed_at = now();
@@ -402,7 +402,7 @@ class RunDayRoster extends Page
         $r = Reservation::find($id);
         if (! $r) return;
         $r->update(['status' => 'approved', 'decided_by' => Auth::id(), 'decided_at' => now()]);
-        $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($r->personnel_id);
         if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
             $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
             $q->stage_changed_at = now();
@@ -488,7 +488,7 @@ class RunDayRoster extends Page
         $personId = $r->personnel_id;
         $r->delete();
         // if the person was Run Scheduled only because of this, drop them back so they can rebook
-        $q = \App\Models\Qualification::where('personnel_id', $personId)->first();
+        $q = \App\Models\Qualification::currentFor($personId);
         if ($q && $q->workflow_stage === \App\Enums\WorkflowStage::RunScheduled) {
             $stillBooked = Reservation::where('personnel_id', $personId)->whereIn('status', ['requested', 'approved'])->exists();
             if (! $stillBooked) {
@@ -582,7 +582,7 @@ class RunDayRoster extends Page
         if (! $res) return;
         // Detach from this day (leaves the roster) and let the scheduler self-find the next open day.
         $res->update(['status' => 'rescheduled']);
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($res->personnel_id);
         $rebooked = $q ? app(\App\Services\AutoScheduler::class)->bookNext($q->fresh()) : null;
         if ($rebooked) {
             Notification::make()->success()->title('Rescheduled')->body('Re-booked into the next open run day.')->send();
@@ -650,7 +650,7 @@ class RunDayRoster extends Page
         foreach ($pending as $r) {
             $intent = $this->intent[$r->id] ?? null;
             if ($intent === 'present') {
-                $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
+                $q = \App\Models\Qualification::currentFor($r->personnel_id);
                 if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
                 $runsToday = 1;
                 if (! empty($this->performAll[$r->id])) {
@@ -702,7 +702,7 @@ class RunDayRoster extends Page
         // GATE: classroom training must be QA-completed (class on file) before a person can
         // actually perform a qualification run. They are allowed to book a slot beforehand,
         // but cannot be marked present until QA has signed off the classroom training.
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($res->personnel_id);
         if (! $q || ! $q->class_on_file) {
             Notification::make()->warning()->title('Classroom training not completed')
                 ->body($res->personnel->full_name . ' cannot perform a run until their gowning class is QA-approved (Completed) on the Class Board. They may stay booked until then.')
@@ -736,7 +736,7 @@ class RunDayRoster extends Page
                 $newRun->save();
             }
         }
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($res->personnel_id);
         // Holistic, multi-run aware: the person moves to Incubating now; they only advance
         // to results once the LAST required run's plates clear (handled by RunCycleAdvancer).
         if ($q) {
@@ -767,7 +767,7 @@ class RunDayRoster extends Page
         $overall = $overall === 'fail' ? 'fail' : 'pass';
         $res->update(['lims_worklist_id' => $worklist]);
 
-        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        $q = \App\Models\Qualification::currentFor($res->personnel_id);
         // Release results for ALL pending runs in this cycle (plates all came in together).
         $adv = app(\App\Services\RunCycleAdvancer::class);
         $cycleRuns = $q ? $adv->cycleRuns($q) : collect();

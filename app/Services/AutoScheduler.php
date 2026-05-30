@@ -202,7 +202,7 @@ class AutoScheduler
                 $res->save();
                 // return the person to bookable so the auto-scheduler re-picks them
                 if ($res->personnel) {
-                    $pq = Qualification::where('personnel_id', $res->personnel_id)->first();
+                    $pq = Qualification::currentFor($res->personnel_id);
                     if ($pq && $pq->workflow_stage === \App\Enums\WorkflowStage::RunScheduled) {
                         $pq->workflow_stage = $pq->class_on_file
                             ? \App\Enums\WorkflowStage::ClassComplete

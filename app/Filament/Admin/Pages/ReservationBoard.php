@@ -86,7 +86,7 @@ class ReservationBoard extends Page
             'notes' => 'Added by analyst',
         ]);
         // advance the person to Run Scheduled if they were waiting
-        $q = \App\Models\Qualification::where('personnel_id', $this->addPersonnelId)->first();
+        $q = \App\Models\Qualification::currentFor($this->addPersonnelId);
         if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
             $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
             $q->stage_changed_at = now();
