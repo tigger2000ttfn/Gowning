@@ -58,6 +58,7 @@ class StatusBoard extends Page
             ->groupBy(fn ($q) => $q->workflow_stage?->value ?? 'class_pending');
 
         foreach (WorkflowStage::pipeline() as $stage) {
+            if ($stage === WorkflowStage::QaSignoff) continue; // lives in the Archive swimlane
             $cards = ($byStage[$stage->value] ?? collect())->map(fn ($q) => [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
@@ -84,7 +85,57 @@ class StatusBoard extends Page
             $out[] = ['key' => 'failed', 'label' => \App\Models\WorkflowStatus::labelFor('run', 'failed', WorkflowStage::Failed->label()), 'color' => \App\Models\WorkflowStatus::colorFor('run', 'failed', WorkflowStage::Failed->color()), 'cards' => $failed];
         }
 
+        // Apply the saved lane order (drag-to-reorder persists this).
+        $order = $this->laneOrder();
+        if ($order) {
+            usort($out, function ($a, $b) use ($order) {
+                $ia = array_search($a['key'], $order, true);
+                $ib = array_search($b['key'], $order, true);
+                $ia = $ia === false ? 999 : $ia;
+                $ib = $ib === false ? 999 : $ib;
+                return $ia <=> $ib;
+            });
+        }
+
         return $out;
+    }
+
+    /** The QA-signed-off / completed cards, shown in a collapsed Archive swimlane. */
+    public function getArchive(): array
+    {
+        $signed = Qualification::with('personnel')
+            ->where('workflow_stage', WorkflowStage::QaSignoff->value)
+            ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
+            ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
+                $p->where('first_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('last_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('employee_id', 'ilike', '%' . $this->search . '%')))
+            ->when($this->deptFilter !== '', fn ($q) => $q->whereHas('personnel', fn ($p) => $p->where('department', $this->deptFilter)))
+            ->latest('stage_changed_at')->get()
+            ->map(fn ($q) => [
+                'id' => $q->id,
+                'name' => $q->personnel?->full_name ?? 'Unknown',
+                'employee_id' => $q->personnel?->employee_id,
+                'due' => $q->due_date?->format('M j, Y'),
+            ])->values()->all();
+
+        return [
+            'label' => \App\Models\WorkflowStatus::labelFor('run', 'qa_signoff', 'Qualified (Archive)'),
+            'color' => \App\Models\WorkflowStatus::colorFor('run', 'qa_signoff', WorkflowStage::QaSignoff->color()),
+            'cards' => $signed,
+        ];
+    }
+
+    public function laneOrder(): array
+    {
+        $raw = \App\Models\Setting::get('board_lane_order', '');
+        return $raw ? array_values(array_filter(explode(',', $raw))) : [];
+    }
+
+    public function setLaneOrder(array $keys): void
+    {
+        if (! Auth::user()?->hasCapability(Capability::ManageScheduling)) return;
+        \App\Models\Setting::put('board_lane_order', implode(',', $keys));
     }
 
     /** Drag a person's card to a new workflow stage. QA sign-off requires QaApprove. */
