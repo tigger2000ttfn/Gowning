@@ -59,6 +59,11 @@
     .fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
 
 
+    /* ===== KANBAN FULL-BLEED: let board pages bust out of .fi-main padding/max-width
+       and scroll the full page width (same technique as the dashboard hero) ===== */
+    .fi-main:has(.sb-fullbleed) { padding-left: 0 !important; padding-right: 0 !important; max-width: none !important; }
+    .fi-main:has(.sb-fullbleed) .fi-page-content { max-width: none !important; }
+
     /* ===== FIX CARD-WITHIN-CARD: a Filament Section inside a modal already sits in the
        modal's card, so the section's own border/background creates a nested card. Flatten
        sections when they're inside a modal/slide-over window. ===== */

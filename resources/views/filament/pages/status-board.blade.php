@@ -18,7 +18,7 @@
             }
         }" x-init="init()" wire:key="sb-{{ now()->timestamp }}">
 
-        <div class="sb-wrap">
+        <div class="sb-fullbleed"><div class="sb-wrap">
             @foreach ($this->getStages() as $stage)
                 <div class="sb-col">
                     <div class="sb-head" style="background:{{ $stage['color'] }};">
@@ -36,12 +36,13 @@
                     </div>
                 </div>
             @endforeach
-        </div>
+        </div></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
-        .sb-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px;align-items:flex-start;}
+        .sb-fullbleed{width:100%;}
+        .sb-wrap{display:flex;gap:12px;overflow-x:auto;padding:0 32px 14px;align-items:flex-start;}
         .sb-col{flex:0 0 220px;background:rgba(120,120,130,.06);border-radius:12px;padding:9px;min-height:140px;}
         .sb-head{display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;font-size:12.5px;padding:8px 11px;border-radius:8px;margin-bottom:9px;}
         .sb-count{background:rgba(255,255,255,.28);border-radius:20px;padding:1px 8px;font-size:11px;}

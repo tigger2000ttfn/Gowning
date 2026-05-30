@@ -13,7 +13,7 @@
                 });
             }
         }" x-init="init()" wire:key="cb-{{ now()->timestamp }}">
-        <div class="kanban-wrap">
+        <div class="sb-fullbleed"><div class="kanban-wrap">
             @foreach ($this->getColumns() as $status => $col)
                 <div class="kanban-col">
                     <div class="kanban-head" style="background:{{ $col['color'] }};">
@@ -30,13 +30,14 @@
                     </div>
                 </div>
             @endforeach
-        </div>
+        </div></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
-        .kanban-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
-        @media(max-width:900px){.kanban-wrap{grid-template-columns:repeat(2,1fr);}}
+        .sb-fullbleed{width:100%;}
+        .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:flex-start;}
+        .kanban-col{flex:0 0 250px;}
         .kanban-col{background:rgba(120,120,130,.06);border-radius:12px;padding:10px;min-height:120px;}
         .kanban-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;padding:8px 11px;border-radius:8px;color:#fff;margin-bottom:10px;}
         .kanban-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 9px;font-size:12px;}
