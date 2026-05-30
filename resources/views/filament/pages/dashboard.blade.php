@@ -1,7 +1,7 @@
 <x-filament-panels::page>
 @php
     $stars = [];
-    for ($i=0;$i<26;$i++){ $stars[]=['t'=>rand(8,86),'l'=>rand(2,97),'c'=>['#fff','#fff','#E8C24A','#B98CE0'][rand(0,3)],'s'=>rand(2,4),'d'=>rand(0,30)/10,'u'=>rand(22,45)/10]; }
+    for ($i=0;$i<50;$i++){ $stars[]=['t'=>rand(4,92),'l'=>rand(2,98),'c'=>['#fff','#fff','#fff','#E8C24A','#B98CE0','#C8102E'][rand(0,5)],'s'=>rand(2,5),'d'=>rand(0,40)/10,'u'=>rand(22,50)/10]; }
 @endphp
 
 <style>
@@ -35,12 +35,12 @@
     @keyframes dashneb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,-3%) scale(1.07)}}
     .dash-star{position:absolute;border-radius:50%;z-index:0;animation:dashtw 3s ease-in-out infinite;box-shadow:0 0 6px 1px currentColor;}
     @keyframes dashtw{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
-    .dash-hero-in{position:relative;z-index:1;flex:1;}
+    .dash-hero-in{position:relative;z-index:1;flex:1;min-width:0;}
     .dash-hero-icon{position:relative;z-index:1;width:clamp(90px,12vw,130px);height:clamp(90px,12vw,130px);flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(232,194,74,.5));animation:dashFloat 6s ease-in-out infinite;}
     @keyframes dashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
     .dash-hello{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#E8C24A;font-weight:700;}
     .dash-title{font-size:clamp(26px,4vw,38px);font-weight:800;margin:2px 0 4px;line-height:1.05;}
-    .dash-sub{color:#C8C8D0;font-size:clamp(14px,2vw,16px);max-width:560px;margin:0 auto;}
+    .dash-sub{color:#C8C8D0;font-size:clamp(13px,1.6vw,15px);max-width:640px;margin:6px 0 0;}
     @media(min-width:641px){.dash-sub{margin:0;}}
 
     /* STATS: spread wider on big screens, 2-up on phones */
@@ -157,7 +157,7 @@
 
 
 <div class="dash-comments">
-    <h3><x-filament::icon icon="heroicon-m-chat-bubble-left-right"/> Recent Comments &amp; QA Notes</h3>
+    <h3><x-filament::icon icon="heroicon-m-chat-bubble-left-right"/> Recent Comments</h3>
     @forelse($recentComments as $cmt)
         <a class="cmt" href="{{ $cmt->qualification ? \App\Filament\Admin\Resources\QualificationResource::getUrl('index') : '#' }}">
             <div class="cmt-top">
@@ -198,7 +198,7 @@
     </div>
 
     <div class="dash-card dc-runs">
-        <h3>Upcoming Class Sessions</h3>
+        <h3>Upcoming Classes</h3>
         @forelse($upcomingRuns as $s)
             <div class="dash-row"><span>{{ \Illuminate\Support\Str::title($s->trainingClass?->name) }}</span>
                 <span class="muted">{{ $s->session_date?->format('M j') }}</span></div>
@@ -206,7 +206,7 @@
     </div>
 
     <div class="dash-card dc-appr">
-        <h3><x-filament::icon icon="heroicon-m-academic-cap" style="width:17px;height:17px;"/> Personnel Signed Up For Classes</h3>
+        <h3><x-filament::icon icon="heroicon-m-academic-cap" style="width:17px;height:17px;"/> Class Signups</h3>
         @forelse($classSignupList as $e)
             <div class="dash-row"><span>{{ $e->personnel?->full_name ?? $e->employee_id }}</span>
                 <span class="muted">{{ \Illuminate\Support\Str::title($e->classSession?->trainingClass?->name) }}</span></div>
@@ -214,7 +214,7 @@
     </div>
 
     <div class="dash-card dc-fail">
-        <h3><x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:17px;height:17px;"/> Failed Runs — QA Review</h3>
+        <h3><x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:17px;height:17px;"/> Failed Runs</h3>
         @forelse($failedRuns as $r)
             <div class="dash-row"><span>{{ $r->personnel?->full_name }}</span>
                 <span class="pill pill-red">{{ $r->run_date?->format('M j') }}</span></div>
@@ -222,7 +222,7 @@
     </div>
 
     <div class="dash-card dc-req">
-        <h3><x-filament::icon icon="heroicon-m-ticket" style="width:17px;height:17px;"/> Run Requests — Approve</h3>
+        <h3><x-filament::icon icon="heroicon-m-ticket" style="width:17px;height:17px;"/> Run Requests</h3>
         @forelse($runRequests as $res)
             <div class="dash-row"><span>{{ $res->personnel?->full_name }}</span>
                 <span class="muted">{{ $res->runSlot?->slot_date?->format('M j') }}</span></div>
