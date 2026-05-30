@@ -220,12 +220,12 @@
 
     /* ===== KANBAN HEADER ROW: hero + filters on ONE line (filters are secondary) ===== */
     .sb-headrow { display:flex; align-items:center; justify-content:space-between; gap:18px;
-        flex-wrap:wrap; padding:6px 0 12px; margin-bottom:14px; margin-top:4px;
+        flex-wrap:wrap; padding:6px 32px 12px; margin-bottom:14px; margin-top:4px;
         border-bottom:2px solid var(--gqs-border,#DADADF); }
     .sb-headrow-title { display:flex; align-items:center; gap:14px; min-width:0; flex:1; }
     .sb-headrow-filters { display:flex; align-items:center; gap:8px; flex:0 0 auto; flex-wrap:wrap; }
-    .sb-hf-search { width:200px !important; height:36px !important; }
-    .sb-hf-sel { width:auto !important; min-width:150px; height:36px !important; }
+    .sb-hf-search { width:200px !important; height:40px !important; line-height:1.4; }
+    .sb-hf-sel { width:auto !important; min-width:150px; height:40px !important; line-height:1.4; padding-top:7px !important; padding-bottom:7px !important; }
     @media (max-width:820px){ .sb-headrow-filters{ width:100%; } .sb-hf-search{ flex:1; width:auto !important; } }
 
     /* ===== LIGHT-THEME MENU/DROPDOWN CONTRAST (comprehensive) =====
