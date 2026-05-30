@@ -1,8 +1,19 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Schedule Calendar', 'subtitle' => 'Run days, class sessions, and qualification due dates in one view.', 'icon' => 'heroicon-o-calendar'])
-
-    {{-- FullCalendar via CDN (same library/pattern already used by the public calendar) --}}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+    <div class="sb-headrow">
+        <div class="sb-headrow-title">
+            <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-calendar" /></span>
+            <div class="pg-head-tx" style="min-width:0;">
+                <h1>Schedule Calendar</h1>
+                <p>Run days, class sessions, and qualification due dates in one view.</p>
+            </div>
+        </div>
+        <div class="sb-headrow-filters">
+            <div class="gqs-tabs">
+                <button type="button" wire:click="$set('tab','calendar')" class="gqs-tab @if($tab==='calendar') on @endif">Calendar</button>
+                <button type="button" wire:click="$set('tab','list')" class="gqs-tab @if($tab==='list') on @endif">List</button>
+            </div>
+        </div>
+    </div>
 
     <div style="display:flex;gap:16px;align-items:center;margin-bottom:14px;font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#A4123F;margin-right:4px;"></span>Run Days</span>
@@ -10,12 +21,37 @@
         <span><span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#C79A2E;margin-right:4px;"></span>Due Dates</span>
     </div>
 
+    @if($tab === 'list')
+        @php $items = $this->listItems(); @endphp
+        <div class="gqs-panel">
+            <div class="gqs-panel-body" style="padding:0;">
+                @if(empty($items))
+                    <div class="gqs-empty" style="padding:30px;">No upcoming run days or classes scheduled. Add them in Run Scheduler / Class Scheduler.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Date</th><th>Type</th><th>What</th><th>When</th></tr></thead>
+                        <tbody>
+                            @foreach($items as $it)
+                                <tr>
+                                    <td style="font-weight:700;white-space:nowrap;">{{ $it['date']->format('D, M j, Y') }}</td>
+                                    <td><span class="gqs-pill" style="background:{{ $it['color'] }};color:#fff;">{{ $it['type'] }}</span></td>
+                                    <td>{{ $it['title'] }}</td>
+                                    <td style="color:var(--gqs-text-dim,#6A6A72);">{{ $it['sub'] }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @else
     <div class="gqs-panel">
         <div class="gqs-panel-body" style="padding:16px;">
             <div id="gqs-cal-data" data-events='@json($this->events())' style="display:none;"></div>
             <div id="gqs-calendar"></div>
         </div>
     </div>
+    @endif
 
     <div wire:ignore>
         <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>

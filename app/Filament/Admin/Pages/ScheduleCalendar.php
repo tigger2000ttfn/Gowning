@@ -28,6 +28,35 @@ class ScheduleCalendar extends Page
 
     protected string $view = 'filament.pages.schedule-calendar';
 
+    public string $tab = 'calendar';   // calendar | list
+
+    /** Upcoming schedule as a flat, date-sorted list (run days + class sessions). */
+    public function listItems(): array
+    {
+        $items = [];
+        foreach (RunSlot::with('analyst')->where('status', '!=', 'cancelled')
+            ->whereDate('slot_date', '>=', now()->subDay()->toDateString())->get() as $s) {
+            $items[] = [
+                'type' => 'Run Day', 'color' => '#A4123F',
+                'date' => $s->slot_date, 'sort' => $s->slot_date->toDateString() . ($s->start_time ?? '00:00'),
+                'title' => $s->cleanroom ?: 'Run Day',
+                'sub' => ($s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : 'All day')
+                    . ($s->analyst ? ' · ' . $s->analyst->name : ''),
+            ];
+        }
+        foreach (ClassSession::with('trainingClass')->where('status', '!=', 'cancelled')
+            ->whereDate('session_date', '>=', now()->subDay()->toDateString())->get() as $s) {
+            $items[] = [
+                'type' => 'Class', 'color' => '#2E7D5B',
+                'date' => $s->session_date, 'sort' => $s->session_date->toDateString() . ($s->start_time ?? '00:00'),
+                'title' => $s->trainingClass?->name ?? 'Gowning Class',
+                'sub' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : 'All day',
+            ];
+        }
+        usort($items, fn ($a, $b) => strcmp($a['sort'], $b['sort']));
+        return $items;
+    }
+
     /** FullCalendar-shaped events: run days, class sessions, due dates. */
     public function events(): array
     {
