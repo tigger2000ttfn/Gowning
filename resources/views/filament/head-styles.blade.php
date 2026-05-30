@@ -136,6 +136,7 @@
 
     /* Manage dropdown (our custom) */
     html:not(.dark) .gqs-manage-menu { background: #fff !important; }
+    html:not(.dark) .gqs-manage-sec { color: #8A8A93 !important; border-top-color: #ECECEF !important; }
     html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
     html:not(.dark) .gqs-manage-link:hover { background: #F1F1F4 !important; }
 

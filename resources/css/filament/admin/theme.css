@@ -405,10 +405,18 @@ html.dark {
 .gqs-manage-menu {
     position: absolute; left: 0; top: calc(100% + 8px);
     min-width: 240px; padding: 7px;
+    max-height: 78vh; overflow-y: auto;
     background: var(--gqs-surface); border: 1px solid var(--gqs-border);
     border-radius: var(--gqs-radius); box-shadow: var(--gqs-menu-shadow);
     z-index: 50;
 }
+.gqs-manage-sec {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--gqs-text-dim, #9A9AA4); padding: 11px 12px 5px; margin-top: 4px;
+    border-top: 1px solid var(--gqs-border);
+}
+.gqs-manage-menu > .gqs-manage-sec:first-child,
+.gqs-manage-menu > .gqs-manage-link:first-child + .gqs-manage-sec { }
 .gqs-manage-link {
     display: flex; align-items: center; gap: 11px;
     padding: 10px 12px; border-radius: var(--gqs-radius-sm);
