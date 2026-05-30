@@ -19,7 +19,7 @@ class Personnel extends Model
     protected $fillable = [
         'employee_id', 'first_name', 'last_name', 'email',
         'phone', 'shift', 'supervisor', 'hire_date', 'badge_id', 'notes',
-        'department', 'job_title', 'is_active', 'user_id',
+        'department', 'job_title', 'is_active', 'user_id', 'lims_username',
     ];
 
     protected function casts(): array

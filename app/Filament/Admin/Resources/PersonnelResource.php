@@ -52,15 +52,16 @@ class PersonnelResource extends Resource
         return $schema->components([
             Wizard::make([
                 Step::make('Identity')->icon('heroicon-o-identification')
-                    ->description('Who they are')
                     ->columns(2)
                     ->schema([
                         TextInput::make('employee_id')->label('Employee ID')->required()->unique(ignoreRecord: true),
                         Toggle::make('is_active')->label('Active')->default(true),
-                        TextInput::make('first_name')->required(),
-                        TextInput::make('last_name')->required(),
-                        TextInput::make('email')->email(),
-                        TextInput::make('phone')->tel(),
+                        TextInput::make('first_name')->label('First Name')->required(),
+                        TextInput::make('last_name')->label('Last Name')->required(),
+                        TextInput::make('email')->label('Email Address')->email(),
+                        TextInput::make('phone')->label('Phone')->tel(),
+                        TextInput::make('lims_username')->label('LIMS Username')
+                            ->helperText('QC LabWare LIMS Login. Used To Match This Person When Importing From A LIMS Upload.'),
                         TextInput::make('badge_id')->label('Badge ID'),
                         DatePicker::make('hire_date')->label('Hire Date'),
                     ]),
@@ -160,6 +161,7 @@ class PersonnelResource extends Resource
                 TextColumn::make('employee_id')->icon('heroicon-m-identification')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('full_name')->label('Name')->searchable(['first_name', 'last_name']),
                 TextColumn::make('department')->icon('heroicon-m-building-office-2')->searchable()->toggleable(),
+                TextColumn::make('lims_username')->label('LIMS Username')->searchable()->toggleable()->placeholder('—'),
                 TextColumn::make('qualification.status')
                     ->label('Qualification')
                     ->badge()
