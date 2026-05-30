@@ -2,6 +2,8 @@
 
 namespace App\Filament\Admin\Concerns;
 
+use Illuminate\Contracts\View\View;
+
 /**
  * Gives a resource List page the GQS page-hero header (matching custom pages),
  * while keeping the standard Filament table + header actions intact.
@@ -12,13 +14,13 @@ trait GqsListHero
 {
     public function getView(): string { return 'filament.resource-list'; }
 
-    public function getHeading(): string { return ''; }       // hide default heading (hero replaces it)
-    public function getSubheading(): ?string { return null; }  // hero carries the subtitle
+    public function getHeading(): string { return ''; }
+    public function getSubheading(): ?string { return null; }
 
-    // Suppress Filament's default header block entirely so its header actions
-    // don't render a second time. Our view renders the hero + actions once.
-    public function getHeader(): ?\Illuminate\Contracts\Support\Htmlable
+    // Returning a (blank) view makes the page component take the truthy-header
+    // branch and skip its default header+actions block, so they don't render twice.
+    public function getHeader(): ?View
     {
-        return new \Illuminate\Support\HtmlString('');
+        return view('filament.empty-header');
     }
 }
