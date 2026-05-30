@@ -21,7 +21,7 @@
                         <div class="ccard-body">
                             <h3>{{ $session->trainingClass->name }}</h3>
                             <div class="ccard-meta">
-                                @if($session->start_time){{ \Illuminate\Support\Carbon::parse($session->start_time)->format('H:i') }} &middot; @endif
+                                @if($session->start_time){{ \Illuminate\Support\Carbon::parse($session->start_time)->format('H:i') }}@if($session->end_time)&ndash;{{ \Illuminate\Support\Carbon::parse($session->end_time)->format('H:i') }}@endif &middot; @endif
                                 {{ $session->location ?? 'TBD' }}
                             </div>
                             <div class="ccard-foot">
