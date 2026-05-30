@@ -38,7 +38,7 @@ class StatusBoard extends Page
 
     public function groupByOptions(): array
     {
-        return ['' => 'No Grouping', 'department' => 'Department', 'type' => 'Cycle Type'];
+        return ['' => 'No Grouping', 'department' => 'Department', 'job_title' => 'Job Title', 'type' => 'Cycle Type', 'due_window' => 'Due Window'];
     }
 
     public function departmentOptions(): array
@@ -75,7 +75,19 @@ class StatusBoard extends Page
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
                 'department' => $q->personnel?->department,
+                'job_title' => $q->personnel?->job_title,
                 'type' => $q->type?->label(),
+                'due_bucket' => (function () use ($q) {
+                    $d = $q->due_date;
+                    if (! $d) return 'No Due Date';
+                    $today = now()->startOfDay();
+                    $due = $d->copy()->startOfDay();
+                    if ($due->lt($today)) return 'Overdue';
+                    $days = (int) $today->diffInDays($due);
+                    if ($days <= 30) return 'Due ≤30 Days';
+                    if ($days <= 90) return 'Due ≤90 Days';
+                    return 'Later';
+                })(),
                 'meta' => $passes . '/' . $q->runs_required . ' runs',
                 'runs_done' => (int) $passes,
                 'runs_req' => (int) $q->runs_required,
@@ -99,6 +111,8 @@ class StatusBoard extends Page
             $failed = ($byStage['failed'] ?? collect())->map(fn ($q) => [
                 'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
+                'department' => $q->personnel?->department, 'job_title' => $q->personnel?->job_title,
+                'type' => $q->type?->label(), 'due_bucket' => $q->due_date ? 'Later' : 'No Due Date',
             ])->values()->all();
             $out[] = ['key' => 'failed', 'label' => \App\Models\WorkflowStatus::labelFor('run', 'failed', WorkflowStage::Failed->label()), 'color' => \App\Models\WorkflowStatus::colorFor('run', 'failed', WorkflowStage::Failed->color()), 'cards' => $failed];
         }
@@ -129,11 +143,21 @@ class StatusBoard extends Page
         if ($this->groupBy === '' || ! array_key_exists($this->groupBy, $this->groupByOptions())) {
             return [['label' => null, 'key' => '_all', 'stages' => $stages]];
         }
-        $field = $this->groupBy; // 'department' | 'type'
+        $field = match ($this->groupBy) {
+            'job_title'  => 'job_title',
+            'due_window' => 'due_bucket',
+            default      => $this->groupBy, // 'department' | 'type'
+        };
         $values = collect($stages)
             ->flatMap(fn ($l) => collect($l['cards'])->pluck($field))
             ->map(fn ($v) => ($v === null || $v === '') ? '—' : $v)
-            ->unique()->sort()->values()->all();
+            ->unique()->values()->all();
+        if ($this->groupBy === 'due_window') {
+            $rank = ['Overdue' => 0, 'Due ≤30 Days' => 1, 'Due ≤90 Days' => 2, 'Later' => 3, 'No Due Date' => 4, '—' => 5];
+            usort($values, fn ($a, $b) => ($rank[$a] ?? 9) <=> ($rank[$b] ?? 9));
+        } else {
+            sort($values);
+        }
         if (empty($values)) {
             return [['label' => null, 'key' => '_all', 'stages' => $stages]];
         }

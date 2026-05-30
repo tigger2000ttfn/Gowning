@@ -42,7 +42,7 @@ class ClassBoard extends Page
 
     public function groupByOptions(): array
     {
-        return ['' => 'No Grouping', 'department' => 'Department', 'class' => 'Class'];
+        return ['' => 'No Grouping', 'department' => 'Department', 'class' => 'Class', 'instructor' => 'Instructor', 'session_date' => 'Session Date'];
     }
 
     /**
@@ -55,11 +55,24 @@ class ClassBoard extends Page
         if ($this->groupBy === '' || ! array_key_exists($this->groupBy, $this->groupByOptions())) {
             return [['label' => null, 'key' => '_all', 'columns' => $cols]];
         }
-        $field = $this->groupBy; // 'department' | 'class'
+        $field = $this->groupBy; // 'department' | 'class' | 'instructor' | 'session_date'
         $values = collect($cols)
             ->flatMap(fn ($c) => collect($c['cards'])->pluck($field))
             ->map(fn ($v) => ($v === null || $v === '') ? '—' : $v)
-            ->unique()->sort()->values()->all();
+            ->unique()->values()->all();
+        if ($this->groupBy === 'session_date') {
+            // Sort the date bands chronologically (parallel Y-m-d key), '—' (no session) last.
+            $sortKey = [];
+            foreach ($cols as $col) {
+                foreach ($col['cards'] as $c) {
+                    $disp = ($c['session_date'] === null || $c['session_date'] === '') ? '—' : $c['session_date'];
+                    $sortKey[$disp] = $c['session_sort'] ?? '9999-12-31';
+                }
+            }
+            usort($values, fn ($a, $b) => ($sortKey[$a] ?? '9999-12-31') <=> ($sortKey[$b] ?? '9999-12-31'));
+        } else {
+            sort($values);
+        }
         if (empty($values)) {
             return [['label' => null, 'key' => '_all', 'columns' => $cols]];
         }
@@ -123,7 +136,7 @@ class ClassBoard extends Page
     public function getColumns(): array
     {
         $out = [];
-        $byStatus = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
+        $byStatus = ClassEnrollment::with(['personnel', 'classSession.trainingClass', 'classSession.instructorUser'])
             ->whereNotIn('status', ['historical', 'cancelled'])
             ->get()->groupBy('status');
         foreach ($this->lanes as $key => $meta) {
@@ -136,6 +149,9 @@ class ClassBoard extends Page
                 'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
                 'date' => $e->classSession?->session_date?->gmpDM(),
+                'instructor' => $e->classSession?->instructorUser?->name ?? $e->classSession?->instructor,
+                'session_date' => $e->classSession?->session_date?->gmp(),
+                'session_sort' => $e->classSession?->session_date?->format('Y-m-d'),
                 'status_label' => $label,
                 'status_color' => $color,
             ])->values()->all();
