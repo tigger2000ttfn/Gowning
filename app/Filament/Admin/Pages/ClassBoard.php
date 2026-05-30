@@ -56,6 +56,24 @@ class ClassBoard extends Page
         ];
     }
 
+    /** People who still need the gowning class and aren't signed up to any session yet. */
+    public function getNeedsClass(): array
+    {
+        $enrolled = ClassEnrollment::whereIn('status', ['signed_up', 'attended'])
+            ->pluck('personnel_id')->filter()->unique()->all();
+        return \App\Models\Qualification::with('personnel')
+            ->where('workflow_stage', \App\Enums\WorkflowStage::ClassPending->value)
+            ->whereNotIn('personnel_id', $enrolled)
+            ->get()
+            ->map(fn ($q) => [
+                'id' => $q->id,
+                'personnel_id' => $q->personnel_id,
+                'name' => $q->personnel?->full_name ?? 'Unknown',
+                'employee_id' => $q->personnel?->employee_id,
+                'department' => $q->personnel?->department,
+            ])->values()->all();
+    }
+
     public function getColumns(): array
     {
         $out = [];

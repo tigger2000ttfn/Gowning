@@ -65,6 +65,26 @@
             }
         }" x-init="init()" wire:key="cb-{{ now()->timestamp }}">
         <div class="sb-fullbleed"><div class="kanban-wrap">
+            {{-- Needs Class: people Class Pending, not yet signed up (informational, with quick enroll) --}}
+            @php $needs = $this->getNeedsClass(); @endphp
+            <div class="kanban-col cb-needs-col">
+                <div class="kanban-head" style="background:#8A0E22;">
+                    <span>Needs A Class</span><span class="kanban-count">{{ count($needs) }}</span>
+                </div>
+                <div class="kanban-lane">
+                    @forelse($needs as $card)
+                        <div class="kanban-card cb-needs-card" style="border-left-color:#8A0E22;">
+                            <div class="kanban-name">{{ $card['name'] }}</div>
+                            <div class="kanban-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
+                            <button wire:click="$set('addPersonnelId', {{ $card['personnel_id'] }}); $set('showAdd', true)"
+                                    class="cb-enroll-btn">Sign Up</button>
+                        </div>
+                    @empty
+                        <div class="gqs-empty" style="padding:14px;font-size:12px;">Everyone needing the class is signed up.</div>
+                    @endforelse
+                </div>
+            </div>
+
             @foreach ($this->getColumns() as $status => $col)
                 <div class="kanban-col">
                     <div class="kanban-head" style="background:{{ $col['color'] }};">
@@ -137,6 +157,10 @@
         .sb-fullbleed{width:100%;}
         .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:stretch;min-height:calc(100vh - 260px);}
         .kanban-col{flex:0 0 320px;display:flex;flex-direction:column;}
+        .cb-needs-col{flex:0 0 250px;}
+        .cb-needs-card{background:#FFF6F7;}
+        .dark .cb-needs-card{background:#241419;}
+        .cb-enroll-btn{margin-top:7px;font-size:11.5px;font-weight:700;padding:4px 11px;border-radius:6px;border:none;background:#A4123F;color:#fff;cursor:pointer;}
         .cb-archive-col{flex:0 0 48px;transition:flex-basis .18s;}
         .cb-archive-col.cb-archive-open{flex:0 0 300px;}
         .cb-archive-head{cursor:pointer;}
