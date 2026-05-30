@@ -15,6 +15,21 @@ class Qualification extends Model
 {
     use Auditable, SoftDeletes, GqsActivityLog;
 
+    protected static function booted(): void
+    {
+        // Central StageChanged automation: fire once whenever workflow_stage actually changes,
+        // no matter which code path moved it (auto-scheduler, approve, perform, results, drag).
+        static::updated(function (Qualification $q) {
+            if ($q->wasChanged('workflow_stage') && $q->workflow_stage) {
+                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::StageChanged, [
+                    'personnel' => $q->personnel,
+                    'qualification' => $q,
+                    'stage' => $q->workflow_stage instanceof \BackedEnum ? $q->workflow_stage->value : $q->workflow_stage,
+                ]);
+            }
+        });
+    }
+
     protected $fillable = [
         'personnel_id', 'type', 'status', 'runs_required',
         'runs_completed', 'qualified_date', 'due_date',

@@ -158,7 +158,6 @@ class StatusBoard extends Page
         }
         $q->save();
 
-        \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::StageChanged, ['personnel' => $q->personnel, 'qualification' => $q, 'stage' => $stage->value]);
 
         Notification::make()->success()->title('Stage updated')
             ->body(($q->personnel?->full_name ?? 'Card') . ' → ' . $stage->label())->send();

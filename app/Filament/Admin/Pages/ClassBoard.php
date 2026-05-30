@@ -146,7 +146,6 @@ class ClassBoard extends Page
                 $q->class_on_file = true;
                 $q->save();
                 \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::ClassCompleted, ['personnel' => $e->personnel, 'qualification' => $q]);
-                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::StageChanged, ['personnel' => $e->personnel, 'qualification' => $q, 'stage' => WorkflowStage::ClassComplete->value]);
             }
         }
     }
