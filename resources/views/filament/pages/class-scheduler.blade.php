@@ -328,14 +328,16 @@
                                 </div>
                             @else
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Tap a status to mark each person. Changes save automatically. Submit at the bottom when everyone is marked.</span>
+                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Tap a status to mark each person. Nothing is saved until you Sign &amp; Submit at the bottom · enrollees stay Signed Up until then.</span>
                                     <button type="button" wire:click="markAllAttended({{ $s->id }})" class="att-tog att-att">&check; Mark All Attended</button>
                                 </div>
                             @endif
 
                             <div class="att-list">
                                 @foreach($attendees as $row)
-                                    <div class="att-row {{ in_array($row['status'], ['attended','completed','pending_qa']) ? 'att-done' : ($row['status'] === 'no_show' ? 'att-absent' : ($row['status'] === 'rescheduled' ? 'att-resched' : '')) }}">
+                                    @php $aIntent = $this->attIntent[$row['id']] ?? null;
+                                         $tintKey = $submitted ? (in_array($row['status'], ['attended','completed','pending_qa']) ? 'attended' : ($row['status'] === 'no_show' ? 'no_show' : ($row['status'] === 'rescheduled' ? 'rescheduled' : null))) : $aIntent; @endphp
+                                    <div class="att-row {{ $tintKey === 'attended' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                         <div class="att-who">
                                             <div class="att-name">{{ $row['name'] }}</div>
                                             <div class="att-eid">{{ $row['employee_id'] }}</div>
@@ -351,11 +353,11 @@
                                         @else
                                             <div class="att-toggles">
                                                 <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'attended')"
-                                                        class="att-tog att-att {{ $row['status'] === 'attended' ? 'on' : '' }}">
+                                                        class="att-tog att-att {{ $aIntent === 'attended' ? 'on' : '' }}">
                                                     <span class="att-box"></span> Attended
                                                 </button>
                                                 <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'no_show')"
-                                                        class="att-tog att-no {{ $row['status'] === 'no_show' ? 'on' : '' }}">
+                                                        class="att-tog att-no {{ $aIntent === 'no_show' ? 'on' : '' }}">
                                                     <span class="att-box"></span> No-Show
                                                 </button>
                                                 <button type="button" class="att-tog att-res"

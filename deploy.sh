@@ -70,9 +70,17 @@ chmod -R 775 storage bootstrap/cache
 
 echo "==> Clearing caches"
 php artisan optimize:clear
+php artisan view:clear || true
 
-echo "==> Restarting Apache (full restart clears OPcache)"
+echo "==> Restarting PHP-FPM (if present) + Apache to flush OPcache"
+# Apache restart flushes OPcache for mod_php; if PHP runs under FPM, Apache restart
+# alone does NOT flush FPM's OPcache, so restart any installed php*-fpm too.
+for svc in php8.3-fpm php8.2-fpm php8.1-fpm php-fpm; do
+    systemctl restart "$svc" 2>/dev/null && echo "    restarted $svc" || true
+done
 systemctl restart apache2
+echo "==> Deploy complete. Deployed commit:"
+git log --oneline -1
 
 echo "==> Ensuring the Laravel scheduler cron is installed (drives the automation chain)"
 CRON_LINE="* * * * * cd $APP_DIR && php artisan schedule:run >> /dev/null 2>&1"

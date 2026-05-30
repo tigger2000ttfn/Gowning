@@ -61,7 +61,8 @@
     // Compliance (rare but important)
     $compliance = [];
     if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::RecordRuns) || $can(\App\Enums\Capability::ManageScheduling)) {
-        $compliance[] = ['Non-Conformances', \App\Filament\Admin\Resources\NonConformanceResource::getUrl(), 'heroicon-o-exclamation-triangle'];
+        // Non-Conformances tracker retired: the TrackWise NC-XXXX number is entered
+        // directly in the QCM analyst results/approval workflow, not managed here.
     }
     if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::SystemSettings)) {
         $compliance[] = ['Audit Trail', \App\Filament\Admin\Pages\AuditTrail::getUrl(), 'heroicon-o-document-magnifying-glass'];
