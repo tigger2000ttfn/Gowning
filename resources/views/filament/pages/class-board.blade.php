@@ -1,11 +1,18 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Gowning Class Board', 'subtitle' => 'Track class enrollments. Completing a class advances the person to the run pipeline.', 'icon' => 'heroicon-o-academic-cap'])
-
-    <div style="margin-bottom:14px;">
-        <button type="button" wire:click="$set('showAdd', true)"
-                style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
-            <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add Enrollment
-        </button>
+    <div class="sb-headrow">
+        <div class="sb-headrow-title">
+            <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-academic-cap" /></span>
+            <div class="pg-head-tx" style="min-width:0;">
+                <h1>Gowning Class Board</h1>
+                <p>Track class enrollments. Completing a class advances the person to the run pipeline.</p>
+            </div>
+        </div>
+        <div class="sb-headrow-filters">
+            <button type="button" wire:click="$set('showAdd', true)"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;height:36px;">
+                <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add Enrollment
+            </button>
+        </div>
     </div>
 
     @if($showAdd)

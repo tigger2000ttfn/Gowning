@@ -1,21 +1,19 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Qualification Status Board', 'subtitle' => 'Drag each person through the GMP pipeline, class to QA sign-off.', 'icon' => 'heroicon-o-squares-2x2'])
-
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:16px;padding:0 32px;">
-        <div style="flex:1;min-width:180px;max-width:300px;">
-            <label class="gqs-flbl">Search</label>
-            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Name or employee ID" class="gqs-fld">
+    <div class="sb-headrow">
+        <div class="sb-headrow-title">
+            <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-squares-2x2" /></span>
+            <div class="pg-head-tx" style="min-width:0;">
+                <h1>Qualification Status Board</h1>
+                <p>Drag each person through the GMP pipeline, class to QA sign-off.</p>
+            </div>
         </div>
-        <div style="min-width:170px;">
-            <label class="gqs-flbl">Department</label>
-            <select wire:model.live="deptFilter" class="gqs-fld">
+        <div class="sb-headrow-filters">
+            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search name or ID" class="gqs-fld sb-hf-search">
+            <select wire:model.live="deptFilter" class="gqs-fld sb-hf-sel">
                 <option value="">All Departments</option>
                 @foreach($this->departmentOptions() as $d)<option value="{{ $d }}">{{ $d }}</option>@endforeach
             </select>
-        </div>
-        <div style="min-width:150px;">
-            <label class="gqs-flbl">Cycle Type</label>
-            <select wire:model.live="typeFilter" class="gqs-fld">
+            <select wire:model.live="typeFilter" class="gqs-fld sb-hf-sel">
                 <option value="">All Types</option>
                 <option value="initial">Initial</option>
                 <option value="annual">Annual</option>

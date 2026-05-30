@@ -122,11 +122,33 @@
     .fi-page-content:has(.pg-head) > .fi-header,
     section:has(> .pg-head) > header.fi-header { display: none !important; }
     /* Also kill the top gap the empty header leaves */
-    .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 20px !important; }
 
     /* ===== TIGHTEN top-of-page wasted space ===== */
     .fi-page-header-main-ctn { padding-top: 12px !important; }
     .fi-main { padding-top: 8px !important; }
+
+    /* ===== TIGHTEN VERTICAL RHYTHM (kill wasted gaps page-wide) =====
+       The page-hero, the Filament content gap, and the table's filter/search bar
+       were each adding space. Compress them so tables/kanbans sit close to the header. */
+    .pg-head { padding: 4px 0 10px !important; margin: 0 0 12px !important; }
+    /* Filament stacks page content with a vertical gap; shrink it */
+    .fi-page-content { gap: 0.75rem !important; }
+    .fi-page > section.fi-page-content > * + * { margin-top: 0 !important; }
+    /* table toolbar (search + filter triggers) - trim its padding */
+    .fi-ta-header-ctn { padding-top: 0 !important; }
+    .fi-ta-header { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+    /* the gap the empty header leaves above our hero */
+    .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 10px !important; }
+
+    /* ===== KANBAN HEADER ROW: hero + filters on ONE line (filters are secondary) ===== */
+    .sb-headrow { display:flex; align-items:center; justify-content:space-between; gap:18px;
+        flex-wrap:wrap; padding:6px 32px 12px; margin-bottom:12px;
+        border-bottom:2px solid var(--gqs-border,#DADADF); }
+    .sb-headrow-title { display:flex; align-items:center; gap:14px; min-width:0; flex:1; }
+    .sb-headrow-filters { display:flex; align-items:center; gap:8px; flex:0 0 auto; flex-wrap:wrap; }
+    .sb-hf-search { width:200px !important; height:36px !important; }
+    .sb-hf-sel { width:auto !important; min-width:150px; height:36px !important; }
+    @media (max-width:820px){ .sb-headrow-filters{ width:100%; } .sb-hf-search{ flex:1; width:auto !important; } }
 
     /* ===== LIGHT-THEME MENU/DROPDOWN CONTRAST (comprehensive) =====
        The dark-topbar text rule (.fi-topbar a {color:#ECECF0}) bleeds into menus that
