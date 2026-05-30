@@ -41,9 +41,24 @@ Artisan::command('gqs:flush-emails', function () {
     foreach ($pending as $email) {
         if (! $email->to_email) { continue; }
         try {
-            \Illuminate\Support\Facades\Mail::raw($email->body, function ($m) use ($email) {
-                $m->to($email->to_email, $email->to_name)->subject($email->subject);
-            });
+            if ($email->body_html) {
+                $html = view('emails.layout', [
+                    'subject' => $email->subject,
+                    'bodyHtml' => $email->body_html,
+                ])->render();
+                \Illuminate\Support\Facades\Mail::html($html, function ($m) use ($email) {
+                    $m->to($email->to_email, $email->to_name)->subject($email->subject);
+                });
+            } else {
+                // plain-text fallback, still wrapped in the branded layout
+                $html = view('emails.layout', [
+                    'subject' => $email->subject,
+                    'bodyHtml' => nl2br(e($email->body)),
+                ])->render();
+                \Illuminate\Support\Facades\Mail::html($html, function ($m) use ($email) {
+                    $m->to($email->to_email, $email->to_name)->subject($email->subject);
+                });
+            }
             $email->update(['sent_at' => now()]);
             $sent++;
         } catch (\Throwable $e) {
