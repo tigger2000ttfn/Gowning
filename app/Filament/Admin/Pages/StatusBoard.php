@@ -337,21 +337,28 @@ class StatusBoard extends Page
                 $latest->save();
             }
         }
-        // Keep the status pill honest: it must reflect the lane the card now sits in,
-        // not a stale value from a prior cycle. (QA Sign-off already set Qualified above.)
+        // Reversibility: moving a card BACKWARD must undo the disposition a forward move set.
+        // Any destination other than Archived un-archives it; dropping below QA Sign-off clears
+        // the qualified stamp unless this cycle's runs actually still qualify them.
+        if ($stage !== WorkflowStage::Archived) {
+            $q->archived_at = null;
+        }
         if ($stage === WorkflowStage::Archived) {
             $q->status = \App\Enums\QualificationStatus::Qualified;
         } elseif ($stage !== WorkflowStage::QaSignoff) {
             $passes = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)
                 ->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
-            if ($q->due_date && $q->due_date->isPast()) {
-                $q->status = \App\Enums\QualificationStatus::Lapsed;
-            } elseif ($q->runs_required > 0 && $passes >= (int) $q->runs_required && $q->due_date) {
+            $stillQualified = $q->runs_required > 0 && $passes >= (int) $q->runs_required
+                && $q->due_date && ! $q->due_date->isPast();
+            if ($stillQualified) {
                 $q->status = \App\Enums\QualificationStatus::Qualified;
-            } elseif ($passes > 0) {
-                $q->status = \App\Enums\QualificationStatus::InProgress;
             } else {
-                $q->status = \App\Enums\QualificationStatus::Pending;
+                // not (yet) qualified this cycle: drop the qualified stamp so the card no longer
+                // reads Qualified. due_date is left intact for access/lifecycle logic.
+                $q->qualified_date = null;
+                $q->status = ($q->due_date && $q->due_date->isPast())
+                    ? \App\Enums\QualificationStatus::Lapsed
+                    : ($passes > 0 ? \App\Enums\QualificationStatus::InProgress : \App\Enums\QualificationStatus::Pending);
             }
         }
 
