@@ -17,7 +17,7 @@
                                 <td style="font-weight:600;">{{ $row['employee_id'] }}</td>
                                 <td>{{ $row['name'] }}</td>
                                 <td>{{ $row['cleanroom'] }}</td>
-                                <td>{{ $row['time'] ?? '—' }}</td>
+                                <td>{{ $row['time'] ?? '-' }}</td>
                                 <td>
                                     <span class="gqs-pill {{ [
                                         'requested' => 'gqs-pill-gold',
