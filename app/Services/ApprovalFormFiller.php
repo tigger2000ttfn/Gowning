@@ -46,17 +46,17 @@ class ApprovalFormFiller
         if (! empty($d['personnel_name'])) $this->text($pdf, 175, 135, $d['personnel_name']);
 
         // Section 2: Qualification type checkboxes
-        if (! empty($d['is_initial'])) $this->check($pdf, 123, 191);
-        if (! empty($d['is_requal']))  $this->check($pdf, 385, 191);
+        if (! empty($d['is_initial'])) $this->check($pdf, 123, 180);
+        if (! empty($d['is_requal']))  $this->check($pdf, 385, 180);
 
         // Section 2 results: left group = 3 consecutive runs (initial), right group = met spec (requal)
-        $this->resultBoxes($pdf, $d['result_initial'] ?? null, 125, 166, 203, 247);
-        $this->resultBoxes($pdf, $d['result_requal'] ?? null, 377, 418, 455, 247);
+        $this->resultBoxes($pdf, $d['result_initial'] ?? null, 125, 166, 203, 236);
+        $this->resultBoxes($pdf, $d['result_requal'] ?? null, 377, 418, 455, 236);
 
         // Section 3: verification checkboxes
-        if (($d['passed'] ?? null) === true)  $this->check($pdf, 59, 303);   // passing criteria met
-        if (($d['passed'] ?? null) === false) $this->check($pdf, 59, 339);   // did NOT meet
-        if (! empty($d['results_attached']))  $this->check($pdf, 59, 376);   // all results attached
+        if (($d['passed'] ?? null) === true)  $this->check($pdf, 59, 291);   // passing criteria met
+        if (($d['passed'] ?? null) === false) $this->check($pdf, 59, 328);   // did NOT meet
+        if (! empty($d['results_attached']))  $this->check($pdf, 59, 364);   // all results attached
 
         // QCM Completed By / Date  (value cell right of x=165; date cell right of x=390)
         if (! empty($d['qcm_by']))   $this->text($pdf, 175, 408, $d['qcm_by']);
@@ -67,7 +67,7 @@ class ApprovalFormFiller
         if (! empty($d['qa_date']))  $this->text($pdf, 398, 434, $d['qa_date']);
 
         // Section 4: registered checkbox, next sample date, QA completed by/date
-        if (! empty($d['registered']))        $this->check($pdf, 59, 485);
+        if (! empty($d['registered']))        $this->check($pdf, 59, 473);
         if (! empty($d['next_sample_date']))  $this->text($pdf, 398, 517, $d['next_sample_date']);
         if (! empty($d['qa_completed_by']))   $this->text($pdf, 175, 543, $d['qa_completed_by']);
         if (! empty($d['qa_completed_date'])) $this->text($pdf, 398, 543, $d['qa_completed_date']);
