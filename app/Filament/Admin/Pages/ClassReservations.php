@@ -54,11 +54,10 @@ class ClassReservations extends Page
 
     public function setStatus(int $id, string $status): void
     {
-        $e = ClassEnrollment::find($id);
+        $e = ClassEnrollment::with('personnel')->find($id);
         if (! $e) return;
         if (! in_array($status, ['signed_up', 'attended', 'completed', 'no_show'], true)) return;
-        $e->status = $status;
-        $e->save();
-        Notification::make()->success()->title('Enrollment updated')->send();
+        $e->markStatus($status, \Illuminate\Support\Facades\Auth::id());
+        Notification::make()->success()->title('Attendance updated')->send();
     }
 }

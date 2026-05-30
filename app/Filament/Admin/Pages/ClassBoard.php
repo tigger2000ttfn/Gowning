@@ -131,22 +131,7 @@ class ClassBoard extends Page
         if (! $e) {
             return;
         }
-        $e->status = $toStatus;
-        $e->save();
-
-        // Completing the gowning class advances the person to ClassComplete in the pipeline
-        if ($toStatus === 'completed' && $e->personnel) {
-            $q = Qualification::firstOrCreate(
-                ['personnel_id' => $e->personnel->id],
-                ['type' => 'initial', 'status' => 'in_progress', 'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3), 'runs_completed' => 0]
-            );
-            if (in_array($q->workflow_stage?->value, [null, 'class_pending'], true)) {
-                $q->workflow_stage = WorkflowStage::ClassComplete;
-                $q->stage_changed_at = now();
-                $q->class_on_file = true;
-                $q->save();
-                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::ClassCompleted, ['personnel' => $e->personnel, 'qualification' => $q]);
-            }
-        }
+        // centralized: stamps who/when and advances the qualification consistently
+        $e->markStatus($toStatus, \Illuminate\Support\Facades\Auth::id());
     }
 }
