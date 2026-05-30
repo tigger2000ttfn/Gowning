@@ -29,6 +29,7 @@ class QualificationTimeline extends Page
 
     public string $search = '';
     public string $deptFilter = '';
+    public string $statusFilter = '';
     public string $viewMode = 'Month';   // Frappe Gantt view_mode: Day/Week/Month/Quarter Day...
 
     public function departmentOptions(): array
@@ -50,7 +51,8 @@ class QualificationTimeline extends Page
                   ->orWhere('employee_id', 'ilike', '%' . $this->search . '%')))
             ->when($this->deptFilter !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('department', $this->deptFilter)))
-            ->limit(80)->get();
+            ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter))
+            ->limit(300)->get();
 
         $tasks = [];
         foreach ($quals as $q) {
@@ -63,19 +65,23 @@ class QualificationTimeline extends Page
             if ($end->lte($start)) { $end = $start->addDays(7); }
 
             $req = max(1, (int) $q->runs_required);
+            $statusVal = $q->status instanceof \BackedEnum ? $q->status->value : $q->status;
             $progress = min(100, (int) round(((int) $q->runs_completed / $req) * 100));
-            if ($q->status === 'qualified') { $progress = 100; }
+            if ($statusVal === 'qualified') { $progress = 100; }
 
-            $class = match ($q->status) {
+            $class = match ($statusVal) {
                 'qualified' => 'gantt-qualified',
                 'lapsed' => 'gantt-lapsed',
                 default => 'gantt-active',
             };
 
+            $stageVal = $q->workflow_stage instanceof \BackedEnum ? $q->workflow_stage->value : $q->workflow_stage;
+            $stageLabel = \App\Models\WorkflowStatus::labelFor('run', (string) $stageVal, $q->workflow_stage?->label() ?? (string) $statusVal);
+
             $tasks[] = [
                 'id' => 'q' . $q->id,
-                'name' => ($q->personnel?->full_name ?? 'Unknown')
-                    . ' · ' . ($q->workflow_stage?->label() ?? $q->status),
+                'name' => ($q->personnel?->full_name ?? 'Unknown') . '  ·  ' . $stageLabel
+                    . '  ·  ' . (int) $q->runs_completed . '/' . $req . ' runs',
                 'start' => $start->format('Y-m-d'),
                 'end' => $end->format('Y-m-d'),
                 'progress' => $progress,
