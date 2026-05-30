@@ -6,14 +6,18 @@
         background-color: #1C1C21 !important;
         border-bottom: 2px solid #A4123F !important;
     }
-    .fi-topbar .fi-icon-btn,
-    .fi-topbar .fi-icon-btn svg,
-    .fi-topbar .fi-dropdown-trigger,
+    .fi-topbar > .fi-icon-btn,
+    .fi-topbar .fi-icon-btn:not(.fi-dropdown-panel *),
+    .fi-topbar .fi-icon-btn:not(.fi-dropdown-panel *) svg,
+    .fi-topbar > * .fi-dropdown-trigger,
     .fi-topbar .fi-user-menu-trigger,
-    .fi-topbar a,
+    .fi-topbar > nav a,
     .fi-topbar .fi-global-search-field input {
         color: #ECECF0 !important;
     }
+    /* but NEVER force light text inside an open dropdown panel */
+    .fi-topbar .fi-dropdown-panel a,
+    .fi-topbar .fi-dropdown-panel button { color: #1A1A1F !important; }
     .fi-topbar .fi-global-search-field input::placeholder { color: #9A9AA4 !important; }
     .fi-topbar .fi-global-search-field {
         background-color: rgba(255,255,255,.07) !important;
@@ -63,19 +67,50 @@
     .fi-page-header-main-ctn { padding-top: 12px !important; }
     .fi-main { padding-top: 8px !important; }
 
-    /* Manage dropdown links: dark text in light theme (the --gqs-text var resolves too light) */
-    html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
+    /* ===== LIGHT-THEME MENU/DROPDOWN CONTRAST (comprehensive) =====
+       The dark-topbar text rule (.fi-topbar a {color:#ECECF0}) bleeds into menus that
+       open from the topbar (Manage, avatar/user menu, theme switcher, notifications),
+       making text/icons invisible on the white panel. Force dark text+icons in light theme.
+       Scoped to the PANELS (not the topbar triggers) so the dark topbar itself is unaffected. */
+
+    /* Manage dropdown (our custom) */
     html:not(.dark) .gqs-manage-menu { background: #fff !important; }
+    html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
     html:not(.dark) .gqs-manage-link:hover { background: #F1F1F4 !important; }
 
-    /* Dropdown menu items: readable dark text on white (light theme) */
+    /* Filament dropdown panels: user/avatar menu, notifications, any fi-dropdown */
+    html:not(.dark) .fi-dropdown-panel,
+    html:not(.dark) .fi-dropdown-list {
+        background-color: #fff !important;
+    }
+    html:not(.dark) .fi-dropdown-panel a,
+    html:not(.dark) .fi-dropdown-panel button,
     html:not(.dark) .fi-dropdown-list-item,
     html:not(.dark) .fi-dropdown-list-item-label,
+    html:not(.dark) .fi-dropdown-list-item .fi-dropdown-list-item-label,
     html:not(.dark) .fi-dropdown-list a,
-    html:not(.dark) .fi-dropdown-panel .fi-dropdown-list-item-label {
+    html:not(.dark) .fi-user-menu .fi-dropdown-list-item-label {
         color: #1A1A1F !important;
     }
+    /* icons inside light-theme dropdown panels (theme switcher sun/moon, menu icons) */
+    html:not(.dark) .fi-dropdown-panel svg,
+    html:not(.dark) .fi-dropdown-list-item-icon,
+    html:not(.dark) .fi-dropdown-list-item svg {
+        color: #5A5A62 !important;
+    }
     html:not(.dark) .fi-dropdown-list-item:hover { background-color: #F1F1F4 !important; }
+
+    /* Theme switcher buttons (sun/moon) - they sit in a dropdown panel on white */
+    html:not(.dark) .fi-theme-switcher-btn svg { color: #5A5A62 !important; }
+    html:not(.dark) .fi-theme-switcher-btn.fi-active svg { color: #A4123F !important; }
+
+    /* Notifications panel text on white */
+    html:not(.dark) .fi-no-notification,
+    html:not(.dark) .fi-no-notification-title,
+    html:not(.dark) .fi-no-notification-body {
+        color: #1A1A1F !important;
+    }
+    html:not(.dark) .fi-no-notification-body { color: #5A5A62 !important; }
 
 
     /* Back To Login link on reset page - force Title Case appearance */
