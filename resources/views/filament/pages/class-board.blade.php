@@ -12,9 +12,12 @@
                 <x-filament::icon icon="heroicon-m-arrow-path" style="width:15px;height:15px;"/> Refresh
             </button>
             <button type="button" wire:click="$set('showAdd', true)"
-                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;height:36px;">
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;height:40px;">
                 <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add Enrollment
             </button>
+            <select wire:model.live="groupBy" class="gqs-fld sb-hf-sel" title="Group cards into swimlanes">
+                @foreach($this->groupByOptions() as $k => $label)<option value="{{ $k }}">{{ $k === '' ? 'No Grouping' : 'Group: ' . $label }}</option>@endforeach
+            </select>
         </div>
     </div>
 
@@ -74,6 +77,7 @@
                 });
             }
         }" x-init="init()">
+        @if($this->groupBy === '')
         <div class="sb-fullbleed"><div class="kanban-wrap">
             {{-- Needs Class: people Class Pending, not yet signed up (informational, with quick enroll) --}}
             @php $needs = $this->getNeedsClass(); @endphp
@@ -96,21 +100,7 @@
             </div>
 
             @foreach ($this->getColumns() as $status => $col)
-                <div class="kanban-col">
-                    <div class="kanban-head" style="background:{{ $col['color'] }};">
-                        <span>{{ $col['label'] }}</span><span class="kanban-count">{{ count($col['cards']) }}</span>
-                    </div>
-                    <div class="kanban-lane" data-lane="{{ $status }}">
-                        @foreach ($col['cards'] as $card)
-                            <div class="kanban-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $col['color'] }};">
-                                <div class="kanban-name">{{ $card['name'] }}</div>
-                                <div class="kanban-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
-                                @if($card['class'])<div class="kanban-slot">{{ $card['class'] }}@if($card['date']) · {{ $card['date'] }}@endif</div>@endif
-                                <span class="cb-pill" style="background:{{ $card['status_color'] }};">{{ $card['status_label'] }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
+                @include('filament.partials.cb-column', ['status' => $status, 'col' => $col])
             @endforeach
 
             {{-- Archive: far-right collapsed lane (completed enrollments) --}}
@@ -132,6 +122,20 @@
                 </div>
             </div>
         </div></div>
+        @else
+        <div class="sb-fullbleed"><div class="sb-gpane"><div class="sb-gboard">
+            @foreach($this->getSwimlanes() as $swim)
+                <div class="sb-swim">
+                    <div class="sb-glabel"><span>{{ $swim['label'] }}</span><span class="sb-gcount">{{ $swim['count'] ?? 0 }}</span></div>
+                    <div class="sb-grow">
+                        @foreach($swim['columns'] as $status => $col)
+                            @include('filament.partials.cb-column', ['status' => $status, 'col' => $col])
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
+        </div></div></div>
+        @endif
     </div>
 
     <script src="{{ asset('vendor/sortable/Sortable.min.js') }}?v={{ @filemtime(public_path('vendor/sortable/Sortable.min.js')) }}"></script>

@@ -38,6 +38,49 @@ class ClassBoard extends Page
         'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
     ];
 
+    public string $groupBy = '';
+
+    public function groupByOptions(): array
+    {
+        return ['' => 'No Grouping', 'department' => 'Department', 'class' => 'Class'];
+    }
+
+    /**
+     * Swimlanes: the same status columns split into horizontal bands by a grouping
+     * field (department or class). No grouping = a single band (the whole board).
+     */
+    public function getSwimlanes(): array
+    {
+        $cols = $this->getColumns();
+        if ($this->groupBy === '' || ! array_key_exists($this->groupBy, $this->groupByOptions())) {
+            return [['label' => null, 'key' => '_all', 'columns' => $cols]];
+        }
+        $field = $this->groupBy; // 'department' | 'class'
+        $values = collect($cols)
+            ->flatMap(fn ($c) => collect($c['cards'])->pluck($field))
+            ->map(fn ($v) => ($v === null || $v === '') ? '—' : $v)
+            ->unique()->sort()->values()->all();
+        if (empty($values)) {
+            return [['label' => null, 'key' => '_all', 'columns' => $cols]];
+        }
+        $lanes = [];
+        foreach ($values as $val) {
+            $count = 0;
+            $forGroup = [];
+            foreach ($cols as $status => $col) {
+                $col['cards'] = array_values(array_filter($col['cards'], function ($c) use ($field, $val) {
+                    $cv = $c[$field] ?? null;
+                    $cv = ($cv === null || $cv === '') ? '—' : $cv;
+                    return $cv === $val;
+                }));
+                $count += count($col['cards']);
+                $forGroup[$status] = $col;
+            }
+            $lanes[] = ['label' => $val, 'count' => $count, 'key' => \Illuminate\Support\Str::slug($val) ?: 'na', 'columns' => $forGroup];
+        }
+        return $lanes;
+    }
+
     /** Historical (archived completed) enrollments, shown in a collapsed far-right lane.
      *  An automation will move Completed -> Historical after a retention period. */
     public function getArchive(): array

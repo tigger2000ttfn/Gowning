@@ -228,6 +228,19 @@
     .sb-hf-sel { width:auto !important; min-width:150px; height:40px !important; line-height:1.4; padding-top:7px !important; padding-bottom:7px !important; }
     @media (max-width:820px){ .sb-headrow-filters{ width:100%; } .sb-hf-search{ flex:1; width:auto !important; } }
 
+    /* Kanban swimlanes (Status Board + Class Board grouped views) - one scroll pane, horizontal scrollbar pinned at the bottom */
+    .sb-gpane{ overflow:auto; height:calc(100vh - 178px); min-height:380px; padding:0 32px 0; }
+    .sb-gboard{ display:flex; flex-direction:column; gap:20px; width:max-content; min-width:100%; padding-bottom:16px; }
+    .sb-swim{ display:flex; flex-direction:column; gap:8px; }
+    .sb-glabel{ position:sticky; left:0; display:inline-flex; align-items:center; gap:9px; font-weight:800; font-size:13.5px;
+        color:var(--gqs-text,#1A1A1F); padding:5px 12px; background:linear-gradient(90deg,rgba(164,18,63,.10),rgba(164,18,63,0));
+        border-left:4px solid #A4123F; border-radius:5px; width:max-content; }
+    .dark .sb-glabel{ color:#ECECF0; background:linear-gradient(90deg,rgba(164,18,63,.28),rgba(164,18,63,0)); }
+    .sb-gcount{ min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:#A4123F; color:#fff; font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; }
+    .sb-grow{ display:flex; gap:12px; align-items:flex-start; }
+    .sb-grow .sb-col, .sb-grow .kanban-col{ max-height:none; }
+    .sb-grow .sb-lane, .sb-grow .kanban-lane{ overflow:visible; }
+
     /* ===== LIGHT-THEME MENU/DROPDOWN CONTRAST (comprehensive) =====
        The dark-topbar text rule (.fi-topbar a {color:#ECECF0}) bleeds into menus that
        open from the topbar (Manage, avatar/user menu, theme switcher, notifications),
