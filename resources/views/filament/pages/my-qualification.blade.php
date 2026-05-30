@@ -1,5 +1,10 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'My Qualification', 'subtitle' => 'Your status and run history.', 'icon' => 'heroicon-o-identification'])
+
+    @if($this->rescheduleAction->isVisible())
+        <div style="margin-bottom:16px;">{{ $this->rescheduleAction }}</div>
+    @endif
+    <x-filament-actions::modals />
     @if (! $person)
         <div style="padding:24px;border:1px dashed var(--gray-300);border-radius:12px;">
             <p>No personnel record is linked to your account yet. An administrator can link
