@@ -4,7 +4,12 @@
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-calendar-days" /></span>
             <div class="pg-head-tx" style="min-width:0;">
                 <h1>Run Scheduler</h1>
-                <p>Schedule cleanroom run days and run the roster on the day.</p>
+                <p>@switch($tab)
+                    @case('overview')Who needs a run, and the state of the pipeline. Book waiting people here.@break
+                    @case('schedule')Create and manage cleanroom run days. Set capacity, analyst, and repeat dates.@break
+                    @case('reservations')Approve requests and book people onto run days.@break
+                    @case('roster')Take attendance on the day: mark Present, No-Show, or Reschedule, then enter results.@break
+                @endswitch</p>
             </div>
         </div>
         <div class="sb-headrow-filters">
@@ -12,7 +17,7 @@
                 <button type="button" wire:click="$set('tab','overview')" class="gqs-tab @if($tab==='overview') on @endif">Overview</button>
                 <button type="button" wire:click="$set('tab','schedule')" class="gqs-tab @if($tab==='schedule') on @endif">Run Days</button>
                 <button type="button" wire:click="$set('tab','reservations')" class="gqs-tab @if($tab==='reservations') on @endif">Reservations</button>
-                <button type="button" wire:click="$set('tab','roster')" class="gqs-tab @if($tab==='roster') on @endif">Roster</button>
+                <button type="button" wire:click="$set('tab','roster')" class="gqs-tab @if($tab==='roster') on @endif">Attendance</button>
             </div>
         </div>
     </div>
