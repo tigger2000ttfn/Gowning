@@ -3,7 +3,17 @@
     $announcements = \App\Models\Announcement::where('is_active', true)->latest()->limit(8)->get();
     $canPost = auth()->user()?->hasCapability(Capability::ManageClasses)
         || auth()->user()?->hasCapability(Capability::ManageUsers);
+    $unreadMsgs = \App\Models\Message::where('recipient_id', auth()->id())->whereNull('read_at')->count();
+    $msgUrl = \App\Filament\Admin\Pages\Messages::getUrl();
 @endphp
+{{-- Direct messages icon (links to the Messages page) --}}
+<a href="{{ $msgUrl }}" class="fi-icon-btn fi-size-md" title="Messages"
+   style="position:relative;display:flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;text-decoration:none;">
+    <x-filament::icon icon="heroicon-o-chat-bubble-left-right" style="width:1.25rem;height:1.25rem;color:#ECECF0;" />
+    @if($unreadMsgs)
+        <span style="position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:#C8102E;color:#fff;font-size:9.5px;font-weight:800;display:flex;align-items:center;justify-content:center;line-height:1;">{{ $unreadMsgs > 9 ? '9+' : $unreadMsgs }}</span>
+    @endif
+</a>
 <div x-data="{ open: false }" class="gqs-msg" style="position:relative;">
     <button @click="open = !open" type="button" class="fi-icon-btn fi-size-md" title="Announcements"
             style="position:relative;display:flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;">
