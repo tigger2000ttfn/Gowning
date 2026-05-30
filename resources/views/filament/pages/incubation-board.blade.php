@@ -56,7 +56,7 @@
         @endunless
         <div class="gqs-panel">
             <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clipboard-document-check"/> Ready For Result Evaluation
-                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $evaluation->count() }} awaiting results</span>
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $evaluation->count() }} Awaiting Results</span>
             </div>
             <div class="gqs-panel-body">
                 @if($evaluation->isEmpty())

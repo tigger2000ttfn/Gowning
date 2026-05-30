@@ -16,7 +16,7 @@
         <div class="gqs-panel">
             <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $group['title'] }}
                 <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;display:flex;align-items:center;gap:10px;">
-                    {{ count($group['rows']) }} enrolled · {{ $group['seats'] }}/{{ $group['capacity'] }} seats left
+                    {{ count($group['rows']) }} Enrolled · {{ $group['seats'] }}/{{ $group['capacity'] }} Seats Left
                     @if($group['submitted'])<span class="gqs-pill gqs-pill-green">Submitted</span>@endif
                     <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}?attend={{ $group['id'] }}" class="rd-act rd-act-magenta" style="text-decoration:none;">Attendance Sheet</a>
                 </span>

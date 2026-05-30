@@ -219,7 +219,7 @@
                         <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-academic-cap"/></span>{{ $ds->trainingClass?->name }} · Session</div>
                         <div class="gqs-modal-body">
                             @if($dlocked)
-                                <div style="padding:10px 12px;background:#E9F7EF;border:1px solid #BFE6CE;border-radius:8px;font-size:12.5px;color:#1C5E3A;">Attendance Submitted · {{ count($this->sessionAttendees($detailSessionId)) }} enrolled. This session is locked from editing.</div>
+                                <div style="padding:10px 12px;background:#E9F7EF;border:1px solid #BFE6CE;border-radius:8px;font-size:12.5px;color:#1C5E3A;">Attendance Submitted · {{ count($this->sessionAttendees($detailSessionId)) }} Enrolled. This Session Is Locked From Editing.</div>
                             @else
                                 @php $enrolled = $this->sessionAttendees($detailSessionId); @endphp
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -293,8 +293,19 @@
                         <x-filament::icon icon="heroicon-m-academic-cap"/>
                         <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('l, M j, Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</span>
                         <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:12px;font-weight:600;opacity:.9;">{{ $s->instructorUser?->name ?? $s->instructor ?? 'No Instructor' }}</span>
-                            @if($submitted)<span class="gqs-pill gqs-pill-green">Submitted</span>@endif
+                            @if($submitted)
+                                <span style="font-size:12px;font-weight:600;opacity:.9;">Trainer: {{ $s->instructorUser?->name ?? $s->instructor ?? 'None' }}</span>
+                                <span class="gqs-pill gqs-pill-green">Submitted</span>
+                            @else
+                                <label style="font-size:12px;font-weight:600;opacity:.9;">Trainer</label>
+                                <select wire:change="setAttendanceTrainer({{ $s->id }}, $event.target.value)"
+                                        style="font-size:12px;padding:5px 8px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:7px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
+                                    <option value="">No Trainer</option>
+                                    @foreach($this->instructorOptions() as $tid => $tname)
+                                        <option value="{{ $tid }}" @selected($s->assigned_instructor_id == $tid)>{{ $tname }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </span>
                     </div>
                     <div class="gqs-panel-body" style="padding:14px 16px;">
@@ -316,7 +327,7 @@
 
                             <div class="att-list">
                                 @foreach($attendees as $row)
-                                    <div class="att-row">
+                                    <div class="att-row {{ in_array($row['status'], ['attended','completed','pending_qa']) ? 'att-done' : ($row['status'] === 'no_show' ? 'att-absent' : ($row['status'] === 'rescheduled' ? 'att-resched' : '')) }}">
                                         <div class="att-who">
                                             <div class="att-name">{{ $row['name'] }}</div>
                                             <div class="att-eid">{{ $row['employee_id'] }}</div>
@@ -333,11 +344,11 @@
                                             <div class="att-toggles">
                                                 <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'attended')"
                                                         class="att-tog att-att {{ $row['status'] === 'attended' ? 'on' : '' }}">
-                                                    @if($row['status'] === 'attended')&check; @endif Attended
+                                                    <span class="att-box"></span> Attended
                                                 </button>
                                                 <button type="button" wire:click="markAttendance({{ $row['id'] }}, 'no_show')"
                                                         class="att-tog att-no {{ $row['status'] === 'no_show' ? 'on' : '' }}">
-                                                    @if($row['status'] === 'no_show')&check; @endif No-Show
+                                                    <span class="att-box"></span> No-Show
                                                 </button>
                                                 <button type="button" class="att-tog att-res"
                                                         wire:click="openReschedule({{ $row['id'] }})">Reschedule</button>
@@ -354,7 +365,7 @@
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
                                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">Save &amp; Close</button>
                                     <button type="button" class="gqs-btn gqs-btn-primary"
-                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance To QA</button>
+                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Trainer of record: {{ addslashes($s->instructorUser?->name ?? auth()->user()->name . ' (you, the signer)') }}. Submitting signs the attendance, locks the session, and sends everyone marked Attended to the QA Classroom Approval queue. If no trainer is set, you are recorded as the trainer.', 'Submit To QA')">Submit Attendance To QA</button>
                                 </div>
                             @endif
                         @endif

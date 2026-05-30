@@ -10,16 +10,8 @@
                 &middot; {{ $session->seatsLeft() }} seats left</p>
             <form method="POST" action="{{ route('public.signup.store', $session) }}">
                 @csrf
-                <label>Full name</label>
-                <input name="name" value="{{ old('name') }}" required>
-                @error('name')<div class="err">{{ $message }}</div>@enderror
-                <label>Email</label>
-                <input name="email" type="email" value="{{ old('email') }}" required>
-                @error('email')<div class="err">{{ $message }}</div>@enderror
-                <label>Employee ID (optional)</label>
-                <input name="employee_id" value="{{ old('employee_id') }}">
-                @error('employee_id')<div class="err">{{ $message }}</div>@enderror
-                <button class="submit" type="submit">Confirm sign-up</button>
+                @include('public.partials.person-lookup-fields', ['people' => $people])
+                <button class="submit" type="submit">Confirm Sign-Up</button>
             </form>
         </div>
     </div>

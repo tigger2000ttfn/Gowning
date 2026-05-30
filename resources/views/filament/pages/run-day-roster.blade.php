@@ -160,7 +160,7 @@
                 <div class="gqs-panel-head" style="justify-content:space-between;">
                     <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $g['day'] }}</span>
                     <span style="display:flex;align-items:center;gap:10px;">
-                        <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} booked</span>
+                        <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} Booked</span>
                         @if($g['date'] !== 'unscheduled')
                             <button type="button" wire:click="viewRoster('{{ $g['date'] }}')" class="rd-act" style="background:#fff;color:#A4123F;">Attendance Sheet</button>
                         @endif
@@ -280,7 +280,7 @@
                         {{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }}@endif
                     </span>
                     <span style="font-size:12px;font-weight:600;opacity:.92;display:flex;align-items:center;gap:10px;">
-                        {{ $slot->reservations->count() }} attending · cap {{ $slot->capacity }}
+                        {{ $slot->reservations->count() }} Attending · Cap {{ $slot->capacity }}
                         @if($slot->attendance_submitted_at)
                             <span class="gqs-pill gqs-pill-green">Submitted</span>
                         @endif

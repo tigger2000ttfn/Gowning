@@ -164,7 +164,7 @@ class PublicController extends Controller
     public function showSignup(ClassSession $session)
     {
         abort_unless($session->isOpen(), 404);
-        return view('public.signup', ['session' => $session->load('trainingClass')]);
+        return view('public.signup', ['session' => $session->load('trainingClass'), 'people' => $this->personnelOptions()]);
     }
 
     /** Record a public class sign-up. */
@@ -173,16 +173,29 @@ class PublicController extends Controller
         abort_unless($session->isOpen(), 404);
 
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'employee_id' => ['nullable', 'string', 'max:50'],
+            'first_name'  => ['required', 'string', 'max:120'],
+            'last_name'   => ['required', 'string', 'max:120'],
+            'email'       => ['required', 'email', 'max:255'],
+            'employee_id' => ['required', 'string', 'max:50'],
         ]);
+
+        $person = Personnel::where('employee_id', $data['employee_id'])->first();
+        if (! $person) {
+            $person = Personnel::create([
+                'employee_id' => $data['employee_id'],
+                'first_name'  => $data['first_name'],
+                'last_name'   => $data['last_name'],
+                'email'       => $data['email'],
+                'is_active'   => false,
+            ]);
+        }
 
         ClassEnrollment::create([
             'class_session_id' => $session->id,
-            'name' => $data['name'],
+            'personnel_id' => $person->id,
+            'name' => trim($data['first_name'] . ' ' . $data['last_name']),
             'email' => $data['email'],
-            'employee_id' => $data['employee_id'] ?? null,
+            'employee_id' => $data['employee_id'],
             'status' => 'signed_up',
             'signed_up_at' => now(),
         ]);

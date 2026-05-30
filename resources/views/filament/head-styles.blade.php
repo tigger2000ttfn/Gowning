@@ -157,6 +157,18 @@
     .run-pip.done{background:#2E7D5B;border-color:#2E7D5B;}
     .run-pip.cur{border-color:#A4123F;box-shadow:0 0 0 2px rgba(164,18,63,.18);}
     .dark .run-pip{border-color:#6A6A74;}
+    /* Checkbox indicator inside attendance toggle buttons */
+    .att-box{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1.5px solid currentColor;border-radius:4px;margin-right:7px;font-size:11px;line-height:1;flex:0 0 auto;}
+    .att-tog .att-box::after{content:'';}
+    .att-tog.on .att-box::after{content:'\2713';font-weight:900;}
+    .att-tog{display:inline-flex;align-items:center;}
+    /* Card turns a "complete" tint once attendance is marked */
+    .att-row.att-done{background:#ECF8F1;border-color:#BFE6CE;}
+    .dark .att-row.att-done{background:#16291F;border-color:#2E6B47;}
+    .att-row.att-absent{background:#FBEDEF;border-color:#E9B8C2;}
+    .dark .att-row.att-absent{background:#2A171C;border-color:#7A2230;}
+    .att-row.att-resched{background:#FBF4E6;border-color:#E8D6A8;}
+    .dark .att-row.att-resched{background:#2A2413;border-color:#6E5C24;}
     .att-note{flex:0 1 240px;min-width:150px;max-width:260px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
     .dark .att-note{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
     .att-state{min-width:110px;}

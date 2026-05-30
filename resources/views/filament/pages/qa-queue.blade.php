@@ -26,7 +26,7 @@
             <div class="gqs-panel" style="margin-bottom:16px;">
                 <div class="gqs-panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#2E7D5B,#225F46);">
                     <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $session['title'] }}</span>
-                    <span style="font-size:12px;font-weight:600;opacity:.92;">{{ count($session['rows']) }} pending · submitted {{ $session['submitted_at'] }}@if($session['submitted_by']) by {{ $session['submitted_by'] }}@endif</span>
+                    <span style="font-size:12px;font-weight:600;opacity:.92;">{{ count($session['rows']) }} Pending · Submitted {{ $session['submitted_at'] }}@if($session['submitted_by']) by {{ $session['submitted_by'] }}@endif</span>
                 </div>
                 <div class="gqs-panel-body">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">

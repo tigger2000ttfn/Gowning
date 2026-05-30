@@ -17,7 +17,7 @@
     @forelse ($groups as $group)
         <div class="gqs-panel">
             <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $group['title'] }}
-                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($group['rows']) }} booked</span>
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($group['rows']) }} Booked</span>
             </div>
             <div class="gqs-panel-body" style="padding:0;">
                 @if(empty($group['rows']))

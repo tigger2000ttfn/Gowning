@@ -435,6 +435,15 @@ class ClassScheduler extends Page
     }
 
     /** Submit a session's attendance: lock it and push attendees to QA classroom approval. */
+    public function setAttendanceTrainer(int $sessionId, $userId): void
+    {
+        $s = \App\Models\ClassSession::find($sessionId);
+        if (! $s || $s->attendance_submitted_at) return;
+        $s->assigned_instructor_id = $userId ?: null;
+        $s->save();
+        Notification::make()->success()->title('Trainer Updated')->send();
+    }
+
     public function submitAttendance(int $sessionId): void
     {
         $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
@@ -453,6 +462,11 @@ class ClassScheduler extends Page
         }
         foreach ($active->where('status', 'attended') as $e) {
             $e->markStatus('pending_qa', \Illuminate\Support\Facades\Auth::id());
+        }
+        // The submitter signs the attendance. If no trainer is on record, the signer
+        // becomes the trainer of record (their name flows onto FORM-AST-36513).
+        if (! $s->assigned_instructor_id) {
+            $s->assigned_instructor_id = \Illuminate\Support\Facades\Auth::id();
         }
         $s->attendance_submitted_at = now();
         $s->attendance_submitted_by = \Illuminate\Support\Facades\Auth::id();
