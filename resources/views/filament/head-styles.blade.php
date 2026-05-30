@@ -123,6 +123,31 @@
     .gqs-panel-head { display:flex; align-items:center; gap:9px; padding:13px 16px; font-weight:700; font-size:14px; color:#fff; background:linear-gradient(135deg,#A4123F,#850F33); }
     .gqs-panel-head svg { width:17px; height:17px; }
     .gqs-panel-body { padding:6px 0; }
+
+    /* Attendance / roster marking rows (shared by Class Scheduler + Run Day Roster) */
+    .att-list{display:flex;flex-direction:column;gap:8px;}
+    .att-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:11px 14px;border:1px solid var(--gqs-border,#E6E6EA);border-radius:10px;background:var(--gqs-surface,#fff);}
+    .dark .att-row{background:#23232B;border-color:#34343E;}
+    .att-who{flex:1;min-width:200px;}
+    .att-name{font-weight:700;font-size:13.5px;color:var(--gqs-text,#1A1A1F);}
+    .dark .att-name{color:#ECECF0;}
+    .att-eid{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:3px;}
+    .att-toggles{display:flex;gap:6px;flex-wrap:wrap;}
+    .att-tog{font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:8px;border:1.5px solid var(--gqs-border,#D6D6DC);background:transparent;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;}
+    .att-tog.att-att.on{background:#2E7D5B;border-color:#2E7D5B;color:#fff;}
+    .att-tog.att-no.on{background:#C8102E;border-color:#C8102E;color:#fff;}
+    .att-tog.att-att:hover{border-color:#2E7D5B;color:#2E7D5B;}
+    .att-tog.att-no:hover{border-color:#C8102E;color:#C8102E;}
+    .att-tog.att-att.on:hover,.att-tog.att-no.on:hover{color:#fff;}
+    .att-tog.att-res{border-style:dashed;}
+    .att-tog.att-res:hover{border-color:#A4123F;color:#A4123F;}
+    .att-note{flex:0 1 240px;min-width:150px;max-width:260px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
+    .dark .att-note{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
+    .att-state{min-width:110px;}
+    .att-note-ro{flex:1;font-size:12px;color:var(--gqs-text-dim,#6A6A72);font-style:italic;}
+    .att-wl{width:140px;padding:6px 9px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
+    .dark .att-wl{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
+    .att-hint{font-size:12px;color:var(--gqs-text-dim,#6A6A72);}
     .gqs-tbl { width:100%; border-collapse:collapse; font-size:13.5px; }
     .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:#26262C; border-bottom:none; }
     .gqs-tbl thead th:first-child { border-top-left-radius:0; }

@@ -283,68 +283,77 @@
                         @endif
                     </span>
                 </div>
-                <div class="gqs-panel-body">
+                <div class="gqs-panel-body" style="padding:14px 16px;">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-                            <div></div>
-                            @if(! $slot->attendance_submitted_at)
-                                <button type="button" wire:click="submitRunDay({{ $slot->id }})"
-                                        wire:confirm="Submit this run day? Everyone scheduled with a worklist will be marked present and the day will be locked."
-                                        class="rd-act rd-act-magenta" style="height:34px;">Submit Attendance</button>
-                            @else
+                        @if(! $slot->attendance_submitted_at)
+                            <div class="att-hint" style="margin-bottom:12px;">Enter each person's LIMS worklist, then mark Present, No-Show, or Reschedule. Changes save automatically. Submit the day at the bottom when done.</div>
+                        @else
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                                <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->format('M j, Y g:i A') }} · locked.</span>
                                 <button type="button" wire:click="reopenRunDay({{ $slot->id }})"
-                                        wire:confirm="Reopen this run day to correct attendance?" class="rd-act" style="background:#6A6A72;height:34px;">Reopen</button>
-                            @endif
-                        </div>
-                        <table class="gqs-tbl">
-                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>LIMS Worklist</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
-                            <tbody>@foreach ($slot->reservations as $i => $res)
+                                        wire:confirm="Reopen this run day to correct attendance?" class="gqs-btn gqs-btn-ghost">Reopen</button>
+                            </div>
+                        @endif
+
+                        <div class="att-list">
+                            @foreach ($slot->reservations as $i => $res)
                                 @php
                                     $rq = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
                                     $adv = app(\App\Services\RunCycleAdvancer::class);
                                     $performed = $rq ? $adv->cycleRuns($rq)->count() : 0;
                                     $required = max(1, (int) ($rq->runs_required ?? 1));
+                                    $ctx = $this->runContext($rq);
                                     $readyForResults = $rq && $rq->workflow_stage === \App\Enums\WorkflowStage::AwaitingResults;
                                     $st = $res->status instanceof \BackedEnum ? $res->status->value : $res->status;
+                                    $runNo = min($performed + 1, $required);
                                     if (! array_key_exists($res->id, $this->worklists)) {
                                         $this->worklists[$res->id] = $res->lims_worklist_id ?: ($rq?->lims_worklist_id ?: '');
                                     }
+                                    $actionable = ! in_array($st, ['completed','no_show','rescheduled'], true);
                                 @endphp
-                                <tr>
-                                    <td>{{ $i + 1 }}</td>
-                                    <td style="font-weight:600;">{{ $res->personnel?->employee_id }}</td>
-                                    <td>{{ $res->personnel?->full_name }}</td>
-                                    <td>
-                                        @if($st === 'completed')
-                                            <span style="font-weight:600;">{{ $res->lims_worklist_id ?: '—' }}</span>
-                                        @else
-                                            <input type="text" wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})"
-                                                   placeholder="EM-..."
-                                                   style="width:130px;padding:5px 8px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:6px;font-size:12px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <span class="gqs-pill {{ $st === 'completed' ? 'gqs-pill-green' : ($st === 'no_show' ? 'gqs-pill-red' : ($st === 'rescheduled' ? 'gqs-pill-gold' : '')) }}">
-                                            {{ $st === 'completed' ? 'Present' : ($st === 'no_show' ? 'No-Show' : ($st === 'rescheduled' ? 'Rescheduled' : 'Scheduled')) }}
-                                        </span>
-                                    </td>
-                                    <td style="white-space:nowrap;">{{ $performed }} / {{ $required }}</td>
-                                    <td style="white-space:nowrap;">
-                                        @if($st !== 'completed' && $st !== 'no_show' && $st !== 'rescheduled')
-                                            <button wire:click="markPerformed({{ $res->id }})" class="rd-act rd-act-green">Present</button>
-                                            <button wire:click="rosterNoShow({{ $res->id }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C8102E;">No-Show</button>
-                                            <button wire:click="rosterReschedule({{ $res->id }})" wire:confirm="Reschedule to the next available run day?" class="rd-act" style="background:#C79A2E;">Reschedule</button>
-                                        @elseif($readyForResults)
-                                            <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">Ready · evaluate on Lab Review</span>
+                                <div class="att-row">
+                                    <div class="att-who">
+                                        <div class="att-name">{{ $i + 1 }}. {{ $res->personnel?->full_name }}</div>
+                                        <div class="att-eid">
+                                            <span>{{ $res->personnel?->employee_id }}</span>
+                                            <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}@if($ctx['tag']) · {{ $ctx['tag'] }}@endif</span>
+                                            <span style="font-weight:700;">Run {{ $runNo }} of {{ $required }}</span>
+                                        </div>
+                                    </div>
+
+                                    @if($st === 'completed')
+                                        <span class="att-hint" style="min-width:120px;">Worklist {{ $res->lims_worklist_id ?: '—' }}</span>
+                                    @elseif($actionable)
+                                        <input type="text" class="att-wl" placeholder="EM- worklist"
+                                               wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})">
+                                    @endif
+
+                                    <div class="att-toggles">
+                                        @if($actionable)
+                                            <button type="button" wire:click="markPerformed({{ $res->id }})" class="att-tog att-att">Present</button>
+                                            <button type="button" wire:click="rosterNoShow({{ $res->id }})"
+                                                    wire:confirm="Mark as no-show? They will be returned for rebooking." class="att-tog att-no">No-Show</button>
+                                            <button type="button" wire:click="rosterReschedule({{ $res->id }})"
+                                                    wire:confirm="Reschedule to the next available run day?" class="att-tog att-res">Reschedule</button>
                                         @elseif($st === 'completed')
-                                            <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">{{ $performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates' }}</span>
+                                            <span class="gqs-pill gqs-pill-green">Present</span>
+                                            <span class="att-hint">{{ $readyForResults ? 'Ready · evaluate on Lab Review' : ($performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates') }}</span>
                                         @else
-                                            <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">{{ $st === 'no_show' ? 'No-show' : 'Rescheduled' }}</span>
+                                            <span class="gqs-pill {{ $st === 'no_show' ? 'gqs-pill-red' : 'gqs-pill-gold' }}">{{ $st === 'no_show' ? 'No-Show' : 'Rescheduled' }}</span>
                                         @endif
-                                    </td>
-                                </tr>
-                            @endforeach</tbody>
-                        </table>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if(! $slot->attendance_submitted_at)
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
+                                <button type="button" wire:click="$set('tab', 'reservations')" class="gqs-btn gqs-btn-ghost">Save &amp; Close</button>
+                                <button type="button" wire:click="submitRunDay({{ $slot->id }})"
+                                        wire:confirm="Submit this run day? Everyone scheduled with a worklist will be marked present and the day will be locked."
+                                        class="gqs-btn gqs-btn-primary">Submit Attendance</button>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </div>
