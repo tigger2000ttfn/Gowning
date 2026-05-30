@@ -14,7 +14,7 @@
 
     @forelse ($groups as $group)
         <div class="gqs-panel">
-            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ \Illuminate\Support\Str::title($group['title']) }}
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $group['title'] }}
                 <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($group['rows']) }} enrolled · {{ $group['seats'] }}/{{ $group['capacity'] }} seats left</span>
             </div>
             <div class="gqs-panel-body">
@@ -31,7 +31,7 @@
                                     <td><span class="gqs-pill {{ [
                                         'signed_up' => 'gqs-pill-purple', 'attended' => 'gqs-pill-gold',
                                         'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
-                                    ][$row['status']] ?? 'gqs-pill-purple' }}">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$row['status'])) }}</span></td>
+                                    ][$row['status']] ?? 'gqs-pill-purple' }}">{{ str_replace('_',' ',$row['status']) }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         @if($row['status'] === 'signed_up')
                                             <button wire:click="setStatus({{ $row['id'] }}, 'completed')" class="sb-act sb-act-green">Mark Completed</button>

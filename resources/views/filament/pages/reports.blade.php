@@ -67,7 +67,7 @@
         <div class="gqs-panel-body">
             @forelse ($this->classStats as $row)
                 <div style="display:flex;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
-                    <span>{{ \Illuminate\Support\Str::title($row->class_name) }}</span><strong>{{ $row->n }}</strong>
+                    <span>{{ $row->class_name }}</span><strong>{{ $row->n }}</strong>
                 </div>
             @empty<div class="gqs-empty">No Completions Recorded.</div>@endforelse
         </div>

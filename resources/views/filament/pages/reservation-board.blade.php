@@ -73,7 +73,7 @@
                                         'completed' => 'gqs-pill-purple',
                                         'no_show'   => 'gqs-pill-red',
                                         'rejected'  => 'gqs-pill-red',
-                                    ][$row['status']] ?? 'gqs-pill-gold' }}">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$row['status'])) }}</span>
+                                    ][$row['status']] ?? 'gqs-pill-gold' }}">{{ str_replace('_',' ',$row['status']) }}</span>
                                 </td>
                                 <td style="text-align:right;white-space:nowrap;">
                                     @if($row['status'] === 'requested')

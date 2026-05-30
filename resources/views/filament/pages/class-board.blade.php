@@ -75,7 +75,7 @@
                             <div class="kanban-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $col['color'] }};">
                                 <div class="kanban-name">{{ $card['name'] }}</div>
                                 <div class="kanban-meta">{{ $card['employee_id'] }}</div>
-                                @if($card['class'])<div class="kanban-slot">{{ \Illuminate\Support\Str::title($card['class']) }}@if($card['date']) · {{ $card['date'] }}@endif</div>@endif
+                                @if($card['class'])<div class="kanban-slot">{{ $card['class'] }}@if($card['date']) · {{ $card['date'] }}@endif</div>@endif
                             </div>
                         @endforeach
                     </div>
@@ -98,7 +98,7 @@
                 </div>
                 <div style="padding:18px 20px;">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;font-size:13px;">
-                        <div><div class="dm-l">Class</div><div class="dm-v">{{ $detail['class'] ? \Illuminate\Support\Str::title($detail['class']) : '—' }}</div></div>
+                        <div><div class="dm-l">Class</div><div class="dm-v">{{ $detail['class'] ? $detail['class'] : '—' }}</div></div>
                         <div><div class="dm-l">Status</div><div class="dm-v">{{ $detail['status'] }}</div></div>
                         <div style="grid-column:1/-1;"><div class="dm-l">Session Date</div><div class="dm-v">{{ $detail['session_date'] ?? '—' }}</div></div>
                     </div>

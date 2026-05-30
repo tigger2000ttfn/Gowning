@@ -137,7 +137,7 @@
             </div>
         </div>
         <div class="my-status-r">
-            <span class="my-status-badge my-{{ $myQual->status }}">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$myQual->status instanceof \BackedEnum ? $myQual->status->value : $myQual->status)) }}</span>
+            <span class="my-status-badge my-{{ $myQual->status }}">{{ str_replace('_',' ',$myQual->status instanceof \BackedEnum ? $myQual->status->value : $myQual->status) }}</span>
             @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->format('M j, Y') }}</span>@endif
         </div>
     </div>
@@ -195,7 +195,7 @@
         <div class="wk-day {{ $day['today'] ? 'today' : '' }}">
             <div class="wk-head"><span class="wk-name">{{ $day['name'] }}</span><span class="wk-num">{{ $day['num'] }}</span></div>
             @forelse($day['events'] as $ev)
-                <div class="wk-ev {{ $ev['type'] }}">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($ev['label']), 22) }}</div>
+                <div class="wk-ev {{ $ev['type'] }}">{{ \Illuminate\Support\Str::limit($ev['label'], 22) }}</div>
             @empty
                 <div class="wk-empty">-</div>
             @endforelse
@@ -215,7 +215,7 @@
     <div class="dash-card dc-runs">
         <h3>Upcoming Classes</h3>
         @forelse($upcomingRuns as $s)
-            <div class="dash-row"><span>{{ \Illuminate\Support\Str::title($s->trainingClass?->name) }}</span>
+            <div class="dash-row"><span>{{ $s->trainingClass?->name }}</span>
                 <span class="muted">{{ $s->session_date?->format('M j') }}</span></div>
         @empty<div class="dash-empty">No Upcoming Sessions.</div>@endforelse
     </div>
@@ -224,7 +224,7 @@
         <h3><x-filament::icon icon="heroicon-m-academic-cap" style="width:17px;height:17px;"/> Class Signups</h3>
         @forelse($classSignupList as $e)
             <div class="dash-row"><span>{{ $e->personnel?->full_name ?? $e->employee_id }}</span>
-                <span class="muted">{{ \Illuminate\Support\Str::title($e->classSession?->trainingClass?->name) }}</span></div>
+                <span class="muted">{{ $e->classSession?->trainingClass?->name }}</span></div>
         @empty<div class="dash-empty">No Class Signups Yet.</div>@endforelse
     </div>
 

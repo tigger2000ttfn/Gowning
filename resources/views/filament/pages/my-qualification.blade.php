@@ -73,9 +73,9 @@
                 @else
                     @foreach ($enrollments as $e)
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
-                            <span><strong>{{ \Illuminate\Support\Str::title($e->classSession?->trainingClass?->name) }}</strong>
+                            <span><strong>{{ $e->classSession?->trainingClass?->name }}</strong>
                                 <span style="color:var(--gqs-text-dim,#6A6A72);"> · {{ $e->classSession?->session_date?->format('M j, Y') }}</span></span>
-                            <span class="gqs-pill gqs-pill-purple">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$e->status)) }}</span>
+                            <span class="gqs-pill gqs-pill-purple">{{ str_replace('_',' ',$e->status) }}</span>
                         </div>
                     @endforeach
                 @endif
