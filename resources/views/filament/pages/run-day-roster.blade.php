@@ -7,10 +7,16 @@
             submit() { $wire.enterResults(this.resId, this.overall, this.worklist); this.showResults = false; }
         }">
 
-    <div style="margin-bottom:18px;max-width:260px;">
-        <label style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);display:block;margin-bottom:6px;">Select Date</label>
-        <input type="date" wire:model.live="date"
-               style="width:100%;padding:10px 12px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
+    <div style="margin-bottom:18px;max-width:560px;display:flex;gap:14px;align-items:end;">
+        <div style="flex:1;max-width:260px;">
+            <label style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);display:block;margin-bottom:6px;">Select Date</label>
+            <input type="date" wire:model.live="date"
+                   style="width:100%;padding:10px 12px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
+        </div>
+        <a href="{{ route('print.run-day', ['date' => $date]) }}" target="_blank"
+           style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:#A4123F;color:#fff;border-radius:9px;font-weight:700;font-size:13px;text-decoration:none;">
+            <x-filament::icon icon="heroicon-m-printer" style="width:16px;height:16px;"/> Print Roster (PDF)
+        </a>
     </div>
 
     @php $slots = $this->slots; @endphp

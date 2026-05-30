@@ -22,3 +22,9 @@ Route::view('/icon-options', 'public.icon-preview')->name('public.icons');
 
 Route::get('/register', [PublicController::class, 'showRegister'])->name('public.register');
 Route::post('/register', [PublicController::class, 'storeRegister'])->name('public.register.store');
+
+// Authenticated printable documents (Astellas-themed, open in new tab, print/save PDF)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/print/run-day', [\App\Http\Controllers\PrintController::class, 'runDay'])->name('print.run-day');
+    Route::get('/print/report', [\App\Http\Controllers\PrintController::class, 'report'])->name('print.report');
+});

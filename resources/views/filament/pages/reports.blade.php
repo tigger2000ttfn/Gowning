@@ -1,6 +1,13 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Reports', 'subtitle' => 'Compliance reports and exports.', 'icon' => 'heroicon-o-chart-bar'])
 
+    <div style="margin-bottom:16px;">
+        <a href="{{ route('print.report') }}" target="_blank"
+           style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:#A4123F;color:#fff;border-radius:9px;font-weight:700;font-size:13px;text-decoration:none;">
+            <x-filament::icon icon="heroicon-m-printer" style="width:16px;height:16px;"/> Print Compliance Report (PDF)
+        </a>
+    </div>
+
     @php $pf = $this->passFail; @endphp
     <div class="gqs-stats">
         <div class="gqs-stat red">
