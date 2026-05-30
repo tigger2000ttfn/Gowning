@@ -50,7 +50,11 @@ class ClassBoard extends Page
                 'class' => $e->classSession?->trainingClass?->name,
                 'date' => $e->classSession?->session_date?->format('M j'),
             ])->values()->all();
-            $out[$key] = ['label' => $meta['label'], 'color' => $meta['color'], 'cards' => $cards];
+            $out[$key] = [
+                'label' => \App\Models\WorkflowStatus::labelFor('class', $key, $meta['label']),
+                'color' => \App\Models\WorkflowStatus::colorFor('class', $key, $meta['color']),
+                'cards' => $cards,
+            ];
         }
         return $out;
     }

@@ -70,8 +70,8 @@ class StatusBoard extends Page
 
             $out[] = [
                 'key' => $stage->value,
-                'label' => $stage->label(),
-                'color' => $stage->color(),
+                'label' => \App\Models\WorkflowStatus::labelFor('run', $stage->value, $stage->label()),
+                'color' => \App\Models\WorkflowStatus::colorFor('run', $stage->value, $stage->color()),
                 'cards' => $cards,
             ];
         }
@@ -81,7 +81,7 @@ class StatusBoard extends Page
                 'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
             ])->values()->all();
-            $out[] = ['key' => 'failed', 'label' => WorkflowStage::Failed->label(), 'color' => WorkflowStage::Failed->color(), 'cards' => $failed];
+            $out[] = ['key' => 'failed', 'label' => \App\Models\WorkflowStatus::labelFor('run', 'failed', WorkflowStage::Failed->label()), 'color' => \App\Models\WorkflowStatus::colorFor('run', 'failed', WorkflowStage::Failed->color()), 'cards' => $failed];
         }
 
         return $out;
