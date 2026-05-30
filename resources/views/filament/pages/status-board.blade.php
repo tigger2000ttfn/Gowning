@@ -107,9 +107,13 @@
                 },
                 init() {
                     this.$nextTick(() => { this.wireSortables(); this.fitHeight(); });
+                    setTimeout(() => this.fitHeight(), 200);
                     // re-wire + re-fit after Livewire DOM updates (search/filter/group/move re-render the lanes)
-                    Livewire.hook('morph.updated', () => this.$nextTick(() => { this.wireSortables(); this.fitHeight(); }));
+                    Livewire.hook('morphed', () => this.$nextTick(() => { this.wireSortables(); this.fitHeight(); }));
+                    Livewire.hook('commit', ({ respond }) => respond(() => this.$nextTick(() => this.fitHeight())));
                     window.addEventListener('resize', () => this.fitHeight());
+                    window.addEventListener('load', () => this.fitHeight());
+                    document.addEventListener('livewire:navigated', () => this.$nextTick(() => this.fitHeight()));
                 },
                 wireSortables() {
                     // card drag between lanes (only for users who can move cards)
