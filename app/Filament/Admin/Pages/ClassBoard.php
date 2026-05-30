@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Filament\Admin\Pages;
+
+use App\Models\ClassEnrollment;
+use App\Models\Qualification;
+use App\Enums\Capability;
+use App\Enums\WorkflowStage;
+use Filament\Pages\Page;
+use Illuminate\Support\Facades\Auth;
+
+class ClassBoard extends Page
+{
+    protected static function allowed(): bool
+    {
+        $u = Auth::user();
+        return (bool) ($u && ($u->hasCapability(Capability::ManageClasses)
+            || $u->hasCapability(Capability::ManageAttendance)));
+    }
+    public static function canAccessNavigation(): bool { return static::allowed(); }
+    public static function shouldRegisterNavigation(): bool { return static::allowed(); }
+    public static function canViewAny(): bool { return static::allowed(); }
+
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
+    protected static ?string $navigationLabel = 'Class Board';
+    protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $title = 'Gowning Class Board';
+    public function getHeading(): string { return ''; }
+
+    protected string $view = 'filament.pages.class-board';
+
+    public array $lanes = [
+        'signed_up' => ['label' => 'Signed Up', 'color' => '#1F6FB2'],
+        'attended'  => ['label' => 'Attended',  'color' => '#C79A2E'],
+        'completed' => ['label' => 'Completed',  'color' => '#2E7D5B'],
+        'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
+    ];
+
+    public function getColumns(): array
+    {
+        $out = [];
+        $byStatus = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
+            ->get()->groupBy('status');
+        foreach ($this->lanes as $key => $meta) {
+            $cards = ($byStatus[$key] ?? collect())->map(fn ($e) => [
+                'id' => $e->id,
+                'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
+                'employee_id' => $e->employee_id,
+                'class' => $e->classSession?->trainingClass?->name,
+                'date' => $e->classSession?->session_date?->format('M j'),
+            ])->values()->all();
+            $out[$key] = ['label' => $meta['label'], 'color' => $meta['color'], 'cards' => $cards];
+        }
+        return $out;
+    }
+
+    /** Drag an enrollment to a new status. 'completed' advances the person's workflow stage. */
+    public function moveCard(int $id, string $toStatus): void
+    {
+        if (! array_key_exists($toStatus, $this->lanes)) {
+            return;
+        }
+        $e = ClassEnrollment::with('personnel')->find($id);
+        if (! $e) {
+            return;
+        }
+        $e->status = $toStatus;
+        $e->save();
+
+        // Completing the gowning class advances the person to ClassComplete in the pipeline
+        if ($toStatus === 'completed' && $e->personnel) {
+            $q = Qualification::firstOrCreate(
+                ['personnel_id' => $e->personnel->id],
+                ['type' => 'initial', 'status' => 'in_progress', 'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3), 'runs_completed' => 0]
+            );
+            if (in_array($q->workflow_stage?->value, [null, 'class_pending'], true)) {
+                $q->workflow_stage = WorkflowStage::ClassComplete;
+                $q->stage_changed_at = now();
+                $q->save();
+            }
+        }
+    }
+}
