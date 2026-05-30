@@ -100,7 +100,8 @@
     .gqs-panel-head svg { width:17px; height:17px; }
     .gqs-panel-body { padding:6px 0; }
     .gqs-tbl { width:100%; border-collapse:collapse; font-size:13.5px; }
-    .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--gqs-text-dim,#6A6A72); border-bottom:1px solid var(--gqs-border,#EEE); }
+    .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:linear-gradient(135deg,#A4123F,#850F33); border-bottom:none; }
+    .gqs-tbl thead th:first-child { border-top-left-radius:0; }
     .gqs-tbl td { padding:10px 16px; border-bottom:1px solid var(--gqs-border,#F2F2F4); color:var(--gqs-text,#1A1A1F); }
     .gqs-tbl tbody tr:hover { background:rgba(164,18,63,.04); }
     .gqs-tbl tbody tr:last-child td { border-bottom:0; }
@@ -269,6 +270,8 @@
     .gqs-tab{background:none;border:none;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
     .gqs-tab.on{color:#A4123F;border-bottom-color:#A4123F;}
     /* Form controls (modals, messages, notification settings, calendar) */
+    /* Capitalize Filament action button labels (auto-generated names like 'no show' -> 'No Show') */
+    .fi-btn .fi-btn-label, .fi-link .fi-link-label, .fi-dropdown-list-item-label { text-transform: capitalize; }
     .gqs-flbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);margin-bottom:5px;}
     .gqs-fld{width:100%;padding:9px 11px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:8px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);font-size:14px;font-family:inherit;}
     .gqs-fld:focus{outline:none;border-color:#A4123F;box-shadow:0 0 0 3px rgba(164,18,63,.12);}

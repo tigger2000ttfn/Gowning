@@ -360,11 +360,11 @@ class RunDayRoster extends Page
             ->sum(fn ($s) => max(0, $scheduler->seatsLeft($s)));
 
         return [
-            ['Awaiting Scheduling', $waiting, 'heroicon-o-clock', '#A4123F'],
-            ['Pending Requests', $pendingReqs, 'heroicon-o-inbox-arrow-down', '#6B2C91'],
-            ['Run Days This Week', $runDaysThisWeek, 'heroicon-o-calendar-days', '#2E7D5B'],
-            ['Open Seats (Upcoming)', $openSeats, 'heroicon-o-user-plus', '#C79A2E'],
-            ['Incubating', $incubating, 'heroicon-o-beaker', '#1F6FB2'],
+            ['Awaiting Scheduling', $waiting, 'heroicon-o-clock', 'magenta'],
+            ['Pending Requests', $pendingReqs, 'heroicon-o-inbox-arrow-down', 'purple'],
+            ['Run Days This Week', $runDaysThisWeek, 'heroicon-o-calendar-days', 'green'],
+            ['Open Seats (Upcoming)', $openSeats, 'heroicon-o-user-plus', 'gold'],
+            ['Incubating', $incubating, 'heroicon-o-beaker', 'charcoal'],
         ];
     }
 

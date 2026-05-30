@@ -22,11 +22,12 @@
 
     @if($tab === 'overview')
         @php $stats = $this->overviewStats(); $need = $this->needingClass(); @endphp
-        <div class="rs-stats">
+        <div class="gqs-stats">
             @foreach($stats as [$label, $value, $icon, $color])
-                <div class="rs-stat">
-                    <div class="rs-stat-ico" style="background:{{ $color }}1a;color:{{ $color }};"><x-filament::icon :icon="$icon" style="width:20px;height:20px;"/></div>
-                    <div><div class="rs-stat-val">{{ $value }}</div><div class="rs-stat-lbl">{{ $label }}</div></div>
+                <div class="gqs-stat {{ $color }}">
+                    <div class="n">{{ $value }}</div>
+                    <div class="l">{{ $label }}</div>
+                    <span class="wm"><x-filament::icon :icon="$icon"/></span>
                 </div>
             @endforeach
         </div>

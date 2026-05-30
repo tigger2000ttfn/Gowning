@@ -69,11 +69,11 @@ class ClassScheduler extends Page
         $templates = TrainingClass::where('is_published', true)->count();
 
         return [
-            ['Need A Class', $needClass, 'heroicon-o-exclamation-circle', '#A4123F'],
-            ['Signed Up', $signedUp, 'heroicon-o-user-group', '#1F6FB2'],
-            ['Sessions This Week', $sessionsThisWeek, 'heroicon-o-calendar-days', '#2E7D5B'],
-            ['Open Seats (Upcoming)', $openSeats, 'heroicon-o-user-plus', '#C79A2E'],
-            ['Class Templates', $templates, 'heroicon-o-rectangle-stack', '#6B2C91'],
+            ['Need A Class', $needClass, 'heroicon-o-exclamation-circle', 'magenta'],
+            ['Signed Up', $signedUp, 'heroicon-o-user-group', 'charcoal'],
+            ['Sessions This Week', $sessionsThisWeek, 'heroicon-o-calendar-days', 'green'],
+            ['Open Seats (Upcoming)', $openSeats, 'heroicon-o-user-plus', 'gold'],
+            ['Class Templates', $templates, 'heroicon-o-rectangle-stack', 'purple'],
         ];
     }
 

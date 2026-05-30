@@ -85,11 +85,20 @@
                         },
                     });
                     cal.render();
+                    // FullCalendar can render as a blank/white bar if the container had no
+                    // dimensions at render time (tab switch / layout not settled). Recalc after paint.
+                    requestAnimationFrame(() => { try { cal && cal.updateSize(); } catch(e){} });
+                    setTimeout(() => { try { cal && cal.updateSize(); } catch(e){} }, 250);
                 }
-                function boot() { render(); }
+                function boot() {
+                    const el = document.getElementById('gqs-calendar');
+                    // only render once the element is actually laid out (has width)
+                    if (el && el.offsetWidth > 0) { render(); }
+                    else { setTimeout(boot, 120); }
+                }
                 if (document.readyState !== 'loading') boot(); else document.addEventListener('DOMContentLoaded', boot);
                 document.addEventListener('livewire:initialized', () => {
-                    if (window.Livewire) Livewire.hook('morph.updated', () => setTimeout(render, 50));
+                    if (window.Livewire) Livewire.hook('morph.updated', () => setTimeout(boot, 60));
                 });
             })();
         </script>
