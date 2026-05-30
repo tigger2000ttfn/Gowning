@@ -48,7 +48,7 @@ class ClassBoard extends Page
             ->map(fn ($e) => [
                 'id' => $e->id,
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
-                'employee_id' => $e->employee_id,
+                'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'class' => $e->classSession?->trainingClass?->name,
                 'date' => $e->classSession?->session_date?->format('d M'),
             ])->values()->all();
@@ -89,7 +89,7 @@ class ClassBoard extends Page
             $cards = ($byStatus[$key] ?? collect())->map(fn ($e) => [
                 'id' => $e->id,
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
-                'employee_id' => $e->employee_id,
+                'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
                 'date' => $e->classSession?->session_date?->format('d M'),
@@ -119,7 +119,7 @@ class ClassBoard extends Page
         $this->detail = [
             'id' => $e->id,
             'name' => $p?->full_name ?? $e->employee_id ?? 'Unknown',
-            'employee_id' => $e->employee_id,
+            'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
             'email' => $p?->email,
             'department' => $p?->department,
             'job_title' => $p?->job_title,

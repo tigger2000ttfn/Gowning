@@ -73,7 +73,7 @@ class ClassReservations extends Page
                     ->map(fn ($e) => [
                         'id' => $e->id,
                         'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
-                        'employee_id' => $e->employee_id,
+                        'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                         'status' => $e->status,
                     ])->values()->all(),
             ])
