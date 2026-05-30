@@ -83,8 +83,23 @@ class PersonnelResource extends Resource
                     ->description('Seed current status (manual first-time setup before import)')
                     ->schema([
                         Section::make()
+                            ->description(function ($record) {
+                                $isQualified = ($record?->qualification?->status?->value ?? $record?->qualification?->status) === 'qualified';
+                                $u = \Illuminate\Support\Facades\Auth::user();
+                                $isAdmin = $u && ($u->hasCapability(\App\Enums\Capability::ManageUsers) || $u->hasCapability(\App\Enums\Capability::SystemSettings));
+                                return ($isQualified && ! $isAdmin)
+                                    ? 'Locked: this person is qualified. Contact an administrator to change qualification details.'
+                                    : null;
+                            })
                             ->columns(2)
                             ->relationship('qualification')
+                            ->disabled(function ($record) {
+                                // Once qualified, the qualification is locked. Admins can still edit.
+                                $isQualified = ($record?->qualification?->status?->value ?? $record?->qualification?->status) === 'qualified';
+                                $u = \Illuminate\Support\Facades\Auth::user();
+                                $isAdmin = $u && ($u->hasCapability(\App\Enums\Capability::ManageUsers) || $u->hasCapability(\App\Enums\Capability::SystemSettings));
+                                return $isQualified && ! $isAdmin;
+                            })
                             ->schema([
                                 Select::make('type')->label('Qualification Type')
                                     ->options(['initial' => 'Initial', 'annual' => 'Annual'])->default('initial'),
