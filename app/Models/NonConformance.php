@@ -7,10 +7,12 @@ use App\Models\Concerns\GqsActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class NonConformance extends Model
+class NonConformance extends Model implements HasMedia
 {
-    use Auditable, SoftDeletes, GqsActivityLog;
+    use Auditable, SoftDeletes, GqsActivityLog, InteractsWithMedia;
 
     protected $fillable = [
         'qualification_id', 'qualification_run_id', 'personnel_id',

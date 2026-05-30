@@ -9,8 +9,10 @@ use App\Models\Concerns\GqsActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class QualificationRun extends Model
+class QualificationRun extends Model implements HasMedia
 {
     protected static function booted(): void
     {
@@ -28,7 +30,7 @@ class QualificationRun extends Model
         });
     }
 
-    use Auditable, SoftDeletes, GqsActivityLog;
+    use Auditable, SoftDeletes, GqsActivityLog, InteractsWithMedia;
 
     protected $fillable = [
         'personnel_id', 'qualification_id', 'run_slot_id', 'reservation_id',

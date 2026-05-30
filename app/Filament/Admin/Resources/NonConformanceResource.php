@@ -74,6 +74,15 @@ class NonConformanceResource extends Resource
                 Textarea::make('summary')->label('Brief Summary')->rows(2)
                     ->helperText('Short note only, not a transcription of the TrackWise record.')->columnSpanFull(),
             ]),
+            Section::make('Attachments')->icon('heroicon-o-paper-clip')->schema([
+                \Filament\Forms\Components\SpatieMediaLibraryFileUpload::make('evidence')
+                    ->collection('evidence')
+                    ->multiple()
+                    ->downloadable()
+                    ->reorderable()
+                    ->helperText('Plate photos, lab reports, or supporting documents. Stored as part of the GMP record.')
+                    ->columnSpanFull(),
+            ]),
         ]);
     }
 
