@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Filament\Admin\Resources\AnnouncementResource\Pages;
+use App\Filament\Admin\Concerns\GqsListHero;
 
 use App\Filament\Admin\Resources\AnnouncementResource;
 use Filament\Actions\CreateAction;
@@ -9,8 +10,11 @@ use Illuminate\Support\Facades\Auth;
 
 class ListAnnouncements extends ListRecords
 {
+    use GqsListHero;
+    public ?string $gqsTitle = 'Announcements';
+    public ?string $gqsSubtitle = 'Broadcast messages to staff and operators.';
+    public ?string $gqsIcon = 'heroicon-o-megaphone';
     protected static string $resource = AnnouncementResource::class;
-    public function getSubheading(): ?string { return 'Broadcast messages to staff and operators.'; }
 
     public function getHeading(): string { return ''; }
 
