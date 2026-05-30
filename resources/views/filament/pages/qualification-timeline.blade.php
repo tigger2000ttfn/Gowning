@@ -24,7 +24,6 @@
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-chart-bar" /></span>
             <div class="pg-head-tx" style="min-width:0;">
                 <h1>Qualification Timeline</h1>
-                <p>{{ $view_mode === 'due_window' ? 'The window each person has to complete their next round before the due date.' : 'Each person\'s full cycle path to qualified.' }}</p>
             </div>
         </div>
         <div class="sb-headrow-filters">
@@ -155,14 +154,15 @@
     </div>
 
     <style>
-        .tl-fullbleed{ margin:0 -32px; padding:0 32px; }
+        .tl-fullbleed{ margin:0 -32px; }
+        .fi-main:has(.tl-fullbleed){ padding-left:0 !important; padding-right:0 !important; max-width:none !important; }
         .tl-legend{ display:flex; align-items:center; gap:8px; padding:4px 32px 12px; flex-wrap:wrap; }
         .tl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:20px; border:1.5px solid var(--gqs-border,#DADADF); background:transparent; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--gqs-text-dim,#6A6A72); }
         .tl-chip i{ width:10px; height:10px; border-radius:50%; }
         .tl-chip-on{ border-color:var(--chip); color:var(--chip); background:color-mix(in srgb, var(--chip) 10%, transparent); }
         .tl-count{ margin-left:auto; font-weight:700; font-size:12.5px; color:var(--gqs-text-dim,#6A6A72); }
 
-        .tl-grid{ display:flex; border:1px solid var(--gqs-border,#E2E2E6); border-radius:12px; overflow:hidden; background:#fff; height:calc(100vh - 280px); min-height:340px; }
+        .tl-grid{ display:flex; border-top:1px solid var(--gqs-border,#E2E2E6); border-bottom:1px solid var(--gqs-border,#E2E2E6); overflow:hidden; background:#fff; height:calc(100vh - 250px); min-height:340px; }
         .dark .tl-grid{ background:#1A1A20; border-color:#2A2A32; }
         .tl-names{ flex:0 0 240px; border-right:2px solid var(--gqs-border,#E2E2E6); overflow-y:auto; }
         .dark .tl-names{ border-color:#2A2A32; }
