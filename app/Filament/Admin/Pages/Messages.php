@@ -28,6 +28,18 @@ class Messages extends Page
 
     public static function shouldRegisterNavigation(): bool { return true; }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = \App\Models\Message::where('recipient_id', \Illuminate\Support\Facades\Auth::id())
+            ->whereNull('read_at')->count();
+        return $count > 0 ? (string) ($count > 99 ? '99+' : $count) : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'danger';
+    }
+
     public function inbox()
     {
         return Message::with('sender')->inbox(Auth::id())->latest()->limit(100)->get();
@@ -47,6 +59,18 @@ class Messages extends Page
     {
         return User::where('is_active', true)->where('id', '!=', Auth::id())
             ->orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    public function mount(): void
+    {
+        $tab = request()->query('tab');
+        if (in_array($tab, ['inbox', 'sent', 'compose'], true)) {
+            $this->tab = $tab;
+        }
+        $openId = request()->query('openMessageId');
+        if ($openId && is_numeric($openId)) {
+            $this->open((int) $openId);
+        }
     }
 
     public function open(int $id): void
