@@ -30,7 +30,7 @@ class RunDayRoster extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Scheduler';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
     protected static ?string $title = 'Run Scheduler';
 
     protected string $view = 'filament.pages.run-day-roster';
@@ -223,8 +223,62 @@ class RunDayRoster extends Page
         $slot = RunSlot::find($slotId);
         if (! $slot) return;
         $moved = app(\App\Services\AutoScheduler::class)->cancelSlot($slot);
-        Notification::make()->success()->title('Run day cancelled')
+        $this->detailSlotId = null;
+        Notification::make()->success()->title('Run Day Cancelled')
             ->body($moved > 0 ? "{$moved} reservation(s) were rescheduled/notified." : 'No bookings to move.')->send();
+    }
+
+    // ===== Run-day detail / reschedule modal =====
+    public ?int $detailSlotId = null;
+    public array $editSlot = [];
+
+    public function openRunDayDetail(int $slotId): void
+    {
+        $slot = RunSlot::find($slotId);
+        if (! $slot) return;
+        $this->detailSlotId = $slotId;
+        $this->editSlot = [
+            'slot_date' => $slot->slot_date?->toDateString(),
+            'start_time' => $slot->start_time ? \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') : null,
+            'end_time' => $slot->end_time ? \Illuminate\Support\Carbon::parse($slot->end_time)->format('H:i') : null,
+            'cleanroom' => $slot->cleanroom,
+            'capacity' => $slot->capacity,
+            'assigned_analyst_id' => $slot->assigned_analyst_id,
+        ];
+    }
+    public function closeRunDayDetail(): void { $this->detailSlotId = null; }
+
+    public function saveRunDayDetail(): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $slot = RunSlot::find($this->detailSlotId);
+        if (! $slot) return;
+        if ($slot->attendance_submitted_at) {
+            Notification::make()->warning()->title('Locked')->body('Attendance has been submitted for this run day.')->send();
+            return;
+        }
+        // Changing the date reschedules the run day; booked reservations stay attached and move with it.
+        $slot->update([
+            'slot_date' => $this->editSlot['slot_date'] ?: $slot->slot_date,
+            'start_time' => $this->editSlot['start_time'] ?: null,
+            'end_time' => $this->editSlot['end_time'] ?: null,
+            'cleanroom' => $this->editSlot['cleanroom'] ?: $slot->cleanroom,
+            'capacity' => $this->editSlot['capacity'] ?: $slot->capacity,
+            'assigned_analyst_id' => $this->editSlot['assigned_analyst_id'] ?: null,
+        ]);
+        $this->closeRunDayDetail();
+        Notification::make()->success()->title('Run Day Updated')->body('Everyone booked on this day moves with it.')->send();
+    }
+
+    /** Booked reservations on a run day, for the detail modal. */
+    public function slotBookings(int $slotId): array
+    {
+        $slot = RunSlot::with('reservations.personnel')->find($slotId);
+        if (! $slot) return [];
+        return $slot->reservations
+            ->filter(fn ($r) => ! in_array(($r->status instanceof \BackedEnum ? $r->status->value : $r->status), ['rejected', 'completed'], true))
+            ->map(fn ($r) => $r->personnel?->full_name ?? 'Unknown')
+            ->values()->all();
     }
 
     public function viewRoster(string $date): void

@@ -262,7 +262,7 @@ class ClassScheduler extends Page
             'name' => $this->clsName,
             'code' => $this->clsCode,
             'validity_months' => $this->clsValidity ?: 12,
-            'default_capacity' => $this->clsCapacity ?: 12,
+            'default_capacity' => $this->clsCapacity ?: 20,
             'default_location' => $this->clsLocation,
             'is_gowning_prerequisite' => $this->clsPrereq,
             'is_published' => true,
@@ -531,7 +531,7 @@ class ClassScheduler extends Page
             'start_time' => $this->sessStart ?: null,
             'end_time' => $this->sessEnd ?: null,
             'location' => $this->sessLocation ?: $tpl?->default_location,
-            'capacity' => $this->sessCapacity ?: ($tpl?->default_capacity ?: 12),
+            'capacity' => $this->sessCapacity ?: ($tpl?->default_capacity ?: 20),
             'assigned_instructor_id' => $this->sessInstructorId ?: null,
             'status' => 'open',
         ];

@@ -1,8 +1,8 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Run Scheduler', 'icon' => 'heroicon-o-calendar-days', 'actions' => '
         <button type="button" wire:click="$set(\'tab\',\'overview\')" class="gqs-tab ' . ($tab==='overview' ? 'active' : '') . '">Overview</button>
-        <button type="button" wire:click="$set(\'tab\',\'schedule\')" class="gqs-tab ' . ($tab==='schedule' ? 'active' : '') . '">Run Days</button>
         <button type="button" wire:click="$set(\'tab\',\'reservations\')" class="gqs-tab ' . ($tab==='reservations' ? 'active' : '') . '">Reservations</button>
+        <button type="button" wire:click="$set(\'tab\',\'schedule\')" class="gqs-tab ' . ($tab==='schedule' ? 'active' : '') . '">Run Days</button>
         <button type="button" wire:click="$set(\'tab\',\'roster\')" class="gqs-tab ' . ($tab==='roster' ? 'active' : '') . '">Attendance</button>
     '])
 
@@ -84,7 +84,8 @@
                                     <td><span class="gqs-pill {{ $d->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $d->booked }} / {{ $d->capacity }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         <button wire:click="viewRoster('{{ $d->slot_date->toDateString() }}')" class="rd-act rd-act-magenta">Open Attendance</button>
-                                        <button wire:click="cancelSlotDay({{ $d->id }})" wire:confirm="Cancel this run day? Booked operators will be rescheduled or flagged." class="rd-act" style="background:#C8102E;">Cancel</button>
+                                        <button wire:click="openRunDayDetail({{ $d->id }})" class="rd-act" style="background:#C79A2E;">Reschedule</button>
+                                        <button wire:click="openRunDayDetail({{ $d->id }})" class="rd-act" style="background:#1C1C21;">Details</button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -138,6 +139,56 @@
                     </div>
                 </div>
             </div>
+        @endif
+
+        {{-- Run day detail / reschedule modal --}}
+        @if($detailSlotId)
+            @php $ds = \App\Models\RunSlot::find($detailSlotId); $dlocked = (bool) $ds?->attendance_submitted_at; @endphp
+            @if($ds)
+                <div class="gqs-modal-overlay" wire:click.self="closeRunDayDetail">
+                    <div class="gqs-modal" style="width:520px;">
+                        <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-calendar-days"/></span>Run Day · {{ $ds->cleanroom }}</div>
+                        <div class="gqs-modal-body">
+                            @if($dlocked)
+                                <div style="padding:10px 12px;background:#E9F7EF;border:1px solid #BFE6CE;border-radius:8px;font-size:12.5px;color:#1C5E3A;">Attendance Submitted. This Run Day Is Locked From Editing.</div>
+                            @else
+                                @php $booked = $this->slotBookings($detailSlotId); @endphp
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSlot.slot_date" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Cleanroom</label>
+                                        <select wire:model="editSlot.cleanroom" class="gqs-fld">
+                                            @foreach($this->cleanroomOptions() as $cr)<option value="{{ $cr }}">{{ $cr }}</option>@endforeach
+                                        </select></div>
+                                    <div><label class="gqs-flbl">Start</label><input type="time" wire:model="editSlot.start_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">End</label><input type="time" wire:model="editSlot.end_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="editSlot.capacity" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Analyst</label>
+                                        <select wire:model="editSlot.assigned_analyst_id" class="gqs-fld"><option value="">Unassigned</option>
+                                            @foreach($this->analystOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
+                                        </select></div>
+                                </div>
+                                <div style="margin-top:4px;padding:10px 12px;background:var(--gqs-surface-2,#F4F4F7);border-radius:8px;">
+                                    <div style="font-size:12px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-bottom:4px;">{{ count($booked) }} Booked · Rescheduling This Run Day Moves Them All To The New Date</div>
+                                    @if(count($booked))
+                                        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ implode(', ', $booked) }}</div>
+                                    @else
+                                        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">No one booked yet.</div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                        <div class="gqs-modal-foot" style="justify-content:space-between;">
+                            <button type="button" wire:click="cancelSlotDay({{ $ds->id }})"
+                                    wire:confirm="Cancel this run day? Booked operators will be returned to the queue / rescheduled and notified."
+                                    class="gqs-btn" style="background:#C8102E;color:#fff;">Cancel Run Day</button>
+                            <span style="display:flex;gap:9px;">
+                                <button type="button" wire:click="closeRunDayDetail" class="gqs-btn gqs-btn-ghost">Close</button>
+                                @if(! $dlocked)<button type="button" wire:click="saveRunDayDetail" class="gqs-btn gqs-btn-primary">Save / Reschedule</button>@endif
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endif
     @elseif($tab === 'reservations')
         {{-- RESERVATIONS TAB --}}
