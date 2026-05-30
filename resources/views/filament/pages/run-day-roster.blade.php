@@ -19,7 +19,7 @@
         </a>
     </div>
 
-    @php $slots = $this->slots; @endphp
+    @php $slots = $this->slots(); @endphp
 
     @if ($slots->isEmpty())
         <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No Qualification Run Slots Scheduled For This Date.</div></div>

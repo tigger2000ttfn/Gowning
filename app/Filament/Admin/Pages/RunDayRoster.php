@@ -42,7 +42,7 @@ class RunDayRoster extends Page
         $this->date = now()->toDateString();
     }
 
-    public function getSlotsProperty()
+    public function slots()
     {
         return RunSlot::with(['reservations' => function ($q) {
                 $q->whereIn('status', ['approved', 'completed'])->with('personnel');
