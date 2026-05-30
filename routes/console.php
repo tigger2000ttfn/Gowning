@@ -36,6 +36,10 @@ Schedule::command('gqs:auto-schedule')->dailyAt('06:10');
 // Flush queued emails once the mail relay (Postfix) is configured.
 // Until then rows sit in queued_emails with sent_at = null.
 Artisan::command('gqs:flush-emails', function () {
+    if (! (bool) \App\Models\Setting::get('email_enabled', false)) {
+        $this->info('Email sending is disabled in Settings; emails remain queued.');
+        return;
+    }
     $pending = \App\Models\QueuedEmail::whereNull('sent_at')->limit(200)->get();
     $sent = 0;
     foreach ($pending as $email) {

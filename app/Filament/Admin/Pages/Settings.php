@@ -60,6 +60,12 @@ class Settings extends Page implements HasForms
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
             'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
+            'email_enabled'         => (bool) Setting::get('email_enabled', false),
+            'mail_from_address'     => Setting::get('mail_from_address', ''),
+            'mail_from_name'        => Setting::get('mail_from_name', 'MATC Gowning Qualification'),
+            'mail_host'             => Setting::get('mail_host', ''),
+            'mail_port'             => Setting::get('mail_port', ''),
+            'mail_username'         => Setting::get('mail_username', ''),
             'org_name'              => Setting::get('org_name', 'MATC, Astellas'),
             'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
             'qcm_manager_id'        => Setting::get('qcm_manager_id'),
@@ -122,6 +128,19 @@ class Settings extends Page implements HasForms
                     TextInput::make('notify_days_before')->label('Due-date Reminder Days')
                         ->helperText('Comma-separated days before due to remind (e.g. 60,30,7).'),
                 ]),
+                Section::make('Email Delivery')->icon('heroicon-o-at-symbol')->columns(2)
+                    ->description('Outbound mail relay. Emails queue until this is reachable, then send automatically.')
+                    ->schema([
+                        Toggle::make('email_enabled')->label('Email Sending Enabled')
+                            ->helperText('Off = notifications stay in-app only and emails keep queuing.'),
+                        TextInput::make('mail_from_address')->label('From Address')->email()
+                            ->placeholder('gowning@matcastellas.com'),
+                        TextInput::make('mail_from_name')->label('From Name')
+                            ->placeholder('MATC Gowning Qualification'),
+                        TextInput::make('mail_host')->label('SMTP Host')->placeholder('localhost or relay host'),
+                        TextInput::make('mail_port')->label('SMTP Port')->numeric()->placeholder('25 / 587'),
+                        TextInput::make('mail_username')->label('SMTP Username')->placeholder('(if required)'),
+                    ]),
                 Section::make('Organization')->icon('heroicon-o-building-office-2')->columns(2)->schema([
                     TextInput::make('org_name')->label('Organization Name'),
                     TextInput::make('site_name')->label('Site Name'),
