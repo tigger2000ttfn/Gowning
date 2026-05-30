@@ -13,9 +13,9 @@ enum WorkflowStage: string
     case ClassComplete    = 'class_complete';     // class done, ready to schedule
     case RunScheduled     = 'run_scheduled';      // reservation approved for a slot
     case RunPerformed     = 'run_performed';      // gowned through the cleanroom
-    case SamplesTaken     = 'samples_taken';      // fingers/chest/forearms sampled
-    case Incubating       = 'incubating';         // plates in incubation
-    case ResultsReleased  = 'results_released';   // lab results in
+    case Incubating       = 'incubating';         // plates in incubation (LIMS), timer running
+    case AwaitingResults  = 'awaiting_results';   // incubation period elapsed, plates ready to read
+    case ResultsReleased  = 'results_released';   // pass/fail entered + released
     case QaReview         = 'qa_review';          // in QA approval queue
     case QaSignoff        = 'qa_signoff';         // QA signed off = Completed
     case Failed           = 'failed';             // failed run, needs QA determination
@@ -27,12 +27,12 @@ enum WorkflowStage: string
             self::ClassComplete   => 'Class Complete',
             self::RunScheduled    => 'Run Scheduled',
             self::RunPerformed    => 'Run Performed',
-            self::SamplesTaken    => 'Samples Taken',
             self::Incubating      => 'Incubating',
+            self::AwaitingResults => 'Awaiting Results',
             self::ResultsReleased => 'Results Released',
             self::QaReview        => 'QA Review',
             self::QaSignoff       => 'QA Sign-off (Complete)',
-            self::Failed          => 'Failed — QA Determination',
+            self::Failed          => 'Failed, QA Determination',
         };
     }
 
@@ -44,8 +44,8 @@ enum WorkflowStage: string
             self::ClassComplete   => '#6B2C91',
             self::RunScheduled    => '#1F6FB2',
             self::RunPerformed    => '#2A7DB5',
-            self::SamplesTaken    => '#C79A2E',
             self::Incubating      => '#B8860B',
+            self::AwaitingResults => '#C79A2E',
             self::ResultsReleased => '#0E8A6E',
             self::QaReview        => '#A4123F',
             self::QaSignoff       => '#2E7D5B',
@@ -58,7 +58,7 @@ enum WorkflowStage: string
     {
         return [
             self::ClassPending, self::ClassComplete, self::RunScheduled,
-            self::RunPerformed, self::SamplesTaken, self::Incubating,
+            self::RunPerformed, self::Incubating, self::AwaitingResults,
             self::ResultsReleased, self::QaReview, self::QaSignoff,
         ];
     }
@@ -78,7 +78,7 @@ enum WorkflowStage: string
         if ($i !== false && isset($pipe[$i + 1])) {
             $next[] = $pipe[$i + 1];
         }
-        if (in_array($this, [self::RunPerformed, self::SamplesTaken, self::Incubating, self::ResultsReleased], true)) {
+        if (in_array($this, [self::RunPerformed, self::Incubating, self::AwaitingResults, self::ResultsReleased], true)) {
             $next[] = self::Failed;
         }
         return $next;

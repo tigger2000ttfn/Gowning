@@ -110,7 +110,7 @@ class QualificationEngine
         // further along in sampling/incubation/QA, or already signed off).
         $current = $qualification->workflow_stage?->value;
         $alreadyPast = in_array($current, [
-            'run_performed', 'samples_taken', 'incubating',
+            'run_performed', 'incubating', 'awaiting_results',
             'results_released', 'qa_review', 'qa_signoff',
         ], true);
         if (! $alreadyPast && $current !== 'failed') {

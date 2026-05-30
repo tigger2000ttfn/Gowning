@@ -33,6 +33,8 @@ class StatusBoard extends Page
 
     public function getStages(): array
     {
+        // keep the board current: promote anything past its incubation period
+        app(\App\Services\IncubationAdvancer::class)->run();
         $out = [];
         $byStage = Qualification::with('personnel')
             ->get()

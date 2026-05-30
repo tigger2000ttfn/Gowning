@@ -88,8 +88,23 @@ class RunDayRoster extends Page
                         'run_date' => now()->toDateString(),
                         'recorded_by' => Auth::id(),
                     ]);
-                Notification::make()->success()->title('Run performed')
-                    ->body(($res->personnel->full_name ?? 'Operator') . ' recorded. Ready for sampling.')->send();
+                // move straight into Incubating and stamp the incubation start (= performed date).
+                // the timer auto-advances to Awaiting Results after the incubation period.
+                $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+                $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
+                    ->latest('run_date')->latest('id')->first();
+                if ($run && ! $run->incubation_started_at) {
+                    $run->incubation_started_at = now();
+                    $run->save();
+                }
+                if ($q) {
+                    $q->workflow_stage = \App\Enums\WorkflowStage::Incubating;
+                    $q->stage_changed_at = now();
+                    $q->save();
+                }
+                $days = (int) \App\Models\Setting::get('incubation_days', 8);
+                Notification::make()->success()->title('Run performed, incubation started')
+                    ->body(($res->personnel->full_name ?? 'Operator') . ': plates ready to read in ' . $days . ' days.')->send();
             });
     }
 

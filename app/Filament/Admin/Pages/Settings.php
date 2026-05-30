@@ -49,7 +49,7 @@ class Settings extends Page implements HasForms
             'class_repeats_annually'=> (bool) Setting::get('class_repeats_annually', false),
             'self_register_open'    => (bool) Setting::get('self_register_open', true),
             'auto_approve'          => (bool) Setting::get('auto_approve', false),
-            'incubation_days'       => (int) Setting::get('incubation_days', 5),
+            'incubation_days'       => (int) Setting::get('incubation_days', 8),
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
