@@ -89,9 +89,9 @@ class Settings extends Page implements HasForms
                         ->numeric()->minValue(1)->required(),
                     TextInput::make('cycle_months')->label('Qualification Valid For (Months)')
                         ->numeric()->minValue(1)->required(),
-                    TextInput::make('grace_days')->label('Grace Window After Due Date (Days)')
-                        ->numeric()->minValue(0)->required()
-                        ->helperText('Days past due before a qualification is treated as lapsed.'),
+                    TextInput::make('grace_days')->label('Lapse Window (Days Relative To Due Date)')
+                        ->numeric()->required()
+                        ->helperText('When a qualified person lapses into requalification, relative to their due date. 0 = lapses the day after the due date. Positive = grace period (e.g. 7 = one week after). Negative = lapses early (e.g. -1 = the day before the due date). Adjust to match policy.'),
                 ]),
                 Section::make('Class & Access')->icon('heroicon-o-lock-closed')->columns(2)->schema([
                     Toggle::make('class_required')->label('Gowning Class Required Before Initial Runs'),

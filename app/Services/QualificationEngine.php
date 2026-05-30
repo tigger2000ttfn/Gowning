@@ -108,7 +108,11 @@ class QualificationEngine
         if ($qualification->cycle_started_at) {
             $runsQuery->whereDate('run_date', '>=', $qualification->cycle_started_at);
         }
-        $state = $this->replay($runsQuery->get());
+        // When a determination/lapse defined this cycle (anchor set), honor its required
+        // count (e.g. a custom lapsed_runs_required or QA's 1-vs-3 choice) instead of
+        // always assuming the initial count.
+        $startingRequired = $qualification->cycle_started_at ? (int) $qualification->runs_required : null;
+        $state = $this->replay($runsQuery->get(), $startingRequired);
 
         $qualification->fill([
             'type' => $state['type'],
@@ -142,10 +146,10 @@ class QualificationEngine
      *
      * @return array{type:QualificationType,status:QualificationStatus,required:int,passes:int,qualified_date:?string,due_date:?string}
      */
-    public function replay(iterable $runs): array
+    public function replay(iterable $runs, ?int $startingRequired = null): array
     {
         $type = QualificationType::Initial;
-        $required = $this->initialRunsRequired();
+        $required = $startingRequired ?? $this->initialRunsRequired();
         $passes = 0;
         $status = QualificationStatus::Pending;
         $qualifiedDate = null;   // CarbonImmutable|null
