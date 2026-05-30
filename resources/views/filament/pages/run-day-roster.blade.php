@@ -235,11 +235,7 @@
         @endif
     @else
         {{-- ROSTER TAB --}}
-        <div x-data="{
-                showResults: false, resId: null, resName: '', worklist: '', overall: 'pass',
-                open(id, name) { this.resId = id; this.resName = name; this.worklist = ''; this.overall = 'pass'; this.showResults = true; },
-                submit() { $wire.enterResults(this.resId, this.overall, this.worklist); this.showResults = false; }
-            }">
+        <div>
 
         <div style="margin-bottom:18px;max-width:560px;display:flex;gap:14px;align-items:end;">
             <div style="flex:1;max-width:260px;">
@@ -295,7 +291,7 @@
                                             <button wire:click="rosterNoShow({{ $res->id }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C8102E;">No-Show</button>
                                             <button wire:click="rosterReschedule({{ $res->id }})" wire:confirm="Reschedule to the next available run day?" class="rd-act" style="background:#C79A2E;">Reschedule</button>
                                         @elseif($readyForResults)
-                                            <button type="button" @click="open({{ $res->id }}, '{{ addslashes($res->personnel?->full_name ?? 'Operator') }}')" class="rd-act rd-act-magenta">Enter Results</button>
+                                            <button type="button" @click="$dispatch('open-results', { id: {{ $res->id }}, name: '{{ addslashes($res->personnel?->full_name ?? 'Operator') }}' })" class="rd-act rd-act-magenta">Enter Results</button>
                                         @elseif($st === 'completed')
                                             <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12px;">{{ $performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates' }}</span>
                                         @else
@@ -311,7 +307,10 @@
         @endforeach
     @endif
 
-    {{-- Results entry modal (Alpine) --}}
+    {{-- Results entry modal (Alpine, self-contained, listens for open-results event) --}}
+    <div x-data="{ showResults: false, resId: null, resName: '', worklist: '', overall: 'pass',
+            submit() { $wire.enterResults(this.resId, this.overall, this.worklist); this.showResults = false; } }"
+         @open-results.window="resId = $event.detail.id; resName = $event.detail.name; worklist = ''; overall = 'pass'; showResults = true">
     <div x-show="showResults" x-cloak style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" @click.self="showResults=false">
         <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:420px;max-width:92vw;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);">
             <h3 style="font-weight:800;font-size:17px;margin:0 0 4px;color:var(--gqs-text,#1A1A1F);">Enter LIMS Results</h3>
@@ -333,8 +332,9 @@
             </div>
         </div>
     </div>
+    </div>{{-- end results-modal x-data --}}
 
-    </div>
+    </div>{{-- end roster tab wrapper --}}
     @endif
 
     <style>

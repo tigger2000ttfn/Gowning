@@ -161,7 +161,7 @@ class StatusBoard extends Page
             'department' => $q->personnel?->department,
             'stage' => $q->workflow_stage?->label(),
             'status' => ucfirst((string) ($q->status?->value ?? $q->status ?? '')),
-            'type' => ucfirst((string) ($q->type ?? '')),
+            'type' => ucfirst((string) ($q->type?->value ?? $q->type ?? '')),
             'runs' => $q->runs_completed . ' / ' . $q->runs_required,
             'due' => $q->due_date?->format('M j, Y'),
             'class_on_file' => (bool) $q->class_on_file,

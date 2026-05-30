@@ -6,6 +6,7 @@ enum RunSlotStatus: string
 {
     case Open = 'open';
     case Closed = 'closed';
+    case Cancelled = 'cancelled';
 
     public function label(): string
     {
