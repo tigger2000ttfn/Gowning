@@ -9,6 +9,7 @@ to validation-document updates for QA. Refit to the Astellas change-control form
 
 | # | Date | Baseline (commit) | Code / configuration change | Validation impact | Docs updated |
 |---|---|---|---|---|---|
+| CC-0008 | 30-MAY-2026 | main @ 8a457da | No code change (documentation). Authored SOP batch 1 (core Part 11 procedures). | Procedural controls for access, e-signatures, audit-trail review, and change control. | SOP-GQS-001 (Access), SOP-GQS-004 (E-Signatures), SOP-GQS-003 (Audit-Trail Review), SOP-GQS-005 (Change Control). |
 | CC-0007 | 30-MAY-2026 | main @ 3b6dca7 | No code change (documentation). Authored the Performance Qualification protocol. | Provides the PQ (10 real-use scenarios: full lifecycle, requal, auto-lapse over simulated time, unattended cron automation, population-scale load, concurrency, NC path, reporting at scale, backup/restore [deferred], and UAT). | PQ-GQS-001 created; RTM-GQS-001 note updated. |
 | CC-0006 | 30-MAY-2026 | main @ db66ac2 | No code change (documentation). Authored the Operational Qualification protocol. | Provides the scripted OQ (16 test cases, GMP-critical + witnessed e-signature + negative tests) verifying functions against FS-GQS-001. | OQ-GQS-001 created; RTM-GQS-001 note updated. |
 | CC-0005 | 30-MAY-2026 | main @ e9f50bd | No code change (documentation). Authored the Installation Qualification protocol. | Provides the executable IQ verifying the deployed baseline + environment against DS-GQS-001. | IQ-GQS-001 created. |
