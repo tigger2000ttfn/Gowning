@@ -144,6 +144,21 @@
 </div>
 @endif
 
+@if(!empty($rolePanels['stats']))
+<div class="dash-pad" style="margin-bottom:18px;">
+    <div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--gqs-text-dim,#9A9AA4);margin-bottom:10px;">{{ $rolePanels['label'] }}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
+        @foreach($rolePanels['stats'] as $stat)
+            <div style="position:relative;overflow:hidden;background:linear-gradient(135deg,{{ $stat[3] }},{{ $stat[3] }}dd);border-radius:14px;padding:18px 20px;color:#fff;box-shadow:0 4px 14px {{ $stat[3] }}33;">
+                <div style="font-size:30px;font-weight:800;line-height:1;">{{ $stat[1] }}</div>
+                <div style="font-size:12.5px;font-weight:600;margin-top:6px;opacity:.95;">{{ $stat[0] }}</div>
+                <x-filament::icon :icon="$stat[2]" style="position:absolute;right:-8px;bottom:-8px;width:64px;height:64px;opacity:.16;"/>
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <div class="dash-pad">
 <div class="dash-grid">
     <div class="dash-stat s-green"><span class="ic"><x-filament::icon icon="heroicon-o-shield-check"/></span><div class="n">{{ $qualified }}</div><div class="l">Qualified</div></div>

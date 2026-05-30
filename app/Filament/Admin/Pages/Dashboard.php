@@ -70,6 +70,55 @@ class Dashboard extends BaseDashboard
         return $days;
     }
 
+    /** Determine the user's primary dashboard role from their capabilities. */
+    public function dashboardRole(): string
+    {
+        $u = Auth::user();
+        if (! $u) return 'operator';
+        $has = fn ($c) => $u->hasCapability($c);
+        if ($has(\App\Enums\Capability::QaApprove) || $has(\App\Enums\Capability::QaReview)) return 'qa';
+        if ($has(\App\Enums\Capability::ManageScheduling) || $has(\App\Enums\Capability::RecordRuns)) return 'qcm';
+        if ($has(\App\Enums\Capability::ViewReports) || $has(\App\Enums\Capability::ManageUsers)) return 'manager';
+        return 'operator';
+    }
+
+    /** Role-specific focus panels (counts + lists tuned to what that role acts on). */
+    public function rolePanels(string $role): array
+    {
+        return match ($role) {
+            'qa' => [
+                'label' => 'QA Focus',
+                'stats' => [
+                    ['Awaiting Sign-off', \App\Models\Qualification::whereIn('workflow_stage', ['qa_review', 'results_released'])->count(), 'heroicon-o-clipboard-document-check', '#A4123F'],
+                    ['Open Non-Conformances', \App\Models\NonConformance::where('status', 'open')->count(), 'heroicon-o-exclamation-triangle', '#C8102E'],
+                    ['My Assigned Approvals', \App\Models\Qualification::where('qa_owner_id', Auth::id())->whereIn('workflow_stage', ['qa_review','results_released'])->count(), 'heroicon-o-user-circle', '#6B2C91'],
+                ],
+            ],
+            'qcm' => [
+                'label' => 'QC Micro Focus',
+                'stats' => [
+                    ['Run Requests', Reservation::where('status', 'requested')->count(), 'heroicon-o-inbox-arrow-down', '#A4123F'],
+                    ['Incubating', \App\Models\Qualification::where('workflow_stage', 'incubating')->count(), 'heroicon-o-beaker', '#C79A2E'],
+                    ['Run Days This Week', \App\Models\RunSlot::whereBetween('slot_date', [now()->startOfWeek()->toDateString(), now()->endOfWeek()->toDateString()])->where('status','open')->count(), 'heroicon-o-calendar-days', '#2E7D5B'],
+                    ['Not Yet Scheduled', \App\Models\Qualification::where('workflow_stage', 'class_complete')->count(), 'heroicon-o-clock', '#6B2C91'],
+                ],
+            ],
+            'manager' => [
+                'label' => 'Compliance Focus',
+                'stats' => [
+                    ['Qualified', Qualification::where('status','qualified')->count(), 'heroicon-o-check-badge', '#2E7D5B'],
+                    ['Overdue', Qualification::whereNotNull('due_date')->whereDate('due_date','<',now())->count(), 'heroicon-o-exclamation-circle', '#C8102E'],
+                    ['Due In 30 Days', Qualification::whereNotNull('due_date')->whereBetween('due_date', [now(), now()->addDays(30)])->count(), 'heroicon-o-bell-alert', '#C79A2E'],
+                    ['Lapsed', Qualification::where('status','lapsed')->count(), 'heroicon-o-x-circle', '#A4123F'],
+                ],
+            ],
+            default => [
+                'label' => 'My Qualification',
+                'stats' => [],
+            ],
+        };
+    }
+
     public function getViewData(): array
     {
         $me = Auth::user();
@@ -79,7 +128,11 @@ class Dashboard extends BaseDashboard
             ? \App\Models\Qualification::where('personnel_id', $myPersonnel->id)->first()
             : null;
 
+        $role = $this->dashboardRole();
+
         return [
+            'dashRole'    => $role,
+            'rolePanels'  => $this->rolePanels($role),
             'userName'    => $me?->name,
             'qualified'   => Qualification::where('status', 'qualified')->count(),
             'inProgress'  => Qualification::where('status', 'in_progress')->count(),
