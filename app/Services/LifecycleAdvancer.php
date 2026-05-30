@@ -59,6 +59,7 @@ class LifecycleAdvancer
                     : WorkflowStage::ClassPending;
                 $q->stage_changed_at = now();
                 $q->save();
+                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Lapsed, ['personnel' => $q->personnel, 'qualification' => $q]);
                 $lapsed++;
             }
         }

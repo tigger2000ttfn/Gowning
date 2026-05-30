@@ -119,6 +119,7 @@ class QaQueue extends Page
                 if (! $q->qualified_date) $q->qualified_date = now();
                 if (! $q->due_date) $q->due_date = now()->addMonths((int) Setting::get('cycle_months', 12));
                 $q->save();
+                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Qualified, ['personnel' => $q->personnel, 'qualification' => $q]);
 
                 Notification::make()->success()->title('Signed off')
                     ->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
@@ -139,6 +140,7 @@ class QaQueue extends Page
         if (! $q->qualified_date) $q->qualified_date = now();
         if (! $q->due_date) $q->due_date = now()->addMonths((int) \App\Models\Setting::get('cycle_months', 12));
         $q->save();
+        \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Qualified, ['personnel' => $q->personnel, 'qualification' => $q]);
         Notification::make()->success()->title('Signed off')
             ->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
     }

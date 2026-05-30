@@ -127,6 +127,7 @@ class RunDayRoster extends Page
                     'summary' => 'Auto-created from failed qualification run. Link TrackWise NC.',
                 ]
             );
+            \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $res->personnel]);
         }
         Notification::make()->success()->title('Results entered')
             ->body(($res->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail' ? ', sent to QA determination.' : ', sent to QA review.'))->send();

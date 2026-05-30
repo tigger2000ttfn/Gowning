@@ -84,6 +84,14 @@ class QualificationEngine
 
         $this->recompute($qualification);
 
+        // fire automation rules for the run outcome
+        \App\Services\AutomationEngine::fire(
+            $result === RunResult::Pass
+                ? \App\Enums\AutomationTrigger::RunPassed
+                : \App\Enums\AutomationTrigger::RunFailed,
+            ['personnel' => $personnel, 'qualification' => $qualification->fresh()]
+        );
+
         return $run->fresh();
     }
 
