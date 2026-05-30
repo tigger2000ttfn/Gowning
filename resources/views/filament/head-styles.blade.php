@@ -58,13 +58,18 @@
     /* re-pad the non-hero content so it isn't edge-to-edge (hero handles its own full width) */
     .dash-pad { padding: 0 32px !important; }
     @media (max-width: 640px){ .dash-pad { padding: 0 16px !important; } }
-    /* Chart widgets live in .fi-page-content (no footer-widgets class exists).
-       Zeroing .fi-main padding made them edge-to-edge; re-pad + top space. */
-    .fi-main:has(.dash-hero) .fi-page-content {
-        padding: 24px 32px 0 !important;
-    }
+    /* Hero stays full-bleed (.fi-page-content padding:0). Pad ONLY the chart-widget grid,
+       not the shared .fi-page-content (which would pad the hero too). */
+    .fi-main:has(.dash-hero) .fi-page-content { padding: 0 !important; }
+    /* Pad the chart widgets specifically (.fi-wi-widget = chart wrapper; hero is not a widget) */
+    .fi-main:has(.dash-hero) .fi-wi-widget { margin: 0 32px !important; }
+    .fi-main:has(.dash-hero) .fi-page-footer-widgets,
+    .fi-main:has(.dash-hero) section.fi-section { scroll-margin: 0; }
+    /* top space above the whole widget row */
+    .fi-main:has(.dash-hero) .fi-page-content > .fi-sc:last-child,
+    .fi-main:has(.dash-hero) .fi-page-content > div:last-child { padding-top: 24px !important; }
     @media (max-width: 640px){
-        .fi-main:has(.dash-hero) .fi-page-content { padding: 20px 16px 0 !important; }
+        .fi-main:has(.dash-hero) .fi-wi-widget { margin: 0 16px !important; }
     }
 
     /* Smaller sidebar font + narrower so it takes less space, esp on small screens */
