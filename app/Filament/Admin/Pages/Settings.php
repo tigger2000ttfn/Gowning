@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Filament\Pages\Page;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -59,6 +60,8 @@ class Settings extends Page implements HasForms
             'notify_days_before'    => Setting::get('notify_days_before', '60,30,7'),
             'org_name'              => Setting::get('org_name', 'MATC — Astellas'),
             'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
+            'qcm_manager_id'        => Setting::get('qcm_manager_id'),
+            'qa_manager_id'         => Setting::get('qa_manager_id'),
         ]);
     }
 
@@ -116,6 +119,16 @@ class Settings extends Page implements HasForms
                     TextInput::make('org_name')->label('Organization Name'),
                     TextInput::make('site_name')->label('Site Name'),
                 ]),
+                Section::make('Teams')->icon('heroicon-o-user-group')->columns(2)
+                    ->description('Assign the manager for each team. Add members by setting a person\'s Team on their user record (Users & Approvals).')
+                    ->schema([
+                        Select::make('qcm_manager_id')->label('QC Micro Team Manager')
+                            ->options(fn () => \App\Models\User::where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                            ->searchable()->placeholder('Unassigned'),
+                        Select::make('qa_manager_id')->label('QA Team Manager')
+                            ->options(fn () => \App\Models\User::where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
+                            ->searchable()->placeholder('Unassigned'),
+                    ]),
             ]);
     }
 

@@ -6,6 +6,7 @@ use App\Enums\Capability;
 use App\Models\User;
 use App\Models\RunSlot;
 use App\Models\ClassSession;
+use App\Models\Setting;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,14 +28,31 @@ class QcmTeamView extends Page
 
     protected string $view = 'filament.pages.qcm-team-view';
 
+    public string $tab = 'overview';   // overview | table | cards | calendar
+    public ?int $assignSlotId = null;
+    public ?int $assignAnalystId = null;
+    public bool $showAssign = false;
+
+    /** Members of the QCM team: explicit team flag, or fallback to capability holders. */
+    protected function teamMembers()
+    {
+        $byTeam = User::where('is_active', true)->where('team', 'qcm')->get();
+        if ($byTeam->isNotEmpty()) return $byTeam;
+        return User::where('is_active', true)->get()
+            ->filter(fn ($u) => $u->hasCapability(Capability::RecordRuns) || $u->hasCapability(Capability::ManageScheduling))
+            ->values();
+    }
+
+    public function manager(): ?User
+    {
+        $id = Setting::get('qcm_manager_id');
+        return $id ? User::find($id) : null;
+    }
+
     public function getAnalysts()
     {
-        $analysts = User::where('is_active', true)->get()
-            ->filter(fn ($u) => $u->hasCapability(Capability::RecordRuns) || $u->hasCapability(Capability::ManageScheduling));
-
         $today = now()->toDateString();
-
-        return $analysts->map(function ($u) use ($today) {
+        return $this->teamMembers()->map(function ($u) use ($today) {
             $runDays = RunSlot::where('assigned_analyst_id', $u->id)
                 ->whereDate('slot_date', '>=', $today)->where('status', 'open')
                 ->orderBy('slot_date')->get();
@@ -42,7 +60,9 @@ class QcmTeamView extends Page
                 ->whereDate('session_date', '>=', $today)
                 ->orderBy('session_date')->get();
             return (object) [
+                'id' => $u->id,
                 'name' => $u->name,
+                'is_manager' => (bool) $u->is_team_manager,
                 'run_days' => $runDays,
                 'classes' => $classes,
                 'load' => $runDays->count() + $classes->count(),
@@ -55,5 +75,51 @@ class QcmTeamView extends Page
         return RunSlot::whereNull('assigned_analyst_id')
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->where('status', 'open')->orderBy('slot_date')->get();
+    }
+
+    /** Calendar data: upcoming run days with their assigned analyst, grouped by date. */
+    public function getCalendar(): array
+    {
+        $today = now()->toDateString();
+        $slots = RunSlot::with('analyst')
+            ->whereDate('slot_date', '>=', $today)
+            ->whereDate('slot_date', '<=', now()->addDays(42)->toDateString())
+            ->where('status', '!=', 'cancelled')
+            ->orderBy('slot_date')->orderBy('start_time')->get();
+
+        return $slots->groupBy(fn ($s) => $s->slot_date->format('Y-m-d'))
+            ->map(fn ($group, $day) => [
+                'date' => \Illuminate\Support\Carbon::parse($day)->format('D, M j'),
+                'rows' => $group->map(fn ($s) => [
+                    'cleanroom' => $s->cleanroom,
+                    'time' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : null,
+                    'analyst' => $s->analyst?->name,
+                    'slot_id' => $s->id,
+                ])->all(),
+            ])->values()->all();
+    }
+
+    /** Analyst options for the assign modal. */
+    public function analystOptions(): array
+    {
+        return $this->teamMembers()->mapWithKeys(fn ($u) => [$u->id => $u->name])->all();
+    }
+
+    public function openAssign(int $slotId): void
+    {
+        $this->assignSlotId = $slotId;
+        $this->assignAnalystId = RunSlot::find($slotId)?->assigned_analyst_id;
+        $this->showAssign = true;
+    }
+
+    public function saveAssign(): void
+    {
+        $slot = RunSlot::find($this->assignSlotId);
+        if ($slot) {
+            $slot->assigned_analyst_id = $this->assignAnalystId ?: null;
+            $slot->save();
+            \Filament\Notifications\Notification::make()->success()->title('Analyst assigned')->send();
+        }
+        $this->showAssign = false;
     }
 }

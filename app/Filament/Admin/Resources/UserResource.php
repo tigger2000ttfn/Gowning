@@ -76,6 +76,14 @@ class UserResource extends Resource
                     ->helperText('Link this login to an employee record so their qualification shows in My Qualification.'),
                 Toggle::make('is_active')->default(true),
             ]),
+            Section::make('Team Membership')->icon('heroicon-o-user-group')->columns(2)->schema([
+                Select::make('team')->label('Team')
+                    ->options(\App\Enums\Team::options())
+                    ->placeholder('No team')
+                    ->helperText('Which working team this staff member belongs to.'),
+                Toggle::make('is_team_manager')->label('Team Manager')
+                    ->helperText('Managers can assign work and see their team view.'),
+            ]),
         ]);
     }
 
@@ -90,10 +98,15 @@ class UserResource extends Resource
                     ->color(fn ($s) => match($s) {
                         'approved' => 'success', 'rejected' => 'danger', default => 'warning',
                     }),
+                TextColumn::make('team')->label('Team')->badge()
+                    ->formatStateUsing(fn ($s) => $s ? \App\Enums\Team::tryFrom($s)?->label() : '-')
+                    ->color(fn ($s) => $s === 'qcm' ? 'info' : ($s === 'qa' ? 'warning' : 'gray'))->toggleable(),
+                IconColumn::make('is_team_manager')->boolean()->label('Mgr')->toggleable(),
                 IconColumn::make('is_active')->boolean()->label('Active'),
                 TextColumn::make('created_at')->dateTime()->since()->label('Requested')->toggleable(),
             ])
             ->filters([
+                \Filament\Tables\Filters\SelectFilter::make('team')->options(\App\Enums\Team::options()),
                 SelectFilter::make('approval_status')->options([
                     'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
                 ])->label('Approval Status'),
