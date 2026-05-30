@@ -140,6 +140,33 @@
     html:not(.dark) .gqs-manage-link { color: #1A1A1F !important; }
     html:not(.dark) .gqs-manage-link:hover { background: #F1F1F4 !important; }
 
+    /* Manage sub-dropdowns (collapsible sections) */
+    .gqs-manage-divider { height:1px; background:var(--gqs-border,#ECECEF); margin:6px 4px; }
+    html:not(.dark) .gqs-manage-divider { background:#ECECEF; }
+    .gqs-manage-sub { display:block; }
+    .gqs-manage-subbtn {
+        display:flex; align-items:center; gap:8px; width:100%;
+        padding:10px 12px; border:none; background:transparent; cursor:pointer;
+        font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
+        color:var(--gqs-text-dim,#8A8A93); border-radius:8px; text-align:left;
+    }
+    .gqs-manage-subbtn:hover { background:var(--gqs-surface-2,#F1F1F4); }
+    html:not(.dark) .gqs-manage-subbtn { color:#8A8A93; }
+    html:not(.dark) .gqs-manage-subbtn:hover { background:#F1F1F4; }
+    .gqs-manage-subbtn > span:first-child { flex:1; }
+    .gqs-manage-subcount {
+        font-size:10px; font-weight:700; background:var(--astellas-magenta,#A4123F); color:#fff;
+        border-radius:9px; padding:1px 7px; letter-spacing:0;
+    }
+    .gqs-manage-subchev { width:14px; height:14px; transition:transform .15s; opacity:.7; }
+    .gqs-manage-subitems { padding-left:6px; margin:2px 0 4px; }
+    .gqs-manage-sublink { padding-left:18px !important; font-size:13.5px !important; }
+    .gqs-manage-sublink::before {
+        content:''; position:absolute; left:9px; width:2px; height:18px;
+        background:var(--gqs-border,#E2E2E6); border-radius:2px;
+    }
+    .gqs-manage-sublink { position:relative; }
+
     /* Filament dropdown panels: user/avatar menu, notifications, any fi-dropdown */
     html:not(.dark) .fi-dropdown-panel,
     html:not(.dark) .fi-dropdown-list {

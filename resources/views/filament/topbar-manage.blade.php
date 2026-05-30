@@ -86,14 +86,26 @@
             </a>
         @endforeach
 
-        @foreach ($sections as [$heading, $items])
-            <div class="gqs-manage-sec">{{ $heading }}</div>
-            @foreach ($items as [$label, $url, $icon])
-                <a href="{{ $url }}" class="gqs-manage-link">
-                    <x-filament::icon :icon="$icon" class="gqs-manage-link-ico" />
-                    <span>{{ $label }}</span>
-                </a>
-            @endforeach
+        @if (count($top) && count($sections))
+            <div class="gqs-manage-divider"></div>
+        @endif
+
+        @foreach ($sections as $si => [$heading, $items])
+            <div x-data="{ sub: false }" class="gqs-manage-sub">
+                <button type="button" @click="sub = !sub" class="gqs-manage-subbtn">
+                    <span>{{ $heading }}</span>
+                    <span class="gqs-manage-subcount">{{ count($items) }}</span>
+                    <x-filament::icon icon="heroicon-m-chevron-down" class="gqs-manage-subchev" x-bind:style="sub && 'transform:rotate(180deg)'" />
+                </button>
+                <div x-show="sub" x-transition x-cloak class="gqs-manage-subitems">
+                    @foreach ($items as [$label, $url, $icon])
+                        <a href="{{ $url }}" class="gqs-manage-link gqs-manage-sublink">
+                            <x-filament::icon :icon="$icon" class="gqs-manage-link-ico" />
+                            <span>{{ $label }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            </div>
         @endforeach
     </div>
 </div>
