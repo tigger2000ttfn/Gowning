@@ -20,7 +20,7 @@
                     </div>
                     @if($canApprove)
                         <div style="white-space:nowrap;">
-                            <button wire:click="signOff({{ $q->id }})" class="sb-act sb-act-green">Sign Off</button>
+                            {{ ($this->signOffAction)(['id' => $q->id]) }}
                             <button wire:click="markFailed({{ $q->id }})" class="sb-act sb-act-red">Fail</button>
                         </div>
                     @endif
@@ -48,4 +48,6 @@
         .sb-act-green{background:#2E7D5B;} .sb-act-green:hover{background:#246148;}
         .sb-act-red{background:#C8102E;} .sb-act-red:hover{background:#9A0C23;}
     </style>
+
+    <x-filament-actions::modals />
 </x-filament-panels::page>
