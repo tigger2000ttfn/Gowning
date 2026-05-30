@@ -143,7 +143,10 @@ class ClassBoard extends Page
             if (in_array($q->workflow_stage?->value, [null, 'class_pending'], true)) {
                 $q->workflow_stage = WorkflowStage::ClassComplete;
                 $q->stage_changed_at = now();
+                $q->class_on_file = true;
                 $q->save();
+                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::ClassCompleted, ['personnel' => $e->personnel, 'qualification' => $q]);
+                \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::StageChanged, ['personnel' => $e->personnel, 'qualification' => $q, 'stage' => WorkflowStage::ClassComplete->value]);
             }
         }
     }
