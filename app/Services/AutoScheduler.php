@@ -200,6 +200,17 @@ class AutoScheduler
                 $res->run_slot_id = null;
                 $res->notes = trim(($res->notes ? $res->notes . ' ' : '') . 'Needs rebooking (no open day) after cancelled ' . $slot->slot_date->format('M j') . '.');
                 $res->save();
+                // return the person to bookable so the auto-scheduler re-picks them
+                if ($res->personnel) {
+                    $pq = Qualification::where('personnel_id', $res->personnel_id)->first();
+                    if ($pq && $pq->workflow_stage === \App\Enums\WorkflowStage::RunScheduled) {
+                        $pq->workflow_stage = $pq->class_on_file
+                            ? \App\Enums\WorkflowStage::ClassComplete
+                            : \App\Enums\WorkflowStage::ClassPending;
+                        $pq->stage_changed_at = now();
+                        $pq->save();
+                    }
+                }
                 $this->notifier->toPersonnel(
                     $res->personnel,
                     'Qualification run needs rebooking',
