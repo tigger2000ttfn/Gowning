@@ -58,6 +58,38 @@
     /* primary links/text also magenta not pink */
     .fi-link.fi-color-primary, a.fi-color-primary { color: #A4123F !important; }
 
+
+    /* ===== GQS SHARED PAGE COMPONENTS (match dashboard look across all pages) ===== */
+    .gqs-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
+    .gqs-stat { position:relative; overflow:hidden; color:#fff; border-radius:14px; padding:18px 18px 16px; box-shadow:0 3px 12px rgba(0,0,0,.12); }
+    .gqs-stat .n { font-size:30px; font-weight:800; line-height:1; }
+    .gqs-stat .l { font-size:13px; font-weight:600; opacity:.95; margin-top:6px; }
+    .gqs-stat .wm { position:absolute; right:-8px; bottom:-10px; width:74px; height:74px; opacity:.16; }
+    .gqs-stat .wm svg { width:100%; height:100%; }
+    .gqs-stat.red { background:linear-gradient(135deg,#C8102E,#920B22); }
+    .gqs-stat.purple { background:linear-gradient(135deg,#6B2C91,#4A1E66); }
+    .gqs-stat.green { background:linear-gradient(135deg,#2E7D5B,#1F6147); }
+    .gqs-stat.gold { background:linear-gradient(135deg,#C79A2E,#9E7818); }
+    .gqs-stat.magenta { background:linear-gradient(135deg,#A4123F,#760D2D); }
+    .gqs-stat.charcoal { background:linear-gradient(135deg,#2A2A31,#1C1C21); }
+
+    .gqs-panel { background:var(--gqs-surface,#fff); border:1px solid var(--gqs-border,#DADADF); border-radius:14px; overflow:hidden; margin-bottom:16px; }
+    .gqs-panel-head { display:flex; align-items:center; gap:9px; padding:13px 16px; font-weight:700; font-size:14px; color:#fff; background:linear-gradient(135deg,#A4123F,#850F33); }
+    .gqs-panel-head svg { width:17px; height:17px; }
+    .gqs-panel-body { padding:6px 0; }
+    .gqs-tbl { width:100%; border-collapse:collapse; font-size:13.5px; }
+    .gqs-tbl th { text-align:left; padding:9px 16px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--gqs-text-dim,#6A6A72); border-bottom:1px solid var(--gqs-border,#EEE); }
+    .gqs-tbl td { padding:10px 16px; border-bottom:1px solid var(--gqs-border,#F2F2F4); color:var(--gqs-text,#1A1A1F); }
+    .gqs-tbl tbody tr:hover { background:rgba(164,18,63,.04); }
+    .gqs-tbl tbody tr:last-child td { border-bottom:0; }
+    .gqs-pill { display:inline-block; font-size:12px; font-weight:700; padding:3px 11px; border-radius:20px; }
+    .gqs-pill-red { background:#FBE3E7; color:#C8102E; }
+    .gqs-pill-gold { background:#FBF3DC; color:#8A6D0B; }
+    .gqs-pill-green { background:#DDF3E9; color:#1E7A52; }
+    .gqs-pill-purple { background:#EFE6F5; color:#6B2C91; }
+    .gqs-empty { padding:22px 16px; text-align:center; color:var(--gqs-text-dim,#9A9AA4); font-size:13.5px; }
+    html.dark .gqs-tbl td { color:#E4E4E8; }
+
     /* ===== HIDE EMPTY FILAMENT PAGE HEADER (we use the .pg-head partial instead) =====
        Pages return getHeading('') but Filament still renders an empty .fi-header taking space
        and sometimes a duplicate h1. Hide it on pages that have our own .pg-head. */
