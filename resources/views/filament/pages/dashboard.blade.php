@@ -20,7 +20,7 @@
         radial-gradient(42% 48% at 80% 60%,rgba(164,18,63,.30),transparent 72%);
         filter:blur(8px);animation:dashneb 26s ease-in-out infinite;}
     @keyframes dashneb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,-3%) scale(1.07)}}
-    .dash-star{position:absolute;border-radius:50%;z-index:0;animation:dashtw 3s ease-in-out infinite;}
+    .dash-star{position:absolute;border-radius:50%;z-index:0;animation:dashtw 3s ease-in-out infinite;box-shadow:0 0 6px 1px currentColor;}
     @keyframes dashtw{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
     .dash-hero-in{position:relative;z-index:1;flex:1;}
     .dash-hero-icon{position:relative;z-index:1;width:clamp(90px,12vw,130px);height:clamp(90px,12vw,130px);flex:0 0 auto;filter:drop-shadow(0 0 14px rgba(232,194,74,.5));animation:dashFloat 6s ease-in-out infinite;}
@@ -100,7 +100,7 @@
 
 <div class="dash-hero">
     @foreach($stars as $s)
-        <span class="dash-star" style="top:{{$s['t']}}%;left:{{$s['l']}}%;width:{{$s['s']}}px;height:{{$s['s']}}px;background:{{$s['c']}};animation-delay:{{$s['d']}}s;animation-duration:{{$s['u']}}s;"></span>
+        <span class="dash-star" style="top:{{$s['t']}}%;left:{{$s['l']}}%;width:{{$s['s']}}px;height:{{$s['s']}}px;background:{{$s['c']}};color:{{$s['c']}};box-shadow:0 0 {{$s['s']+4}}px {{round($s['s']*0.5,1)}}px {{$s['c']}};animation-delay:{{$s['d']}}s;animation-duration:{{$s['u']}}s;"></span>
     @endforeach
     <img src="{{ asset('images/dashboard-icon.svg') }}" alt="" class="dash-hero-icon">
     <div class="dash-hero-in">
