@@ -65,7 +65,7 @@ class RunDayRoster extends Page
         if (! $res) return;
         $wl = $this->normalizeWorklist($this->worklists[$reservationId] ?? '');
         $res->update(['lims_worklist_id' => $wl]);
-        $this->worklists[$reservationId] = $wl;
+        $this->worklists[$reservationId] = preg_replace('/^EM-/i', '', $wl);
 
         // store on the qualification (the per-person cycle worklist) and stamp all cycle runs
         $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();

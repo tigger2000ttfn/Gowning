@@ -141,6 +141,22 @@
     .att-tog.att-att.on:hover,.att-tog.att-no.on:hover{color:#fff;}
     .att-tog.att-res{border-style:dashed;}
     .att-tog.att-res:hover{border-color:#A4123F;color:#A4123F;}
+    /* Dark-theme: make the attendance card and its controls stand out from the page */
+    .dark .att-row{background:#2A2A33;border-color:#43434F;box-shadow:0 1px 3px rgba(0,0,0,.35);}
+    .dark .att-tog{border-color:#54545F;color:#D2D2DA;}
+    .dark .att-eid{color:#A6A6B0;}
+    /* EM- worklist field: fixed prefix, user types only the number */
+    .att-wl-wrap{display:flex;align-items:stretch;min-width:170px;}
+    .att-wl-px{display:flex;align-items:center;padding:0 9px;font-size:12.5px;font-weight:700;color:var(--gqs-text-dim,#6A6A72);background:var(--gqs-surface-2,#F1F1F4);border:1px solid var(--gqs-border,#D6D6DC);border-right:none;border-radius:8px 0 0 8px;}
+    .dark .att-wl-px{background:#1A1A20;border-color:#43434F;color:#B8B8C2;}
+    .att-wl{flex:1;min-width:90px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:0 8px 8px 0;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
+    .dark .att-wl{background:#1A1A20;border-color:#43434F;color:#ECECF0;}
+    /* Run progress pips (●●○ for a 3-run cycle) */
+    .run-pips{display:inline-flex;gap:4px;align-items:center;}
+    .run-pip{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--gqs-text-dim,#9A9AA4);box-sizing:border-box;}
+    .run-pip.done{background:#2E7D5B;border-color:#2E7D5B;}
+    .run-pip.cur{border-color:#A4123F;box-shadow:0 0 0 2px rgba(164,18,63,.18);}
+    .dark .run-pip{border-color:#6A6A74;}
     .att-note{flex:0 1 240px;min-width:150px;max-width:260px;padding:7px 11px;border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;font-size:12.5px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);}
     .dark .att-note{background:#1A1A20;border-color:#34343E;color:#ECECF0;}
     .att-state{min-width:110px;}

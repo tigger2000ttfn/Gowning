@@ -4,7 +4,7 @@
     <section class="pagehead">
         <div class="pagehead-inner">
             <h1><img src="{{ asset('images/title-flask.svg') }}" alt="" class="title-icon"> Qualification Run Slots</h1>
-            <p>Request a cleanroom run slot published by QC Micro. Requests are approved before the run.</p>
+            <p>Book a cleanroom qualification run published by QC Micro. Bookings are approved before the run.</p>
         </div>
     </section>
     <section class="section">
@@ -26,7 +26,7 @@
                             </div>
                             <div class="ccard-foot">
                                 <span class="seats">{{ max(0, $slot->capacity - $slot->approvedCount()) }} Spots</span>
-                                <a class="signup signup-gold" href="{{ route('public.run.signup', $slot) }}">Request &rarr;</a>
+                                <a class="signup signup-gold" href="{{ route('public.run.signup', $slot) }}">Book Run &rarr;</a>
                             </div>
                         </div>
                     </div>

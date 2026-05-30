@@ -310,7 +310,7 @@
                                     $st = $res->status instanceof \BackedEnum ? $res->status->value : $res->status;
                                     $runNo = min($performed + 1, $required);
                                     if (! array_key_exists($res->id, $this->worklists)) {
-                                        $this->worklists[$res->id] = $res->lims_worklist_id ?: ($rq?->lims_worklist_id ?: '');
+                                        $this->worklists[$res->id] = preg_replace('/^EM-/i', '', $res->lims_worklist_id ?: ($rq?->lims_worklist_id ?: ''));
                                     }
                                     $actionable = ! in_array($st, ['completed','no_show','rescheduled'], true);
                                 @endphp
@@ -320,6 +320,11 @@
                                         <div class="att-eid">
                                             <span>{{ $res->personnel?->employee_id }}</span>
                                             <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}@if($ctx['tag']) · {{ $ctx['tag'] }}@endif</span>
+                                            <span class="run-pips" title="Run {{ $runNo }} of {{ $required }}">
+                                                @for($k = 1; $k <= $required; $k++)
+                                                    <span class="run-pip {{ $k <= $performed ? 'done' : ($k == $runNo ? 'cur' : '') }}"></span>
+                                                @endfor
+                                            </span>
                                             <span style="font-weight:700;">Run {{ $runNo }} of {{ $required }}</span>
                                         </div>
                                     </div>
@@ -327,8 +332,11 @@
                                     @if($st === 'completed')
                                         <span class="att-hint" style="min-width:120px;">Worklist {{ $res->lims_worklist_id ?: '—' }}</span>
                                     @elseif($actionable)
-                                        <input type="text" class="att-wl" placeholder="EM- worklist"
-                                               wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})">
+                                        <div class="att-wl-wrap">
+                                            <span class="att-wl-px">EM-</span>
+                                            <input type="text" class="att-wl" placeholder="worklist #"
+                                                   wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})">
+                                        </div>
                                     @endif
 
                                     <div class="att-toggles">

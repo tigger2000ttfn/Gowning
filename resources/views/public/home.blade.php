@@ -70,7 +70,7 @@
 
             {{-- RUN SLOTS --}}
             <div x-show="tab==='runs'" x-cloak>
-                <p class="tab-sub">Request a cleanroom run slot published by QC Micro. Requests are approved before the run.</p>
+                <p class="tab-sub">Book a cleanroom qualification run published by QC Micro. Bookings are approved before the run.</p>
                 @if ($runSlots->isEmpty())
                     <div class="empty">No Open Run Slots Right Now</div>
                 @else
@@ -89,7 +89,7 @@
                                     </div>
                                     <div class="ccard-foot">
                                         <span class="seats">{{ max(0, $slot->capacity - $slot->approvedCount()) }} Spots</span>
-                                        <a class="signup signup-gold" href="{{ route('public.run.signup', $slot) }}">Request &rarr;</a>
+                                        <a class="signup signup-gold" href="{{ route('public.run.signup', $slot) }}">Book Run &rarr;</a>
                                     </div>
                                 </div>
                             </div>
