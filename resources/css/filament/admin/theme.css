@@ -245,14 +245,20 @@ html:not(.dark) .fi-topbar {
     background-color: #1C1C21 !important;
     border-bottom: 2px solid var(--astellas-magenta) !important;
 }
-/* Keep topbar contents readable on the dark header in light theme */
+/* Keep topbar contents readable on the dark header in light theme.
+   Exclude dropdown PANEL contents (Manage menu, etc.) which open on a white background. */
 html:not(.dark) .fi-topbar .fi-icon-btn,
 html:not(.dark) .fi-topbar .fi-icon-btn svg,
 html:not(.dark) .fi-topbar .fi-dropdown-trigger,
 html:not(.dark) .fi-topbar .fi-global-search-field input,
 html:not(.dark) .fi-topbar .fi-user-menu-trigger,
-html:not(.dark) .fi-topbar a,
-html:not(.dark) .fi-topbar button { color: #ECECF0 !important; }
+html:not(.dark) .fi-topbar > a,
+html:not(.dark) .fi-topbar > nav a,
+html:not(.dark) .fi-topbar > button,
+html:not(.dark) .fi-topbar .gqs-manage-btn { color: #ECECF0 !important; }
+/* Manage dropdown panel + links stay dark on their white background */
+html:not(.dark) .gqs-manage-menu .gqs-manage-link,
+html:not(.dark) .gqs-manage-menu a { color: #1A1A1F !important; }
 html:not(.dark) .fi-topbar .fi-global-search-field input::placeholder { color: #9A9AA4 !important; }
 html:not(.dark) .fi-topbar .fi-global-search-field {
     background-color: rgba(255,255,255,.07) !important;

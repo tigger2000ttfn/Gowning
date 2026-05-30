@@ -6,8 +6,8 @@
 @endphp
 <div x-data="{ open: false }" class="gqs-msg" style="position:relative;">
     <button @click="open = !open" type="button" class="fi-icon-btn fi-size-md" title="Announcements"
-            style="position:relative;display:flex;align-items:center;justify-content:center;width:36px;height:36px;">
-        <x-filament::icon icon="heroicon-o-megaphone" style="width:20px;height:20px;color:#ECECF0;" />
+            style="position:relative;display:flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;">
+        <x-filament::icon icon="heroicon-o-megaphone" style="width:1.25rem;height:1.25rem;color:#ECECF0;" />
         @if($announcements->isNotEmpty())
             <span style="position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#E8C24A;"></span>
         @endif
