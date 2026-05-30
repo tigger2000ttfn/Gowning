@@ -53,7 +53,7 @@ class PrintController extends Controller
     }
 
     /** Astellas QCM Gowning Qualification Approval (FORM-AST-36749), prefilled for a qualification. */
-    public function approvalForm(\Illuminate\Http\Request $request, Qualification $qualification)
+    public function approvalForm(\Illuminate\Http\Request $request, Qualification $qualification, ?string $file = null)
     {
         $this->guard();
         $qualification->load('personnel');

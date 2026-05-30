@@ -79,21 +79,36 @@ class IncubationBoard extends Page
     public function getEvaluation()
     {
         return Qualification::with('personnel')
-            ->where('workflow_stage', WorkflowStage::AwaitingResults->value)
+            ->whereIn('workflow_stage', [WorkflowStage::AwaitingResults->value, WorkflowStage::ResultsReleased->value])
             ->get()
             ->map(function ($q) {
                 $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+                $signoff = $q->workflow_stage === WorkflowStage::ResultsReleased;
                 return (object) [
                     'id' => $q->id,
                     'name' => $q->personnel?->full_name ?? 'Unknown',
                     'employee_id' => $q->personnel?->employee_id,
                     'worklist' => $run?->lims_worklist_id,
+                    'run_uid' => $run?->run_uid,
+                    'veeva' => $run?->veeva_doc_number,
                     'performed' => $run?->run_date,
                     'cycle' => $q->type?->label(),
                     'progress' => (int) $q->runs_completed . ' / ' . (int) $q->runs_required,
+                    'step' => $signoff ? 'signoff' : 'result',
+                    'form_url' => route('print.approval', [$q->id, 'FORM-AST-36749-' . ($run?->run_uid ?: 'QRUN') . '.pdf']),
                 ];
             })
             ->sortBy('performed')->values();
+    }
+
+    /** Two-person rule: the signer cannot be the person being qualified. */
+    protected function signerIsSubject(Qualification $q): bool
+    {
+        $u = Auth::user();
+        if (! $u || ! $q->personnel_id) return false;
+        $p = \App\Models\Personnel::where('id', $q->personnel_id)->first();
+        if (! $p) return false;
+        return ($p->user_id && $p->user_id === $u->id) || ($p->email && $u->email && strcasecmp($p->email, $u->email) === 0);
     }
 
     /** Recently evaluated runs (results entered), for the History tab. */
@@ -136,6 +151,8 @@ class IncubationBoard extends Page
             })
             ->schema([
                 TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')->columnSpanFull(),
+                TextInput::make('lms_number')->label('LMS Number (Optional)')->columnSpanFull()
+                    ->helperText('Overall qualification run tracking number in the LMS.'),
                 Select::make('overall')->label('Overall Result')->options(['pass' => 'Pass', 'fail' => 'Fail'])->required()->live(),
                 TextInput::make('nc_note')->label('Non-Conformance Note (Fail)')->columnSpanFull()
                     ->helperText('On a fail, an NC is opened for QA. Add the observation / TrackWise note here.')
@@ -148,6 +165,7 @@ class IncubationBoard extends Page
                 }
                 $q = Qualification::with('personnel')->find($arguments['id'] ?? null);
                 if (! $q) return;
+                if (! empty($data['lms_number'])) { $q->lms_number = $data['lms_number']; }
                 $overall = $data['overall'] ?? 'pass';
                 $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
                 if ($run) {
@@ -165,7 +183,9 @@ class IncubationBoard extends Page
                     $overall === 'fail' ? \App\Enums\AutomationTrigger::RunFailed : \App\Enums\AutomationTrigger::RunPassed,
                     ['personnel' => $q->personnel, 'qualification' => $q]
                 );
-                $q->workflow_stage = $overall === 'fail' ? WorkflowStage::Failed : WorkflowStage::QaReview;
+                // Pass -> Results Released: the approval form is generated for QCM wet signature + Veeva upload,
+                // then QCM enters the Veeva number to send to QA. Fail -> Failed + NC.
+                $q->workflow_stage = $overall === 'fail' ? WorkflowStage::Failed : WorkflowStage::ResultsReleased;
                 $q->stage_changed_at = now();
                 $q->save();
                 // every failed run gets a non-conformance record (TrackWise to be linked)
@@ -183,8 +203,78 @@ class IncubationBoard extends Page
                     );
                     \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
                 }
-                Notification::make()->success()->title('Results submitted to QA')
-                    ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail' ? ', NC opened and sent to QA determination.' : ', sent to QA sign-off.'))->send();
+                Notification::make()->success()->title($overall === 'fail' ? 'Failed, Sent To QA Determination' : 'Results Released')
+                    ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail'
+                        ? ', NC opened and sent to QA determination.'
+                        : '. Download the approval form, wet-sign, upload to Veeva, then enter the Veeva number to send to QA.'))->send();
+            });
+    }
+
+    /** QCM final sign-off: enter the Veeva report number (after wet-sign + upload) and send to QA. */
+    public function qcmSignOffAction(): Action
+    {
+        return Action::make('qcmSignOff')
+            ->label('QCM Sign-off (Veeva)')
+            ->icon('heroicon-m-document-check')
+            ->color('primary')
+            ->modalHeading('QCM Sign-off, Enter Veeva Report Number')
+            ->modalWidth('md')
+            ->modalSubmitActionLabel('Sign & Send To QA')
+            ->fillForm(function (array $arguments) {
+                $q = Qualification::find($arguments['id'] ?? null);
+                $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('id')->first() : null;
+                return ['veeva_doc_number' => $run?->veeva_doc_number, 'veeva_url' => $run?->veeva_url];
+            })
+            ->schema(function () {
+                $fields = [
+                    TextInput::make('veeva_doc_number')->label('Veeva Report Number')->required()
+                        ->helperText('The Veeva document/report number for the signed FORM-AST-36749.'),
+                    TextInput::make('veeva_url')->label('Veeva Link (Optional)')->url(),
+                ];
+                if ((bool) Setting::get('esig_required', true)) {
+                    $fields[] = TextInput::make('password')->label('Confirm Your Password')->password()->required()
+                        ->helperText('Re-enter your password to apply your QCM electronic signature.');
+                }
+                return $fields;
+            })
+            ->action(function (array $data, array $arguments) {
+                if (! $this->canEvaluate()) {
+                    Notification::make()->danger()->title('Not Authorized')->body('QC Micro role required.')->send();
+                    return;
+                }
+                $q = Qualification::with('personnel')->find($arguments['id'] ?? null);
+                if (! $q) return;
+                if ($this->signerIsSubject($q)) {
+                    Notification::make()->danger()->title('Two-Person Rule')
+                        ->body('You cannot sign off your own qualification. Another QC Micro analyst must sign.')->send();
+                    return;
+                }
+                if ((bool) Setting::get('esig_required', true) && ! \Illuminate\Support\Facades\Hash::check($data['password'] ?? '', Auth::user()->password)) {
+                    Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+                    return;
+                }
+                $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+                if ($run) {
+                    $run->veeva_doc_number = $data['veeva_doc_number'] ?? null;
+                    $run->veeva_url = $data['veeva_url'] ?? null;
+                    $run->qcm_signed_at = now();
+                    $run->qcm_signed_by = Auth::id();
+                    $run->save();
+                }
+                \App\Models\ElectronicSignature::create([
+                    'signable_type' => QualificationRun::class,
+                    'signable_id' => $run?->id,
+                    'user_id' => Auth::id(),
+                    'signer_name' => Auth::user()->name,
+                    'meaning' => 'QCM Sign-off',
+                    'statement' => 'QCM result sign-off; Veeva report ' . ($data['veeva_doc_number'] ?? '') . ' linked. Sent to QA.',
+                    'signed_at' => now(),
+                ]);
+                $q->workflow_stage = WorkflowStage::QaReview;
+                $q->stage_changed_at = now();
+                $q->save();
+                Notification::make()->success()->title('Sent To QA')
+                    ->body(($q->personnel?->full_name ?? 'Operator') . ' signed off, Veeva ' . ($data['veeva_doc_number'] ?? '') . ', now in QA Sign-off.')->send();
             });
     }
 }

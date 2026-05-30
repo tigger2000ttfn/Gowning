@@ -63,21 +63,25 @@
                     <div class="gqs-empty">No runs ready to evaluate. Runs move here once their incubation period elapses.</div>
                 @else
                     <table class="gqs-tbl">
-                        <thead><tr><th>Employee</th><th>Name</th><th>Cycle</th><th>Worklist</th><th>Performed</th><th>Progress</th><th style="text-align:right;">Result</th></tr></thead>
+                        <thead><tr><th>Employee</th><th>Name</th><th>Cycle</th><th>Run</th><th>Worklist</th><th>Performed</th><th>Progress</th><th style="text-align:right;">Action</th></tr></thead>
                         <tbody>
                             @foreach($evaluation as $r)
                                 <tr>
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
                                     <td>{{ $r->name }}</td>
                                     <td>{{ $r->cycle }}</td>
+                                    <td>{{ $r->run_uid ?: '—' }}</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
                                     <td>{{ $r->performed ? \Illuminate\Support\Carbon::parse($r->performed)->format('M j, Y') : '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $r->progress }}</td>
-                                    <td style="text-align:right;">
-                                        @if($canEval)
-                                            {{ ($this->enterResultsAction)(['id' => $r->id]) }}
-                                        @else
+                                    <td style="text-align:right;white-space:nowrap;">
+                                        @if(! $canEval)
                                             <span class="gqs-pill gqs-pill-purple">Awaiting QCM</span>
+                                        @elseif($r->step === 'signoff')
+                                            <a href="{{ $r->form_url }}" target="_blank" class="sb-act" style="background:#1C1C21;color:#fff;text-decoration:none;">Approval Form</a>
+                                            {{ ($this->qcmSignOffAction)(['id' => $r->id]) }}
+                                        @else
+                                            {{ ($this->enterResultsAction)(['id' => $r->id]) }}
                                         @endif
                                     </td>
                                 </tr>

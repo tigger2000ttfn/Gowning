@@ -32,5 +32,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/print/run-day', [\App\Http\Controllers\PrintController::class, 'runDay'])->name('print.run-day');
     Route::get('/print/report', [\App\Http\Controllers\PrintController::class, 'report'])->name('print.report');
     Route::get('/print/class-attendance/{session}/{file?}', [\App\Http\Controllers\PrintController::class, 'classAttendanceForm'])->name('print.class-attendance');
-    Route::get('/print/approval/{qualification}', [\App\Http\Controllers\PrintController::class, 'approvalForm'])->name('print.approval');
+    Route::get('/print/approval/{qualification}/{file?}', [\App\Http\Controllers\PrintController::class, 'approvalForm'])->name('print.approval');
 });
