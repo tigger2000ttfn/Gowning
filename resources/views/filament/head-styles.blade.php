@@ -122,7 +122,7 @@
     .fi-page-content:has(.pg-head) > .fi-header,
     section:has(> .pg-head) > header.fi-header { display: none !important; }
     /* Also kill the top gap the empty header leaves */
-    .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 0 !important; }
+    .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 20px !important; }
 
     /* ===== TIGHTEN top-of-page wasted space ===== */
     .fi-page-header-main-ctn { padding-top: 12px !important; }
@@ -209,4 +209,10 @@
     @media (max-width: 1024px) {
         .fi-sidebar { width: 15rem !important; }
     }
+    /* Page hero header (shared by the partial and resource-list view) */
+    .pg-head{display:flex;align-items:center;gap:16px;padding:8px 0 16px;margin-bottom:18px;margin-top:6px;border-bottom:2px solid var(--gqs-border,#DADADF);}
+    .pg-head-ico{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#850F33);box-shadow:0 3px 10px rgba(164,18,63,.28);}
+    .pg-head-ico svg{width:24px;height:24px;color:#fff;}
+    .pg-head-tx h1{font-size:22px;font-weight:800;margin:0;color:var(--gqs-text,#1A1A1F);}
+    .pg-head-tx p{margin:3px 0 0;color:var(--gqs-text-dim,#5A5A62);font-size:14px;}
 </style>
