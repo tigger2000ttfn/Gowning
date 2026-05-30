@@ -63,6 +63,8 @@
        and scroll the full page width (same technique as the dashboard hero) ===== */
     .fi-main:has(.sb-fullbleed) { padding-left: 0 !important; padding-right: 0 !important; max-width: none !important; }
     .fi-main:has(.sb-fullbleed) .fi-page-content { max-width: none !important; }
+    /* the page-hero must keep its side padding + top breathing room even on full-bleed kanban pages */
+    .fi-main:has(.sb-fullbleed) .pg-head { padding: 24px 32px 16px !important; margin-bottom: 14px !important; }
 
     /* ===== FIX CARD-WITHIN-CARD: a Filament Section inside a modal already sits in the
        modal's card, so the section's own border/background creates a nested card. Flatten

@@ -36,8 +36,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         .sb-fullbleed{width:100%;}
-        .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:flex-start;}
-        .kanban-col{flex:0 0 250px;}
+        .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:stretch;min-height:calc(100vh - 260px);}
+        .kanban-col{flex:0 0 250px;display:flex;flex-direction:column;}
+        .kanban-lane{flex:1;}
         .kanban-col{background:rgba(120,120,130,.06);border-radius:12px;padding:10px;min-height:120px;}
         .kanban-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;padding:8px 11px;border-radius:8px;color:#fff;margin-bottom:10px;}
         .kanban-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 9px;font-size:12px;}

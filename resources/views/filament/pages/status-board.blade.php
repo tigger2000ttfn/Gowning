@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Qualification Status Board', 'subtitle' => 'Drag each person through the GMP pipeline — class to QA sign-off.', 'icon' => 'heroicon-o-squares-2x2'])
+    @include('filament.page-hero', ['title' => 'Qualification Status Board', 'subtitle' => 'Drag each person through the GMP pipeline, class to QA sign-off.', 'icon' => 'heroicon-o-squares-2x2'])
 
     <div x-data="{
             init() { this.$nextTick(() => this.wire()); },
@@ -42,8 +42,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <style>
         .sb-fullbleed{width:100%;}
-        .sb-wrap{display:flex;gap:12px;overflow-x:auto;padding:0 32px 14px;align-items:flex-start;}
-        .sb-col{flex:0 0 220px;background:rgba(120,120,130,.06);border-radius:12px;padding:9px;min-height:140px;}
+        .sb-wrap{display:flex;gap:12px;overflow-x:auto;padding:0 32px 14px;align-items:stretch;min-height:calc(100vh - 260px);}
+        .sb-col{flex:0 0 220px;background:rgba(120,120,130,.06);border-radius:12px;padding:9px;display:flex;flex-direction:column;}
+        .sb-lane{flex:1;}
         .sb-head{display:flex;align-items:center;justify-content:space-between;color:#fff;font-weight:700;font-size:12.5px;padding:8px 11px;border-radius:8px;margin-bottom:9px;}
         .sb-count{background:rgba(255,255,255,.28);border-radius:20px;padding:1px 8px;font-size:11px;}
         .sb-lane{display:flex;flex-direction:column;gap:7px;min-height:60px;}
