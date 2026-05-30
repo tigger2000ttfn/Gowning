@@ -216,10 +216,10 @@
        Make resource-list pages (Personnel, Qualifications, Non-Conformances, etc.) match the
        hand-built panel pattern (Class Reservations): a magenta header bar that holds the
        search/filter toolbar, and charcoal column headers. Classes verified vs Filament v5.6.6. */
-    /* Magenta header bar (it holds search + filters + table actions) */
-    .fi-ta-header-ctn { background:linear-gradient(135deg,#A4123F,#850F33) !important; padding:10px 16px !important; }
-    .fi-ta-header { padding:0 !important; }
-    .fi-ta-header-heading, .fi-ta-header-description { color:#fff !important; }
+    /* Magenta header bar (holds search + filters + table actions); round its top to match the card */
+    .fi-ta-ctn .fi-ta-header-ctn { background:linear-gradient(135deg,#A4123F,#850F33) !important; background-color:#A4123F !important; padding:10px 16px !important; border-radius:12px 12px 0 0 !important; }
+    .fi-ta-ctn .fi-ta-header { padding:0 !important; }
+    .fi-ta-ctn .fi-ta-header-heading, .fi-ta-ctn .fi-ta-header-description { color:#fff !important; }
     /* Toolbar controls legible on magenta: ghost/outlined/icon/dropdown buttons -> white */
     .fi-ta-header-toolbar .fi-icon-btn, .fi-ta-header-toolbar .fi-icon-btn svg,
     .fi-ta-header-toolbar .fi-btn.fi-btn-outlined, .fi-ta-header-toolbar .fi-btn.fi-btn-ghost,
@@ -229,9 +229,16 @@
     /* Keep the search field a readable white input sitting on the magenta bar */
     .fi-ta-header-toolbar .fi-input-wrp { background:var(--gqs-surface,#fff) !important; box-shadow:0 0 0 1px rgba(255,255,255,.35) !important; }
     .dark .fi-ta-header-toolbar .fi-input-wrp { background:#15151A !important; }
-    /* Charcoal column headers (the th row), matching .gqs-tbl th */
-    .fi-ta-header-cell, .fi-ta-empty-header-cell, .fi-ta-actions-header-cell { background:#26262C !important; }
-    .fi-ta-header-cell, .fi-ta-header-cell *, .fi-ta-header-cell-sort-btn, .fi-ta-header-cell-sort-btn svg { color:#fff !important; }
+    /* Charcoal column headers (the th row), matching .gqs-tbl th. High specificity (html + thead)
+       to beat Filament's layered Tailwind defaults; background-color + background-image cover both. */
+    html .fi-ta-table thead .fi-ta-header-cell,
+    html .fi-ta-table thead th.fi-ta-header-cell,
+    html .fi-ta-table thead .fi-ta-empty-header-cell,
+    html .fi-ta-table thead .fi-ta-actions-header-cell { background-color:#26262C !important; background-image:none !important; }
+    html .fi-ta-table thead .fi-ta-header-cell,
+    html .fi-ta-table thead .fi-ta-header-cell *,
+    html .fi-ta-table thead .fi-ta-header-cell-sort-btn,
+    html .fi-ta-table thead .fi-ta-header-cell-sort-btn * { color:#fff !important; }
     /* the gap the empty header leaves above our hero */
     .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 10px !important; }
 
