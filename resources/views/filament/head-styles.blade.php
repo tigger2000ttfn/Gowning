@@ -212,9 +212,26 @@
     /* Filament stacks page content with a vertical gap; shrink it */
     .fi-page-content { gap: 0.75rem !important; }
     .fi-page > section.fi-page-content > * + * { margin-top: 0 !important; }
-    /* table toolbar (search + filter triggers) - trim its padding */
-    .fi-ta-header-ctn { padding-top: 0 !important; }
-    .fi-ta-header { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+    /* ===== GQS BRAND LOOK ON FILAMENT NATIVE RESOURCE TABLES =====
+       Make resource-list pages (Personnel, Qualifications, Non-Conformances, etc.) match the
+       hand-built panel pattern (Class Reservations): a magenta header bar that holds the
+       search/filter toolbar, and charcoal column headers. Classes verified vs Filament v5.6.6. */
+    /* Magenta header bar (it holds search + filters + table actions) */
+    .fi-ta-header-ctn { background:linear-gradient(135deg,#A4123F,#850F33) !important; padding:10px 16px !important; }
+    .fi-ta-header { padding:0 !important; }
+    .fi-ta-header-heading, .fi-ta-header-description { color:#fff !important; }
+    /* Toolbar controls legible on magenta: ghost/outlined/icon/dropdown buttons -> white */
+    .fi-ta-header-toolbar .fi-icon-btn, .fi-ta-header-toolbar .fi-icon-btn svg,
+    .fi-ta-header-toolbar .fi-btn.fi-btn-outlined, .fi-ta-header-toolbar .fi-btn.fi-btn-ghost,
+    .fi-ta-header-toolbar .fi-dropdown-trigger .fi-btn { color:#fff !important; }
+    .fi-ta-header-toolbar .fi-btn.fi-btn-outlined { border-color:rgba(255,255,255,.5) !important; }
+    .fi-ta-header-toolbar .fi-icon-btn:hover { background:rgba(255,255,255,.15) !important; }
+    /* Keep the search field a readable white input sitting on the magenta bar */
+    .fi-ta-header-toolbar .fi-input-wrp { background:var(--gqs-surface,#fff) !important; box-shadow:0 0 0 1px rgba(255,255,255,.35) !important; }
+    .dark .fi-ta-header-toolbar .fi-input-wrp { background:#15151A !important; }
+    /* Charcoal column headers (the th row), matching .gqs-tbl th */
+    .fi-ta-header-cell, .fi-ta-empty-header-cell, .fi-ta-actions-header-cell { background:#26262C !important; }
+    .fi-ta-header-cell, .fi-ta-header-cell *, .fi-ta-header-cell-sort-btn, .fi-ta-header-cell-sort-btn svg { color:#fff !important; }
     /* the gap the empty header leaves above our hero */
     .fi-page:has(.pg-head) .fi-page-header-main-ctn { padding-top: 10px !important; }
 
