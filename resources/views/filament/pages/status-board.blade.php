@@ -29,7 +29,15 @@
                         @foreach ($stage['cards'] as $card)
                             <div class="sb-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $stage['color'] }};">
                                 <div class="sb-name">{{ $card['name'] }}</div>
-                                <div class="sb-meta">{{ $card['employee_id'] }} · {{ $card['meta'] }}</div>
+                                <div class="sb-meta">{{ $card['employee_id'] }}</div>
+                                @if(($card['runs_req'] ?? 0) > 0)
+                                    <div class="sb-runs" title="{{ $card['runs_done'] }} of {{ $card['runs_req'] }} runs">
+                                        @for($r = 0; $r < $card['runs_req']; $r++)
+                                            <span class="sb-pip {{ $r < $card['runs_done'] ? 'on' : '' }}"></span>
+                                        @endfor
+                                        <span class="sb-runs-lbl">{{ $card['runs_done'] }}/{{ $card['runs_req'] }} runs</span>
+                                    </div>
+                                @endif
                                 @if($card['due'])<div class="sb-due">Due {{ $card['due'] }}</div>@endif
                             </div>
                         @endforeach
@@ -52,6 +60,10 @@
         .sb-card:active{cursor:grabbing;}
         .sb-name{font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);}
         .sb-meta{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:2px;}
+        .sb-runs{display:flex;align-items:center;gap:4px;margin-top:5px;}
+        .sb-pip{width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid #C79A2E;display:inline-block;}
+        .sb-pip.on{background:#2E7D5B;border-color:#2E7D5B;}
+        .sb-runs-lbl{font-size:10.5px;color:var(--gqs-text-dim,#9A9AA4);margin-left:3px;font-weight:600;}
         .sb-due{font-size:11px;color:#A4123F;font-weight:600;margin-top:3px;}
         .sb-ghost{opacity:.4;}
         .dark .sb-card{background:#1F1F25;}

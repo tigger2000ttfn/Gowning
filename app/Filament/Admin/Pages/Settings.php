@@ -50,6 +50,9 @@ class Settings extends Page implements HasForms
             'self_register_open'    => (bool) Setting::get('self_register_open', true),
             'auto_approve'          => (bool) Setting::get('auto_approve', false),
             'incubation_days'       => (int) Setting::get('incubation_days', 8),
+            'runs_per_day_capacity' => (int) Setting::get('runs_per_day_capacity', 6),
+            'auto_schedule'         => (bool) Setting::get('auto_schedule', true),
+            'auto_schedule_weeks_out' => (int) Setting::get('auto_schedule_weeks_out', 2),
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
@@ -89,6 +92,16 @@ class Settings extends Page implements HasForms
                         ->helperText('Days plates incubate before results are released.'),
                     TextInput::make('sampling_sites')->label('Sampling Sites')
                         ->helperText('Comma-separated body sites sampled per run.'),
+                ]),
+                Section::make('Auto-Scheduling')->icon('heroicon-o-calendar-days')->columns(2)->schema([
+                    Toggle::make('auto_schedule')->label('Auto-schedule Qualification Runs')
+                        ->helperText('Automatically book people who need runs into the next available run day.'),
+                    TextInput::make('runs_per_day_capacity')->label('Max People Per Run Day')
+                        ->numeric()->minValue(1)->required()
+                        ->helperText('Capacity cap for a qualification run day.'),
+                    TextInput::make('auto_schedule_weeks_out')->label('Schedule Lead Time (Weeks)')
+                        ->numeric()->minValue(0)->required()
+                        ->helperText('How far out the first auto-booked date should be.'),
                 ]),
                 Section::make('Quality / Part 11')->icon('heroicon-o-shield-check')->columns(2)->schema([
                     Toggle::make('require_qa_signoff')->label('Require QA Sign-off To Complete')

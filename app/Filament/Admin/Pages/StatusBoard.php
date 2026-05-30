@@ -47,6 +47,8 @@ class StatusBoard extends Page
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
                 'meta' => $q->runs_completed . '/' . $q->runs_required . ' runs',
+                'runs_done' => (int) $q->runs_completed,
+                'runs_req' => (int) $q->runs_required,
                 'due' => $q->due_date?->format('M j'),
             ])->values()->all();
 

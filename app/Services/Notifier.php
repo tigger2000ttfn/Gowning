@@ -38,4 +38,33 @@ class Notifier
             $notification->sendToDatabase($user);
         }
     }
+
+    /**
+     * Notify a specific person: in-app (to their linked user account if any) plus a
+     * queued email row (held until the mail relay is up, then flushed).
+     */
+    public function toPersonnel(?\App\Models\Personnel $personnel, string $title, string $body): void
+    {
+        if (! $personnel) {
+            return;
+        }
+
+        // in-app notification to their linked user, if any
+        if ($personnel->user_id) {
+            $user = User::find($personnel->user_id);
+            if ($user) {
+                Notification::make()->title($title)->body($body)
+                    ->icon('heroicon-o-calendar-days')->color('success')
+                    ->sendToDatabase($user);
+            }
+        }
+
+        // queue an email for when the relay is ready
+        \App\Models\QueuedEmail::create([
+            'to_email' => $personnel->email,
+            'to_name' => $personnel->full_name,
+            'subject' => $title,
+            'body' => $body,
+        ]);
+    }
 }

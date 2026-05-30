@@ -64,6 +64,20 @@ class RunSlotResource extends Resource
                     ->color(fn ($s) => $s?->value === 'open' ? 'success' : 'gray'),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('cancelDay')
+                    ->label('Cancel Day')
+                    ->icon('heroicon-m-x-circle')
+                    ->color('danger')
+                    ->visible(fn ($record) => ($record->status->value ?? $record->status) !== 'cancelled')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancel This Run Day')
+                    ->modalDescription('Everyone booked will be auto-rescheduled to the next available day, with notifications sent.')
+                    ->action(function ($record) {
+                        $moved = app(\App\Services\AutoScheduler::class)->cancelSlot($record);
+                        \Filament\Notifications\Notification::make()->success()
+                            ->title('Run day cancelled')
+                            ->body("{$moved} reservation(s) rescheduled and notified.")->send();
+                    }),
                 \Filament\Actions\EditAction::make(),
                 \Filament\Actions\DeleteAction::make(),
             ])

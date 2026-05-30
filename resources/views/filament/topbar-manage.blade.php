@@ -21,7 +21,6 @@
     $sched = [];
     if ($can(\App\Enums\Capability::ManageScheduling)) {
         $sched[] = ['Run Slots', \App\Filament\Admin\Resources\RunSlotResource::getUrl(), 'heroicon-o-calendar-days'];
-        $sched[] = ['Reservations', \App\Filament\Admin\Resources\ReservationResource::getUrl(), 'heroicon-o-ticket'];
         $sched[] = ['Class Completions', \App\Filament\Admin\Resources\ClassCompletionResource::getUrl(), 'heroicon-o-academic-cap'];
     }
     if ($sched) $sections[] = ['Records', $sched];

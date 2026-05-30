@@ -24,3 +24,11 @@ Artisan::command('gqs:advance-lifecycle', function () {
 })->purpose('Lapse qualifications past their due date into a 3-run requalification');
 
 Schedule::command('gqs:advance-lifecycle')->dailyAt('06:05');
+
+// Auto-schedule: book Class-Complete people into the next available run day.
+Artisan::command('gqs:auto-schedule', function () {
+    $n = app(\App\Services\AutoScheduler::class)->run();
+    $this->info("Auto-scheduler: {$n} qualification run(s) booked.");
+})->purpose('Auto-book qualification runs into the next available run day');
+
+Schedule::command('gqs:auto-schedule')->dailyAt('06:10');

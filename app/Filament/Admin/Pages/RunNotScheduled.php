@@ -32,8 +32,9 @@ class RunNotScheduled extends Page
 
     public function mount(): void
     {
-        // keep current: lapse overdue first so newly-lapsed people surface here too
+        // keep current: lapse overdue, then auto-book anyone ready into the next available day
         app(\App\Services\LifecycleAdvancer::class)->run();
+        app(\App\Services\AutoScheduler::class)->run();
     }
 
     /** People who are Class Complete (ready) but have no active reservation yet. */
