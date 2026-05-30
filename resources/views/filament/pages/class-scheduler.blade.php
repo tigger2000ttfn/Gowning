@@ -148,7 +148,7 @@
                         <tbody>
                             @foreach($sessions as $s)
                                 <tr style="cursor:pointer;" wire:click="openSessionDetail({{ $s->id }})">
-                                    <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
+                                    <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}@if($s->session_uid)<div style="font-size:11px;font-weight:600;color:#A4123F;">{{ $s->session_uid }}</div>@endif</td>
                                     <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
                                     <td>{{ $s->trainingClass?->name }}</td>
                                     <td>{{ $s->location ?: '—' }}</td>

@@ -13,9 +13,20 @@ class ClassSession extends Model
     use Auditable, SoftDeletes;
 
     protected $fillable = [
+        'session_uid',
         'training_class_id', 'session_date', 'start_time', 'end_time',
         'location', 'instructor', 'capacity', 'status', 'assigned_instructor_id', 'attendance_submitted_at', 'attendance_submitted_by',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function ($s) {
+            if (! $s->session_uid) {
+                $s->session_uid = 'GCLS-' . str_pad((string) $s->id, 5, '0', STR_PAD_LEFT);
+                $s->saveQuietly();
+            }
+        });
+    }
 
     protected function casts(): array
     {

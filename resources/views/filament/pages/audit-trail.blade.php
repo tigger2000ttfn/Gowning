@@ -58,6 +58,11 @@
                         <span style="margin-left:auto;font-size:12px;color:var(--gqs-text-dim,#9A9AA4);">
                             {{ $a->causer?->name ?? 'System' }} · {{ $a->created_at?->setTimezone('America/New_York')?->format('M j, Y g:i A') }}
                         </span>
+                        @if($this->canDeleteAudit())
+                            <button type="button" wire:click="deleteEntry({{ $a->id }})"
+                                    wire:confirm="Delete this audit entry? Super User only. This is permanent."
+                                    class="sb-act sb-act-red">Delete</button>
+                        @endif
                     </div>
                     @if(!empty($new))
                         <div style="margin-top:7px;font-size:12.5px;color:var(--gqs-text-dim,#5A5A62);">

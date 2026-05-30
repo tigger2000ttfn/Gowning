@@ -47,4 +47,21 @@ class AuditTrail extends Page
             ->limit(200)
             ->get();
     }
+
+    /** Only a Super User may delete audit entries (e.g. clearing test data). */
+    public function canDeleteAudit(): bool
+    {
+        return (bool) \Illuminate\Support\Facades\Auth::user()?->role?->isSuperUser();
+    }
+
+    public function deleteEntry(int $id): void
+    {
+        if (! $this->canDeleteAudit()) {
+            \Filament\Notifications\Notification::make()->danger()->title('Not Authorized')
+                ->body('Only a Super User can delete audit entries.')->send();
+            return;
+        }
+        Activity::whereKey($id)->delete();
+        \Filament\Notifications\Notification::make()->success()->title('Audit Entry Deleted')->send();
+    }
 }

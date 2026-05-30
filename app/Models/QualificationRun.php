@@ -18,6 +18,10 @@ class QualificationRun extends Model implements HasMedia
     protected static function booted(): void
     {
         static::created(function ($run) {
+            if (! $run->run_uid) {
+                $run->run_uid = 'QRUN-' . str_pad((string) $run->id, 5, '0', STR_PAD_LEFT);
+                $run->saveQuietly();
+            }
             if (($run->result->value ?? $run->result) === 'fail') {
                 $name = $run->personnel?->full_name ?? 'A trainee';
                 \App\Services\Notifier::toCapability(
@@ -34,6 +38,7 @@ class QualificationRun extends Model implements HasMedia
     use Auditable, SoftDeletes, GqsActivityLog, InteractsWithMedia;
 
     protected $fillable = [
+        'run_uid',
         'personnel_id', 'qualification_id', 'run_slot_id', 'reservation_id',
         'parent_run_id', 'qa_determination', 'qa_determined_at', 'is_complete',
         'run_date', 'result', 'cycle_type', 'notes', 'recorded_by', 'is_seed',

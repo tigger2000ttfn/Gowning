@@ -3,7 +3,7 @@
 
     @include('filament.page-hero', ['title' => 'QA Review', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => '
         <button type="button" wire:click="setTab(\'runs\')" class="gqs-tab ' . ($tab === 'runs' ? 'active' : '') . '">Run Sign-off</button>
-        <button type="button" wire:click="setTab(\'classroom\')" class="gqs-tab ' . ($tab === 'classroom' ? 'active' : '') . '">Classroom Approval</button>
+        <button type="button" wire:click="setTab(\'classroom\')" class="gqs-tab ' . ($tab === 'classroom' ? 'active' : '') . '">Classroom Sign-off</button>
     '])
 
     @if($tab === 'classroom')
@@ -91,6 +91,7 @@
                         <div style="font-weight:700;color:var(--gqs-text,#1A1A1F);">{{ $q->personnel?->full_name ?? 'Unknown' }}</div>
                         <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
                             {{ $q->personnel?->employee_id }} · {{ $q->runs_completed }}/{{ $q->runs_required }} runs · {{ $q->workflow_stage?->label() }}
+                            @if($latestRun?->run_uid) · <span style="font-weight:700;color:#A4123F;">{{ $latestRun->run_uid }}</span>@endif
                             @if($latestRun?->veeva_doc_number)
                                 · @if($latestRun->veeva_url)<a href="{{ $latestRun->veeva_url }}" target="_blank" style="color:#A4123F;font-weight:700;">Veeva {{ $latestRun->veeva_doc_number }} ↗</a>@else Veeva {{ $latestRun->veeva_doc_number }} @endif
                             @endif
@@ -119,8 +120,14 @@
         <div class="gqs-panel-head" style="background:linear-gradient(135deg,#C8102E,#920B22);"><x-filament::icon icon="heroicon-m-exclamation-triangle"/> Failed, Needs Determination</div>
         <div class="gqs-panel-body">
             @foreach ($failed as $q)
+                @php
+                    $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->where('result', 'fail')->latest('id')->first();
+                    $nc = $failedRun ? \App\Models\NonConformance::where('qualification_run_id', $failedRun->id)->first() : null;
+                @endphp
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
-                    <span><strong>{{ $q->personnel?->full_name }}</strong> <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12.5px;">· {{ $q->personnel?->employee_id }}</span></span>
+                    <span><strong>{{ $q->personnel?->full_name }}</strong> <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12.5px;">· {{ $q->personnel?->employee_id }}@if($failedRun?->run_uid) · {{ $failedRun->run_uid }}@endif</span>
+                        @if($nc)<span class="gqs-pill gqs-pill-red" style="margin-left:6px;">NC {{ $nc->nc_number }}@if($nc->trackwise_id) · TW {{ $nc->trackwise_id }}@endif</span>@endif
+                    </span>
                     @if($canApprove)
                         {{ ($this->recommendAction)(['id' => $q->id]) }}
                     @else

@@ -72,7 +72,7 @@ class PublicController extends Controller
                 'start' => $slot->slot_date->toDateString() . ($slot->start_time ? 'T' . $slot->start_time : ''),
                 'end' => $slot->end_time ? $slot->slot_date->toDateString() . 'T' . $slot->end_time : null,
                 'color' => '#C79A2E',
-                'url' => ($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast()) ? route('public.run.signup', $slot) : null,
+                'url' => ($slot->status === \App\Enums\RunSlotStatus::Open && $slot->hasCapacity() && ! $slot->slot_date->isPast()) ? route('public.run.signup', $slot) : null,
                 'extendedProps' => ['type' => 'Run Slot', 'location' => $slot->cleanroom, 'seats' => max(0, $slot->capacity - $slot->approvedCount())],
             ];
         }
@@ -83,14 +83,14 @@ class PublicController extends Controller
     /** Show the run-slot reservation request form. */
     public function showRunSignup(RunSlot $slot)
     {
-        abort_unless($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
+        abort_unless($slot->status === \App\Enums\RunSlotStatus::Open && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
         return view('public.run-signup', ['slot' => $slot]);
     }
 
     /** Record a run-slot reservation request from the public page. */
     public function storeRunSignup(Request $request, RunSlot $slot)
     {
-        abort_unless($slot->status === 'open' && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
+        abort_unless($slot->status === \App\Enums\RunSlotStatus::Open && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
 
         $data = $request->validate([
             'employee_id' => ['required', 'string', 'max:50'],
