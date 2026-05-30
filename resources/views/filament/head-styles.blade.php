@@ -276,6 +276,24 @@
     .gqs-fld{width:100%;padding:9px 11px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:8px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);font-size:14px;font-family:inherit;}
     .gqs-fld:focus{outline:none;border-color:#A4123F;box-shadow:0 0 0 3px rgba(164,18,63,.12);}
     .dark .gqs-fld{background:#23232B;border-color:#3A3A44;color:#ECECF0;}
+
+    /* Shared clean modal (matches the wizard look: one container, generous spacing, no card-in-card) */
+    .gqs-modal-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(20,20,24,.55);backdrop-filter:blur(2px);padding:20px;}
+    .gqs-modal{background:var(--gqs-surface,#fff);border-radius:16px;width:480px;max-width:96vw;max-height:90vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.35);}
+    .dark .gqs-modal{background:#1C1C22;}
+    .gqs-modal-head{display:flex;align-items:center;gap:10px;padding:18px 22px;border-bottom:1px solid var(--gqs-border,#ECECEF);font-weight:800;font-size:16px;color:var(--gqs-text,#1A1A1F);}
+    .dark .gqs-modal-head{border-color:#2C2C34;color:#fff;}
+    .gqs-modal-head .gqs-modal-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#A4123F;color:#fff;flex-shrink:0;}
+    .gqs-modal-head .gqs-modal-ico svg{width:17px;height:17px;}
+    .gqs-modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:15px;}
+    .gqs-modal-body .gqs-flbl{margin-bottom:4px;}
+    .gqs-modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:16px 22px;border-top:1px solid var(--gqs-border,#ECECEF);}
+    .dark .gqs-modal-foot{border-color:#2C2C34;}
+    .gqs-btn{padding:9px 18px;border-radius:9px;font-weight:700;font-size:13.5px;cursor:pointer;border:none;}
+    .gqs-btn-primary{background:#A4123F;color:#fff;}
+    .gqs-btn-primary:hover{background:#85102F;}
+    .gqs-btn-ghost{background:transparent;border:1px solid var(--gqs-border,#C4C4CC);color:var(--gqs-text,#1A1A1F);}
+    .dark .gqs-btn-ghost{color:#ECECF0;border-color:#3A3A44;}
     .gqs-mini-btn{background:#A4123F;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
     .gqs-mini-btn:hover{background:#850F33;}
 </style>

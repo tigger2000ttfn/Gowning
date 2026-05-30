@@ -112,11 +112,11 @@
 
         {{-- Add run day modal --}}
         @if($showAddSlot)
-            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAddSlot', false)">
-                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:460px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Add Run Day</div>
-                    <div style="padding:18px 20px;">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="gqs-modal-overlay" wire:click.self="$set('showAddSlot', false)">
+                <div class="gqs-modal" style="width:520px;">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-calendar-days"/></span>Add Run Day</div>
+                    <div class="gqs-modal-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                             <div><label class="gqs-flbl">Date</label><input type="date" wire:model="newDate" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">Cleanroom</label>
                                 <select wire:model="newCleanroom" class="gqs-fld"><option value="">Select...</option>
@@ -130,14 +130,14 @@
                                     @foreach($this->analystOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
                                 </select></div>
                         </div>
-                        <div style="margin-top:12px;"><label class="gqs-flbl">Notes</label><input type="text" wire:model="newNotes" placeholder="Optional" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Notes</label><input type="text" wire:model="newNotes" placeholder="Optional" class="gqs-fld"></div>
 
                         {{-- Recurrence --}}
-                        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gqs-text,#1A1A1F);">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gqs-text,#1A1A1F);">
                             <input type="checkbox" wire:model.live="repeat"> Repeat this run day
                         </label>
                         @if($repeat)
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;padding:12px;background:var(--gqs-surface-2,#F5F5F7);border-radius:9px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px;background:var(--gqs-surface-2,#F5F5F7);border-radius:9px;">
                                 <div><label class="gqs-flbl">Pattern</label>
                                     <select wire:model="repeatPattern" class="gqs-fld">
                                         <option value="weekly">Weekly</option>
@@ -147,10 +147,10 @@
                                 <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="repeatUntil" class="gqs-fld"></div>
                             </div>
                         @endif
-                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                            <button type="button" wire:click="$set('showAddSlot', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                            <button type="button" wire:click="addSlot" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">@if($repeat)Generate Run Days @else Add Run Day @endif</button>
-                        </div>
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showAddSlot', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="addSlot" class="gqs-btn gqs-btn-primary">@if($repeat)Generate Run Days @else Add Run Day @endif</button>
                     </div>
                 </div>
             </div>
@@ -211,24 +211,28 @@
 
         {{-- Book a person modal --}}
         @if($showAddRes)
-            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAddRes', false)">
-                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Book A Person Onto A Run Day</div>
-                    <div style="padding:18px 20px;">
-                        <label class="gqs-flbl">Person</label>
-                        <select wire:model="addResPersonnelId" class="gqs-fld" style="margin-bottom:14px;">
-                            <option value="">Select a person...</option>
-                            @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
-                        </select>
-                        <label class="gqs-flbl">Run Day</label>
-                        <select wire:model="addResSlotId" class="gqs-fld">
-                            <option value="">Select an open run day...</option>
-                            @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
-                        </select>
-                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                            <button type="button" wire:click="$set('showAddRes', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                            <button type="button" wire:click="addReservation" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Book</button>
+            <div class="gqs-modal-overlay" wire:click.self="$set('showAddRes', false)">
+                <div class="gqs-modal">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-user-plus"/></span>Book A Person Onto A Run Day</div>
+                    <div class="gqs-modal-body">
+                        <div>
+                            <label class="gqs-flbl">Person</label>
+                            <select wire:model="addResPersonnelId" class="gqs-fld">
+                                <option value="">Select a person...</option>
+                                @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                            </select>
                         </div>
+                        <div>
+                            <label class="gqs-flbl">Run Day</label>
+                            <select wire:model="addResSlotId" class="gqs-fld">
+                                <option value="">Select an open run day...</option>
+                                @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showAddRes', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="addReservation" class="gqs-btn gqs-btn-primary">Book</button>
                     </div>
                 </div>
             </div>
@@ -236,20 +240,22 @@
 
         {{-- Move reservation modal --}}
         @if($showMoveRes)
-            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showMoveRes', false)">
-                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Move Reservation</div>
-                    <div style="padding:18px 20px;">
-                        <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0 0 14px;">{{ $moveResName }}</p>
-                        <label class="gqs-flbl">Move To Run Day</label>
-                        <select wire:model="moveResSlotId" class="gqs-fld">
-                            <option value="">Select a run day...</option>
-                            @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
-                        </select>
-                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                            <button type="button" wire:click="$set('showMoveRes', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                            <button type="button" wire:click="moveReservation" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Move</button>
+            <div class="gqs-modal-overlay" wire:click.self="$set('showMoveRes', false)">
+                <div class="gqs-modal">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-arrows-right-left"/></span>Move Reservation</div>
+                    <div class="gqs-modal-body">
+                        <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0;">{{ $moveResName }}</p>
+                        <div>
+                            <label class="gqs-flbl">Move To Run Day</label>
+                            <select wire:model="moveResSlotId" class="gqs-fld">
+                                <option value="">Select a run day...</option>
+                                @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                            </select>
                         </div>
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showMoveRes', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="moveReservation" class="gqs-btn gqs-btn-primary">Move</button>
                     </div>
                 </div>
             </div>
