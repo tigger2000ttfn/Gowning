@@ -44,6 +44,9 @@
         $admin[] = ['Roles & Permissions', \App\Filament\Admin\Pages\RolePermissions::getUrl(), 'heroicon-o-shield-check'];
         $admin[] = ['Settings', \App\Filament\Admin\Pages\Settings::getUrl(), 'heroicon-o-cog-6-tooth'];
     }
+    if ($can(\App\Enums\Capability::SystemSettings)) {
+        $admin[] = ['Automation Rules', \App\Filament\Admin\Resources\AutomationRuleResource::getUrl(), 'heroicon-o-bolt'];
+    }
     if ($admin) $sections[] = ['Setup & Settings', $admin];
 
     // Team & Assignments (managers)
