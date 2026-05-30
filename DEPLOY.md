@@ -117,15 +117,29 @@ curl -k -s -o /dev/null -w "admin   %{http_code}\n" https://matcastellas.com:808
 
 ## Updating later (pull new commits)
 
+The standard path is just `sudo bash deploy.sh` (it now auto-runs `composer update`
+if the lock file is out of date, e.g. after new packages are added). Manual equivalent:
+
 ```bash
 cd /var/www/html/gowning
 sudo git pull
-sudo COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+# composer.json now declares spatie/laravel-activitylog, laravel-backup, laravel-medialibrary.
+# 'install' uses the lock; if it complains the lock is out of date, run 'update' once:
+sudo COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader \
+  || sudo COMPOSER_ALLOW_SUPERUSER=1 composer update --no-dev --optimize-autoloader
 sudo php artisan migrate --force
 sudo chown -R www-data:www-data /var/www/html/gowning
 sudo php artisan optimize:clear
 sudo systemctl restart apache2     # restart, not reload (see note)
 ```
+
+### Package notes
+- **spatie/laravel-backup**: needs `pg_dump` on the server (Postgres client tools). Backups
+  run on the schedule (requires the cron line below). Storage disk per `config/backup.php`.
+- **spatie/laravel-medialibrary**: file uploads stored on the default disk; the `media`
+  table is created by migration. No extra Filament plugin needed (ships in filament/filament v5).
+- **Cron** (so scheduled commands actually run, including backups + the automation chain):
+  `* * * * * cd /var/www/html/gowning && php artisan schedule:run >> /dev/null 2>&1`
 
 ---
 
