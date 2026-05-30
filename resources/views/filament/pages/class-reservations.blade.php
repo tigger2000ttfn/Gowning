@@ -12,8 +12,6 @@
         <div class="gqs-stat charcoal"><div class="n">{{ $sessionCount ? round($totalEnrolled / max($sessionCount,1), 1) : 0 }}</div><div class="l">Avg Per Session</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
     </div>
 
-    <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:12px;">Manage who is booked into each class. Move, reschedule, or cancel a booking here. Marking attendance and submitting to QA is done on the Class Scheduler.</div>
-
     @forelse ($groups as $group)
         <div class="gqs-panel">
             <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $group['title'] }}
@@ -23,9 +21,9 @@
                     <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}?attend={{ $group['id'] }}" class="rd-act rd-act-magenta" style="text-decoration:none;">Attendance Sheet</a>
                 </span>
             </div>
-            <div class="gqs-panel-body">
+            <div class="gqs-panel-body" style="padding:0;">
                 @if(empty($group['rows']))
-                    <div class="gqs-empty">No One Enrolled Yet.</div>
+                    <div class="gqs-empty" style="padding:20px;">No One Enrolled Yet.</div>
                 @else
                     <table class="gqs-tbl">
                         <thead><tr><th>Employee</th><th>Name</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>

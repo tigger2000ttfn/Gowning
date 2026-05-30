@@ -86,6 +86,72 @@ class ClassScheduler extends Page
         Notification::make()->success()->title('Session Updated')->send();
     }
 
+    // ----- Schedule a waiting person into a class session (Overview tab) -----
+    public bool $showSchedule = false;
+    public ?int $schedulePersonnelId = null;
+    public ?int $scheduleSessionId = null;
+    public string $scheduleName = '';
+
+    /** Open future sessions with an open seat (id => label). */
+    public function openSessionOptions(): array
+    {
+        return \App\Models\ClassSession::with('trainingClass')
+            ->where('status', '!=', 'cancelled')
+            ->whereNull('attendance_submitted_at')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')->get()
+            ->filter(fn ($s) => $s->seatsLeft() > 0)
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')
+                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')
+                . ' · ' . $s->seatsLeft() . ' seats'])
+            ->all();
+    }
+
+    public function openSchedule(int $personnelId): void
+    {
+        $p = \App\Models\Personnel::find($personnelId);
+        if (! $p) return;
+        $this->schedulePersonnelId = $personnelId;
+        $this->scheduleName = $p->full_name;
+        $this->scheduleSessionId = null;
+        $this->showSchedule = true;
+    }
+
+    public function saveSchedule(): void
+    {
+        if (! $this->schedulePersonnelId || ! $this->scheduleSessionId) {
+            Notification::make()->warning()->title('Pick A Class Date')->send();
+            return;
+        }
+        $session = \App\Models\ClassSession::find($this->scheduleSessionId);
+        $p = \App\Models\Personnel::find($this->schedulePersonnelId);
+        if (! $session || ! $p) return;
+        if ($session->seatsLeft() <= 0) {
+            Notification::make()->warning()->title('Session Full')->send();
+            return;
+        }
+        // already enrolled in this session?
+        $exists = \App\Models\ClassEnrollment::where('class_session_id', $session->id)
+            ->where('personnel_id', $p->id)->whereNotIn('status', ['cancelled'])->exists();
+        if ($exists) {
+            Notification::make()->warning()->title('Already Enrolled')->body($p->full_name . ' is already in that session.')->send();
+            $this->showSchedule = false;
+            return;
+        }
+        \App\Models\ClassEnrollment::create([
+            'class_session_id' => $session->id,
+            'personnel_id' => $p->id,
+            'employee_id' => $p->employee_id,
+            'name' => $p->full_name,
+            'email' => $p->email,
+            'status' => 'signed_up',
+            'signed_up_at' => now(),
+        ]);
+        $this->showSchedule = false;
+        Notification::make()->success()->title('Scheduled')
+            ->body($p->full_name . ' booked into ' . ($session->trainingClass?->name ?? 'class') . ' on ' . $session->session_date?->format('M j, Y') . '.')->send();
+    }
+
     // reusable in-app confirmation modal (no native system prompts)
     public array $confirm = [];
     public function askConfirm(string $method, $arg, string $title, string $body, ?string $confirmLabel = null, bool $danger = false): void
@@ -159,6 +225,7 @@ class ClassScheduler extends Page
             ->whereNotIn('personnel_id', $enrolled)
             ->get()
             ->map(fn ($q) => [
+                'personnel_id' => $q->personnel_id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
                 'department' => $q->personnel?->department,

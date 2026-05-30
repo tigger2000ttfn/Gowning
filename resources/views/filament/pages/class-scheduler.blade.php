@@ -24,7 +24,7 @@
                     <div class="gqs-empty" style="padding:28px;">Nobody is waiting. Everyone who needs the class is signed up.</div>
                 @else
                     <table class="gqs-tbl">
-                        <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Waiting</th></tr></thead>
+                        <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Waiting</th><th style="text-align:right;">Action</th></tr></thead>
                         <tbody>
                             @foreach($need as $n)
                                 <tr>
@@ -32,6 +32,9 @@
                                     <td>{{ $n['name'] }}</td>
                                     <td>{{ $n['department'] ?: '—' }}</td>
                                     <td style="color:var(--gqs-text-dim,#6A6A72);">{{ $n['since'] ?? '—' }}</td>
+                                    <td style="text-align:right;">
+                                        <button type="button" wire:click="openSchedule({{ $n['personnel_id'] }})" class="rd-act rd-act-magenta">Schedule</button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -39,6 +42,29 @@
                 @endif
             </div>
         </div>
+
+        {{-- Schedule a waiting person into a class session --}}
+        @if($showSchedule)
+            <div class="gqs-modal-overlay" wire:click.self="$set('showSchedule', false)">
+                <div class="gqs-modal">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-calendar-days"/></span>Schedule Gowning Class</div>
+                    <div class="gqs-modal-body">
+                        <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0;">{{ $scheduleName }}</p>
+                        <div>
+                            <label class="gqs-flbl">Class Date</label>
+                            <select wire:model="scheduleSessionId" class="gqs-fld">
+                                <option value="">Select A Class Date...</option>
+                                @foreach($this->openSessionOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showSchedule', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="saveSchedule" class="gqs-btn gqs-btn-primary">Schedule</button>
+                    </div>
+                </div>
+            </div>
+        @endif
 
     @elseif($tab === 'classes')
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
