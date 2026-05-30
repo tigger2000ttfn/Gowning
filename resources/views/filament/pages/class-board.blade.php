@@ -20,31 +20,38 @@
     </div>
 
     @if($showAdd)
-        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAdd', false)">
-            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Add Class Enrollment</div>
-                <div style="padding:18px 20px;">
-                    <label class="gqs-flbl">Person</label>
-                    <select wire:model="addPersonnelId" class="gqs-fld" style="margin-bottom:14px;">
-                        <option value="">Select a person...</option>
-                        @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
-                    </select>
-                    <label class="gqs-flbl">Class Session</label>
-                    <select wire:model="addSessionId" class="gqs-fld">
-                        <option value="">Select a session...</option>
-                        @foreach($this->openSessions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
-                    </select>
-                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                        <button type="button" wire:click="$set('showAdd', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                        <button type="button" wire:click="addEnrollment" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Add Enrollment</button>
+        <div class="gqs-modal-overlay" wire:click.self="$set('showAdd', false)">
+            <div class="gqs-modal">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-academic-cap"/></span>Schedule Class</div>
+                <div class="gqs-modal-body">
+                    <div>
+                        <label class="gqs-flbl">Person</label>
+                        <select wire:model="addPersonnelId" class="gqs-fld">
+                            <option value="">Select a person...</option>
+                            @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                        </select>
                     </div>
+                    <div>
+                        <label class="gqs-flbl">Class Date / Session</label>
+                        <select wire:model="addSessionId" class="gqs-fld">
+                            <option value="">Select a session...</option>
+                            @foreach($this->openSessions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="gqs-modal-foot">
+                    <button type="button" wire:click="$set('showAdd', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="addEnrollment" class="gqs-btn gqs-btn-primary">Schedule</button>
                 </div>
             </div>
         </div>
     @endif
 
     <div x-data="{
-            init() { this.$nextTick(() => this.wire()); },
+            init() {
+                this.$nextTick(() => this.wire());
+                Livewire.hook('morph.updated', () => this.$nextTick(() => this.wire()));
+            },
             wire() {
                 document.querySelectorAll('[data-lane]').forEach(lane => {
                     if (lane._sortable) return;
@@ -67,7 +74,7 @@
                     });
                 });
             }
-        }" x-init="init()" wire:key="cb-{{ now()->timestamp }}">
+        }" x-init="init()">
         <div class="sb-fullbleed"><div class="kanban-wrap">
             {{-- Needs Class: people Class Pending, not yet signed up (informational, with quick enroll) --}}
             @php $needs = $this->getNeedsClass(); @endphp
@@ -81,7 +88,7 @@
                             <div class="kanban-name">{{ $card['name'] }}</div>
                             <div class="kanban-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
                             <button wire:click="$set('addPersonnelId', {{ $card['personnel_id'] }}); $set('showAdd', true)"
-                                    class="cb-enroll-btn">Sign Up</button>
+                                    class="cb-enroll-btn">Schedule Class</button>
                         </div>
                     @empty
                         <div class="gqs-empty" style="padding:14px;font-size:12px;">Everyone needing the class is signed up.</div>

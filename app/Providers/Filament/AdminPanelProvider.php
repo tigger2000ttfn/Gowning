@@ -72,6 +72,10 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render('@include("filament.login-extras")'),
             )
             ->renderHook(
+                PanelsRenderHook::BODY_END,
+                fn (): string => Blade::render('@include("filament.session-guard")'),
+            )
+            ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn (): string => Blade::render('@include("filament.topbar-manage")'),
             )
