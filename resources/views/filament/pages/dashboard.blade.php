@@ -257,5 +257,24 @@
 </div>
 @endif
 
+@php $dashComments = $this->recentComments(); @endphp
+@if(!empty($dashComments))
+<div class="dash-section-title" style="margin-top:24px;">Recent Comments</div>
+<div class="gqs-panel">
+    <div class="gqs-panel-body" style="padding:0;">
+        @foreach($dashComments as $c)
+            <a @if($c['url']) href="{{ $c['url'] }}" @endif style="display:block;text-decoration:none;padding:12px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                    <span style="font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);">{{ $c['person'] }}</span>
+                    <span style="font-size:11px;color:#9A9AA4;white-space:nowrap;">{{ $c['when'] }}</span>
+                </div>
+                <div style="font-size:12.5px;color:var(--gqs-text,#3A3A42);margin-top:3px;line-height:1.45;">{{ $c['body'] }}</div>
+                <div style="font-size:11px;color:#A4123F;font-weight:700;margin-top:4px;">{{ $c['author'] }}</div>
+            </a>
+        @endforeach
+    </div>
+</div>
+@endif
+
 </div>
 </x-filament-panels::page>

@@ -50,6 +50,32 @@ class Messages extends Page
         return Message::with('recipient')->where('sender_id', Auth::id())->latest()->limit(100)->get();
     }
 
+    /**
+     * System-wide comment activity: every comment made on a qualification (QA notes,
+     * determinations, due-date overrides, free-text comments) as a running feed, each
+     * linking back to that person's qualification record.
+     */
+    public function commentFeed()
+    {
+        return \App\Models\QualificationComment::with(['qualification.personnel', 'user'])
+            ->latest()->limit(60)->get()
+            ->map(function ($c) {
+                $person = $c->qualification?->personnel;
+                return [
+                    'id' => $c->id,
+                    'author' => $c->author_name ?: ($c->user?->name ?? 'System'),
+                    'body' => $c->body,
+                    'person' => $person?->full_name ?: 'Unknown',
+                    'employee_id' => $person?->employee_id,
+                    'when' => $c->created_at?->diffForHumans(),
+                    'stamp' => $c->created_at?->gmpDt(),
+                    'url' => $c->qualification_id
+                        ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $c->qualification_id])
+                        : null,
+                ];
+            })->all();
+    }
+
     public function unreadCount(): int
     {
         return Message::inbox(Auth::id())->unread()->count();

@@ -5,6 +5,7 @@
         @php $unread = $this->unreadCount(); @endphp
         <button type="button" wire:click="$set('tab','inbox')" class="gqs-tab {{ $tab === 'inbox' ? 'on' : '' }}">Inbox @if($unread)<span class="gqs-pill gqs-pill-red" style="margin-left:6px;">{{ $unread }}</span>@endif</button>
         <button type="button" wire:click="$set('tab','sent')" class="gqs-tab {{ $tab === 'sent' ? 'on' : '' }}">Sent</button>
+        <button type="button" wire:click="$set('tab','activity')" class="gqs-tab {{ $tab === 'activity' ? 'on' : '' }}">Activity</button>
         <button type="button" wire:click="$set('tab','compose')" class="gqs-tab {{ $tab === 'compose' ? 'on' : '' }}">Compose</button>
     </div>
 
@@ -43,6 +44,24 @@
                         <button wire:click="startReply({{ $m->sender_id }}, '{{ addslashes($m->subject) }}', {{ $m->id }})" style="padding:8px 16px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Reply</button>
                     </div>
                 @endif
+            </div>
+        </div>
+    @elseif($tab === 'activity')
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-chat-bubble-left-ellipsis"/> Comment Activity</div>
+            <div class="gqs-panel-body" style="padding:0;">
+                @forelse($this->commentFeed() as $c)
+                    <a @if($c['url']) href="{{ $c['url'] }}" @endif style="display:block;text-decoration:none;padding:13px 18px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
+                        <div style="display:flex;justify-content:space-between;gap:10px;">
+                            <span style="font-weight:800;font-size:13.5px;color:var(--gqs-text,#1A1A1F);">{{ $c['person'] }}@if($c['employee_id']) <span style="font-weight:600;color:#9A9AA4;">· {{ $c['employee_id'] }}</span>@endif</span>
+                            <span style="font-size:11.5px;color:#9A9AA4;white-space:nowrap;" title="{{ $c['stamp'] }}">{{ $c['when'] }}</span>
+                        </div>
+                        <div style="font-size:13px;color:var(--gqs-text,#3A3A42);margin-top:4px;line-height:1.5;">{{ $c['body'] }}</div>
+                        <div style="font-size:11.5px;color:#A4123F;font-weight:700;margin-top:5px;">{{ $c['author'] }}</div>
+                    </a>
+                @empty
+                    <div class="gqs-empty" style="padding:24px;text-align:center;">No comments yet.</div>
+                @endforelse
             </div>
         </div>
     @else

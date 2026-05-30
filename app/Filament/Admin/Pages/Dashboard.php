@@ -29,6 +29,22 @@ class Dashboard extends BaseDashboard
 
     public function getColumns(): int|array { return 2; }
 
+    /** Latest comment activity across all qualifications, with a link back to each record. */
+    public function recentComments(): array
+    {
+        return \App\Models\QualificationComment::with(['qualification.personnel', 'user'])
+            ->latest()->limit(6)->get()
+            ->map(fn ($c) => [
+                'author' => $c->author_name ?: ($c->user?->name ?? 'System'),
+                'body' => \Illuminate\Support\Str::limit($c->body, 110),
+                'person' => $c->qualification?->personnel?->full_name ?: 'Unknown',
+                'when' => $c->created_at?->diffForHumans(),
+                'url' => $c->qualification_id
+                    ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $c->qualification_id])
+                    : null,
+            ])->all();
+    }
+
     protected function buildQuickLinks(): array
     {
         $u = \Illuminate\Support\Facades\Auth::user();
