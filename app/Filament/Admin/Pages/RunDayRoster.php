@@ -30,7 +30,7 @@ class RunDayRoster extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Qual Run Day';
     protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Qualification Run Day Roster';
 
     protected string $view = 'filament.pages.run-day-roster';

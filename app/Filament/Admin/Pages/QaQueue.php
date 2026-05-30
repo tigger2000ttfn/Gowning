@@ -29,7 +29,7 @@ class QaQueue extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'QA Sign-off Queue';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
     protected static ?string $title = 'QA Sign-off Queue';
     public function getHeading(): string { return ''; }
 

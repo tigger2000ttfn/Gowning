@@ -44,8 +44,8 @@ class TrainingClassResource extends Resource
     protected static ?string $model = TrainingClass::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
-    protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 10;
+    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
+    protected static ?int $navigationSort = 3;
     protected static ?string $modelLabel = 'Gowning Class';
     protected static ?string $pluralModelLabel = 'Gowning Classes';
 

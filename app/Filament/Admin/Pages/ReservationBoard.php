@@ -26,7 +26,7 @@ class ReservationBoard extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Reservations';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Qualification Run Reservations';
     public function getHeading(): string { return ''; }
 

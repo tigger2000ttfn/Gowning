@@ -23,8 +23,8 @@ class ClassReservations extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Class Reservations';
-    protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 11;
+    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
+    protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Gowning Class Reservations';
     public function getHeading(): string { return ''; }
 

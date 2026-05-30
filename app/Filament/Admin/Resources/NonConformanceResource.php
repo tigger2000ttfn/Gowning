@@ -28,7 +28,7 @@ class NonConformanceResource extends Resource
     protected static ?string $pluralModelLabel = 'Non-Conformances';
     protected static ?string $navigationLabel = 'Non-Conformances';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 5;
 
     protected static function allowed(): bool
     {

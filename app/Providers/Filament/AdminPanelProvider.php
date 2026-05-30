@@ -71,6 +71,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->navigationGroups([
                 'Qualifications',
+                'Classroom',
                 'Scheduling',
             ])
             ->widgets([])
