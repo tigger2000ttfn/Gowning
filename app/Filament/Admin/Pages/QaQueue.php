@@ -186,6 +186,7 @@ class QaQueue extends Page
                     : (int) Setting::get('annual_runs_required', 1);
                 $q->runs_completed = 0;
                 $q->status = 'in_progress';
+                $q->cycle_started_at = now()->toDateString(); // fresh cycle: don't recount prior runs
 
                 if ($retrain) {
                     // QA requires retraining: clear class on file, back to Class Pending

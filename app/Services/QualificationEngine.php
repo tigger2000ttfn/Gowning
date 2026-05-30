@@ -102,9 +102,13 @@ class QualificationEngine
      */
     public function recompute(Qualification $qualification): Qualification
     {
-        $state = $this->replay(
-            $qualification->runs()->orderBy('run_date')->orderBy('id')->get()
-        );
+        // Only replay runs from the current cycle. A QA determination or lapse sets
+        // cycle_started_at, so prior-cycle runs (incl. the failure) don't get recounted.
+        $runsQuery = $qualification->runs()->orderBy('run_date')->orderBy('id');
+        if ($qualification->cycle_started_at) {
+            $runsQuery->whereDate('run_date', '>=', $qualification->cycle_started_at);
+        }
+        $state = $this->replay($runsQuery->get());
 
         $qualification->fill([
             'type' => $state['type'],

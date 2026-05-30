@@ -52,6 +52,7 @@ class LifecycleAdvancer
                 $q->type = 'initial';
                 $q->runs_required = $this->lapsedRuns();
                 $q->runs_completed = 0;
+                $q->cycle_started_at = now()->toDateString(); // fresh requal cycle
                 $q->qualified_date = null;
                 // class persists: if on file, skip straight to ready-to-book; else needs class
                 $q->workflow_stage = $q->class_on_file
