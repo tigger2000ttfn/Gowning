@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ReservationStatus;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\GqsActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,7 +26,7 @@ class Reservation extends Model
         });
     }
 
-    use Auditable, SoftDeletes;
+    use Auditable, SoftDeletes, GqsActivityLog;
 
     protected $fillable = [
         'run_slot_id', 'personnel_id', 'status',

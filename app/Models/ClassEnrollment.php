@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\GqsActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ClassEnrollment extends Model
 {
-    use Auditable;
+    use Auditable, GqsActivityLog;
 
     protected $fillable = [
         'class_session_id', 'personnel_id', 'name', 'email',

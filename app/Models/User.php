@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 use App\Enums\Role;
 use App\Models\Concerns\Auditable;
+use App\Models\Concerns\GqsActivityLog;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +30,7 @@ class User extends Authenticatable implements FilamentUser
         });
     }
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use Auditable, HasFactory, Notifiable;
+    use Auditable, HasFactory, Notifiable, GqsActivityLog;
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'is_active',
