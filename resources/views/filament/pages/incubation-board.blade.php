@@ -1,42 +1,122 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Incubation & Results', 'subtitle' => 'Plates auto-advance to Awaiting Results after the incubation period. Enter pass/fail when LIMS has them.', 'icon' => 'heroicon-o-beaker'])
+    @include('filament.page-hero', ['title' => 'Lab Review', 'subtitle' => 'QC Micro lab tracking: incubation, result evaluation, and submittal to QA.', 'icon' => 'heroicon-o-beaker'])
 
-    @php $incubating = $this->getIncubating(); $days = $this->incubationDays(); $ready = $incubating->where('awaiting', true); @endphp
+    @php
+        $tab = $this->tab ?? 'incubating';
+        $incubating = $this->getIncubating();
+        $evaluation = $this->getEvaluation();
+        $canEval = $this->canEvaluate();
+    @endphp
 
     <div class="gqs-stats">
-        <div class="gqs-stat gold"><div class="n">{{ $incubating->where('awaiting', false)->count() }}</div><div class="l">Incubating</div><span class="wm"><x-filament::icon icon="heroicon-o-beaker"/></span></div>
-        <div class="gqs-stat green"><div class="n">{{ $ready->count() }}</div><div class="l">Ready To Read</div><span class="wm"><x-filament::icon icon="heroicon-o-check-badge"/></span></div>
-        <div class="gqs-stat charcoal"><div class="n">{{ $days }}</div><div class="l">Incubation Days</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
+        <div class="gqs-stat gold"><div class="n">{{ $incubating->count() }}</div><div class="l">Incubating</div><span class="wm"><x-filament::icon icon="heroicon-o-beaker"/></span></div>
+        <div class="gqs-stat magenta"><div class="n">{{ $evaluation->count() }}</div><div class="l">Ready To Evaluate</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-check"/></span></div>
+        <div class="gqs-stat charcoal"><div class="n">{{ $this->incubationDays() }}d</div><div class="l">Incubation Period</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
     </div>
 
-    <div class="gqs-panel">
-        <div class="gqs-panel-head" style="background:linear-gradient(135deg,#B8860B,#8A6309);"><x-filament::icon icon="heroicon-m-beaker"/> Incubation Timeline</div>
-        <div class="gqs-panel-body">
-            @forelse ($incubating as $row)
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);{{ $row->awaiting ? 'background:rgba(46,125,91,.06);' : '' }}">
-                    <div>
-                        <div style="font-weight:700;color:var(--gqs-text,#1A1A1F);">{{ $row->name }}</div>
-                        <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
-                            {{ $row->employee_id }}
-                            @if($row->started) · started {{ $row->started->setTimezone('America/New_York')->format('M j') }}@endif
-                            @if($row->ready) · read by {{ $row->ready->setTimezone('America/New_York')->format('M j') }}@endif
-                            @if($row->worklist) · WL {{ $row->worklist }}@endif
-                        </div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;white-space:nowrap;">
-                        @if($row->awaiting)
-                            <span class="gqs-pill gqs-pill-green">Ready To Read</span>
-                            {{ ($this->enterResultsAction)(['id' => $row->id]) }}
-                        @else
-                            <span class="gqs-pill gqs-pill-gold">{{ (int) ceil($row->remaining) }} Days Left</span>
-                        @endif
-                    </div>
-                </div>
-            @empty
-                <div class="gqs-empty">Nothing In Incubation.</div>
-            @endforelse
-        </div>
+    <div class="gqs-tabs" style="margin-bottom:16px;">
+        <button type="button" wire:click="setTab('incubating')" class="gqs-tab {{ $tab === 'incubating' ? 'active' : '' }}">Incubating ({{ $incubating->count() }})</button>
+        <button type="button" wire:click="setTab('evaluation')" class="gqs-tab {{ $tab === 'evaluation' ? 'active' : '' }}">Result Evaluation ({{ $evaluation->count() }})</button>
+        <button type="button" wire:click="setTab('history')" class="gqs-tab {{ $tab === 'history' ? 'active' : '' }}">History</button>
     </div>
+
+    @if($tab === 'incubating')
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-beaker"/> In Incubation
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $incubating->count() }} plates</span>
+            </div>
+            <div class="gqs-panel-body">
+                @if($incubating->isEmpty())
+                    <div class="gqs-empty">Nothing in incubation. Performed runs appear here while their plates incubate.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee</th><th>Name</th><th>Worklist</th><th>Started</th><th>Ready</th><th>Remaining</th></tr></thead>
+                        <tbody>
+                            @foreach($incubating as $r)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $r->employee_id }}</td>
+                                    <td>{{ $r->name }}</td>
+                                    <td>{{ $r->worklist ?: '—' }}</td>
+                                    <td>{{ $r->started ? \Illuminate\Support\Carbon::parse($r->started)->format('M j, Y') : '—' }}</td>
+                                    <td>{{ $r->ready ? \Illuminate\Support\Carbon::parse($r->ready)->format('M j, Y') : '—' }}</td>
+                                    <td>
+                                        @if($r->remaining === null)<span class="gqs-pill">—</span>
+                                        @elseif($r->remaining > 0)<span class="gqs-pill gqs-pill-gold">{{ (int) ceil($r->remaining) }}d left</span>
+                                        @else<span class="gqs-pill gqs-pill-green">Ready</span>@endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @elseif($tab === 'evaluation')
+        @unless($canEval)
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:14px;color:#8A6D0B;">You can view evaluations, but a QC Micro analyst enters results.</div></div>
+        @endunless
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clipboard-document-check"/> Ready For Result Evaluation
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $evaluation->count() }} awaiting results</span>
+            </div>
+            <div class="gqs-panel-body">
+                @if($evaluation->isEmpty())
+                    <div class="gqs-empty">No runs ready to evaluate. Runs move here once their incubation period elapses.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee</th><th>Name</th><th>Cycle</th><th>Worklist</th><th>Performed</th><th>Progress</th><th style="text-align:right;">Result</th></tr></thead>
+                        <tbody>
+                            @foreach($evaluation as $r)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $r->employee_id }}</td>
+                                    <td>{{ $r->name }}</td>
+                                    <td>{{ $r->cycle }}</td>
+                                    <td>{{ $r->worklist ?: '—' }}</td>
+                                    <td>{{ $r->performed ? \Illuminate\Support\Carbon::parse($r->performed)->format('M j, Y') : '—' }}</td>
+                                    <td style="white-space:nowrap;">{{ $r->progress }}</td>
+                                    <td style="text-align:right;">
+                                        @if($canEval)
+                                            {{ ($this->enterResultsAction)(['id' => $r->id]) }}
+                                        @else
+                                            <span class="gqs-pill gqs-pill-purple">Awaiting QCM</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @else
+        @php $history = $this->getHistory(); @endphp
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clock"/> Recently Evaluated
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">last {{ $history->count() }} results</span>
+            </div>
+            <div class="gqs-panel-body">
+                @if($history->isEmpty())
+                    <div class="gqs-empty">No results entered yet.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee</th><th>Name</th><th>Worklist</th><th>Run Date</th><th>Result</th><th>Evaluated</th></tr></thead>
+                        <tbody>
+                            @foreach($history as $r)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $r->employee_id }}</td>
+                                    <td>{{ $r->name }}</td>
+                                    <td>{{ $r->worklist ?: '—' }}</td>
+                                    <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->format('M j, Y') : '—' }}</td>
+                                    <td><span class="gqs-pill {{ $r->result === 'Pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $r->result }}</span></td>
+                                    <td>{{ $r->entered_at ? \Illuminate\Support\Carbon::parse($r->entered_at)->format('M j, Y g:i A') : '—' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @endif
 
     <x-filament-actions::modals />
 </x-filament-panels::page>

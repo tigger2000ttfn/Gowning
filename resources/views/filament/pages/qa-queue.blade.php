@@ -1,7 +1,59 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'QA Sign-off Queue', 'subtitle' => 'Review released results and sign off to complete qualification.', 'icon' => 'heroicon-o-clipboard-document-check'])
+    @include('filament.page-hero', ['title' => 'QA Review', 'subtitle' => 'Approve classroom training and sign off completed runs.', 'icon' => 'heroicon-o-clipboard-document-check'])
 
-    @php $queue = $this->getQueue(); $failed = $this->getFailed(); $canApprove = $this->canApprove();
+    @php $tab = $this->tab ?? 'runs'; $canApprove = $this->canApprove(); @endphp
+
+    <div class="gqs-tabs" style="margin-bottom:16px;">
+        <button type="button" wire:click="setTab('runs')" class="gqs-tab {{ $tab === 'runs' ? 'active' : '' }}">Run Sign-off</button>
+        <button type="button" wire:click="setTab('classroom')" class="gqs-tab {{ $tab === 'classroom' ? 'active' : '' }}">Classroom Approval</button>
+    </div>
+
+    @if($tab === 'classroom')
+        @php $classQueue = $this->getClassroomQueue(); @endphp
+        @unless($canApprove)
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:14px;color:#8A6D0B;">You can review classroom submissions, but only a QA Approver can approve them.</div></div>
+        @endunless
+        @forelse($classQueue as $session)
+            <div class="gqs-panel" style="margin-bottom:16px;">
+                <div class="gqs-panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <span>{{ $session['title'] }}</span>
+                    <span style="font-size:12px;font-weight:600;opacity:.92;">{{ count($session['rows']) }} pending · submitted {{ $session['submitted_at'] }}@if($session['submitted_by']) by {{ $session['submitted_by'] }}@endif</span>
+                </div>
+                <div class="gqs-panel-body">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                        <a href="{{ $session['form_url'] }}" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">View Signed Form</a>
+                        @if($canApprove)
+                            <button type="button" wire:click="approveClassroomSession({{ $session['id'] }})" class="gqs-btn gqs-btn-primary"
+                                    wire:confirm="Approve all {{ count($session['rows']) }} trainee(s) on this session?">Approve All</button>
+                        @endif
+                    </div>
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Name</th><th>Employee ID</th><th style="text-align:right;">Action</th></tr></thead>
+                        <tbody>
+                            @foreach($session['rows'] as $row)
+                                <tr>
+                                    <td>{{ $row['name'] }}</td>
+                                    <td>{{ $row['employee_id'] ?: '—' }}</td>
+                                    <td style="text-align:right;white-space:nowrap;">
+                                        @if($canApprove)
+                                            <button type="button" wire:click="approveClassroom({{ $row['id'] }})" class="sb-act sb-act-green">Approve</button>
+                                            <button type="button" wire:click="returnClassroom({{ $row['id'] }})" class="sb-act" style="background:#6A6A72;">Return</button>
+                                        @else
+                                            <span class="gqs-pill gqs-pill-purple">Pending QA</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @empty
+            <div class="gqs-empty">No classroom training awaiting QA approval. Submitted sessions appear here.</div>
+        @endforelse
+    @else
+    {{-- ===================== RUN SIGN-OFF TAB ===================== --}}
+    @php $queue = $this->getQueue(); $failed = $this->getFailed();
         $unassigned = $queue->filter(fn ($q) => ! $q->qa_owner_id)->count();
         $oldest = $queue->min('stage_changed_at');
         $waitDays = $oldest ? (int) \Illuminate\Support\Carbon::parse($oldest)->diffInDays(now()) : 0;
@@ -69,6 +121,7 @@
             @endforeach
         </div>
     </div>
+    @endif
     @endif
 
     <style>
