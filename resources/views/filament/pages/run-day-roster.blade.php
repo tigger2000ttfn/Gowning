@@ -9,7 +9,8 @@
         </div>
         <div class="sb-headrow-filters">
             <div class="gqs-tabs">
-                <button type="button" wire:click="$set('tab','schedule')" class="gqs-tab @if($tab==='schedule') on @endif">Schedule</button>
+                <button type="button" wire:click="$set('tab','schedule')" class="gqs-tab @if($tab==='schedule') on @endif">Run Days</button>
+                <button type="button" wire:click="$set('tab','reservations')" class="gqs-tab @if($tab==='reservations') on @endif">Reservations</button>
                 <button type="button" wire:click="$set('tab','roster')" class="gqs-tab @if($tab==='roster') on @endif">Roster</button>
             </div>
         </div>
@@ -75,6 +76,82 @@
                         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
                             <button type="button" wire:click="$set('showAddSlot', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
                             <button type="button" wire:click="addSlot" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Add Run Day</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+    @elseif($tab === 'reservations')
+        {{-- RESERVATIONS TAB --}}
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <select wire:model.live="resStatusFilter" class="gqs-fld" style="max-width:200px;">
+                <option value="">All Statuses</option>
+                <option value="requested">Requested</option>
+                <option value="approved">Approved</option>
+                <option value="completed">Completed</option>
+                <option value="no_show">No-Show</option>
+            </select>
+            <button type="button" wire:click="$set('showAddRes', true)"
+                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
+                <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Book A Person
+            </button>
+        </div>
+
+        @php $groups = $this->reservationsByDay(); @endphp
+        @forelse($groups as $g)
+            <div class="gqs-panel" style="margin-bottom:14px;">
+                <div class="gqs-panel-head" style="justify-content:space-between;">
+                    <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $g['day'] }}</span>
+                    <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} booked</span>
+                </div>
+                <div class="gqs-panel-body" style="padding:0;">
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee ID</th><th>Name</th><th>Cleanroom</th><th>Time</th><th>Status</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($g['rows'] as $r)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $r['employee_id'] }}</td>
+                                    <td>{{ $r['name'] }}</td>
+                                    <td>{{ $r['cleanroom'] ?: '—' }}</td>
+                                    <td>{{ $r['time'] ?? '—' }}</td>
+                                    <td><span class="gqs-pill {{ $r['status'] === 'completed' ? 'gqs-pill-green' : ($r['status'] === 'no_show' ? 'gqs-pill-red' : ($r['status'] === 'approved' ? 'gqs-pill-gold' : '')) }}">{{ ucfirst(str_replace('_',' ',$r['status'])) }}</span></td>
+                                    <td style="text-align:right;white-space:nowrap;">
+                                        @if($r['status'] === 'requested')
+                                            <button wire:click="approveReservation({{ $r['id'] }})" class="rd-act rd-act-green">Approve</button>
+                                        @endif
+                                        @if(in_array($r['status'], ['requested','approved']))
+                                            <button wire:click="markNoShow({{ $r['id'] }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C8102E;">No-Show</button>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @empty
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No reservations match. Book a person or wait for run requests.</div></div>
+        @endforelse
+
+        {{-- Book a person modal --}}
+        @if($showAddRes)
+            <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAddRes', false)">
+                <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                    <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Book A Person Onto A Run Day</div>
+                    <div style="padding:18px 20px;">
+                        <label class="gqs-flbl">Person</label>
+                        <select wire:model="addResPersonnelId" class="gqs-fld" style="margin-bottom:14px;">
+                            <option value="">Select a person...</option>
+                            @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                        </select>
+                        <label class="gqs-flbl">Run Day</label>
+                        <select wire:model="addResSlotId" class="gqs-fld">
+                            <option value="">Select an open run day...</option>
+                            @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                        </select>
+                        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                            <button type="button" wire:click="$set('showAddRes', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
+                            <button type="button" wire:click="addReservation" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Book</button>
                         </div>
                     </div>
                 </div>

@@ -15,8 +15,7 @@ class ReservationBoard extends Page
     }
     public static function shouldRegisterNavigation(): bool
     {
-        $u = \Illuminate\Support\Facades\Auth::user();
-        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
+        return false; // merged into Run Scheduler > Reservations tab
     }
     public static function canViewAny(): bool
     {

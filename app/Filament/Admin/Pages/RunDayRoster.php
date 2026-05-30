@@ -36,7 +36,7 @@ class RunDayRoster extends Page
     protected string $view = 'filament.pages.run-day-roster';
 
     public ?string $date = null;
-    public string $tab = 'schedule';   // schedule | roster
+    public string $tab = 'schedule';   // schedule | reservations | roster
 
     // new-run-day form fields
     public ?string $newDate = null;
@@ -125,6 +125,107 @@ class RunDayRoster extends Page
     {
         $this->date = $date;
         $this->tab = 'roster';
+    }
+
+    // ===== Reservations tab =====
+    public bool $showAddRes = false;
+    public ?int $addResSlotId = null;
+    public ?int $addResPersonnelId = null;
+    public string $resStatusFilter = '';
+
+    public function openSlotsForBooking(): array
+    {
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        return RunSlot::where('status', 'open')
+            ->whereDate('slot_date', '>=', now()->toDateString())
+            ->orderBy('slot_date')->orderBy('start_time')->get()
+            ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ' · ' . ($s->cleanroom ?: 'Run Day')
+                . ' (' . $scheduler->seatsLeft($s) . ' seats)'])->all();
+    }
+
+    public function bookablePersonnel(): array
+    {
+        return \App\Models\Personnel::where('is_active', true)
+            ->orderBy('last_name')->orderBy('first_name')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => $p->full_name . ' (' . $p->employee_id . ')'])->all();
+    }
+
+    /** Reservations grouped by run day, for the Reservations tab. */
+    public function reservationsByDay(): array
+    {
+        return Reservation::with(['personnel', 'runSlot'])
+            ->whereHas('runSlot')
+            ->when($this->resStatusFilter !== '', fn ($q) => $q->where('status', $this->resStatusFilter))
+            ->get()
+            ->sortBy(fn ($r) => $r->runSlot?->slot_date)
+            ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
+            ->map(fn ($group, $day) => [
+                'day' => $day === 'unscheduled' ? 'Unscheduled' : \Illuminate\Support\Carbon::parse($day)->format('l, M j, Y'),
+                'date' => $day,
+                'rows' => $group->map(fn ($r) => [
+                    'id' => $r->id,
+                    'name' => $r->personnel?->full_name ?? 'Unknown',
+                    'employee_id' => $r->personnel?->employee_id,
+                    'cleanroom' => $r->runSlot?->cleanroom,
+                    'time' => $r->runSlot?->start_time ? \Illuminate\Support\Carbon::parse($r->runSlot->start_time)->format('g:i A') : null,
+                    'status' => $r->status instanceof \BackedEnum ? $r->status->value : $r->status,
+                ])->values()->all(),
+            ])->values()->all();
+    }
+
+    public function addReservation(): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        if (! $this->addResSlotId || ! $this->addResPersonnelId) {
+            Notification::make()->danger()->title('Pick a person and a run day')->send();
+            return;
+        }
+        $slot = RunSlot::find($this->addResSlotId);
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        if ($slot && $scheduler->seatsLeft($slot) <= 0) {
+            Notification::make()->warning()->title('That run day is full')->body('Pick another day or raise capacity.')->send();
+            return;
+        }
+        Reservation::create([
+            'run_slot_id' => $this->addResSlotId,
+            'personnel_id' => $this->addResPersonnelId,
+            'status' => 'approved',
+            'requested_at' => now(),
+            'decided_at' => now(),
+            'decided_by' => Auth::id(),
+            'notes' => 'Added by analyst',
+        ]);
+        $q = \App\Models\Qualification::where('personnel_id', $this->addResPersonnelId)->first();
+        if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
+            $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+        $this->showAddRes = false;
+        $this->addResPersonnelId = null;
+        Notification::make()->success()->title('Reservation added')->send();
+    }
+
+    public function approveReservation(int $id): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $r = Reservation::find($id);
+        if (! $r) return;
+        $r->update(['status' => 'approved', 'decided_by' => Auth::id(), 'decided_at' => now()]);
+        $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
+        if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
+            $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+    }
+
+    public function markNoShow(int $id): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $r = Reservation::find($id);
+        if ($r) app(\App\Services\AutoScheduler::class)->handleNoShow($r);
     }
 
 
