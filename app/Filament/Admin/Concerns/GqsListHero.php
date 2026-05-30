@@ -14,4 +14,11 @@ trait GqsListHero
 
     public function getHeading(): string { return ''; }       // hide default heading (hero replaces it)
     public function getSubheading(): ?string { return null; }  // hero carries the subtitle
+
+    // Suppress Filament's default header block entirely so its header actions
+    // don't render a second time. Our view renders the hero + actions once.
+    public function getHeader(): ?\Illuminate\Contracts\Support\Htmlable
+    {
+        return new \Illuminate\Support\HtmlString('');
+    }
 }
