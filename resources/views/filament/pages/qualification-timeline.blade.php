@@ -143,10 +143,16 @@
                     track.addEventListener('scroll', () => { names.scrollTop = track.scrollTop; });
                     names.addEventListener('scroll', () => { track.scrollTop = names.scrollTop; });
                 }
-                if (document.readyState !== 'loading') sync(); else document.addEventListener('DOMContentLoaded', sync);
+                function fit() {
+                    const g = document.querySelector('.tl-grid');
+                    if (g) g.style.height = Math.max(320, window.innerHeight - g.getBoundingClientRect().top - 10) + 'px';
+                }
+                function go() { sync(); fit(); }
+                if (document.readyState !== 'loading') go(); else document.addEventListener('DOMContentLoaded', go);
+                window.addEventListener('resize', fit);
                 document.addEventListener('livewire:initialized', () => {
                     if (window.Livewire) Livewire.hook('morph.updated', () => setTimeout(() => {
-                        const t = document.querySelector('.tl-track-wrap'); if (t) t._synced = false; sync();
+                        const t = document.querySelector('.tl-track-wrap'); if (t) t._synced = false; go();
                     }, 50));
                 });
             })();
@@ -155,7 +161,7 @@
 
     <style>
         .tl-fullbleed{ margin:0; }
-        .tl-legend{ display:flex; align-items:center; gap:8px; padding:4px 32px 12px; flex-wrap:wrap; }
+        .tl-legend{ display:flex; align-items:center; gap:8px; padding:0 32px 6px; margin-top:-6px; flex-wrap:wrap; }
         .tl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:20px; border:1.5px solid var(--gqs-border,#DADADF); background:transparent; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--gqs-text-dim,#6A6A72); }
         .tl-chip i{ width:10px; height:10px; border-radius:50%; }
         .tl-chip-on{ border-color:var(--chip); color:var(--chip); background:color-mix(in srgb, var(--chip) 10%, transparent); }
