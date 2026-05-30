@@ -47,6 +47,8 @@
     if ($can(\App\Enums\Capability::SystemSettings)) {
         $admin[] = ['Automation Rules', \App\Filament\Admin\Resources\AutomationRuleResource::getUrl(), 'heroicon-o-bolt'];
     }
+    // Notification Settings is available to everyone (personal prefs)
+    $admin[] = ['Notification Settings', \App\Filament\Admin\Pages\NotificationSettings::getUrl(), 'heroicon-o-bell-alert'];
     if ($admin) $sections[] = ['Setup & Settings', $admin];
 
     // Team & Assignments (managers)
