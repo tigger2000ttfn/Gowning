@@ -13,6 +13,7 @@ use Filament\Pages\Page;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Section;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
@@ -154,7 +155,7 @@ class IncubationBoard extends Page
                 TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')->columnSpanFull(),
                 TextInput::make('lms_number')->label('LMS Number (Optional)')->columnSpanFull()
                     ->helperText('Overall qualification run tracking number in the LMS.'),
-                Select::make('overall')->label('Overall Result')->options(['pass' => 'Pass', 'fail' => 'Fail'])->required()->live(),
+                ToggleButtons::make('overall')->label('Overall Result')->options(['pass' => 'Pass', 'fail' => 'Fail'])->colors(['pass' => 'success', 'fail' => 'danger'])->icons(['pass' => 'heroicon-m-check-circle', 'fail' => 'heroicon-m-x-circle'])->inline()->grouped()->required()->live(),
                 TextInput::make('nc_note')->label('Non-Conformance Note (Fail)')->columnSpanFull()
                     ->helperText('On a fail, an NC is opened for QA. Add the observation / TrackWise note here.')
                     ->visible(fn ($get) => ($get('overall') ?? '') === 'fail'),
