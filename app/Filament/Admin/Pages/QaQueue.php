@@ -143,6 +143,63 @@ class QaQueue extends Page
             ->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
     }
 
+    /** QA requalification recommendation on the failed/requal path:
+     *  full initial (3 runs) or annual requal (1 run). Resets the qualification accordingly. */
+    public function recommendAction(): Action
+    {
+        return Action::make('recommend')
+            ->label('QA Determination')
+            ->icon('heroicon-m-scale')
+            ->color('danger')
+            ->modalHeading('QA Requalification Determination')
+            ->modalWidth('lg')
+            ->schema([
+                \Filament\Forms\Components\Radio::make('recommendation')
+                    ->label('Requalification Path')
+                    ->options([
+                        'requal_three' => 'Full requalification, 3 successful runs required',
+                        'requal_one' => 'Annual requalification, 1 successful run required',
+                    ])
+                    ->default('requal_three')->required(),
+                TextInput::make('note')->label('Determination Note')->columnSpanFull(),
+            ])
+            ->action(function (array $data, array $arguments) {
+                if (! $this->canApprove()) {
+                    Notification::make()->danger()->title('Not authorized')->send();
+                    return;
+                }
+                $q = Qualification::with('personnel')->find($arguments['id'] ?? null);
+                if (! $q) return;
+
+                $three = ($data['recommendation'] ?? 'requal_three') === 'requal_three';
+                $q->qa_recommendation = $data['recommendation'] ?? 'requal_three';
+                $q->qa_recommendation_note = $data['note'] ?? null;
+                $q->runs_required = $three
+                    ? (int) Setting::get('initial_runs_required', 3)
+                    : (int) Setting::get('annual_runs_required', 1);
+                $q->runs_completed = 0;
+                $q->status = 'in_progress';
+                // back to Class Complete so they can be scheduled for the required run(s)
+                $q->workflow_stage = WorkflowStage::ClassComplete;
+                $q->stage_changed_at = now();
+                $q->save();
+
+                // record the determination as a signature event
+                ElectronicSignature::create([
+                    'signable_type' => Qualification::class,
+                    'signable_id' => $q->id,
+                    'user_id' => Auth::id(),
+                    'signer_name' => Auth::user()->name,
+                    'meaning' => 'QA Determination',
+                    'statement' => 'Requalification path: ' . ($three ? '3 runs' : '1 run') . '. ' . ($data['note'] ?? ''),
+                    'signed_at' => now(),
+                ]);
+
+                Notification::make()->success()->title('Determination recorded')
+                    ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run') . ' required.')->send();
+            });
+    }
+
     public function markFailed(int $id): void
     {
         if (! $this->canApprove()) {

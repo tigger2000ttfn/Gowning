@@ -24,7 +24,7 @@
                 <div class="gqs-panel-body">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No One Scheduled Yet.</div>@else
                         <table class="gqs-tbl">
-                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Run</th><th>Sampling</th></tr></thead>
+                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Run</th><th>Results</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
                                 <tr>
                                     <td>{{ $i + 1 }}</td>

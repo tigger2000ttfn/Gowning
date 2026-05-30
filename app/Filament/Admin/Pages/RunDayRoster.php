@@ -93,26 +93,39 @@ class RunDayRoster extends Page
             });
     }
 
-    /** Record microbiological samples (per site pass/fail) for one reservation. */
+    /** Enter LIMS results (worklist ID + per-site pass/fail) for one reservation.
+     *  Incubation happens in LIMS, so this is the quick results-entry step that moves
+     *  the card straight to QA Review. */
     public function recordSamplesAction(): Action
     {
-        return Action::make('recordSamples')
-            ->label('Record Samples')
-            ->icon('heroicon-m-beaker')
-            ->modalHeading('Record Microbiological Samples')
+        return Action::make('enterResults')
+            ->label('Enter Results')
+            ->icon('heroicon-m-clipboard-document-check')
+            ->color('success')
+            ->modalHeading('Enter LIMS Results')
             ->modalWidth('lg')
-            ->fillForm(fn (array $arguments) => ['reservation_id' => $arguments['reservation_id'] ?? null])
+            ->fillForm(function (array $arguments) {
+                $res = Reservation::find($arguments['reservation_id'] ?? null);
+                return ['lims_worklist_id' => $res?->lims_worklist_id];
+            })
             ->schema(function () {
-                $fields = [];
+                $fields = [
+                    TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')
+                        ->placeholder('Worklist / batch reference from LIMS')->columnSpanFull(),
+                    Select::make('overall')->label('Overall Result')
+                        ->options(['pass' => 'Pass', 'fail' => 'Fail'])->required()->live()
+                        ->helperText('The headline pass/fail for this run.')->columnSpanFull(),
+                ];
+                // optional per-site detail (collapsed by default via a section)
+                $siteFields = [];
                 foreach ($this->samplingSites() as $i => $site) {
                     $key = 'site_' . $i;
-                    $fields[] = Section::make($site)->columns(3)->schema([
-                        Select::make($key . '_result')->label('Result')
-                            ->options(['pass' => 'Pass', 'fail' => 'Fail', 'pending' => 'Pending'])
-                            ->default('pending')->required(),
-                        TextInput::make($key . '_plate')->label('Plate / LIMS ID'),
-                        TextInput::make($key . '_cfu')->label('CFU Count')->numeric()->minValue(0),
-                    ]);
+                    $siteFields[] = Select::make($key . '_result')->label($site)
+                        ->options(['pass' => 'Pass', 'fail' => 'Fail', 'na' => 'N/A'])->default('pass');
+                }
+                if ($siteFields) {
+                    $fields[] = Section::make('Per-Site Detail (Optional)')
+                        ->columns(count($siteFields))->collapsed()->schema($siteFields);
                 }
                 return $fields;
             })
@@ -123,37 +136,43 @@ class RunDayRoster extends Page
                     Notification::make()->danger()->title('Reservation not found')->send();
                     return;
                 }
+                $overall = $data['overall'] ?? 'pass';
+                $worklist = $data['lims_worklist_id'] ?? null;
+                $res->update(['lims_worklist_id' => $worklist]);
+
+                // store per-site rows if provided
                 foreach ($this->samplingSites() as $i => $site) {
-                    $key = 'site_' . $i;
-                    RunSample::updateOrCreate(
-                        ['reservation_id' => $res->id, 'site' => $site],
-                        [
-                            'personnel_id' => $res->personnel_id,
-                            'result' => $data[$key . '_result'] ?? 'pending',
-                            'plate_id' => $data[$key . '_plate'] ?? null,
-                            'cfu_count' => $data[$key . '_cfu'] ?? null,
-                            'recorded_by' => Auth::id(),
-                        ]
-                    );
-                }
-                // advance the person's workflow stage to Incubating and start the timer
-                if ($res->personnel) {
-                    $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
-                    if ($q && in_array($q->workflow_stage?->value, ['run_scheduled', 'run_performed', 'samples_taken'], true)) {
-                        $q->workflow_stage = \App\Enums\WorkflowStage::Incubating;
-                        $q->stage_changed_at = now();
-                        $q->save();
-                        // stamp incubation start on the latest run
-                        $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
-                            ->latest('run_date')->latest('id')->first();
-                        if ($run && ! $run->incubation_started_at) {
-                            $run->incubation_started_at = now();
-                            $run->save();
-                        }
+                    $key = 'site_' . $i . '_result';
+                    if (isset($data[$key])) {
+                        RunSample::updateOrCreate(
+                            ['reservation_id' => $res->id, 'site' => $site],
+                            ['personnel_id' => $res->personnel_id, 'result' => $data[$key], 'recorded_by' => Auth::id()],
+                        );
                     }
                 }
-                Notification::make()->success()->title('Samples recorded')
-                    ->body(($res->personnel?->full_name ?? 'Operator') . ', ' . count($this->samplingSites()) . ' sites logged. Incubation started.')->send();
+
+                if ($res->personnel) {
+                    $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+                    $run = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
+                        ->latest('run_date')->latest('id')->first();
+                    if ($run) {
+                        $run->lims_worklist_id = $worklist;
+                        $run->results_entered_at = now();
+                        $run->results_released_at = now();
+                        $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
+                        $run->save();
+                    }
+                    if ($q) {
+                        // fail goes to QA determination; pass goes to QA review queue
+                        $q->workflow_stage = $overall === 'fail'
+                            ? \App\Enums\WorkflowStage::Failed
+                            : \App\Enums\WorkflowStage::QaReview;
+                        $q->stage_changed_at = now();
+                        $q->save();
+                    }
+                }
+                Notification::make()->success()->title('Results entered')
+                    ->body(($res->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail' ? ', sent to QA determination.' : ', sent to QA review.'))->send();
             });
     }
 }

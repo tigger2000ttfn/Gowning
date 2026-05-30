@@ -30,7 +30,7 @@ class Reservation extends Model
 
     protected $fillable = [
         'run_slot_id', 'personnel_id', 'status',
-        'requested_at', 'decided_by', 'decided_at', 'notes',
+        'requested_at', 'decided_by', 'decided_at', 'notes', 'lims_worklist_id',
     ];
 
     protected function casts(): array

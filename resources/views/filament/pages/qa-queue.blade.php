@@ -36,7 +36,11 @@
             @foreach ($failed as $q)
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                     <span><strong>{{ $q->personnel?->full_name }}</strong> <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12.5px;">· {{ $q->personnel?->employee_id }}</span></span>
-                    <span class="gqs-pill gqs-pill-red">Determination Pending</span>
+                    @if($canApprove)
+                        {{ ($this->recommendAction)(['id' => $q->id]) }}
+                    @else
+                        <span class="gqs-pill gqs-pill-red">Determination Pending</span>
+                    @endif
                 </div>
             @endforeach
         </div>
