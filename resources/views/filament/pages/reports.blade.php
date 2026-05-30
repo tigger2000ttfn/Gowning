@@ -110,7 +110,10 @@
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-down-tray"/> LIMS Handoff Export</div>
         <div class="gqs-panel-body" style="padding:16px;">
             <p style="margin:0 0 12px;color:var(--gqs-text-dim,#5A5A62);font-size:13.5px;">Download recent run results as CSV for LIMS / records.</p>
-            <x-filament::button wire:click="exportRuns" icon="heroicon-m-arrow-down-tray">Export Run Results (CSV)</x-filament::button>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <x-filament::button wire:click="exportRuns" icon="heroicon-m-arrow-down-tray">Export Run Results (CSV)</x-filament::button>
+                <x-filament::button wire:click="exportXlsx" color="gray" icon="heroicon-m-table-cells">Export Compliance Workbook (XLSX)</x-filament::button>
+            </div>
         </div>
     </div>
 </x-filament-panels::page>

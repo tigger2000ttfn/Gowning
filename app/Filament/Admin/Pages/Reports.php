@@ -70,6 +70,44 @@ class Reports extends Page
                 'open' => \App\Models\NonConformance::where('status', 'open')->count()];
     }
 
+    /** Multi-sheet XLSX compliance workbook (no composer dependency, via SimpleXlsx). */
+    public function exportXlsx(): StreamedResponse
+    {
+        $xlsx = new \App\Support\SimpleXlsx();
+
+        // Overdue
+        $overdue = [['Employee ID', 'Name', 'Department', 'Due Date']];
+        foreach ($this->overdue as $q) {
+            $overdue[] = [$q->personnel?->employee_id, $q->personnel?->full_name, $q->personnel?->department, $q->due_date?->toDateString()];
+        }
+        $xlsx->sheet('Overdue', $overdue);
+
+        // Upcoming
+        $upcoming = [['Employee ID', 'Name', 'Department', 'Due Date']];
+        foreach ($this->upcoming as $q) {
+            $upcoming[] = [$q->personnel?->employee_id, $q->personnel?->full_name, $q->personnel?->department, $q->due_date?->toDateString()];
+        }
+        $xlsx->sheet('Upcoming 60 Days', $upcoming);
+
+        // Run results
+        $runs = [['Employee ID', 'Name', 'Run Date', 'Result', 'Worklist', 'Veeva Doc']];
+        foreach (QualificationRun::with('personnel')->latest('run_date')->limit(2000)->get() as $r) {
+            $runs[] = [$r->personnel?->employee_id, $r->personnel?->full_name, $r->run_date?->toDateString(),
+                $r->result?->value, $r->lims_worklist_id, $r->veeva_doc_number];
+        }
+        $xlsx->sheet('Run Results', $runs);
+
+        // NC trending
+        $nc = $this->ncTrend();
+        $ncRows = [['Category', 'Key', 'Count']];
+        foreach ($nc['type'] as $k => $v) { $ncRows[] = ['Type', \Illuminate\Support\Str::headline(str_replace('_',' ',$k)), $v]; }
+        foreach ($nc['organism'] as $k => $v) { $ncRows[] = ['Organism', $k, $v]; }
+        foreach ($nc['site'] as $k => $v) { $ncRows[] = ['Site', $k, $v]; }
+        $xlsx->sheet('NC Trending', $ncRows);
+
+        return $xlsx->download('gqs_compliance_' . now()->format('Ymd_His') . '.xlsx');
+    }
+
     /** CSV export for LIMS handoff (recent run results). */
     public function exportRuns(): StreamedResponse
     {
