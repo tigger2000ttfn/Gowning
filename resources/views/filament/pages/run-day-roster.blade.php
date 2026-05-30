@@ -102,13 +102,13 @@
                     <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-calendar-days"/></span>Add Run Day</div>
                     <div class="gqs-modal-body">
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-                            <div><label class="gqs-flbl">Date</label><input type="date" wire:model="newDate" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Date</label>@include('filament.partials.fp-date',['model'=>'newDate'])</div>
                             <div><label class="gqs-flbl">Cleanroom</label>
                                 <select wire:model="newCleanroom" class="gqs-fld"><option value="">Select...</option>
                                     @foreach($this->cleanroomOptions() as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
                                 </select></div>
-                            <div><label class="gqs-flbl">Start</label><input type="time" wire:model="newStart" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">End</label><input type="time" wire:model="newEnd" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Start</label>@include('filament.partials.fp-date',['model'=>'newStart','isTime'=>true])</div>
+                            <div><label class="gqs-flbl">End</label>@include('filament.partials.fp-date',['model'=>'newEnd','isTime'=>true])</div>
                             <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="newCapacity" placeholder="default" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">Analyst</label>
                                 <select wire:model="newAnalystId" class="gqs-fld"><option value="">Unassigned</option>
@@ -129,7 +129,7 @@
                                         <option value="biweekly">Every 2 Weeks</option>
                                         <option value="monthly">Monthly</option>
                                     </select></div>
-                                <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="repeatUntil" class="gqs-fld"></div>
+                                <div><label class="gqs-flbl">Repeat Until</label>@include('filament.partials.fp-date',['model'=>'repeatUntil'])</div>
                             </div>
                         @endif
                     </div>
@@ -154,13 +154,13 @@
                             @else
                                 @php $booked = $this->slotBookings($detailSlotId); @endphp
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                    <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSlot.slot_date" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Date</label>@include('filament.partials.fp-date',['model'=>'editSlot.slot_date'])</div>
                                     <div><label class="gqs-flbl">Cleanroom</label>
                                         <select wire:model="editSlot.cleanroom" class="gqs-fld">
                                             @foreach($this->cleanroomOptions() as $cr)<option value="{{ $cr }}">{{ $cr }}</option>@endforeach
                                         </select></div>
-                                    <div><label class="gqs-flbl">Start</label><input type="time" wire:model="editSlot.start_time" class="gqs-fld"></div>
-                                    <div><label class="gqs-flbl">End</label><input type="time" wire:model="editSlot.end_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Start</label>@include('filament.partials.fp-date',['model'=>'editSlot.start_time','isTime'=>true])</div>
+                                    <div><label class="gqs-flbl">End</label>@include('filament.partials.fp-date',['model'=>'editSlot.end_time','isTime'=>true])</div>
                                     <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="editSlot.capacity" class="gqs-fld"></div>
                                     <div><label class="gqs-flbl">Analyst</label>
                                         <select wire:model="editSlot.assigned_analyst_id" class="gqs-fld"><option value="">Unassigned</option>
@@ -310,7 +310,7 @@
         <div style="margin-bottom:18px;max-width:560px;display:flex;gap:14px;align-items:end;">
             <div style="flex:1;max-width:260px;">
                 <label class="gqs-flbl">Select Date</label>
-                <input type="date" wire:model.live="date" class="gqs-fld">
+                @include('filament.partials.fp-date',['model'=>'date','live'=>true])
             </div>
             <a href="{{ route('print.run-day', ['date' => $date]) }}" target="_blank"
                style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:#A4123F;color:#fff;border-radius:9px;font-weight:700;font-size:13px;text-decoration:none;">

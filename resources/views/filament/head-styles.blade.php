@@ -385,4 +385,10 @@
     .dark .gqs-btn-ghost{color:#ECECF0;border-color:#3A3A44;}
     .gqs-mini-btn{background:#A4123F;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
     .gqs-mini-btn:hover{background:#850F33;}
+    /* flatpickr (vendored locally; no CDN) accent to match the Astellas palette */
+    .flatpickr-day.selected,.flatpickr-day.selected:hover{background:#A4123F;border-color:#A4123F;}
+    .flatpickr-day.today{border-color:#A4123F;}
+    .flatpickr-input[readonly]{background:var(--gqs-surface,#fff);}
 </style>
+<link rel="stylesheet" href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}">
+<script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}"></script>

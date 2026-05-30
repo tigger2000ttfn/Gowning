@@ -177,14 +177,14 @@
                                 @foreach($this->classOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
                             </select></div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div><label class="gqs-flbl">First Date</label><input type="date" wire:model="sessDate" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">First Date</label>@include('filament.partials.fp-date',['model'=>'sessDate'])</div>
                             <div><label class="gqs-flbl">Location</label>
                                 <select wire:model="sessLocation" class="gqs-fld">
                                     <option value="">Template Default</option>
                                     @foreach($this->roomLocationOptions() as $loc)<option value="{{ $loc }}">{{ $loc }}</option>@endforeach
                                 </select></div>
-                            <div><label class="gqs-flbl">Start</label><input type="time" wire:model="sessStart" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">End</label><input type="time" wire:model="sessEnd" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Start</label>@include('filament.partials.fp-date',['model'=>'sessStart','isTime'=>true])</div>
+                            <div><label class="gqs-flbl">End</label>@include('filament.partials.fp-date',['model'=>'sessEnd','isTime'=>true])</div>
                             <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="sessCapacity" placeholder="default" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">Instructor</label>
                                 <select wire:model="sessInstructorId" class="gqs-fld"><option value="">Unassigned</option>
@@ -202,7 +202,7 @@
                                         <option value="biweekly">Every 2 Weeks</option>
                                         <option value="monthly">Monthly</option>
                                     </select></div>
-                                <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="sessUntil" class="gqs-fld"></div>
+                                <div><label class="gqs-flbl">Repeat Until</label>@include('filament.partials.fp-date',['model'=>'sessUntil'])</div>
                             </div>
                         @endif
                     </div>
@@ -227,14 +227,14 @@
                             @else
                                 @php $enrolled = $this->sessionAttendees($detailSessionId); @endphp
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                    <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSession.session_date" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Date</label>@include('filament.partials.fp-date',['model'=>'editSession.session_date'])</div>
                                     <div><label class="gqs-flbl">Location</label>
                                         <select wire:model="editSession.location" class="gqs-fld">
                                             <option value="">None</option>
                                             @foreach($this->roomLocationOptions() as $loc)<option value="{{ $loc }}">{{ $loc }}</option>@endforeach
                                         </select></div>
-                                    <div><label class="gqs-flbl">Start</label><input type="time" wire:model="editSession.start_time" class="gqs-fld"></div>
-                                    <div><label class="gqs-flbl">End</label><input type="time" wire:model="editSession.end_time" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Start</label>@include('filament.partials.fp-date',['model'=>'editSession.start_time','isTime'=>true])</div>
+                                    <div><label class="gqs-flbl">End</label>@include('filament.partials.fp-date',['model'=>'editSession.end_time','isTime'=>true])</div>
                                     <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="editSession.capacity" class="gqs-fld"></div>
                                     <div><label class="gqs-flbl">Instructor</label>
                                         <select wire:model="editSession.assigned_instructor_id" class="gqs-fld"><option value="">Unassigned</option>
