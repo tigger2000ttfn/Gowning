@@ -82,6 +82,9 @@ class TrainingClassResource extends Resource
                 IconColumn::make('is_gowning_prerequisite')->label('Prereq')->boolean(),
                 IconColumn::make('is_published')->label('Published')->boolean(),
             ])
+            ->filters([
+                \Filament\Tables\Filters\TernaryFilter::make('is_published')->label('Published'),
+            ])
             ->recordActions([
                 Action::make('generate')
                     ->label('Generate Sessions')

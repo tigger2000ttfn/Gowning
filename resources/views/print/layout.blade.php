@@ -8,11 +8,10 @@
         :root { --magenta:#A4123F; --charcoal:#1C1C21; --gold:#E0B83C; --ink:#1A1A1F; --dim:#6A6A72; --line:#E2E2E6; }
         * { box-sizing: border-box; }
         body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); margin: 0; background: #f4f4f6; }
-        .sheet { max-width: 1000px; margin: 0 auto; background: #fff; padding: 32px 40px 48px; min-height: 100vh; }
+        .sheet { max-width: 1300px; margin: 0 auto; background: #fff; padding: 28px 36px 44px; min-height: 100vh; }
         .hd { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 3px solid var(--magenta); padding-bottom: 14px; margin-bottom: 6px; }
-        .hd-brand { display: flex; align-items: center; gap: 12px; }
-        .hd-mark { width: 38px; height: 38px; border-radius: 9px; background: var(--charcoal); display: flex; align-items: center; justify-content: center; }
-        .hd-mark svg { width: 22px; height: 22px; }
+        .hd-brand { display: flex; align-items: center; gap: 14px; }
+        .hd-logo { height: 34px; width: auto; }
         .hd-title { font-size: 19px; font-weight: 800; color: var(--ink); letter-spacing: -.01em; }
         .hd-sub { font-size: 12px; color: var(--dim); margin-top: 1px; }
         .hd-meta { text-align: right; font-size: 11px; color: var(--dim); }
@@ -38,7 +37,7 @@
         .empty { padding: 14px 12px; color: var(--dim); font-size: 12.5px; }
         @media print {
             body { background: #fff; } .toolbar { display: none; } .sheet { box-shadow: none; max-width: none; padding: 0; }
-            @page { margin: 1.4cm; }
+            @page { margin: 1.1cm; size: landscape; }
         }
     </style>
 </head>
@@ -50,9 +49,7 @@
     <div class="sheet">
         <div class="hd">
             <div class="hd-brand">
-                <span class="hd-mark">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" fill="#E0B83C"/></svg>
-                </span>
+                <img class="hd-logo" src="{{ asset('images/astellas-logo.png') }}" alt="Astellas">
                 <div>
                     <div class="hd-title">Gowning Qualification</div>
                     <div class="hd-sub">{{ $org ?? 'MATC, Astellas' }} · {{ $site ?? '' }}</div>

@@ -32,11 +32,82 @@ class ReservationBoard extends Page
 
     protected string $view = 'filament.pages.reservation-board';
 
+    // Filters / search
+    public string $search = '';
+    public string $statusFilter = '';
+
+    // Manual add-reservation modal state
+    public bool $showAdd = false;
+    public ?int $addSlotId = null;
+    public ?int $addPersonnelId = null;
+
+    /** Open run slots for the add-reservation dropdown. */
+    public function openSlots(): array
+    {
+        return \App\Models\RunSlot::where('status', 'open')
+            ->whereDate('slot_date', '>=', now()->toDateString())
+            ->orderBy('slot_date')->get()
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
+                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')])
+            ->all();
+    }
+
+    /** People who can be booked (active personnel), searchable in the modal. */
+    public function bookablePersonnel(): array
+    {
+        return \App\Models\Personnel::where('is_active', true)
+            ->orderBy('last_name')->orderBy('first_name')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => $p->full_name . ' (' . $p->employee_id . ')'])
+            ->all();
+    }
+
+    public function addReservation(): void
+    {
+        if (! $this->addSlotId || ! $this->addPersonnelId) {
+            \Filament\Notifications\Notification::make()->danger()->title('Pick a person and a run day')->send();
+            return;
+        }
+        $slot = \App\Models\RunSlot::find($this->addSlotId);
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        if ($slot && $scheduler->seatsLeft($slot) <= 0) {
+            \Filament\Notifications\Notification::make()->warning()->title('That run day is full')
+                ->body('Pick another day or raise capacity.')->send();
+            return;
+        }
+        // avoid double-booking the same active reservation
+        $exists = Reservation::where('personnel_id', $this->addPersonnelId)
+            ->whereIn('status', ['requested', 'approved'])->exists();
+        Reservation::create([
+            'run_slot_id' => $this->addSlotId,
+            'personnel_id' => $this->addPersonnelId,
+            'status' => 'approved',
+            'requested_at' => now(),
+            'decided_at' => now(),
+            'notes' => 'Added by analyst',
+        ]);
+        // advance the person to Run Scheduled if they were waiting
+        $q = \App\Models\Qualification::where('personnel_id', $this->addPersonnelId)->first();
+        if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
+            $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+        $this->showAdd = false;
+        $this->addPersonnelId = null;
+        \Filament\Notifications\Notification::make()->success()->title('Reservation added')
+            ->body($exists ? 'Note: this person already had an active reservation.' : '')->send();
+    }
+
     /** Reservations grouped by run-slot day, for the per-day list view. */
     public function getGroupedByDay(): array
     {
         return Reservation::with(['personnel', 'runSlot'])
             ->whereHas('runSlot')
+            ->when($this->statusFilter !== '', fn ($q) => $q->where('status', $this->statusFilter))
+            ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
+                $p->where('first_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('last_name', 'ilike', '%' . $this->search . '%')
+                  ->orWhere('employee_id', 'ilike', '%' . $this->search . '%')))
             ->get()
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')

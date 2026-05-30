@@ -81,7 +81,8 @@
         .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:stretch;min-height:calc(100vh - 260px);}
         .kanban-col{flex:0 0 250px;display:flex;flex-direction:column;}
         .kanban-lane{flex:1;}
-        .kanban-col{background:rgba(120,120,130,.06);border-radius:12px;padding:10px;min-height:120px;}
+        .kanban-col{background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:10px;min-height:120px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+        .dark .kanban-col{background:#1A1A20;border-color:#2A2A32;}
         .kanban-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;padding:8px 11px;border-radius:8px;color:#fff;margin-bottom:10px;}
         .kanban-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 9px;font-size:12px;}
         .kanban-lane{display:flex;flex-direction:column;gap:8px;min-height:60px;}

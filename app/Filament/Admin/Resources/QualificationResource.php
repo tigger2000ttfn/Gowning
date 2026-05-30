@@ -61,6 +61,9 @@ class QualificationResource extends Resource
                 SelectFilter::make('status')->options(
                     collect(QualificationStatus::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
                 ),
+                SelectFilter::make('workflow_stage')->label('Stage')->options(
+                    collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($c) => [$c->value => $c->label()])->all()
+                ),
             ])
             ->recordActions([
                 \Filament\Actions\Action::make('override_due')

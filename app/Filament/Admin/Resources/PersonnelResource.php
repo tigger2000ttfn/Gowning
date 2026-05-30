@@ -131,6 +131,9 @@ class PersonnelResource extends Resource
             ])
             ->filters([
                 TernaryFilter::make('is_active')->label('Active'),
+                \Filament\Tables\Filters\SelectFilter::make('department')
+                    ->options(fn () => \App\Models\Department::orderBy('name')->pluck('name', 'name')->all())
+                    ->searchable()->label('Department'),
             ])
             ->defaultSort('last_name');
     }

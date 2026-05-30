@@ -461,3 +461,8 @@ html.dark .gqs-manage-link-ico { color: var(--astellas-gold); }
 /* Login card: clean WHITE card floating on the cosmic backdrop */
 .fi-simple-main { background:#FFFFFF !important; border-radius:16px !important; box-shadow:0 20px 60px rgba(0,0,0,.5) !important; }
 html.dark .fi-simple-main { background:#1F1F25 !important; }
+
+/* Shared lightweight form controls for custom pages (filters, modals) */
+.gqs-flbl { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color: var(--gqs-text-dim, #6A6A72); margin-bottom:5px; }
+.gqs-fld { width:100%; padding:9px 11px; border:1px solid var(--gqs-border, #C4C4CC); border-radius:9px; background: var(--gqs-surface, #fff); color: var(--gqs-text, #1A1A1F); font-size:13.5px; }
+.gqs-fld:focus { outline:none; border-color:#A4123F; box-shadow:0 0 0 3px rgba(164,18,63,.12); }

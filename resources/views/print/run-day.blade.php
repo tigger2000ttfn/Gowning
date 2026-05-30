@@ -11,15 +11,20 @@
                 <div class="empty">No one scheduled.</div>
             @else
                 <table>
-                    <thead><tr><th style="width:30px;">#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Worklist</th><th>Result</th><th style="width:120px;">Initials</th></tr></thead>
+                    <thead><tr><th style="width:26px;">#</th><th>Employee ID</th><th>Name</th><th>Department</th><th>Status</th><th>Worklist</th><th>Veeva Doc</th><th>Result</th><th style="width:90px;">Time In</th><th style="width:90px;">Time Out</th><th style="width:110px;">Initials</th></tr></thead>
                     <tbody>
                         @foreach($slot->reservations as $i => $res)
+                            @php $lr = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)->latest('id')->first(); @endphp
                             <tr>
                                 <td>{{ $i + 1 }}</td>
                                 <td>{{ $res->personnel?->employee_id }}</td>
                                 <td>{{ $res->personnel?->full_name }}</td>
+                                <td>{{ $res->personnel?->department }}</td>
                                 <td>{{ ucfirst($res->status) }}</td>
                                 <td>{{ $res->lims_worklist_id ?? '' }}</td>
+                                <td>{{ $lr?->veeva_doc_number ?? '' }}</td>
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
                                 <td>&nbsp;</td>
                                 <td>&nbsp;</td>
                             </tr>

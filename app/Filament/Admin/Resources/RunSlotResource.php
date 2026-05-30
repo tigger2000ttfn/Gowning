@@ -79,6 +79,11 @@ class RunSlotResource extends Resource
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s?->value === 'open' ? 'success' : 'gray'),
             ])
+            ->filters([
+                \Filament\Tables\Filters\SelectFilter::make('status')->options(['open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled']),
+                \Filament\Tables\Filters\SelectFilter::make('cleanroom')
+                    ->options(fn () => \App\Models\RunSlot::query()->distinct()->orderBy('cleanroom')->pluck('cleanroom', 'cleanroom')->all()),
+            ])
             ->recordActions([
                 \Filament\Actions\Action::make('cancelDay')
                     ->label('Cancel Day')
