@@ -90,7 +90,7 @@ class Messages extends Page
 
         // in-app notification to the recipient
         $recipient = User::find($this->toUserId);
-        if ($recipient) {
+        if ($recipient && \App\Models\NotificationPreference::wants($recipient->id, \App\Enums\NotificationEvent::NewMessage, 'in_app')) {
             \Filament\Notifications\Notification::make()
                 ->title('New message from ' . (Auth::user()?->name ?? 'a colleague'))
                 ->body(\Illuminate\Support\Str::limit($this->body, 80))

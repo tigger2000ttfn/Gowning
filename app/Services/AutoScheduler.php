@@ -86,7 +86,8 @@ class AutoScheduler
             $q->personnel,
             'Qualification run scheduled',
             'You are booked for a qualification run on ' . $slot->slot_date->format('M j, Y')
-                . ($slot->cleanroom ? ' in ' . $slot->cleanroom : '') . '.'
+                . ($slot->cleanroom ? ' in ' . $slot->cleanroom : '') . '.',
+            \App\Enums\NotificationEvent::RunScheduled
         );
 
         return $res;
@@ -136,7 +137,8 @@ class AutoScheduler
                     $res->personnel,
                     'Qualification run rescheduled',
                     'Your run day on ' . $slot->slot_date->format('M j') . ' was cancelled. You are re-booked for '
-                        . $newSlot->slot_date->format('M j, Y') . '.'
+                        . $newSlot->slot_date->format('M j, Y') . '.',
+                    \App\Enums\NotificationEvent::RunScheduled
                 );
             } else {
                 // no day available: hold for manual review
@@ -147,7 +149,8 @@ class AutoScheduler
                 $this->notifier->toPersonnel(
                     $res->personnel,
                     'Qualification run needs rebooking',
-                    'Your run day on ' . $slot->slot_date->format('M j') . ' was cancelled and no open day was available yet. Scheduling will rebook you.'
+                    'Your run day on ' . $slot->slot_date->format('M j') . ' was cancelled and no open day was available yet. Scheduling will rebook you.',
+                    \App\Enums\NotificationEvent::RunScheduled
                 );
             }
             $moved++;
