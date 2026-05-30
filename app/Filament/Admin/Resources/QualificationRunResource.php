@@ -40,9 +40,9 @@ class QualificationRunResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 7;
-    protected static ?string $navigationLabel = 'Run Records';
-    protected static ?string $modelLabel = 'Run Record';
-    protected static ?string $pluralModelLabel = 'Run Records';
+    protected static ?string $navigationLabel = 'Run Completions';
+    protected static ?string $modelLabel = 'Run Completion';
+    protected static ?string $pluralModelLabel = 'Run Completions';
 
     public static function form(Schema $schema): Schema
     {

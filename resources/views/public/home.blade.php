@@ -50,7 +50,7 @@
                                     <span class="dy">{{ $session->session_date->format('j') }}</span>
                                 </div>
                                 <div class="ccard-body">
-                                    <h3>{{ \Illuminate\Support\Str::title($session->trainingClass->name) }}</h3>
+                                    <h3>{{ $session->trainingClass->name }}</h3>
                                     <div class="ccard-meta">
                                         @if($session->start_time){{ \Illuminate\Support\Carbon::parse($session->start_time)->format('g:i A') }} &middot; @endif
                                         {{ $session->location ?? 'TBD' }}
@@ -80,7 +80,7 @@
                                     <span class="dy">{{ $slot->slot_date->format('j') }}</span>
                                 </div>
                                 <div class="ccard-body">
-                                    <h3>{{ \Illuminate\Support\Str::title($slot->cleanroom) }}</h3>
+                                    <h3>{{ $slot->cleanroom }}</h3>
                                     <div class="ccard-meta">
                                         @if($slot->start_time){{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }} &middot; @endif
                                         Cleanroom Run
