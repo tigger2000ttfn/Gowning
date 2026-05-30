@@ -68,6 +68,8 @@ class Settings extends Page implements HasForms
             'mail_host'             => Setting::get('mail_host', ''),
             'mail_port'             => Setting::get('mail_port', ''),
             'mail_username'         => Setting::get('mail_username', ''),
+            'mail_password'         => '', // never prefill the password field
+            'mail_encryption'       => Setting::get('mail_encryption', 'tls'),
             'org_name'              => Setting::get('org_name', 'MATC, Astellas'),
             'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
             'qcm_manager_id'        => Setting::get('qcm_manager_id'),
@@ -152,6 +154,16 @@ class Settings extends Page implements HasForms
                         TextInput::make('mail_host')->label('SMTP Host')->placeholder('localhost or relay host'),
                         TextInput::make('mail_port')->label('SMTP Port')->numeric()->placeholder('25 / 587'),
                         TextInput::make('mail_username')->label('SMTP Username')->placeholder('(if required)'),
+                        TextInput::make('mail_password')->label('SMTP Password')->password()->revealable()
+                            ->placeholder('(leave blank to keep current)')->dehydrated(fn ($state) => filled($state))
+                            ->helperText('Stored for the relay. Leave blank to keep the existing password.'),
+                        \Filament\Forms\Components\Select::make('mail_encryption')->label('Encryption')
+                            ->options(['none' => 'None', 'tls' => 'TLS', 'ssl' => 'SSL'])->default('tls'),
+                        \Filament\Schemas\Components\Actions::make([
+                            \Filament\Actions\Action::make('sendTest')
+                                ->label('Send Test Email')->icon('heroicon-m-paper-airplane')
+                                ->action(fn () => $this->sendTestEmail()),
+                        ])->columnSpanFull(),
                     ]),
                 Section::make('Organization')->icon('heroicon-o-building-office-2')->columns(2)->schema([
                     TextInput::make('org_name')->label('Organization Name'),
@@ -176,6 +188,30 @@ class Settings extends Page implements HasForms
             Setting::put($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
         }
         Notification::make()->success()->title('Settings saved')->send();
+    }
+
+    public function sendTestEmail(): void
+    {
+        // persist current form values first so the test uses what's on screen
+        $this->save();
+        $to = \Illuminate\Support\Facades\Auth::user()?->email;
+        if (! $to) {
+            Notification::make()->danger()->title('Your account has no email address')->send();
+            return;
+        }
+        try {
+            \App\Support\MailConfig::apply(); // bind runtime mail config from settings
+            $html = view('emails.layout', [
+                'subject' => 'GQS test email',
+                'bodyHtml' => '<p style="margin:0 0 14px;">This is a test email from the MATC Gowning Qualification System. If you received it, your mail relay settings are working.</p>',
+            ])->render();
+            \Illuminate\Support\Facades\Mail::html($html, function ($m) use ($to) {
+                $m->to($to)->subject('GQS test email');
+            });
+            Notification::make()->success()->title('Test email sent')->body('Sent to ' . $to)->send();
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Test email failed')->body($e->getMessage())->send();
+        }
     }
 
     protected function getFormActions(): array

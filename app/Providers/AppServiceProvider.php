@@ -36,5 +36,8 @@ class AppServiceProvider extends ServiceProvider
         foreach (self::AUDITED as $model) {
             $model::observe(AuditObserver::class);
         }
+
+        // Bind relay settings (Settings page) onto the live mail config at runtime.
+        \App\Support\MailConfig::apply();
     }
 }
