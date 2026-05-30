@@ -7,22 +7,33 @@
     '])
 
     @if($tab === 'classroom')
-        @php $classQueue = $this->getClassroomQueue(); @endphp
+        @php
+            $classQueue = $this->getClassroomQueue();
+            $sessCount = is_countable($classQueue) ? count($classQueue) : 0;
+            $traineeCount = collect($classQueue)->sum(fn ($s) => count($s['rows']));
+        @endphp
+
+        <div class="gqs-stats">
+            <div class="gqs-stat green"><div class="n">{{ $sessCount }}</div><div class="l">Sessions Awaiting Approval</div><span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span></div>
+            <div class="gqs-stat gold"><div class="n">{{ $traineeCount }}</div><div class="l">Trainees Pending</div><span class="wm"><x-filament::icon icon="heroicon-o-user-group"/></span></div>
+            <div class="gqs-stat purple"><div class="n">{{ $canApprove ? 'You' : '—' }}</div><div class="l">{{ $canApprove ? 'Can Approve' : 'Review Only' }}</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-check"/></span></div>
+        </div>
+
         @unless($canApprove)
             <div class="gqs-panel"><div class="gqs-empty" style="padding:14px;color:#8A6D0B;">You can review classroom submissions, but only a QA Approver can approve them.</div></div>
         @endunless
         @forelse($classQueue as $session)
             <div class="gqs-panel" style="margin-bottom:16px;">
-                <div class="gqs-panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
-                    <span>{{ $session['title'] }}</span>
+                <div class="gqs-panel-head" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#2E7D5B,#225F46);">
+                    <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $session['title'] }}</span>
                     <span style="font-size:12px;font-weight:600;opacity:.92;">{{ count($session['rows']) }} pending · submitted {{ $session['submitted_at'] }}@if($session['submitted_by']) by {{ $session['submitted_by'] }}@endif</span>
                 </div>
                 <div class="gqs-panel-body">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                         <a href="{{ $session['form_url'] }}" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">View Signed Form</a>
                         @if($canApprove)
-                            <button type="button" wire:click="approveClassroomSession({{ $session['id'] }})" class="gqs-btn gqs-btn-primary"
-                                    wire:confirm="Approve all {{ count($session['rows']) }} trainee(s) on this session?">Approve All</button>
+                            <button type="button" wire:click="approveClassroomSession({{ $session['id'] }})" class="gqs-btn" style="background:#2E7D5B;color:#fff;"
+                                    wire:confirm="Approve all {{ count($session['rows']) }} trainee(s) on this session?">Approve All Trainees</button>
                         @endif
                     </div>
                     <table class="gqs-tbl">
@@ -47,7 +58,7 @@
                 </div>
             </div>
         @empty
-            <div class="gqs-empty">No classroom training awaiting QA approval. Submitted sessions appear here.</div>
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No classroom training awaiting QA approval. Submitted sessions appear here.</div></div>
         @endforelse
     @else
     {{-- ===================== RUN SIGN-OFF TAB ===================== --}}
