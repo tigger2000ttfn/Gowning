@@ -134,7 +134,7 @@ class ImportPersonnel extends Page implements HasForms
             }
 
             $existing = Personnel::where('employee_id', $eid)->first();
-            Personnel::updateOrCreate(
+            $person = Personnel::updateOrCreate(
                 ['employee_id' => $eid],
                 array_filter([
                     'first_name' => $first,
@@ -145,6 +145,20 @@ class ImportPersonnel extends Page implements HasForms
                 ], fn ($v) => $v !== null),
             );
             $existing ? $updated++ : $created++;
+
+            // Seed a qualification so imported people enter the workflow (Class Pending),
+            // otherwise they are invisible to the Status Board and auto-scheduler.
+            \App\Models\Qualification::firstOrCreate(
+                ['personnel_id' => $person->id],
+                [
+                    'type' => 'initial',
+                    'status' => 'in_progress',
+                    'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3),
+                    'runs_completed' => 0,
+                    'workflow_stage' => \App\Enums\WorkflowStage::ClassPending->value,
+                    'stage_changed_at' => now(),
+                ]
+            );
         }
 
         $this->createdCount = $created;
