@@ -45,7 +45,15 @@ class RunDayRoster extends Page
     public ?string $newCleanroom = null;
     public ?int $newCapacity = null;
     public ?int $newAnalystId = null;
+    public ?string $newNotes = null;
     public bool $showAddSlot = false;
+    // recurrence
+    public bool $repeat = false;
+    public string $repeatPattern = 'weekly';   // weekly | biweekly | monthly
+    public ?string $repeatUntil = null;
+    // Run Days list sorting
+    public string $sortField = 'slot_date';     // slot_date | cleanroom | capacity | booked
+    public string $sortDir = 'asc';
 
     public function mount(): void
     {
@@ -62,20 +70,41 @@ class RunDayRoster extends Page
             ->get();
     }
 
-    /** Upcoming + recent run days for the Schedule tab, with seat usage. */
+    /** Upcoming + recent run days for the Schedule tab, with seat usage. Sortable. */
     public function scheduleDays()
     {
         $scheduler = app(\App\Services\AutoScheduler::class);
-        return RunSlot::with('analyst')
+        $rows = RunSlot::with('analyst')
             ->where('status', '!=', 'cancelled')
             ->whereDate('slot_date', '>=', now()->subDays(7)->toDateString())
-            ->orderBy('slot_date')->orderBy('start_time')
             ->get()
             ->map(function ($s) use ($scheduler) {
                 $s->seats_left = $scheduler->seatsLeft($s);
                 $s->booked = $s->reservations()->whereIn('status', ['approved', 'completed', 'requested'])->count();
                 return $s;
             });
+
+        $dir = $this->sortDir === 'desc' ? -1 : 1;
+        $rows = $rows->sort(function ($a, $b) {
+            return match ($this->sortField) {
+                'cleanroom' => strcmp((string) $a->cleanroom, (string) $b->cleanroom),
+                'capacity' => $a->capacity <=> $b->capacity,
+                'booked' => $a->booked <=> $b->booked,
+                default => ($a->slot_date->toDateString() . ($a->start_time ?? '')) <=> ($b->slot_date->toDateString() . ($b->start_time ?? '')),
+            };
+        })->values();
+        if ($dir === -1) $rows = $rows->reverse()->values();
+        return $rows;
+    }
+
+    public function sortBy(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDir = 'asc';
+        }
     }
 
     public function cleanroomOptions(): array
@@ -97,18 +126,51 @@ class RunDayRoster extends Page
             Notification::make()->danger()->title('Pick a date')->send();
             return;
         }
-        RunSlot::create([
-            'slot_date' => $this->newDate,
+
+        $cap = $this->newCapacity ?: (int) \App\Models\Setting::get('runs_per_day_capacity', 10);
+        $base = [
             'start_time' => $this->newStart ?: null,
             'end_time' => $this->newEnd ?: null,
             'cleanroom' => $this->newCleanroom,
-            'capacity' => $this->newCapacity ?: (int) \App\Models\Setting::get('runs_per_day_capacity', 10),
+            'capacity' => $cap,
             'assigned_analyst_id' => $this->newAnalystId ?: null,
+            'notes' => $this->newNotes ?: null,
             'status' => 'open',
-        ]);
+        ];
+
+        // Build the set of dates (single or recurring up to an end date).
+        $dates = [\Illuminate\Support\Carbon::parse($this->newDate)];
+        if ($this->repeat && $this->repeatUntil) {
+            $until = \Illuminate\Support\Carbon::parse($this->repeatUntil);
+            $cursor = \Illuminate\Support\Carbon::parse($this->newDate);
+            $guard = 0;
+            while ($guard < 400) {
+                $cursor = match ($this->repeatPattern) {
+                    'biweekly' => $cursor->copy()->addWeeks(2),
+                    'monthly' => $cursor->copy()->addMonth(),
+                    default => $cursor->copy()->addWeek(),
+                };
+                if ($cursor->gt($until)) break;
+                $dates[] = $cursor;
+                $guard++;
+            }
+        }
+
+        $created = 0;
+        foreach ($dates as $d) {
+            $exists = RunSlot::whereDate('slot_date', $d->toDateString())
+                ->where('cleanroom', $this->newCleanroom)
+                ->where('start_time', $this->newStart ?: null)
+                ->where('status', '!=', 'cancelled')->exists();
+            if ($exists) continue;
+            RunSlot::create(array_merge($base, ['slot_date' => $d->toDateString()]));
+            $created++;
+        }
+
         $this->showAddSlot = false;
-        $this->newCleanroom = null; $this->newAnalystId = null; $this->newCapacity = null;
-        Notification::make()->success()->title('Run day added')->send();
+        $this->reset(['newCleanroom', 'newAnalystId', 'newCapacity', 'newNotes', 'repeat', 'repeatUntil']);
+        Notification::make()->success()->title($created > 1 ? "{$created} run days added" : 'Run day added')
+            ->body($created === 0 ? 'All matching days already existed.' : '')->send();
     }
 
     public function cancelSlotDay(int $slotId): void

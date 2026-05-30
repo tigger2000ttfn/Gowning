@@ -79,7 +79,14 @@
                     <div class="gqs-empty" style="padding:28px;">No upcoming run days. Add one to start scheduling.</div>
                 @else
                     <table class="gqs-tbl">
-                        <thead><tr><th>Date</th><th>Time</th><th>Cleanroom</th><th>Analyst</th><th>Booked / Capacity</th><th></th></tr></thead>
+                        <thead><tr>
+                            <th wire:click="sortBy('slot_date')" style="cursor:pointer;">Date @if($sortField==='slot_date'){{ $sortDir==='asc'?'▲':'▼' }}@endif</th>
+                            <th>Time</th>
+                            <th wire:click="sortBy('cleanroom')" style="cursor:pointer;">Cleanroom @if($sortField==='cleanroom'){{ $sortDir==='asc'?'▲':'▼' }}@endif</th>
+                            <th>Analyst</th>
+                            <th wire:click="sortBy('booked')" style="cursor:pointer;">Booked / Capacity @if($sortField==='booked'){{ $sortDir==='asc'?'▲':'▼' }}@endif</th>
+                            <th></th>
+                        </tr></thead>
                         <tbody>
                             @foreach($days as $d)
                                 <tr>
@@ -120,9 +127,26 @@
                                     @foreach($this->analystOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
                                 </select></div>
                         </div>
+                        <div style="margin-top:12px;"><label class="gqs-flbl">Notes</label><input type="text" wire:model="newNotes" placeholder="Optional" class="gqs-fld"></div>
+
+                        {{-- Recurrence --}}
+                        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--gqs-text,#1A1A1F);">
+                            <input type="checkbox" wire:model.live="repeat"> Repeat this run day
+                        </label>
+                        @if($repeat)
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;padding:12px;background:var(--gqs-surface-2,#F5F5F7);border-radius:9px;">
+                                <div><label class="gqs-flbl">Pattern</label>
+                                    <select wire:model="repeatPattern" class="gqs-fld">
+                                        <option value="weekly">Weekly</option>
+                                        <option value="biweekly">Every 2 Weeks</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select></div>
+                                <div><label class="gqs-flbl">Repeat Until</label><input type="date" wire:model="repeatUntil" class="gqs-fld"></div>
+                            </div>
+                        @endif
                         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
                             <button type="button" wire:click="$set('showAddSlot', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
-                            <button type="button" wire:click="addSlot" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Add Run Day</button>
+                            <button type="button" wire:click="addSlot" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">@if($repeat)Generate Run Days @else Add Run Day @endif</button>
                         </div>
                     </div>
                 </div>
