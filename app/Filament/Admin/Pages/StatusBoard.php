@@ -205,6 +205,20 @@ class StatusBoard extends Page
             if (! $q->due_date) {
                 $q->due_date = now()->addMonths((int) \App\Models\Setting::get('cycle_months', 12));
             }
+            $q->archived_at = null; // back in an active completed state, not archived
+        }
+
+        // Archived = fully done and filed. Stamp archived_at and mark the latest run completed,
+        // so run history reflects a completed cycle (and a future automation can sweep these).
+        if ($stage === WorkflowStage::Archived) {
+            $q->archived_at = now();
+            $latest = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
+                ->latest('run_date')->latest('id')->first();
+            if ($latest && ! $latest->qa_signed_at) {
+                $latest->qa_signed_at = now();
+                $latest->qa_signed_by = Auth::id();
+                $latest->save();
+            }
         }
         $q->save();
         // No success toast on drag-move: the card visibly moving is the confirmation.
