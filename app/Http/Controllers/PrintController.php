@@ -15,7 +15,7 @@ class PrintController extends Controller
         abort_unless(Auth::check(), 403);
     }
 
-    /** Run Day Roster, printable. ?date=YYYY-MM-DD */
+    /** Run Day Roster, printable. ?date=YYYY-MM-DD&pdf=1 */
     public function runDay(\Illuminate\Http\Request $request)
     {
         $this->guard();
@@ -24,12 +24,19 @@ class PrintController extends Controller
             ->whereDate('slot_date', $date)
             ->orderBy('start_time')->get();
 
-        return view('print.run-day', [
+        $data = [
             'date' => Carbon::parse($date),
             'slots' => $slots,
             'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
             'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),
-        ]);
+        ];
+
+        if ($request->boolean('pdf', true)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.run-day', $data)
+                ->setPaper('letter', 'landscape')
+                ->stream('run-roster-' . $date . '.pdf');
+        }
+        return view('print.run-day', $data);
     }
 
     /** Compliance report, printable. */
@@ -44,7 +51,7 @@ class PrintController extends Controller
         $passes = QualificationRun::where('result', 'pass')->count();
         $fails = QualificationRun::where('result', 'fail')->count();
 
-        return view('print.report', [
+        $data = [
             'overdue' => $overdue,
             'upcoming' => $upcoming,
             'passes' => $passes,
@@ -52,6 +59,13 @@ class PrintController extends Controller
             'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
             'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),
             'generated' => now()->setTimezone('America/New_York'),
-        ]);
+        ];
+
+        if (request()->boolean('pdf', true)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.report', $data)
+                ->setPaper('letter', 'landscape')
+                ->stream('compliance-report-' . now()->toDateString() . '.pdf');
+        }
+        return view('print.report', $data);
     }
 }
