@@ -32,8 +32,7 @@
                     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
                         <a href="{{ $session['form_url'] }}" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">View Signed Form</a>
                         @if($canApprove)
-                            <button type="button" wire:click="approveClassroomSession({{ $session['id'] }})" class="gqs-btn" style="background:#2E7D5B;color:#fff;"
-                                    wire:confirm="Approve all {{ count($session['rows']) }} trainee(s) on this session?">Approve All Trainees</button>
+                            <button type="button" wire:click="openClassSignoff({{ $session['id'] }})" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Sign Off Session</button>
                         @endif
                     </div>
                     <table class="gqs-tbl">
@@ -60,6 +59,31 @@
         @empty
             <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No classroom training awaiting QA approval. Submitted sessions appear here.</div></div>
         @endforelse
+        @if($canApprove)
+            @php $signedClass = $this->recentlySignedClassrooms(); @endphp
+            @if(count($signedClass))
+                <div class="gqs-panel" style="margin-top:8px;">
+                    <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-lock-closed"/> Recently Signed Off
+                        <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">reopen requires e-signature</span>
+                    </div>
+                    <div class="gqs-panel-body">
+                        <table class="gqs-tbl">
+                            <thead><tr><th>Session</th><th>Veeva</th><th>Signed</th><th style="text-align:right;">Action</th></tr></thead>
+                            <tbody>
+                                @foreach($signedClass as $sc)
+                                    <tr>
+                                        <td>{{ $sc['title'] }}</td>
+                                        <td>{{ $sc['veeva'] ?: '—' }}</td>
+                                        <td>{{ $sc['signed_at'] }}</td>
+                                        <td style="text-align:right;"><button type="button" wire:click="openClassReopen({{ $sc['id'] }})" class="sb-act" style="background:#6A6A72;">Reopen</button></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+        @endif
     @else
     {{-- ===================== RUN SIGN-OFF TAB ===================== --}}
     @php $queue = $this->getQueue(); $failed = $this->getFailed();
@@ -203,6 +227,42 @@
                             <button type="button" wire:click="finalizeFail" class="gqs-btn" style="background:#C8102E;color:#fff;">Record Determination</button>
                         @endif
                     </span>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Classroom sign-off / reopen --}}
+    @php $cd = $this->clsData(); @endphp
+    @if($cd)
+        <div class="gqs-modal-overlay" wire:click.self="closeClassSignoff">
+            <div class="gqs-modal" style="width:520px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-academic-cap"/></span>{{ $clsMode === 'reopen' ? 'Reopen Classroom Sign-off' : 'Classroom Sign-off' }} · {{ $cd['title'] }}</div>
+                <div class="gqs-modal-body">
+                    @if($clsMode === 'reopen')
+                        <div style="font-size:13px;line-height:1.5;">Reopening returns the completed trainees on this session to QA review for correction. This is a recorded, electronically-signed action.</div>
+                        @if($cd['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="clsPassword" class="gqs-fld"></div>@endif
+                    @else
+                        <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">{{ $cd['count'] }} trainee(s) pending: {{ $cd['names'] ?: '—' }}</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div><label class="gqs-flbl">Veeva Report Number</label><input type="text" wire:model="clsVeeva" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">LMS Number (Optional)</label><input type="text" wire:model="clsLms" class="gqs-fld"></div>
+                            <div style="grid-column:1 / -1;"><label class="gqs-flbl">Veeva Link (Optional)</label><input type="url" wire:model="clsVeevaUrl" class="gqs-fld"></div>
+                        </div>
+                        <div style="font-size:13px;line-height:1.5;">By signing, I, <strong>{{ auth()->user()->name }}</strong>, certify the classroom training record is reviewed and approved as complete. This electronic signature is the legally binding equivalent of my handwritten signature.</div>
+                        @if($cd['signer_is_trainee'])
+                            <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;">Two-person rule: you are a trainee on this session and cannot sign it off.</div>
+                        @endif
+                        @if($cd['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="clsPassword" class="gqs-fld"></div>@endif
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeClassSignoff" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    @if($clsMode === 'reopen')
+                        <button type="button" wire:click="finalizeClassReopen" class="gqs-btn" style="background:#C8102E;color:#fff;">Reopen & Sign</button>
+                    @else
+                        <button type="button" wire:click="finalizeClassSignoff" class="gqs-btn" style="background:#2E7D5B;color:#fff;" @disabled($cd['signer_is_trainee'])>Sign Off Session</button>
+                    @endif
                 </div>
             </div>
         </div>

@@ -42,6 +42,20 @@ class QaQueue extends Page
     // ---------------- Classroom approval (the Classroom tab) ----------------
 
     /** Submitted class sessions with attendees awaiting QA classroom approval. */
+    /** Last few QA-signed classroom sessions, so a sign-off can be reopened for correction. */
+    public function recentlySignedClassrooms(): array
+    {
+        return \App\Models\ClassSession::with('trainingClass')
+            ->whereNotNull('qa_signed_at')
+            ->latest('qa_signed_at')->limit(8)->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class'),
+                'signed_at' => $s->qa_signed_at?->format('M j, Y g:i A'),
+                'veeva' => $s->veeva_doc_number,
+            ])->all();
+    }
+
     public function getClassroomQueue(): array
     {
         return \App\Models\ClassSession::with(['trainingClass', 'enrollments.personnel', 'submittedBy', 'instructorUser'])
@@ -82,6 +96,101 @@ class QaQueue extends Page
         $n = 0;
         foreach ($s->enrollments->where('status', 'pending_qa') as $e) { $e->markStatus('completed', Auth::id()); $n++; }
         Notification::make()->success()->title('Session approved')->body($n . ' trainee(s) are now Class Complete.')->send();
+    }
+
+    // ===================== CLASSROOM SIGN-OFF (custom modal) =====================
+    public ?int $clsSid = null;          // class session under sign-off
+    public string $clsMode = 'signoff';  // signoff | reopen
+    public string $clsVeeva = '';
+    public string $clsVeevaUrl = '';
+    public string $clsLms = '';
+    public string $clsPassword = '';
+
+    public function openClassSignoff(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::find($sessionId);
+        if (! $s) return;
+        $this->clsSid = $sessionId; $this->clsMode = 'signoff';
+        $this->clsVeeva = $s->veeva_doc_number ?? ''; $this->clsVeevaUrl = $s->veeva_url ?? '';
+        $this->clsLms = $s->lms_number ?? ''; $this->clsPassword = '';
+    }
+    public function openClassReopen(int $sessionId): void
+    {
+        $this->clsSid = $sessionId; $this->clsMode = 'reopen'; $this->clsPassword = '';
+    }
+    public function closeClassSignoff(): void { $this->clsSid = null; }
+
+    public function clsData(): ?array
+    {
+        if (! $this->clsSid) return null;
+        $s = \App\Models\ClassSession::with('trainingClass', 'enrollments.personnel')->find($this->clsSid);
+        if (! $s) return null;
+        $pending = $s->enrollments->where('status', 'pending_qa');
+        $u = Auth::user();
+        $myPid = $u ? (\App\Models\Personnel::where('user_id', $u->id)->orWhere('email', $u->email)->value('id')) : null;
+        $signerIsTrainee = $myPid && $s->enrollments->whereNotIn('status', ['cancelled'])->contains('personnel_id', $myPid);
+        return [
+            'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class'),
+            'count' => $pending->count(),
+            'names' => $pending->map(fn ($e) => $e->personnel?->full_name ?? $e->name)->implode(', '),
+            'signer_is_trainee' => (bool) $signerIsTrainee,
+            'esig' => (bool) Setting::get('esig_required', true),
+        ];
+    }
+
+    public function finalizeClassSignoff(): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($this->clsSid);
+        if (! $s) return;
+        $d = $this->clsData();
+        if (! $this->canApprove()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        if ($d['signer_is_trainee']) {
+            Notification::make()->danger()->title('Two-Person Rule')->body('You are a trainee on this session and cannot sign it off.')->send();
+            return;
+        }
+        if ($d['esig'] && ! Hash::check($this->clsPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+            return;
+        }
+        $s->update([
+            'veeva_doc_number' => $this->clsVeeva ?: null,
+            'veeva_url' => $this->clsVeevaUrl ?: null,
+            'lms_number' => $this->clsLms ?: null,
+            'qa_signed_at' => now(), 'qa_signed_by' => Auth::id(),
+        ]);
+        $n = 0;
+        foreach ($s->enrollments->where('status', 'pending_qa') as $e) { $e->markStatus('completed', Auth::id()); $n++; }
+        ElectronicSignature::create([
+            'signable_type' => \App\Models\ClassSession::class, 'signable_id' => $s->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'Classroom QA Sign-off',
+            'statement' => 'Classroom training approved for ' . $n . ' trainee(s). Veeva ' . $this->clsVeeva . ($this->clsLms ? ', LMS ' . $this->clsLms : '') . '.',
+            'signed_at' => now(),
+        ]);
+        $this->clsSid = null;
+        Notification::make()->success()->title('Classroom Signed Off')->body($n . ' trainee(s) are now Class Complete.')->send();
+    }
+
+    public function finalizeClassReopen(): void
+    {
+        $s = \App\Models\ClassSession::find($this->clsSid);
+        if (! $s) return;
+        if (! $this->canApprove()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        if ((bool) Setting::get('esig_required', true) && ! Hash::check($this->clsPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+            return;
+        }
+        $n = 0;
+        foreach (\App\Models\ClassEnrollment::where('class_session_id', $s->id)->where('status', 'completed')->get() as $e) {
+            $e->markStatus('pending_qa', Auth::id()); $n++;
+        }
+        $s->update(['qa_signed_at' => null, 'qa_signed_by' => null]);
+        ElectronicSignature::create([
+            'signable_type' => \App\Models\ClassSession::class, 'signable_id' => $s->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'Classroom Sign-off Reopened',
+            'statement' => 'Reopened classroom sign-off for correction; ' . $n . ' trainee(s) returned to QA review.', 'signed_at' => now(),
+        ]);
+        $this->clsSid = null;
+        Notification::make()->success()->title('Reopened')->body($n . ' trainee(s) returned to QA review.')->send();
     }
 
     public function returnClassroom(int $enrollmentId): void
