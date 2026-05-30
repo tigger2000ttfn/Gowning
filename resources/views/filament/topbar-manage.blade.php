@@ -46,6 +46,7 @@
     }
     if ($can(\App\Enums\Capability::SystemSettings)) {
         $admin[] = ['Automation Rules', \App\Filament\Admin\Resources\AutomationRuleResource::getUrl(), 'heroicon-o-bolt'];
+        $admin[] = ['Email Templates', \App\Filament\Admin\Resources\EmailTemplateResource::getUrl(), 'heroicon-o-envelope'];
     }
     // Notification Settings is available to everyone (personal prefs)
     $admin[] = ['Notification Settings', \App\Filament\Admin\Pages\NotificationSettings::getUrl(), 'heroicon-o-bell-alert'];
