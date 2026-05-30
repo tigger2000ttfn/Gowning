@@ -28,6 +28,7 @@ class QaQueue extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'QA Review';
+    protected static ?string $slug = 'qa-review';
     protected static string|\UnitEnum|null $navigationGroup = 'Review';
     protected static ?int $navigationSort = 2;
     protected static ?string $title = 'QA Review';

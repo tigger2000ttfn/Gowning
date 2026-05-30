@@ -41,6 +41,7 @@ class QualificationRunResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 7;
     protected static ?string $navigationLabel = 'Run Completions';
+    protected static ?string $slug = 'run-completions';
     protected static ?string $modelLabel = 'Run Completion';
     protected static ?string $pluralModelLabel = 'Run Completions';
 

@@ -35,6 +35,7 @@ class QualificationResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 6;
     protected static ?string $navigationLabel = 'Active Runs';
+    protected static ?string $slug = 'active-runs';
     protected static ?string $pluralModelLabel = 'Active Runs';
     protected static ?string $modelLabel = 'Qualification';
 

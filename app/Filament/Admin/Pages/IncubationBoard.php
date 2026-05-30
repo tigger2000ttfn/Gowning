@@ -31,6 +31,7 @@ class IncubationBoard extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-beaker';
     protected static ?string $navigationLabel = 'Lab Review';
+    protected static ?string $slug = 'lab-review';
     protected static string|\UnitEnum|null $navigationGroup = 'Review';
     protected static ?int $navigationSort = 1;
     protected static ?string $title = 'Lab Review';

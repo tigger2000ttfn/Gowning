@@ -29,6 +29,7 @@ class RunDayRoster extends Page
     }
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Scheduler';
+    protected static ?string $slug = 'run-scheduler';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 3;
     protected static ?string $title = 'Run Scheduler';

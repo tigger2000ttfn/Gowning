@@ -20,6 +20,7 @@ class QualificationTimeline extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-bar';
     protected static ?string $navigationLabel = 'Timeline';
+    protected static ?string $slug = 'timeline';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 9;
     protected static ?string $title = 'Timeline';

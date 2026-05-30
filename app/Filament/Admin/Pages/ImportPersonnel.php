@@ -40,6 +40,7 @@ class ImportPersonnel extends Page implements HasForms
     protected static string|\UnitEnum|null $navigationGroup = 'Data Import';
     protected static ?int $navigationSort = 0;
     protected static ?string $navigationLabel = 'Import LMS Data';
+    protected static ?string $slug = 'import-lms-data';
     protected static ?string $title = 'Import LMS Data';
 
     protected string $view = 'filament.pages.import-personnel';
