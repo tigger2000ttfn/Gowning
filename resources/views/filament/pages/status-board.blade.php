@@ -54,10 +54,13 @@
                                 </label>
                                 <div class="sb-card-body" @click="openCard({{ $card['id'] }})">
                                     <div class="sb-name">{{ $card['name'] }}</div>
-                                    <div class="sb-meta">{{ $card['employee_id'] }}</div>
-                                    @if(!empty($card['status']))
-                                        <span class="sb-pill sb-pill-{{ $card['status_key'] }}">{{ $card['status'] }}</span>
-                                    @endif
+                                    <div class="sb-meta">{{ $card['employee_id'] }}@if($card['department']) · {{ $card['department'] }}@endif</div>
+                                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
+                                        @if(!empty($card['status']))
+                                            <span class="sb-pill sb-pill-{{ $card['status_key'] }}">{{ $card['status'] }}</span>
+                                        @endif
+                                        @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
+                                    </div>
                                     @if(($card['runs_req'] ?? 0) > 0)
                                         <div class="sb-runs" title="{{ $card['runs_done'] }} of {{ $card['runs_req'] }} runs">
                                             @for($r = 0; $r < $card['runs_req']; $r++)
@@ -66,7 +69,10 @@
                                             <span class="sb-runs-lbl">{{ $card['runs_done'] }}/{{ $card['runs_req'] }} runs</span>
                                         </div>
                                     @endif
-                                    @if($card['due'])<div class="sb-due">Due {{ $card['due'] }}</div>@endif
+                                    @if(!empty($card['last_run_date']))
+                                        <div class="sb-line"><span class="sb-line-l">Last run</span> {{ $card['last_run_date'] }}@if($card['last_run_worklist']) · {{ $card['last_run_worklist'] }}@endif</div>
+                                    @endif
+                                    @if($card['due'])<div class="sb-line"><span class="sb-line-l">Next due</span> {{ $card['due'] }}</div>@endif
                                 </div>
                             </div>
                         @endforeach
@@ -186,7 +192,10 @@
 
                     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
                         <button wire:click="closeDetail" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Close</button>
-                        <a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Edit</a>
+                        @if(!empty($detail['quick_url']))
+                            <a href="{{ $detail['quick_url'] }}" style="padding:9px 18px;border-radius:8px;background:#1C1C21;color:#fff;font-weight:700;text-decoration:none;">{{ $detail['quick_label'] }}</a>
+                        @endif
+                        <a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Edit Record</a>
                     </div>
                 </div>
             </div>
@@ -232,6 +241,10 @@
         .sb-pill-in_progress{background:#C79A2E;color:#fff;}
         .sb-pill-pending{background:#6B6B73;color:#fff;}
         .sb-pill-lapsed{background:#C8102E;color:#fff;}
+        .sb-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:#EFEFF2;color:#444;}
+        .dark .sb-tag{background:#2C2C34;color:#C9C9D2;}
+        .sb-line{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:5px;}
+        .sb-line-l{font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-size:9.5px;opacity:.8;margin-right:4px;}
         /* lane header is the grab handle for reordering columns */
         .sb-head-grab{cursor:grab;}
         .sb-head-grab:active{cursor:grabbing;}

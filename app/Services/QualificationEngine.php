@@ -190,14 +190,31 @@ class QualificationEngine
         foreach ($runs as $run) {
             $runDate = CarbonImmutable::parse($run->run_date);
 
+            // Honor the run's own cycle type. If a run is recorded as an ANNUAL
+            // requalification, the person's initial is assumed already done (even if that
+            // historic initial was never entered): an annual pass alone qualifies them.
+            // This lets a backfilled annual requal stand on its own.
+            $runCycle = $run->cycle_type instanceof \BackedEnum ? $run->cycle_type->value : $run->cycle_type;
+            if ($runCycle === 'annual' && $status !== QualificationStatus::Qualified) {
+                $type = QualificationType::Annual;
+                $required = $this->annualRunsRequired();
+            }
+
             // If already qualified but this run happens after the due date, the
             // qualification has lapsed: a fresh initial cycle (3 runs) is required.
             if ($status === QualificationStatus::Qualified
                 && $dueDate !== null
                 && $runDate->greaterThan($dueDate)) {
-                $status = QualificationStatus::Lapsed;
-                $type = QualificationType::Initial;
-                $required = $this->initialRunsRequired();
+                // A run dated after the due date: if it is an annual requal, 1 run renews;
+                // otherwise treat as a fresh initial cycle.
+                if ($runCycle === 'annual') {
+                    $type = QualificationType::Annual;
+                    $required = $this->annualRunsRequired();
+                } else {
+                    $status = QualificationStatus::Lapsed;
+                    $type = QualificationType::Initial;
+                    $required = $this->initialRunsRequired();
+                }
                 $passes = 0;
             }
 

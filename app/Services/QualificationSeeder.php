@@ -7,6 +7,7 @@ use App\Enums\RunResult;
 use App\Enums\WorkflowStage;
 use App\Models\Qualification;
 use App\Models\QualificationRun;
+use App\Models\ClassCompletion;
 use App\Models\Setting;
 use Illuminate\Support\Carbon;
 
@@ -125,6 +126,22 @@ class QualificationSeeder
     /** Let the engine recompute status/due_date from the (now-seeded) run history. */
     protected function finish(Qualification $q): void
     {
+        // If the gowning class is on file but there is no class-completion record yet,
+        // create that specific record (the class entry is its own record, like runs).
+        // A future QA-mandated retake will be a new ClassCompletion entry.
+        if ($q->class_on_file && $q->personnel_id) {
+            $person = $q->personnel;
+            $exists = ClassCompletion::where('personnel_id', $q->personnel_id)->exists();
+            if (! $exists) {
+                ClassCompletion::create([
+                    'personnel_id' => $q->personnel_id,
+                    'employee_id' => $person?->employee_id,
+                    'class_name' => 'Gowning Class (SOP-AST-30167 / SOP-AST-30163)',
+                    'completion_date' => $q->class_on_file_date ?: now()->toDateString(),
+                    'source' => 'manual',
+                ]);
+            }
+        }
         app(QualificationEngine::class)->recompute($q->fresh());
     }
 }

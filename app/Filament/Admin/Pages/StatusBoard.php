@@ -58,17 +58,25 @@ class StatusBoard extends Page
             ->groupBy(fn ($q) => $q->workflow_stage?->value ?? 'class_pending');
 
         foreach (WorkflowStage::pipeline() as $stage) {
-            $cards = ($byStage[$stage->value] ?? collect())->map(fn ($q) => [
+            $cards = ($byStage[$stage->value] ?? collect())->map(function ($q) {
+                $lastRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
+                    ->orderByDesc('run_date')->orderByDesc('id')->first();
+                return [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $q->personnel?->employee_id,
+                'department' => $q->personnel?->department,
+                'type' => $q->type?->label(),
                 'meta' => $q->runs_completed . '/' . $q->runs_required . ' runs',
                 'runs_done' => (int) $q->runs_completed,
                 'runs_req' => (int) $q->runs_required,
-                'due' => $q->due_date?->format('M j'),
+                'due' => $q->due_date?->format('M j, Y'),
+                'last_run_date' => $lastRun?->run_date?->format('M j'),
+                'last_run_worklist' => $lastRun?->lims_worklist_id,
                 'status' => ucfirst(str_replace('_', ' ', ($q->status?->value ?? (string) $q->status ?? ''))),
                 'status_key' => $q->status?->value ?? (string) $q->status,
-            ])->values()->all();
+            ];
+            })->values()->all();
 
             $out[] = [
                 'key' => $stage->value,
@@ -169,6 +177,8 @@ class StatusBoard extends Page
             'class_on_file' => (bool) $q->class_on_file,
             'qa_owner' => $q->qaOwner?->name,
             'recent_runs' => $runs,
+            'quick_url' => $this->quickActionUrl($q),
+            'quick_label' => $this->quickActionLabel($q),
             'edit_url' => $q->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $q->personnel_id])
                 : \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
@@ -176,6 +186,36 @@ class StatusBoard extends Page
     }
 
     public function closeDetail(): void { $this->detail = null; }
+
+    /** Where to go to make the next entry for this person, based on their stage. */
+    protected function quickActionUrl(Qualification $q): ?string
+    {
+        $stage = $q->workflow_stage?->value;
+        return match ($stage) {
+            // ready to run / scheduled / performing / incubating / results -> Run Scheduler
+            'class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released'
+                => \App\Filament\Admin\Pages\RunDayRoster::getUrl(),
+            // QA stages -> QA Sign-off Queue
+            'qa_review', 'qa_signoff', 'failed'
+                => \App\Filament\Admin\Pages\QaQueue::getUrl(),
+            // class pending -> Class Scheduler
+            'class_pending'
+                => \App\Filament\Admin\Pages\ClassScheduler::getUrl(),
+            default => null,
+        };
+    }
+
+    protected function quickActionLabel(Qualification $q): ?string
+    {
+        $stage = $q->workflow_stage?->value;
+        return match ($stage) {
+            'class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released'
+                => 'Go To Run Scheduler',
+            'qa_review', 'qa_signoff', 'failed' => 'Go To QA Queue',
+            'class_pending' => 'Go To Class Scheduler',
+            default => null,
+        };
+    }
 
     public function moveCard(int $id, string $toStage): void
     {
