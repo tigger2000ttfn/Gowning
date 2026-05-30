@@ -79,13 +79,18 @@
     }
     .fi-modal-window .fi-section-content { padding: 0 !important; }
     /* Polished section look inside modals: a charcoal header bar per section, clean spacing,
-       no nested card. This is the canonical GQS modal/form look. */
+       no nested card. This is the canonical GQS modal/form look. The background selector is
+       deliberately high-specificity (3 classes) so it beats Filament's own section rules;
+       a 2-class selector lost the cascade and left white text on a white bar. */
+    .fi-modal-window .fi-section .fi-section-header,
+    .fi-modal-window section.fi-section > .fi-section-header,
     .fi-modal-window .fi-section-header {
         padding: 9px 14px !important;
         margin: 0 0 14px !important;
         background: #26262C !important;
         border-radius: 9px !important;
     }
+    .fi-modal-window .fi-section-header * { color: #fff !important; }
     .fi-modal-window .fi-section-header .fi-section-header-heading,
     .fi-modal-window .fi-section-header-heading {
         color: #fff !important;
@@ -304,9 +309,8 @@
     .gqs-modal-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(20,20,24,.55);backdrop-filter:blur(2px);padding:20px;}
     .gqs-modal{background:var(--gqs-surface,#fff);border-radius:16px;width:480px;max-width:96vw;max-height:90vh;overflow:auto;box-shadow:0 24px 70px rgba(0,0,0,.35);}
     .dark .gqs-modal{background:#1C1C22;}
-    .gqs-modal-head{display:flex;align-items:center;gap:10px;padding:18px 22px;border-bottom:1px solid var(--gqs-border,#ECECEF);font-weight:800;font-size:16px;color:var(--gqs-text,#1A1A1F);}
-    .dark .gqs-modal-head{border-color:#2C2C34;color:#fff;}
-    .gqs-modal-head .gqs-modal-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#A4123F;color:#fff;flex-shrink:0;}
+    .gqs-modal-head{display:flex;align-items:center;gap:10px;padding:15px 22px;border-radius:16px 16px 0 0;font-weight:800;font-size:15px;background:#26262C;color:#fff;}
+    .gqs-modal-head .gqs-modal-ico{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:#E8C24A;color:#26262C;flex-shrink:0;}
     .gqs-modal-head .gqs-modal-ico svg{width:17px;height:17px;}
     .gqs-modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:15px;}
     .gqs-modal-body .gqs-flbl{margin-bottom:4px;}

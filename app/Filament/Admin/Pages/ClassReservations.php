@@ -74,6 +74,23 @@ class ClassReservations extends Page
     public ?int $moveSessionId = null;
     public string $moveName = '';
 
+    // reusable in-app confirmation modal (no native system prompts)
+    public array $confirm = [];
+    public function askConfirm(string $method, $arg, string $title, string $body, ?string $confirmLabel = null, bool $danger = false): void
+    {
+        $this->confirm = compact('method', 'arg', 'title', 'body', 'danger') + ['label' => $confirmLabel ?? 'Confirm'];
+    }
+    public function runConfirm(): void
+    {
+        $m = $this->confirm['method'] ?? null;
+        $allowed = ['reschedule', 'cancelBooking'];
+        if ($m && in_array($m, $allowed, true)) {
+            $this->{$m}($this->confirm['arg']);
+        }
+        $this->confirm = [];
+    }
+    public function cancelConfirm(): void { $this->confirm = []; }
+
     public function openMove(int $enrollmentId): void
     {
         $e = ClassEnrollment::with('personnel')->find($enrollmentId);

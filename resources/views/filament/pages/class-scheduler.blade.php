@@ -100,27 +100,29 @@
 
     @else
         {{-- SESSIONS --}}
-        <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-            <button type="button" wire:click="$set('showAddSession', true)"
-                    style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
-                <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add / Generate Sessions
-            </button>
-        </div>
         @php $sessions = $this->sessions(); @endphp
-        @if($sessions->isEmpty())
-            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
-        @else
-            @foreach($sessions as $s)
-                @php $attendees = $this->sessionAttendees($s->id); $submitted = (bool) $s->attendance_submitted_at; @endphp
-                <div class="gqs-panel" style="margin-bottom:16px;">
+
+        @if($focusSessionId)
+            {{-- ===== SINGLE SESSION ATTENDANCE SHEET ===== --}}
+            @php $s = $sessions->firstWhere('id', $focusSessionId) ?? \App\Models\ClassSession::with(['trainingClass','instructorUser'])->find($focusSessionId);
+                $attendees = $this->sessionAttendees($focusSessionId); $submitted = (bool) $s?->attendance_submitted_at; @endphp
+            @if(! $s)
+                <div class="gqs-panel"><div class="gqs-empty" style="padding:24px;">Session Not Found. <button wire:click="unfocusSession" class="rd-act rd-act-magenta">Back To Sessions</button></div></div>
+            @else
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">&larr; Back To Sessions</button>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Attendance Form</button>
+                        <button type="button" wire:click="askConfirm('cancelSession', {{ $s->id }}, 'Cancel Session', 'Cancel this class session? Enrollees will need to be rebooked.', 'Cancel Session', true)" class="rd-act" style="background:#C8102E;">Cancel Session</button>
+                    </div>
+                </div>
+                <div class="gqs-panel">
                     <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                         <x-filament::icon icon="heroicon-m-academic-cap"/>
-                        <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('D, M j, Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</span>
-                        <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                            <span style="font-size:12px;font-weight:600;opacity:.9;">{{ $s->instructorUser?->name ?? $s->instructor ?? 'No Instructor' }} · {{ $s->booked }} / {{ $s->capacity }}</span>
+                        <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('l, M j, Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</span>
+                        <span style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:12px;font-weight:600;opacity:.9;">{{ $s->instructorUser?->name ?? $s->instructor ?? 'No Instructor' }}</span>
                             @if($submitted)<span class="gqs-pill gqs-pill-green">Submitted</span>@endif
-                            <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Attendance Form</button>
-                            <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel Session</button>
                         </span>
                     </div>
                     <div class="gqs-panel-body">
@@ -129,15 +131,14 @@
                         @else
                             @if(! $submitted)
                                 <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
-                                    <button type="button" wire:click="submitAttendance({{ $s->id }})"
-                                            wire:confirm="Submit this session's attendance to QA? It will be locked and attendees sent to the QA Classroom Approval queue."
-                                            class="gqs-btn gqs-btn-primary">Submit Attendance</button>
+                                    <button type="button" class="gqs-btn gqs-btn-primary"
+                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Submit this session\'s attendance to QA? It will be locked and everyone marked Attended will be sent to the QA Classroom Approval queue.', 'Submit To QA')">Submit Attendance</button>
                                 </div>
                             @else
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
                                     <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('M j, Y g:i A') }} · awaiting QA classroom approval.</span>
-                                    <button type="button" wire:click="reopenAttendance({{ $s->id }})"
-                                            wire:confirm="Reopen this session? Attendees not yet QA-approved return to draft." class="gqs-btn gqs-btn-ghost">Reopen</button>
+                                    <button type="button" class="gqs-btn gqs-btn-ghost"
+                                            wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft so attendance can be corrected.', 'Reopen')">Reopen</button>
                                 </div>
                             @endif
                             <table class="gqs-tbl">
@@ -164,7 +165,56 @@
                         @endif
                     </div>
                 </div>
-            @endforeach
+            @endif
+
+        @else
+            {{-- ===== SESSIONS OVERVIEW LIST (click a session to take attendance) ===== --}}
+            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+                <button type="button" wire:click="$set('showAddSession', true)"
+                        style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
+                    <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add / Generate Sessions
+                </button>
+            </div>
+            @if($sessions->isEmpty())
+                <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
+            @else
+                <div class="gqs-panel">
+                    <div class="gqs-panel-body" style="padding:0;">
+                        <table class="gqs-tbl">
+                            <thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Attendance</th></tr></thead>
+                            <tbody>
+                                @foreach($sessions as $s)
+                                    <tr style="cursor:pointer;" wire:click="focusSession({{ $s->id }})">
+                                        <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
+                                        <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
+                                        <td>{{ $s->trainingClass?->name }}</td>
+                                        <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
+                                        <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
+                                        <td>@if($s->attendance_submitted_at)<span class="gqs-pill gqs-pill-green">Submitted</span>@else<span class="gqs-pill gqs-pill-purple">Open</span>@endif</td>
+                                        <td style="text-align:right;white-space:nowrap;">
+                                            <button type="button" wire:click.stop="focusSession({{ $s->id }})" class="rd-act rd-act-magenta">Take Attendance</button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
+        @endif
+
+        {{-- in-app confirmation modal (replaces native confirm prompts) --}}
+        @if(! empty($confirm))
+            <div class="gqs-modal-overlay" wire:click.self="cancelConfirm">
+                <div class="gqs-modal" style="width:440px;">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-exclamation-triangle"/></span>{{ $confirm['title'] }}</div>
+                    <div class="gqs-modal-body"><p style="margin:0;font-size:13.5px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">{{ $confirm['body'] }}</p></div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="cancelConfirm" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="runConfirm" class="gqs-btn {{ ($confirm['danger'] ?? false) ? '' : 'gqs-btn-primary' }}" @if($confirm['danger'] ?? false) style="background:#C8102E;color:#fff;" @endif>{{ $confirm['label'] ?? 'Confirm' }}</button>
+                    </div>
+                </div>
+            </div>
         @endif
 
         @if($showAddSession)

@@ -40,8 +40,8 @@
                                     <td style="text-align:right;white-space:nowrap;">
                                         @if(! $group['submitted'] && in_array($row['status'], ['signed_up']))
                                             <button wire:click="openMove({{ $row['id'] }})" class="sb-act sb-act-magenta">Move</button>
-                                            <button wire:click="reschedule({{ $row['id'] }})" wire:confirm="Move to the next available session?" class="sb-act" style="background:#C79A2E;">Reschedule</button>
-                                            <button wire:click="cancelBooking({{ $row['id'] }})" wire:confirm="Cancel this booking?" class="sb-act sb-act-red">Cancel</button>
+                                            <button wire:click="askConfirm('reschedule', {{ $row['id'] }}, 'Reschedule Booking', 'Move {{ addslashes($row['name']) }} to the next available session with an open seat?', 'Reschedule')" class="sb-act" style="background:#C79A2E;">Reschedule</button>
+                                            <button wire:click="askConfirm('cancelBooking', {{ $row['id'] }}, 'Cancel Booking', 'Cancel this class booking for {{ addslashes($row['name']) }}?', 'Cancel Booking', true)" class="sb-act sb-act-red">Cancel</button>
                                         @else
                                             <span style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Locked</span>
                                         @endif
@@ -56,6 +56,20 @@
     @empty
         <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No Class Sessions Scheduled.</div></div>
     @endforelse
+
+    {{-- in-app confirmation modal (replaces native confirm prompts) --}}
+    @if(! empty($confirm))
+        <div class="gqs-modal-overlay" wire:click.self="cancelConfirm">
+            <div class="gqs-modal" style="width:440px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-exclamation-triangle"/></span>{{ $confirm['title'] }}</div>
+                <div class="gqs-modal-body"><p style="margin:0;font-size:13.5px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">{{ $confirm['body'] }}</p></div>
+                <div class="gqs-modal-foot">
+                    <button type="button" wire:click="cancelConfirm" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="runConfirm" class="gqs-btn {{ ($confirm['danger'] ?? false) ? '' : 'gqs-btn-primary' }}" @if($confirm['danger'] ?? false) style="background:#C8102E;color:#fff;" @endif>{{ $confirm['label'] ?? 'Confirm' }}</button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Move booking modal --}}
     @if($showMove)

@@ -31,6 +31,28 @@ class ClassScheduler extends Page
 
     public string $tab = 'overview';   // overview | classes | sessions
 
+    // single-session attendance focus (Sessions tab drills into one sheet)
+    public ?int $focusSessionId = null;
+    public function focusSession(int $id): void { $this->focusSessionId = $id; }
+    public function unfocusSession(): void { $this->focusSessionId = null; }
+
+    // reusable in-app confirmation modal (no native system prompts)
+    public array $confirm = [];
+    public function askConfirm(string $method, $arg, string $title, string $body, ?string $confirmLabel = null, bool $danger = false): void
+    {
+        $this->confirm = compact('method', 'arg', 'title', 'body', 'danger') + ['label' => $confirmLabel ?? 'Confirm'];
+    }
+    public function runConfirm(): void
+    {
+        $m = $this->confirm['method'] ?? null;
+        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession'];
+        if ($m && in_array($m, $allowed, true)) {
+            $this->{$m}($this->confirm['arg']);
+        }
+        $this->confirm = [];
+    }
+    public function cancelConfirm(): void { $this->confirm = []; }
+
     // ---- session add / generate form ----
     public bool $showAddSession = false;
     public ?int $sessClassId = null;
