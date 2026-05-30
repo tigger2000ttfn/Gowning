@@ -42,7 +42,9 @@ class PrintController extends Controller
             \Illuminate\Support\Facades\Log::error('Attendance form fill failed: ' . $e->getMessage());
             abort(500, 'Could not generate the attendance form: ' . $e->getMessage());
         }
-        $fname = 'FORM-AST-36513-' . ($session->session_date?->format('Y-m-d') ?? 'session') . '.pdf';
+        $classSlug = \Illuminate\Support\Str::slug($session->trainingClass?->name ?? 'Class');
+        $dateSlug = $session->session_date?->format('Y-m-d') ?? 'session';
+        $fname = 'FORM-AST-36513-Class-Training-' . $classSlug . '-' . $dateSlug . '.pdf';
 
         return response($bytes, 200, [
             'Content-Type' => 'application/pdf',
@@ -96,7 +98,12 @@ class PrintController extends Controller
             \Illuminate\Support\Facades\Log::error('Approval form fill failed: ' . $e->getMessage());
             abort(500, 'Could not generate the approval form: ' . $e->getMessage());
         }
-        $fname = 'FORM-AST-36749-' . ($qualification->personnel?->employee_id ?? $qualification->id) . '.pdf';
+        $nameSlug = \Illuminate\Support\Str::slug($qualification->personnel?->full_name ?? ('qual-' . $qualification->id));
+        $eid = $qualification->personnel?->employee_id;
+        $typeSlug = $isInitial ? 'Initial' : 'Requalification';
+        $dateSlug = now()->format('Y-m-d');
+        $fname = 'FORM-AST-36749-Gowning-Approval-' . $nameSlug
+            . ($eid ? '-' . $eid : '') . '-' . $typeSlug . '-' . $dateSlug . '.pdf';
         return response($bytes, 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="' . $fname . '"',
