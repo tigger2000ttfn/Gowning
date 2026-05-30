@@ -28,6 +28,7 @@
     if ($can(\App\Enums\Capability::ManageScheduling)) {
         $lists[] = ['Cleanrooms', \App\Filament\Admin\Resources\CleanroomResource::getUrl(), 'heroicon-o-beaker'];
         $lists[] = ['Sampling Sites', \App\Filament\Admin\Resources\SamplingSiteResource::getUrl(), 'heroicon-o-hand-raised'];
+        $lists[] = ['Room Locations', \App\Filament\Admin\Resources\RoomLocationResource::getUrl(), 'heroicon-o-building-office'];
     }
     if ($lists) $sections[] = ['Lists', $lists];
 

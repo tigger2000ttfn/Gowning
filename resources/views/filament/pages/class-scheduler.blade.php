@@ -178,7 +178,11 @@
                             </select></div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                             <div><label class="gqs-flbl">First Date</label><input type="date" wire:model="sessDate" class="gqs-fld"></div>
-                            <div><label class="gqs-flbl">Location</label><input type="text" wire:model="sessLocation" placeholder="Template default" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Location</label>
+                                <select wire:model="sessLocation" class="gqs-fld">
+                                    <option value="">Template Default</option>
+                                    @foreach($this->roomLocationOptions() as $loc)<option value="{{ $loc }}">{{ $loc }}</option>@endforeach
+                                </select></div>
                             <div><label class="gqs-flbl">Start</label><input type="time" wire:model="sessStart" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">End</label><input type="time" wire:model="sessEnd" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="sessCapacity" placeholder="default" class="gqs-fld"></div>
@@ -224,7 +228,11 @@
                                 @php $enrolled = $this->sessionAttendees($detailSessionId); @endphp
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                     <div><label class="gqs-flbl">Date</label><input type="date" wire:model="editSession.session_date" class="gqs-fld"></div>
-                                    <div><label class="gqs-flbl">Location</label><input type="text" wire:model="editSession.location" class="gqs-fld"></div>
+                                    <div><label class="gqs-flbl">Location</label>
+                                        <select wire:model="editSession.location" class="gqs-fld">
+                                            <option value="">None</option>
+                                            @foreach($this->roomLocationOptions() as $loc)<option value="{{ $loc }}">{{ $loc }}</option>@endforeach
+                                        </select></div>
                                     <div><label class="gqs-flbl">Start</label><input type="time" wire:model="editSession.start_time" class="gqs-fld"></div>
                                     <div><label class="gqs-flbl">End</label><input type="time" wire:model="editSession.end_time" class="gqs-fld"></div>
                                     <div><label class="gqs-flbl">Capacity</label><input type="number" min="1" wire:model="editSession.capacity" class="gqs-fld"></div>

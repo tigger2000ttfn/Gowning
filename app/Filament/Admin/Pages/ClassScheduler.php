@@ -285,6 +285,14 @@ class ClassScheduler extends Page
             ->orderBy('name')->pluck('name', 'id')->all();
     }
 
+    /** Active room locations (office/classroom rooms) for the session Location field. */
+    public function roomLocationOptions(): array
+    {
+        return \App\Models\RoomLocation::where('is_active', true)
+            ->orderBy('sort')->orderBy('name')
+            ->pluck('name')->all();
+    }
+
     // ----- Attendance form: pick the trainer in a modal, then open the prefilled PDF -----
     public bool $showAttendanceForm = false;
     public ?int $attendanceSessionId = null;
