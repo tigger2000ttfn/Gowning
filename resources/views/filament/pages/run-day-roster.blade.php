@@ -9,6 +9,7 @@
         </div>
         <div class="sb-headrow-filters">
             <div class="gqs-tabs">
+                <button type="button" wire:click="$set('tab','overview')" class="gqs-tab @if($tab==='overview') on @endif">Overview</button>
                 <button type="button" wire:click="$set('tab','schedule')" class="gqs-tab @if($tab==='schedule') on @endif">Run Days</button>
                 <button type="button" wire:click="$set('tab','reservations')" class="gqs-tab @if($tab==='reservations') on @endif">Reservations</button>
                 <button type="button" wire:click="$set('tab','roster')" class="gqs-tab @if($tab==='roster') on @endif">Roster</button>
@@ -16,7 +17,53 @@
         </div>
     </div>
 
-    @if($tab === 'schedule')
+    @if($tab === 'overview')
+        {{-- OVERVIEW TAB: mini-dashboard for the run pipeline --}}
+        @php $stats = $this->overviewStats(); $waiting = $this->getWaiting(); @endphp
+        <div class="rs-stats">
+            @foreach($stats as [$label, $value, $icon, $color])
+                <div class="rs-stat">
+                    <div class="rs-stat-ico" style="background:{{ $color }}1a;color:{{ $color }};"><x-filament::icon :icon="$icon" style="width:20px;height:20px;"/></div>
+                    <div>
+                        <div class="rs-stat-val">{{ $value }}</div>
+                        <div class="rs-stat-lbl">{{ $label }}</div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+
+        <div class="gqs-panel" style="margin-top:16px;">
+            <div class="gqs-panel-head" style="justify-content:space-between;">
+                <span style="display:flex;align-items:center;gap:9px;"><x-filament::icon icon="heroicon-m-clock"/> Awaiting Scheduling</span>
+                @if(count($waiting))
+                    <button wire:click="bookAllWaiting" wire:confirm="Book everyone waiting into the next available run days?"
+                            style="background:#fff;color:#A4123F;border:none;border-radius:7px;padding:5px 12px;font-weight:700;font-size:12px;cursor:pointer;">Book All Waiting</button>
+                @endif
+            </div>
+            <div class="gqs-panel-body" style="padding:0;">
+                @if(empty($waiting))
+                    <div class="gqs-empty" style="padding:28px;">Nobody is waiting. Everyone class-complete has a run booked.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Runs Needed</th><th>Waiting</th><th>Type</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($waiting as $w)
+                                <tr>
+                                    <td style="font-weight:600;">{{ $w['employee_id'] }}</td>
+                                    <td>{{ $w['name'] }}</td>
+                                    <td>{{ $w['department'] ?: '—' }}</td>
+                                    <td>{{ $w['runs_required'] }}</td>
+                                    <td style="color:var(--gqs-text-dim,#6A6A72);">{{ $w['since'] ?? '—' }}</td>
+                                    <td>@if($w['is_requal'])<span class="gqs-pill gqs-pill-gold">Requal</span>@else<span class="gqs-pill">Initial</span>@endif</td>
+                                    <td style="text-align:right;"><button wire:click="bookWaiting({{ $w['qid'] }})" class="rd-act rd-act-green">Book Next Day</button></td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @elseif($tab === 'schedule')
         {{-- SCHEDULE TAB: manage run days --}}
         <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
             <button type="button" wire:click="$set('showAddSlot', true)"
@@ -246,6 +293,13 @@
     @endif
 
     <style>
+        .rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+        .rs-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+        .dark .rs-stat{background:#1A1A20;border-color:#2A2A32;}
+        .rs-stat-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+        .rs-stat-val{font-size:24px;font-weight:800;line-height:1;color:var(--gqs-text,#1A1A1F);}
+        .dark .rs-stat-val{color:#fff;}
+        .rs-stat-lbl{font-size:11.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;text-transform:uppercase;letter-spacing:.03em;}
         .rd-act{font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;color:#fff;}
         .rd-act-green{background:#2E7D5B;} .rd-act-green:hover{background:#246148;}
         .rd-act-magenta{background:#A4123F;} .rd-act-magenta:hover{background:#85102F;}

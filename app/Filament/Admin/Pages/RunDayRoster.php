@@ -36,7 +36,7 @@ class RunDayRoster extends Page
     protected string $view = 'filament.pages.run-day-roster';
 
     public ?string $date = null;
-    public string $tab = 'schedule';   // schedule | reservations | roster
+    public string $tab = 'overview';   // overview | schedule | reservations | roster
 
     // new-run-day form fields
     public ?string $newDate = null;
@@ -226,6 +226,78 @@ class RunDayRoster extends Page
         if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
         $r = Reservation::find($id);
         if ($r) app(\App\Services\AutoScheduler::class)->handleNoShow($r);
+    }
+
+    // ===== Overview tab (mini-dashboard) =====
+    public function overviewStats(): array
+    {
+        $booked = Reservation::whereIn('status', ['requested', 'approved'])->pluck('personnel_id')->filter()->unique()->all();
+        $waiting = \App\Models\Qualification::where('workflow_stage', \App\Enums\WorkflowStage::ClassComplete->value)
+            ->whereNotIn('personnel_id', $booked)->count();
+        $weekStart = now()->startOfWeek()->toDateString();
+        $weekEnd = now()->endOfWeek()->toDateString();
+        $runDaysThisWeek = RunSlot::where('status', 'open')->whereBetween('slot_date', [$weekStart, $weekEnd])->count();
+        $pendingReqs = Reservation::where('status', 'requested')->count();
+        $incubating = \App\Models\Qualification::where('workflow_stage', \App\Enums\WorkflowStage::Incubating->value)->count();
+        // total open seats across upcoming run days
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        $openSeats = RunSlot::where('status', 'open')->whereDate('slot_date', '>=', now()->toDateString())->get()
+            ->sum(fn ($s) => max(0, $scheduler->seatsLeft($s)));
+
+        return [
+            ['Awaiting Scheduling', $waiting, 'heroicon-o-clock', '#A4123F'],
+            ['Pending Requests', $pendingReqs, 'heroicon-o-inbox-arrow-down', '#6B2C91'],
+            ['Run Days This Week', $runDaysThisWeek, 'heroicon-o-calendar-days', '#2E7D5B'],
+            ['Open Seats (Upcoming)', $openSeats, 'heroicon-o-user-plus', '#C79A2E'],
+            ['Incubating', $incubating, 'heroicon-o-beaker', '#1F6FB2'],
+        ];
+    }
+
+    /** People class-complete but with no run booked (the watchlist). */
+    public function getWaiting(): array
+    {
+        $booked = Reservation::whereIn('status', ['requested', 'approved'])->pluck('personnel_id')->filter()->unique()->all();
+        return \App\Models\Qualification::with('personnel')
+            ->where('workflow_stage', \App\Enums\WorkflowStage::ClassComplete->value)
+            ->whereNotIn('personnel_id', $booked)
+            ->get()
+            ->map(fn ($q) => [
+                'qid' => $q->id,
+                'personnel_id' => $q->personnel_id,
+                'name' => $q->personnel?->full_name ?? 'Unknown',
+                'employee_id' => $q->personnel?->employee_id,
+                'department' => $q->personnel?->department,
+                'runs_required' => $q->runs_required,
+                'since' => $q->stage_changed_at?->diffForHumans(),
+                'is_requal' => ($q->status instanceof \BackedEnum ? $q->status->value : $q->status) === 'lapsed' || $q->qa_recommendation !== null,
+            ])->values()->all();
+    }
+
+    /** Book a waiting person into the next available run day (from the Overview watchlist). */
+    public function bookWaiting(int $qid): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $q = \App\Models\Qualification::find($qid);
+        if (! $q) return;
+        $res = app(\App\Services\AutoScheduler::class)->bookNext($q);
+        if ($res) {
+            Notification::make()->success()->title('Booked')->body(($q->personnel?->full_name ?? 'Person') . ' booked into the next available run day.')->send();
+        } else {
+            Notification::make()->warning()->title('No open run day')->body('Add a run day with capacity, then book them.')->send();
+        }
+    }
+
+    public function bookAllWaiting(): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) return;
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        $booked = 0; $skipped = 0;
+        foreach ($this->getWaiting() as $w) {
+            $q = \App\Models\Qualification::find($w['qid']);
+            if ($q && $scheduler->bookNext($q)) { $booked++; } else { $skipped++; }
+        }
+        Notification::make()->success()->title('Bulk booking done')
+            ->body("Booked {$booked}. Skipped {$skipped} (no open seats).")->send();
     }
 
 

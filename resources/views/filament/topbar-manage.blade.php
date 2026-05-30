@@ -17,12 +17,7 @@
     // Grouped sections (less frequent / setup)
     $sections = [];
 
-    // Scheduling records
-    $sched = [];
-    if ($can(\App\Enums\Capability::ManageScheduling)) {
-        $sched[] = ['Class Completions', \App\Filament\Admin\Resources\ClassCompletionResource::getUrl(), 'heroicon-o-academic-cap'];
-    }
-    if ($sched) $sections[] = ['Records', $sched];
+    // (Class Completions moved to the Classroom sidebar group)
 
     // Reference lists (rarely touched)
     $lists = [];

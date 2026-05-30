@@ -18,7 +18,7 @@ class RunNotScheduled extends Page
             || $u->hasCapability(Capability::ViewQualifications)));
     }
     public static function canAccessNavigation(): bool { return static::allowed(); }
-    public static function shouldRegisterNavigation(): bool { return static::allowed(); }
+    public static function shouldRegisterNavigation(): bool { return false; } // absorbed into Run Scheduler > Overview tab
     public static function canViewAny(): bool { return static::allowed(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
