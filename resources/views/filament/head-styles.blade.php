@@ -391,5 +391,5 @@
     .flatpickr-input[readonly]{background:var(--gqs-surface,#fff);}
     .gqs-gmp-up{text-transform:uppercase;}
 </style>
-<link rel="stylesheet" href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}">
-<script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}"></script>
+<link rel="stylesheet" href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}?v={{ @filemtime(public_path('vendor/flatpickr/flatpickr.min.css')) }}">
+<script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}?v={{ @filemtime(public_path('vendor/flatpickr/flatpickr.min.js')) }}"></script>

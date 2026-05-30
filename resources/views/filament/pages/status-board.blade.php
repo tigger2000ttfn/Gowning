@@ -87,7 +87,7 @@
         @endif
     </div>
 
-    <script src="{{ asset('vendor/sortable/Sortable.min.js') }}"></script>
+    <script src="{{ asset('vendor/sortable/Sortable.min.js') }}?v={{ @filemtime(public_path('vendor/sortable/Sortable.min.js')) }}"></script>
     <script>
         function sbBoard({ canReorder, canMove }) {
             return {

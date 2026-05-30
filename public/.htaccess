@@ -27,3 +27,16 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# --- Cache policy (so deploys show up without a manual hard-refresh) ---
+# Vite build assets are fingerprinted (filename changes on rebuild), so they can
+# cache forever. Everything else - the HTML app shell, vendored libs, images -
+# must revalidate each load, so a deploy is picked up immediately.
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#/build/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+    <Else>
+        Header set Cache-Control "no-cache, must-revalidate"
+    </Else>
+</IfModule>
