@@ -55,13 +55,15 @@ class AttendanceFormFiller
         $pdf->SetTextColor(0, 0, 0);
         $pdf->SetFont('Helvetica', '', 9);
 
-        // Section 1 header fields
+        // Section 1 header fields. Smaller font so a long title/Document # stays inside its cell.
+        $pdf->SetFont('Helvetica', '', 8);
         // "Training Date:" label sits at row 92-116; value cell is right of the x=216 divider.
         if (! empty($header['training_date'])) $this->text($pdf, 230, 110, $header['training_date']);
-        // Document# / Revision# / Title headers are at top~134; the entry row is 145-174 (baseline ~162).
+        // Columns (from the grid): Document # 36-283, Revision # 283-328, Title 328-760.
         if (! empty($header['document_no']))   $this->text($pdf, 42, 162, $header['document_no']);
-        if (! empty($header['revision_no']))   $this->text($pdf, 286, 162, $header['revision_no']);
-        if (! empty($header['title']))         $this->text($pdf, 335, 162, $header['title']);
+        if (! empty($header['revision_no']))   $this->text($pdf, 290, 162, $header['revision_no']);
+        if (! empty($header['title']))         $this->text($pdf, 333, 162, $header['title']);
+        $pdf->SetFont('Helvetica', '', 9);
 
         // Section 2 trainees, page 1 (rows 0..15)
         $rowsP1 = array_slice($trainees, 0, $this->page1Rows);
@@ -83,20 +85,18 @@ class AttendanceFormFiller
                 $this->row($pdf, $y, $t);
             }
 
-            // Section 3 Trainer name only (coordinator is filled at training time on paper)
-            if (! empty($header['trainer_name']))     $this->text($pdf, 42, 437, $header['trainer_name']);
+            // Section 3 Trainer name + date (coordinator is filled on paper at training time)
+            if (! empty($header['trainer_name'])) $this->text($pdf, 42, 437, $header['trainer_name']);
+            if (! empty($header['trainer_date'])) $this->text($pdf, 645, 437, $header['trainer_date']);
         }
 
         return $pdf->Output('S');
     }
 
-    /** One trainee row: Name (Printed) + Department + Date. Signature left blank to sign. */
+    /** One trainee row: Name (Printed, full name) + Department + Date. Signature left blank to sign. */
     protected function row(Fpdi $pdf, float $baselineY, array $t): void
     {
         $name = trim((string) ($t['name'] ?? ''));
-        if ($name !== '' && ! empty($t['employee_id'])) {
-            $name .= '  (' . $t['employee_id'] . ')';
-        }
         if ($name !== '') $this->text($pdf, $this->colNameX, $baselineY, $name);
         if (! empty($t['department'])) $this->text($pdf, $this->colDeptX, $baselineY, (string) $t['department']);
         if (! empty($t['date']))       $this->text($pdf, $this->colDateX, $baselineY, (string) $t['date']);

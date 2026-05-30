@@ -21,7 +21,6 @@ class PrintController extends Controller
             ->sortBy(fn ($e) => $e->personnel?->last_name ?? $e->name)
             ->map(fn ($e) => [
                 'name' => $e->personnel?->full_name ?? $e->name ?? '',
-                'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
                 'date' => $session->session_date?->format('d M Y'),  // date of training, prefilled
             ])->values()->all();
@@ -34,6 +33,7 @@ class PrintController extends Controller
             // Trainer prefills from the assigned instructor, overridable at print time via ?trainer=
             'trainer_name' => $request->query('trainer')
                 ?: ($session->instructorUser?->name ?? $session->instructor ?? ''),
+            'trainer_date' => $session->session_date?->format('d M Y'),
         ];
 
         try {
