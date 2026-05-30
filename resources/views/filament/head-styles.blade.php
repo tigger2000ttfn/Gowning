@@ -41,12 +41,15 @@
     /* Move the sidebar-collapse button OUT of the topbar and onto the sidebar edge */
     .fi-topbar-collapse-sidebar-btn-ctn {
         position: fixed !important;
-        top: 14px !important;
+        bottom: 16px !important;
+        top: auto !important;
         z-index: 60 !important;
     }
     /* nudge it to sit at the right edge of the open sidebar */
     .fi-body-has-sidebar-collapsible-on-desktop .fi-topbar-collapse-sidebar-btn-ctn {
-        left: calc(var(--sidebar-width, 16rem) - 34px) !important;
+        left: calc(var(--sidebar-width, 14rem) - 34px) !important;
+        bottom: 16px !important;
+        top: auto !important;
         transition: left .2s;
         z-index: 60 !important;
     }
