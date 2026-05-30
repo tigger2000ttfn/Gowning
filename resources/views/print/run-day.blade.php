@@ -1,30 +1,46 @@
-@extends('print.layout', ['title' => 'Run Day Roster', 'org' => $org, 'site' => $site])
+@extends('print.layout', ['title' => 'Run Qualification Attendance', 'org' => $org, 'site' => $site])
 @section('body')
-    <div class="doc-title">Qualification Run Day Roster, {{ $date->gmpL() }}</div>
+    <div class="doc-title">Gowning Qualification Run Attendance, {{ $date->gmpL() }}</div>
 
     @forelse($slots as $slot)
         <div class="sec">
-            <div class="sec-h">{{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') }}@endif
+            <div class="sec-h">{{ $slot->cleanroom ?: 'Run Day' }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('H:i') }}@endif
                 @if($slot->analyst) · Analyst: {{ $slot->analyst->name }} @endif
                 · {{ $slot->reservations->count() }} of {{ $slot->capacity }}</div>
             @if($slot->reservations->isEmpty())
                 <div class="empty">No one scheduled.</div>
             @else
                 <table class="data">
-                    <thead><tr><th style="width:26px;">#</th><th>Employee ID</th><th>Name</th><th>Department</th><th>Status</th><th>Worklist</th><th>Veeva Doc</th><th>Result</th><th style="width:90px;">Time In</th><th style="width:90px;">Time Out</th><th style="width:110px;">Initials</th></tr></thead>
+                    <thead><tr>
+                        <th style="width:24px;">#</th>
+                        <th>Name (Printed)</th>
+                        <th style="width:78px;">Employee ID</th>
+                        <th>Department</th>
+                        <th style="width:118px;">Runs Performed Today</th>
+                        <th style="width:110px;">LIMS Worklist</th>
+                        <th style="width:150px;">Signature</th>
+                        <th style="width:78px;">Date</th>
+                    </tr></thead>
                     <tbody>
                         @foreach($slot->reservations as $i => $res)
-                            @php $lr = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)->latest('id')->first(); @endphp
+                            @php
+                                $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+                                $required = max(1, (int) ($q->runs_required ?? 1));
+                                $todayRuns = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id)
+                                    ->whereDate('run_date', $date->toDateString())->get();
+                                $doneToday = $todayRuns->count();
+                                $wls = $todayRuns->pluck('lims_worklist_id')->filter()->unique()->implode(', ');
+                                $runsLbl = $doneToday
+                                    ? ($doneToday . ' of ' . $required . ($doneToday >= $required ? ' · all' : ''))
+                                    : ('0 of ' . $required);
+                            @endphp
                             <tr>
                                 <td>{{ $i + 1 }}</td>
-                                <td>{{ $res->personnel?->employee_id }}</td>
                                 <td>{{ $res->personnel?->full_name }}</td>
+                                <td>{{ $res->personnel?->employee_id }}</td>
                                 <td>{{ $res->personnel?->department }}</td>
-                                <td>{{ $res->status?->label() ?? ucfirst((string)($res->status?->value ?? $res->status)) }}</td>
-                                <td>{{ $res->lims_worklist_id ?? '' }}</td>
-                                <td>{{ $lr?->veeva_doc_number ?? '' }}</td>
-                                <td>&nbsp;</td>
-                                <td>&nbsp;</td>
+                                <td>{{ $runsLbl }}</td>
+                                <td>{{ $wls ?: ($res->lims_worklist_id ?? '') }}</td>
                                 <td>&nbsp;</td>
                                 <td>&nbsp;</td>
                             </tr>
@@ -34,7 +50,7 @@
             @endif
         </div>
     @empty
-        <div class="empty">No run slots scheduled for this date.</div>
+        <div class="empty">No run days scheduled for this date.</div>
     @endforelse
 
     <table class="sign-tbl"><tr>
