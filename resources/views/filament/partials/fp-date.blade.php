@@ -11,7 +11,7 @@
             @if($isTime)
             enableTime: true, noCalendar: true, dateFormat: 'H:i', time_24hr: true,
             @else
-            dateFormat: 'Y-m-d', altInput: true, altFormat: 'd M Y',
+            dateFormat: 'Y-m-d', altInput: true, altFormat: 'd-M-Y', altInputClass: 'gqs-fld gqs-gmp-up',
             @endif
             allowInput: true,
             defaultDate: $wire.get('{{ $model }}') || null,

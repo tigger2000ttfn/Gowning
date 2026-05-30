@@ -322,7 +322,7 @@
                         @else
                             @if($submitted)
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('d M Y H:i') }} · awaiting QA classroom approval.</span>
+                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->gmpDt() }} · awaiting QA classroom approval.</span>
                                     <button type="button" class="gqs-btn gqs-btn-ghost"
                                             wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft.', 'Reopen')">Reopen</button>
                                 </div>
@@ -500,7 +500,7 @@
                     </p>
                     <label class="gqs-flbl">Password</label>
                     <input type="password" wire:model="signPassword" wire:keydown.enter="confirmSubmitSign" class="gqs-fld" autocomplete="off" placeholder="Enter your password to sign">
-                    <p style="margin:8px 0 0;font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Signed By {{ auth()->user()->name }} · {{ now()->format('d M Y H:i') }}</p>
+                    <p style="margin:8px 0 0;font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Signed By {{ auth()->user()->name }} · {{ now()->gmpDt() }}</p>
                 </div>
                 <div class="gqs-modal-foot">
                     <button type="button" wire:click="closeSubmitSign" class="gqs-btn gqs-btn-ghost">Cancel</button>

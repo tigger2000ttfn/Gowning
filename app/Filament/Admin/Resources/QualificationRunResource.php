@@ -54,7 +54,7 @@ class QualificationRunResource extends Resource
                         ->relationship('personnel', 'employee_id')
                         ->getOptionLabelFromRecordUsing(fn ($r) => $r ? "{$r->employee_id} · {$r->full_name}" : '')
                         ->searchable()->preload()->required(),
-                    DatePicker::make('run_date')->native(false)->displayFormat('d M Y')->required()->default(now()),
+                    DatePicker::make('run_date')->native(false)->displayFormat('d-M-Y')->required()->default(now()),
                     Select::make('result')->options([
                         RunResult::Pass->value => 'Pass',
                         RunResult::Fail->value => 'Fail',

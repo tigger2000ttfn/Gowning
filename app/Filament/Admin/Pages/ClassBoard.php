@@ -130,13 +130,13 @@ class ClassBoard extends Page
             'location' => $e->classSession?->location,
             'status' => ucwords(str_replace('_', ' ', (string) $statusVal)),
             'status_color' => \App\Models\WorkflowStatus::colorFor('class', $statusVal, '#6A6A72'),
-            'signed_up_at' => $e->signed_up_at?->format('d M Y'),
-            'attended_at' => $e->attended_at?->format('d M Y'),
-            'completed_at' => $e->completed_at?->format('d M Y'),
+            'signed_up_at' => $e->signed_up_at?->gmp(),
+            'attended_at' => $e->attended_at?->gmp(),
+            'completed_at' => $e->completed_at?->gmp(),
             'qual_status' => $qStatusVal ? ucwords(str_replace('_', ' ', $qStatusVal)) : null,
             'qual_stage' => $q?->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label()) : null,
             'qual_runs' => $q ? ((int) $q->runs_completed . ' / ' . (int) $q->runs_required) : null,
-            'qual_due' => $q?->due_date?->format('d M Y'),
+            'qual_due' => $q?->due_date?->gmp(),
             'class_on_file' => (bool) ($q?->class_on_file),
             'edit_url' => $e->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
@@ -157,7 +157,7 @@ class ClassBoard extends Page
             ->where('status', 'open')
             ->whereDate('session_date', '>=', now()->toDateString())
             ->orderBy('session_date')->get()
-            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('d M Y')])
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->gmp()])
             ->all();
     }
 

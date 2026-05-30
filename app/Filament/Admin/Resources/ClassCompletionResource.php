@@ -47,7 +47,7 @@ class ClassCompletionResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn ($r) => $r ? trim(($r->employee_id ?? '') . ' · ' . ($r->full_name ?? '')) : '—')
                     ->searchable()->preload(),
                 TextInput::make('class_name')->required(),
-                DatePicker::make('completion_date')->native(false)->displayFormat('d M Y')->required(),
+                DatePicker::make('completion_date')->native(false)->displayFormat('d-M-Y')->required(),
                 Select::make('source')->options(['lms' => 'LMS import', 'manual' => 'Manual'])->default('manual')->required(),
             ]),
         ]);

@@ -343,7 +343,7 @@
                             <div class="att-hint" style="margin-bottom:12px;">Enter each person's LIMS worklist and mark Present, No-Show, or Reschedule. Nothing is committed until you Submit the day · the worklist is required for everyone marked Present.</div>
                         @else
                             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-                                <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->format('d M Y H:i') }} · locked.</span>
+                                <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->gmpDt() }} · locked.</span>
                                 <button type="button" wire:click="reopenRunDay({{ $slot->id }})"
                                         wire:confirm="Reopen this run day to correct attendance?" class="gqs-btn gqs-btn-ghost">Reopen</button>
                             </div>

@@ -5,7 +5,6 @@
             <span class="pg-head-ico"><x-filament::icon :icon="$this->gqsIcon ?? 'heroicon-o-square-3-stack-3d'" /></span>
             <div class="pg-head-tx" style="min-width:0;">
                 <h1>{{ $this->gqsTitle ?? $this->getTitle() }}</h1>
-                @if($this->gqsSubtitle)<p>{{ $this->gqsSubtitle }}</p>@endif
             </div>
         </div>
         @if(count($this->getCachedHeaderActions()))

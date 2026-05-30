@@ -22,18 +22,18 @@ class PrintController extends Controller
             ->map(fn ($e) => [
                 'name' => $e->personnel?->full_name ?? $e->name ?? '',
                 'department' => $e->personnel?->department,
-                'date' => $session->session_date?->format('d M Y'),  // date of training, prefilled
+                'date' => $session->session_date?->gmp(),  // date of training, prefilled
             ])->values()->all();
 
         $header = [
-            'training_date' => $session->session_date?->format('d M Y'),
+            'training_date' => $session->session_date?->gmp(),
             'document_no' => \App\Models\Setting::get('attendance_form_document_no', ''),
             'revision_no' => \App\Models\Setting::get('attendance_form_revision_no', ''),
             'title' => \App\Models\Setting::get('attendance_form_title', '') ?: $session->trainingClass?->name,
             // Trainer prefills from the assigned instructor, overridable at print time via ?trainer=
             'trainer_name' => $request->query('trainer')
                 ?: ($session->instructorUser?->name ?? $session->instructor ?? ''),
-            'trainer_date' => $session->session_date?->format('d M Y'),
+            'trainer_date' => $session->session_date?->gmp(),
         ];
 
         try {
@@ -69,7 +69,7 @@ class PrintController extends Controller
 
         // QCM "completed by" = whoever recorded the last run; QA = whoever signed off.
         $qcmBy = optional($lastRun?->recordedBy)->name;
-        $qcmDate = $lastRun?->run_date?->format('d M Y');
+        $qcmDate = $lastRun?->run_date?->gmp();
         $qaSig = \App\Models\ElectronicSignature::where('signable_type', Qualification::class)
             ->where('signable_id', $qualification->id)->where('meaning', 'like', '%Approv%')
             ->latest('signed_at')->first();
@@ -85,11 +85,11 @@ class PrintController extends Controller
             'qcm_by' => $qcmBy,
             'qcm_date' => $qcmDate,
             'qa_by' => $qaSig?->signer_name,
-            'qa_date' => $qaSig?->signed_at?->format('d M Y'),
+            'qa_date' => $qaSig?->signed_at?->gmp(),
             'registered' => $passed,
-            'next_sample_date' => $qualification->due_date?->format('d M Y'),
+            'next_sample_date' => $qualification->due_date?->gmp(),
             'qa_completed_by' => $qaSig?->signer_name,
-            'qa_completed_date' => $qaSig?->signed_at?->format('d M Y'),
+            'qa_completed_date' => $qaSig?->signed_at?->gmp(),
         ];
 
         try {

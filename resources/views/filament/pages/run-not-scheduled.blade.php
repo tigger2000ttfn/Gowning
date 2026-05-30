@@ -24,7 +24,7 @@
                                 <td>{{ $row->department ?? '-' }}</td>
                                 <td><span class="gqs-pill {{ $row->runs_required >= 3 ? 'gqs-pill-gold' : 'gqs-pill-green' }}">{{ $row->runs_required }} {{ \Illuminate\Support\Str::plural('run', $row->runs_required) }}</span></td>
                                 <td>{{ $row->is_requal ? 'Requalification' : 'Initial' }}</td>
-                                <td>{{ $row->class_date?->format('d M Y') ?? '-' }}</td>
+                                <td>{{ $row->class_date?->gmp() ?? '-' }}</td>
                                 <td style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">{{ $row->since?->setTimezone('America/New_York')?->diffForHumans() ?? '-' }}</td>
                             </tr>
                         @endforeach

@@ -50,10 +50,10 @@
                             <thead><tr><th>Type</th><th>Date</th><th>Detail</th></tr></thead>
                             <tbody>
                                 @foreach($a->run_days as $s)
-                                    <tr><td><span class="gqs-pill gqs-pill-purple">Run Day</span></td><td>{{ $s->slot_date?->format('d M Y') }}</td><td>{{ $s->cleanroom }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') }}@endif</td></tr>
+                                    <tr><td><span class="gqs-pill gqs-pill-purple">Run Day</span></td><td>{{ $s->slot_date?->gmp() }}</td><td>{{ $s->cleanroom }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') }}@endif</td></tr>
                                 @endforeach
                                 @foreach($a->classes as $cs)
-                                    <tr><td><span class="gqs-pill gqs-pill-green">Class</span></td><td>{{ $cs->session_date?->format('d M Y') }}</td><td>{{ $cs->trainingClass?->name }}</td></tr>
+                                    <tr><td><span class="gqs-pill gqs-pill-green">Class</span></td><td>{{ $cs->session_date?->gmp() }}</td><td>{{ $cs->trainingClass?->name }}</td></tr>
                                 @endforeach
                             </tbody>
                         </table>

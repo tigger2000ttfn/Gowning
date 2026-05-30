@@ -74,7 +74,7 @@ class AutomationEngine
                 'stage' => $ctx['stage'] ?? '',
                 'date' => $ctx['date'] ?? '',
                 'time' => $ctx['time'] ?? '',
-                'due_date' => $q && $q->due_date ? $q->due_date->format('d M Y') : ($ctx['due_date'] ?? ''),
+                'due_date' => $q && $q->due_date ? $q->due_date->gmp() : ($ctx['due_date'] ?? ''),
                 'class' => $ctx['class'] ?? '',
                 'trainer' => $ctx['trainer'] ?? '',
                 'result' => $ctx['result'] ?? '',

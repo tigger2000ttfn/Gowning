@@ -90,7 +90,7 @@ class ClassReservations extends Page
             ->whereDate('session_date', '>=', now()->toDateString())
             ->orderBy('session_date')
             ->get()
-            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('d M Y')])
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->gmp()])
             ->all();
     }
 
@@ -183,7 +183,7 @@ class ClassReservations extends Page
         $e->status = 'signed_up';
         $e->save();
         Notification::make()->success()->title('Rescheduled')
-            ->body('Moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('d M Y') . '.')->send();
+            ->body('Moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->gmp() . '.')->send();
     }
 
     public function cancelBooking(int $enrollmentId): void

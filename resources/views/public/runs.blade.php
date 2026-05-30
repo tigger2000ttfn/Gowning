@@ -3,7 +3,7 @@
 @section('content')
     <section class="pagehead">
         <div class="pagehead-inner">
-            <h1><img src="{{ asset('images/title-flask.svg') }}" alt="" class="title-icon"> Qualification Run Slots</h1>
+            <h1><img src="{{ asset('images/title-runs.svg') }}" alt="" class="title-icon"> Qualification Run Slots</h1>
             <p>Book a cleanroom qualification run published by QC Micro. Bookings are approved before the run.</p>
         </div>
     </section>

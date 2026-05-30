@@ -389,6 +389,7 @@
     .flatpickr-day.selected,.flatpickr-day.selected:hover{background:#A4123F;border-color:#A4123F;}
     .flatpickr-day.today{border-color:#A4123F;}
     .flatpickr-input[readonly]{background:var(--gqs-surface,#fff);}
+    .gqs-gmp-up{text-transform:uppercase;}
 </style>
 <link rel="stylesheet" href="{{ asset('vendor/flatpickr/flatpickr.min.css') }}">
 <script src="{{ asset('vendor/flatpickr/flatpickr.min.js') }}"></script>

@@ -63,7 +63,7 @@ class PersonnelResource extends Resource
                         TextInput::make('lims_username')->label('LIMS Username')
                             ->helperText('Used To Match This Person On A LIMS Upload.'),
                         TextInput::make('badge_id')->label('Badge ID'),
-                        DatePicker::make('hire_date')->native(false)->displayFormat('d M Y')->label('Hire Date'),
+                        DatePicker::make('hire_date')->native(false)->displayFormat('d-M-Y')->label('Hire Date'),
                     ]),
                 Step::make('Assignment')->icon('heroicon-o-link')
                     ->description('Department, role, shift')
@@ -98,7 +98,7 @@ class PersonnelResource extends Resource
                                 Toggle::make('class_on_file')->label('Classroom Status Approved')
                                     ->helperText('On = Gowning Class / OJT Is QA-Approved And On File.')
                                     ->live()->columnSpanFull(),
-                                DatePicker::make('class_on_file_date')->native(false)->displayFormat('d M Y')->label('Class Date')
+                                DatePicker::make('class_on_file_date')->native(false)->displayFormat('d-M-Y')->label('Class Date')
                                     ->visible(fn ($get) => $get('class_on_file')),
                             ]),
                         Section::make('Run History')
@@ -119,7 +119,7 @@ class PersonnelResource extends Resource
                                         Select::make('workflow_stage')->label('Workflow Stage')
                                             ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
                                             ->default('class_pending'),
-                                        DatePicker::make('qualified_date')->native(false)->displayFormat('d M Y')->label('Date Last Qualified (QA Approval)')
+                                        DatePicker::make('qualified_date')->native(false)->displayFormat('d-M-Y')->label('Date Last Qualified (QA Approval)')
                                             ->live()
                                             ->visible(fn ($get) => $get('status') === 'qualified')
                                             ->afterStateUpdated(function ($state, $set) {
@@ -128,7 +128,7 @@ class PersonnelResource extends Resource
                                                 $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
                                             })
                                             ->helperText('Set Only When QA Has Qualified This Person · Drives The Next Due Date.'),
-                                        DatePicker::make('due_date')->native(false)->displayFormat('d M Y')->label('Next Qualification Due Date')
+                                        DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('Next Qualification Due Date')
                                             ->visible(fn ($get) => $get('status') === 'qualified')
                                             ->helperText('Auto-Calculates From The QA Approval Date + Cycle Length.'),
                                     ]),
@@ -143,7 +143,7 @@ class PersonnelResource extends Resource
                                     ->defaultItems(0)
                                     ->reorderable(false)
                                     ->schema([
-                                        DatePicker::make('run_date')->native(false)->displayFormat('d M Y')->label('Run Date')->required(),
+                                        DatePicker::make('run_date')->native(false)->displayFormat('d-M-Y')->label('Run Date')->required(),
                                         Select::make('cycle_type')->label('Cycle')
                                             ->options(['initial' => 'Initial', 'annual' => 'Annual'])
                                             ->default('initial'),

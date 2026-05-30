@@ -332,7 +332,7 @@ class RunDayRoster extends Page
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->orderBy('slot_date')->orderBy('start_time')->get()
             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
-            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ' · ' . ($s->cleanroom ?: 'Run Day')
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->gmp() . ' · ' . ($s->cleanroom ?: 'Run Day')
                 . ' (' . $scheduler->seatsLeft($s) . ' seats)'])->all();
     }
 

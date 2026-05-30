@@ -46,13 +46,13 @@
                 <span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span>
             </div>
             <div class="gqs-stat {{ $qualification?->isPastDue() ? 'red' : 'magenta' }}">
-                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->format('d M Y') ?? '-' }}</div>
+                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->gmp() ?? '-' }}</div>
                 <div class="l">Due Date @if($qualification?->due_date)· {{ $qualification->isPastDue() ? 'Overdue' : 'Current' }}@endif</div>
                 <span class="wm"><x-filament::icon icon="heroicon-o-calendar-days"/></span>
             </div>
             <div class="gqs-stat {{ $hasClass ? 'green' : 'gold' }}">
                 <div class="n" style="font-size:22px;">{{ $hasClass ? 'Completed' : 'Not On File' }}</div>
-                <div class="l">Gowning Class @if($hasClass)· {{ $classes->first()->completion_date?->format('d M Y') }}@endif</div>
+                <div class="l">Gowning Class @if($hasClass)· {{ $classes->first()->completion_date?->gmp() }}@endif</div>
                 <span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span>
             </div>
         </div>
@@ -64,7 +64,7 @@
                     <table class="gqs-tbl">
                         <thead><tr><th>Date</th><th>Result</th><th>Cycle</th></tr></thead>
                         <tbody>@foreach ($runs as $run)
-                            <tr><td>{{ $run->run_date?->format('d M Y') }}</td>
+                            <tr><td>{{ $run->run_date?->gmp() }}</td>
                                 <td><span class="gqs-pill {{ $run->result?->value === 'pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $run->result?->label() }}</span></td>
                                 <td>{{ $run->cycle_type?->label() }}</td></tr>
                         @endforeach</tbody>
@@ -83,7 +83,7 @@
                     @foreach ($enrollments as $e)
                         <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                             <span><strong>{{ $e->classSession?->trainingClass?->name }}</strong>
-                                <span style="color:var(--gqs-text-dim,#6A6A72);"> · {{ $e->classSession?->session_date?->format('d M Y') }}</span></span>
+                                <span style="color:var(--gqs-text-dim,#6A6A72);"> · {{ $e->classSession?->session_date?->gmp() }}</span></span>
                             <span class="gqs-pill gqs-pill-purple">{{ str_replace('_',' ',$e->status) }}</span>
                         </div>
                     @endforeach

@@ -85,7 +85,7 @@ class AutoScheduler
         $this->notifier->toPersonnel(
             $q->personnel,
             'Qualification run scheduled',
-            'You are booked for a qualification run on ' . $slot->slot_date->format('d M Y')
+            'You are booked for a qualification run on ' . $slot->slot_date->gmp()
                 . ($slot->cleanroom ? ' in ' . $slot->cleanroom : '') . '.',
             \App\Enums\NotificationEvent::RunScheduled
         );
@@ -191,7 +191,7 @@ class AutoScheduler
                     $res->personnel,
                     'Qualification run rescheduled',
                     'Your run day on ' . $slot->slot_date->format('d M') . ' was cancelled. You are re-booked for '
-                        . $newSlot->slot_date->format('d M Y') . '.',
+                        . $newSlot->slot_date->gmp() . '.',
                     \App\Enums\NotificationEvent::RunScheduled
                 );
             } else {

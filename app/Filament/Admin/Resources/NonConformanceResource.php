@@ -68,7 +68,7 @@ class NonConformanceResource extends Resource
                 TextInput::make('cfu_count')->label('CFU Count')->numeric()->minValue(0)
                     ->helperText('Record even if sub-threshold, for trending.'),
                 Toggle::make('over_threshold')->label('Over Action Limit'),
-                DatePicker::make('observed_date')->native(false)->displayFormat('d M Y')->label('Observed Date')->default(now()),
+                DatePicker::make('observed_date')->native(false)->displayFormat('d-M-Y')->label('Observed Date')->default(now()),
                 Select::make('assigned_to')->label('Assigned To')
                     ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all())->searchable(),
             ]),

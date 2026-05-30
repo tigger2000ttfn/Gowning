@@ -46,7 +46,7 @@ class ReservationBoard extends Page
         return \App\Models\RunSlot::where('status', 'open')
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->orderBy('slot_date')->get()
-            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->gmp() . ', ' . $s->cleanroom
                 . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')])
             ->all();
     }
@@ -145,7 +145,7 @@ class ReservationBoard extends Page
                         'name' => $r->personnel?->full_name ?? 'Unknown',
                         'employee_id' => $r->personnel?->employee_id,
                         'slot' => $r->runSlot?->cleanroom,
-                        'date' => $r->runSlot?->slot_date?->format('d M Y'),
+                        'date' => $r->runSlot?->slot_date?->gmp(),
                     ])->all(),
             ];
         }

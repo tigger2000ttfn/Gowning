@@ -36,7 +36,7 @@ class SessionsRelationManager extends RelationManager
                 \Filament\Schemas\Components\Wizard\Step::make('Schedule')
                     ->icon('heroicon-o-calendar')->description('Date, time, capacity')
                     ->columns(2)->schema([
-                        DatePicker::make('session_date')->native(false)->displayFormat('d M Y')->required()->native(false),
+                        DatePicker::make('session_date')->native(false)->displayFormat('d-M-Y')->required()->native(false),
                         Select::make('status')->options([
                             'open' => 'Open', 'closed' => 'Closed', 'cancelled' => 'Cancelled',
                         ])->default('open')->required(),
@@ -82,7 +82,7 @@ class SessionsRelationManager extends RelationManager
                     ->label('Attendance')
                     ->icon('heroicon-m-clipboard-document-check')
                     ->color('success')
-                    ->modalHeading(fn (ClassSession $record) => 'Attendance, ' . $record->session_date->format('d M Y'))
+                    ->modalHeading(fn (ClassSession $record) => 'Attendance, ' . $record->session_date->gmp())
                     ->modalWidth('xl')
                     ->fillForm(function (ClassSession $record) {
                         return [

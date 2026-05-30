@@ -110,7 +110,7 @@ class QualificationResource extends Resource
                                 ->state(fn ($record) => \App\Models\QualificationRun::where('personnel_id', $record->personnel_id)
                                     ->orderByDesc('run_date')->orderByDesc('id')->limit(6)->get()
                                     ->map(fn ($r) => [
-                                        'date' => $r->run_date?->format('d M Y'),
+                                        'date' => $r->run_date?->gmp(),
                                         'result' => ucfirst($r->result?->value ?? (string) $r->result),
                                         'worklist' => $r->lims_worklist_id ?: '—',
                                     ])->all())
@@ -128,7 +128,7 @@ class QualificationResource extends Resource
                     ->icon('heroicon-m-calendar')
                     ->color('warning')
                     ->schema([
-                        \Filament\Forms\Components\DatePicker::make('due_date')->native(false)->displayFormat('d M Y')->label('New Due Date')->required()->native(false),
+                        \Filament\Forms\Components\DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('New Due Date')->required()->native(false),
                         \Filament\Forms\Components\Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
                     ])
                     ->fillForm(fn ($record) => ['due_date' => $record->due_date])

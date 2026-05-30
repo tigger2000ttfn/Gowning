@@ -36,8 +36,8 @@
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
                                     <td>{{ $r->name }}</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
-                                    <td>{{ $r->started ? \Illuminate\Support\Carbon::parse($r->started)->format('d M Y') : '—' }}</td>
-                                    <td>{{ $r->ready ? \Illuminate\Support\Carbon::parse($r->ready)->format('d M Y') : '—' }}</td>
+                                    <td>{{ $r->started ? \Illuminate\Support\Carbon::parse($r->started)->gmp() : '—' }}</td>
+                                    <td>{{ $r->ready ? \Illuminate\Support\Carbon::parse($r->ready)->gmp() : '—' }}</td>
                                     <td>
                                         @if($r->remaining === null)<span class="gqs-pill">—</span>
                                         @elseif($r->remaining > 0)<span class="gqs-pill gqs-pill-gold">{{ (int) ceil($r->remaining) }}d left</span>
@@ -72,7 +72,7 @@
                                     <td>{{ $r->cycle }}</td>
                                     <td>{{ $r->run_uid ?: '—' }}</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
-                                    <td>{{ $r->performed ? \Illuminate\Support\Carbon::parse($r->performed)->format('d M Y') : '—' }}</td>
+                                    <td>{{ $r->performed ? \Illuminate\Support\Carbon::parse($r->performed)->gmp() : '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $r->progress }}</td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         @if(! $canEval)
@@ -109,9 +109,9 @@
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
                                     <td>{{ $r->name }}</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
-                                    <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->format('d M Y') : '—' }}</td>
+                                    <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->gmp() : '—' }}</td>
                                     <td><span class="gqs-pill {{ $r->result === 'Pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $r->result }}</span></td>
-                                    <td>{{ $r->entered_at ? \Illuminate\Support\Carbon::parse($r->entered_at)->format('d M Y H:i') : '—' }}</td>
+                                    <td>{{ $r->entered_at ? \Illuminate\Support\Carbon::parse($r->entered_at)->gmpDt() : '—' }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

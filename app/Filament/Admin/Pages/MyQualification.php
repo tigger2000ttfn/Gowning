@@ -72,7 +72,7 @@ class MyQualification extends Page
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
-                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->gmp() . ', ' . $s->cleanroom
                                 . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')]);
                     }),
             ])
@@ -135,7 +135,7 @@ class MyQualification extends Page
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
-                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('d M Y') . ', ' . $s->cleanroom
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->gmp() . ', ' . $s->cleanroom
                                 . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')]);
                     }),
             ])
@@ -156,7 +156,7 @@ class MyQualification extends Page
                     }
                     $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
                     Notification::make()->success()->title('Run rescheduled')
-                        ->body('You are now booked for ' . $slot->slot_date->format('d M Y') . '.')->send();
+                        ->body('You are now booked for ' . $slot->slot_date->gmp() . '.')->send();
                     return;
                 }
 
@@ -169,7 +169,7 @@ class MyQualification extends Page
                 }
                 $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
                 Notification::make()->success()->title('Run rescheduled')
-                    ->body('You are now booked for ' . $slot->slot_date->format('d M Y') . '.')->send();
+                    ->body('You are now booked for ' . $slot->slot_date->gmp() . '.')->send();
             });
     }
 

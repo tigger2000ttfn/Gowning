@@ -37,6 +37,17 @@ class AppServiceProvider extends ServiceProvider
             $model::observe(AuditObserver::class);
         }
 
+        // GMP date display: 11-MAY-2026 (uppercase month, hyphenated) and 24-hour time.
+        // Used app-wide via $carbon->gmp() / $carbon->gmpDt().
+        \Carbon\Carbon::macro('gmp', function () {
+            /** @var \Carbon\Carbon $this */
+            return strtoupper($this->format('d-M-Y'));
+        });
+        \Carbon\Carbon::macro('gmpDt', function () {
+            /** @var \Carbon\Carbon $this */
+            return strtoupper($this->format('d-M-Y')) . ' ' . $this->format('H:i');
+        });
+
         // Bind relay settings (Settings page) onto the live mail config at runtime.
         \App\Support\MailConfig::apply();
     }

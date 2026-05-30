@@ -129,7 +129,7 @@ class PublicController extends Controller
         );
 
         return redirect()->route('public.home')
-            ->with('flash', "Run-slot request submitted for {$slot->slot_date->format('d M Y')} in {$slot->cleanroom}. QC Micro will approve it.");
+            ->with('flash', "Run-slot request submitted for {$slot->slot_date->gmp()} in {$slot->cleanroom}. QC Micro will approve it.");
     }
 
     /** Dedicated page: all open gowning class sessions. */
@@ -201,7 +201,7 @@ class PublicController extends Controller
         ]);
 
         return redirect()->route('public.home')
-            ->with('flash', "You're signed up for {$session->trainingClass->name} on {$session->session_date->format('d M Y')}.");
+            ->with('flash', "You're signed up for {$session->trainingClass->name} on {$session->session_date->gmp()}.");
     }
 
     /** Self-registration form. */

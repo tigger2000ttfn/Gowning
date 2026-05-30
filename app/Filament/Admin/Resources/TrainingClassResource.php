@@ -100,8 +100,8 @@ class TrainingClassResource extends Resource
                             1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday',0=>'Sunday',
                         ])->default(2)->required()
                             ->helperText('For monthly, uses this weekday of the first matching week each month.'),
-                        DatePicker::make('start_date')->native(false)->displayFormat('d M Y')->label('Start Date')->required()->native(false),
-                        DatePicker::make('end_date')->native(false)->displayFormat('d M Y')->label('End Date')->required()->native(false),
+                        DatePicker::make('start_date')->native(false)->displayFormat('d-M-Y')->label('Start Date')->required()->native(false),
+                        DatePicker::make('end_date')->native(false)->displayFormat('d-M-Y')->label('End Date')->required()->native(false),
                         TimePicker::make('start_time')->native(false)->displayFormat('H:i')->seconds(false),
                         TimePicker::make('end_time')->native(false)->displayFormat('H:i')->seconds(false),
                         FormTextInput::make('location')->maxLength(255),

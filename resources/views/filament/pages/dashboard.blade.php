@@ -138,7 +138,7 @@
         </div>
         <div class="my-status-r">
             <span class="my-status-badge my-{{ $myQual->status }}">{{ str_replace('_',' ',$myQual->status instanceof \BackedEnum ? $myQual->status->value : $myQual->status) }}</span>
-            @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->format('d M Y') }}</span>@endif
+            @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->gmp() }}</span>@endif
         </div>
     </div>
 </div>
@@ -208,7 +208,7 @@
         <h3>Overdue Qualifications</h3>
         @forelse($overdueList as $q)
             <div class="dash-row"><span>{{ $q->personnel?->full_name ?? $q->personnel?->employee_id }}</span>
-                <span class="pill pill-red">{{ $q->due_date?->format('d M Y') }}</span></div>
+                <span class="pill pill-red">{{ $q->due_date?->gmp() }}</span></div>
         @empty<div class="dash-empty">No Overdue Qualifications.</div>@endforelse
     </div>
 
