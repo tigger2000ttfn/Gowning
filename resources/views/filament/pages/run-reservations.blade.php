@@ -31,8 +31,10 @@
                                     <td style="font-weight:600;">{{ $row['employee_id'] }}</td>
                                     <td>{{ $row['name'] }}</td>
                                     <td><span class="gqs-pill {{ [
-                                        'requested' => 'gqs-pill-purple', 'approved' => 'gqs-pill-green',
-                                    ][$row['status']] ?? 'gqs-pill-purple' }}">{{ ucwords(str_replace('_',' ',$row['status'])) }}</span></td>
+                                        'requested' => 'gqs-pill-gold', 'approved' => 'gqs-pill-purple',
+                                    ][$row['status']] ?? 'gqs-pill-purple' }}">{{ [
+                                        'requested' => 'Requested', 'approved' => 'Scheduled',
+                                    ][$row['status']] ?? ucwords(str_replace('_',' ',$row['status'])) }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         <button wire:click="openMove({{ $row['id'] }})" class="sb-act sb-act-magenta">Move</button>
                                         <button wire:click="askConfirm('reschedule', {{ $row['id'] }}, 'Reschedule Booking', 'Move {{ addslashes($row['name']) }} to the next available run day with an open seat?', 'Reschedule')" class="sb-act" style="background:#C79A2E;">Reschedule</button>

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Import Classroom Or LMS Data', 'icon' => 'heroicon-o-arrow-up-tray'])
+    @include('filament.page-hero', ['title' => 'Import LMS Data', 'icon' => 'heroicon-o-arrow-up-tray'])
 
     <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Import gowning-class completions exported from the LMS. Each row is matched to a person, recorded as a completion, and marks their class on file so they can start qualification runs. Bulk personnel loading is done separately by an administrator.</div>
 

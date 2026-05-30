@@ -33,8 +33,8 @@ class QualificationResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 6;
-    protected static ?string $navigationLabel = 'Active Qualifications';
-    protected static ?string $pluralModelLabel = 'Active Qualifications';
+    protected static ?string $navigationLabel = 'Active Runs';
+    protected static ?string $pluralModelLabel = 'Active Runs';
     protected static ?string $modelLabel = 'Qualification';
 
     /** This page is the live qualification picture: people due, in progress, lapsed, or

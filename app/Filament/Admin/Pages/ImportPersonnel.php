@@ -15,7 +15,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Import Classroom Or LMS Data.
+ * Import LMS Data.
  *
  * Imports gowning-class completion records exported from the LMS (CSV). Each row is matched
  * to a person by LIMS username, employee ID, or email, then recorded as a ClassCompletion and
@@ -39,8 +39,8 @@ class ImportPersonnel extends Page implements HasForms
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-arrow-up-tray';
     protected static string|\UnitEnum|null $navigationGroup = 'Data Import';
     protected static ?int $navigationSort = 0;
-    protected static ?string $navigationLabel = 'Import Classroom Or LMS Data';
-    protected static ?string $title = 'Import Classroom Or LMS Data';
+    protected static ?string $navigationLabel = 'Import LMS Data';
+    protected static ?string $title = 'Import LMS Data';
 
     protected string $view = 'filament.pages.import-personnel';
 

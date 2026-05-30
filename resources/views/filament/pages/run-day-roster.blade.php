@@ -145,9 +145,8 @@
             <select wire:model.live="resStatusFilter" class="gqs-fld" style="max-width:200px;">
                 <option value="">All Statuses</option>
                 <option value="requested">Requested</option>
-                <option value="approved">Approved</option>
+                <option value="approved">Scheduled</option>
                 <option value="completed">Completed</option>
-                <option value="no_show">No-Show</option>
             </select>
             <button type="button" wire:click="$set('showAddRes', true)"
                     style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
@@ -163,7 +162,7 @@
                     <span style="display:flex;align-items:center;gap:10px;">
                         <span style="font-size:12px;opacity:.9;">{{ count($g['rows']) }} booked</span>
                         @if($g['date'] !== 'unscheduled')
-                            <button type="button" wire:click="viewRoster('{{ $g['date'] }}')" class="rd-act rd-act-magenta">Attendance Sheet</button>
+                            <button type="button" wire:click="viewRoster('{{ $g['date'] }}')" class="rd-act" style="background:#fff;color:#A4123F;">Attendance Sheet</button>
                         @endif
                     </span>
                 </div>
@@ -172,20 +171,24 @@
                         <thead><tr><th>Employee ID</th><th>Name</th><th>Cleanroom</th><th>Time</th><th>Status</th><th></th></tr></thead>
                         <tbody>
                             @foreach($g['rows'] as $r)
+                                @php
+                                    $rsLabel = ['requested'=>'Requested','approved'=>'Scheduled','completed'=>'Completed','no_show'=>'No-Show','rescheduled'=>'Rescheduled','rejected'=>'Cancelled'][$r['status']] ?? ucfirst(str_replace('_',' ',$r['status']));
+                                    $rsPill = ['requested'=>'gqs-pill-gold','approved'=>'gqs-pill-purple','completed'=>'gqs-pill-green','no_show'=>'gqs-pill-red','rescheduled'=>'gqs-pill-gold','rejected'=>'gqs-pill-red'][$r['status']] ?? 'gqs-pill-purple';
+                                @endphp
                                 <tr>
                                     <td style="font-weight:600;">{{ $r['employee_id'] }}</td>
                                     <td>{{ $r['name'] }}</td>
                                     <td>{{ $r['cleanroom'] ?: '—' }}</td>
                                     <td>{{ $r['time'] ?? '—' }}</td>
-                                    <td><span class="gqs-pill {{ $r['status'] === 'completed' ? 'gqs-pill-green' : ($r['status'] === 'no_show' ? 'gqs-pill-red' : ($r['status'] === 'approved' ? 'gqs-pill-gold' : '')) }}">{{ ucfirst(str_replace('_',' ',$r['status'])) }}</span></td>
+                                    <td><span class="gqs-pill {{ $rsPill }}">{{ $rsLabel }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         @if($r['status'] === 'requested')
                                             <button wire:click="approveReservation({{ $r['id'] }})" class="rd-act rd-act-green">Approve</button>
                                         @endif
                                         @if(in_array($r['status'], ['requested','approved']))
                                             <button wire:click="openMoveRes({{ $r['id'] }})" class="rd-act" style="background:#1F6FB2;">Move</button>
-                                            <button wire:click="markNoShow({{ $r['id'] }})" wire:confirm="Mark as no-show? They will be returned for rebooking." class="rd-act" style="background:#C79A2E;">No-Show</button>
-                                            <button wire:click="cancelReservation({{ $r['id'] }})" wire:confirm="Remove this reservation entirely?" class="rd-act" style="background:#C8102E;">Remove</button>
+                                            <button wire:click="rosterReschedule({{ $r['id'] }})" wire:confirm="Reschedule to the next available run day?" class="rd-act" style="background:#C79A2E;">Reschedule</button>
+                                            <button wire:click="cancelReservation({{ $r['id'] }})" wire:confirm="Cancel this booking? They go back to the unscheduled queue to be rebooked." class="rd-act" style="background:#C8102E;">Cancel</button>
                                         @endif
                                     </td>
                                 </tr>
