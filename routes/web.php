@@ -17,6 +17,10 @@ Route::post('/classes/{session}/signup', [PublicController::class, 'storeSignup'
 Route::get('/runs/{slot}/signup', [PublicController::class, 'showRunSignup'])->name('public.run.signup');
 Route::post('/runs/{slot}/signup', [PublicController::class, 'storeRunSignup'])->name('public.run.signup.store');
 
+// Add-to-calendar (.ics) downloads for Outlook / Teams / Google / Apple
+Route::get('/runs/{slot}/calendar.ics', [PublicController::class, 'runIcs'])->name('public.run.ics');
+Route::get('/classes/{session}/calendar.ics', [PublicController::class, 'classIcs'])->name('public.class.ics');
+
 
 Route::view('/icon-options', 'public.icon-preview')->name('public.icons');
 

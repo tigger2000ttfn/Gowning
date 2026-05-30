@@ -204,4 +204,45 @@ class PublicController extends Controller
 
         return redirect()->route('public.home')->with('flash', $msg);
     }
+
+    public function runIcs(RunSlot $slot)
+    {
+        $start = \Carbon\Carbon::parse($slot->slot_date->toDateString() . ' ' . ($slot->start_time ?: '09:00'));
+        $end = $slot->end_time
+            ? \Carbon\Carbon::parse($slot->slot_date->toDateString() . ' ' . $slot->end_time)
+            : $start->copy()->addHour();
+        $ics = \App\Support\IcsBuilder::event(
+            'run-' . $slot->id,
+            'Cleanroom Gowning Qualification Run',
+            $start, $end,
+            'Your scheduled gowning qualification run. Arrive a few minutes early.',
+            $slot->cleanroom,
+            60, // 1-hour reminder baked into the calendar event
+        );
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="gowning-run.ics"',
+        ]);
+    }
+
+    public function classIcs(ClassSession $session)
+    {
+        $session->loadMissing('trainingClass');
+        $start = \Carbon\Carbon::parse($session->session_date->toDateString() . ' ' . ($session->start_time ?: '09:00'));
+        $end = $session->end_time
+            ? \Carbon\Carbon::parse($session->session_date->toDateString() . ' ' . $session->end_time)
+            : $start->copy()->addHours(2);
+        $ics = \App\Support\IcsBuilder::event(
+            'class-' . $session->id,
+            ($session->trainingClass?->name ?? 'Gowning Class'),
+            $start, $end,
+            'Your scheduled gowning class.',
+            $session->location,
+            60,
+        );
+        return response($ics, 200, [
+            'Content-Type' => 'text/calendar; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="gowning-class.ics"',
+        ]);
+    }
 }
