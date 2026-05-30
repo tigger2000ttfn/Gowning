@@ -17,7 +17,11 @@ git fetch origin main
 git reset --hard origin/main
 
 echo "==> Installing PHP dependencies"
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
+# If composer.json declares packages not in the lock file, sync the lock first.
+if ! COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader 2>/dev/null; then
+    echo "==> Lock file out of date or install failed; running composer update for declared packages"
+    COMPOSER_ALLOW_SUPERUSER=1 composer update --no-dev --optimize-autoloader
+fi
 
 echo "==> Running migrations"
 php artisan migrate --force
