@@ -92,8 +92,8 @@ class PublicController extends Controller
     {
         return Personnel::query()
             ->orderBy('last_name')->orderBy('first_name')
-            ->get(['first_name', 'last_name', 'email', 'employee_id'])
-            ->map(fn ($p) => ['f' => $p->first_name, 'l' => $p->last_name, 'e' => $p->email, 'id' => $p->employee_id])
+            ->get(['first_name', 'last_name', 'email', 'employee_id', 'department', 'job_title'])
+            ->map(fn ($p) => ['f' => $p->first_name, 'l' => $p->last_name, 'e' => $p->email, 'id' => $p->employee_id, 'd' => $p->department, 'j' => $p->job_title])
             ->values();
     }
 
@@ -107,21 +107,11 @@ class PublicController extends Controller
             'last_name'   => ['required', 'string', 'max:120'],
             'email'       => ['required', 'email', 'max:255'],
             'employee_id' => ['required', 'string', 'max:50'],
+            'department'  => ['nullable', 'string', 'max:120'],
+            'job_title'   => ['nullable', 'string', 'max:120'],
         ]);
 
-        // Resolve by Employee ID. If the person is not on the roster yet, create a
-        // pending (inactive) record from their self-identification; QC Micro verifies
-        // it when approving the request.
-        $person = Personnel::where('employee_id', $data['employee_id'])->first();
-        if (! $person) {
-            $person = Personnel::create([
-                'employee_id' => $data['employee_id'],
-                'first_name'  => $data['first_name'],
-                'last_name'   => $data['last_name'],
-                'email'       => $data['email'],
-                'is_active'   => false,
-            ]);
-        }
+        $person = $this->resolvePersonnel($data);
 
         Reservation::firstOrCreate(
             ['run_slot_id' => $slot->id, 'personnel_id' => $person->id],
@@ -177,18 +167,11 @@ class PublicController extends Controller
             'last_name'   => ['required', 'string', 'max:120'],
             'email'       => ['required', 'email', 'max:255'],
             'employee_id' => ['required', 'string', 'max:50'],
+            'department'  => ['nullable', 'string', 'max:120'],
+            'job_title'   => ['nullable', 'string', 'max:120'],
         ]);
 
-        $person = Personnel::where('employee_id', $data['employee_id'])->first();
-        if (! $person) {
-            $person = Personnel::create([
-                'employee_id' => $data['employee_id'],
-                'first_name'  => $data['first_name'],
-                'last_name'   => $data['last_name'],
-                'email'       => $data['email'],
-                'is_active'   => false,
-            ]);
-        }
+        $person = $this->resolvePersonnel($data);
 
         ClassEnrollment::create([
             'class_session_id' => $session->id,
@@ -204,36 +187,95 @@ class PublicController extends Controller
             ->with('flash', "You're signed up for {$session->trainingClass->name} on {$session->session_date->gmp()}.");
     }
 
+    /**
+     * Find a person by Employee ID or create a pending (inactive) record from their
+     * self-identification. Backfills any missing department/job-title/email so the
+     * record fills out as people self-identify; QC Micro verifies on approval.
+     */
+    protected function resolvePersonnel(array $data): Personnel
+    {
+        $person = Personnel::where('employee_id', $data['employee_id'])->first();
+        if (! $person) {
+            return Personnel::create([
+                'employee_id' => $data['employee_id'],
+                'first_name'  => $data['first_name'],
+                'last_name'   => $data['last_name'],
+                'email'       => $data['email'],
+                'department'  => $data['department'] ?? null,
+                'job_title'   => $data['job_title'] ?? null,
+                'is_active'   => false,
+            ]);
+        }
+        $fill = [];
+        foreach (['email' => 'email', 'department' => 'department', 'job_title' => 'job_title'] as $col => $key) {
+            if (trim((string) $person->{$col}) === '' && filled($data[$key] ?? null)) {
+                $fill[$col] = $data[$key];
+            }
+        }
+        if ($fill) $person->update($fill);
+        return $person;
+    }
+
     /** Self-registration form. */
     public function showRegister()
     {
-        return view('public.register');
+        return view('public.register', ['people' => $this->personnelOptions()]);
     }
 
     /**
      * Create a self-registered account in PENDING state.
      * Part 11: pending accounts cannot access the qualification system until an
-     * administrator approves them.
+     * administrator approves them. If the Employee ID matches a personnel record we
+     * link the account to it automatically; otherwise we create a pending personnel
+     * stub so an administrator can review and link/merge it.
      */
     public function storeRegister(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::min(10)->letters()->numbers()],
+            'employee_id' => ['required', 'string', 'max:50'],
+            'first_name'  => ['required', 'string', 'max:120'],
+            'last_name'   => ['required', 'string', 'max:120'],
+            'email'       => ['required', 'email', 'max:255', 'unique:users,email'],
+            'department'  => ['nullable', 'string', 'max:120'],
+            'job_title'   => ['nullable', 'string', 'max:120'],
+            'password'    => ['required', 'confirmed', Password::min(10)->letters()->numbers()],
         ]);
 
-        User::create([
-            'name' => $data['name'],
+        $autoApprove = (bool) \App\Models\Setting::get('auto_approve', false);
+
+        $user = User::create([
+            'name' => trim($data['first_name'] . ' ' . $data['last_name']),
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => \App\Enums\Role::Operator,
             'is_active' => true,
-            'approval_status' => \App\Models\Setting::get('auto_approve', false) ? 'approved' : 'pending',
-            'approved_at' => \App\Models\Setting::get('auto_approve', false) ? now() : null,
+            'approval_status' => $autoApprove ? 'approved' : 'pending',
+            'approved_at' => $autoApprove ? now() : null,
         ]);
 
-        $msg = \App\Models\Setting::get('auto_approve', false)
+        // Auto-link to an existing personnel record by Employee ID (A-number).
+        $person = Personnel::where('employee_id', $data['employee_id'])->first();
+        if ($person) {
+            $fill = ['user_id' => $user->id];
+            foreach (['email', 'department', 'job_title'] as $col) {
+                if (trim((string) $person->{$col}) === '' && filled($data[$col] ?? null)) $fill[$col] = $data[$col];
+            }
+            $person->update($fill);
+        } else {
+            // Pending stub for an administrator to verify/merge.
+            Personnel::create([
+                'employee_id' => $data['employee_id'],
+                'first_name'  => $data['first_name'],
+                'last_name'   => $data['last_name'],
+                'email'       => $data['email'],
+                'department'  => $data['department'] ?? null,
+                'job_title'   => $data['job_title'] ?? null,
+                'is_active'   => false,
+                'user_id'     => $user->id,
+            ]);
+        }
+
+        $msg = $autoApprove
             ? 'Account created. You can sign in now.'
             : 'Account requested. An administrator will approve your access shortly.';
 

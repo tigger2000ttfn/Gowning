@@ -121,6 +121,8 @@ class UserResource extends Resource
                 SelectFilter::make('approval_status')->options([
                     'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
                 ])->label('Approval Status'),
+                \Filament\Tables\Filters\Filter::make('unlinked')->label('Not Linked To Personnel')->toggle()
+                    ->query(fn ($query) => $query->whereDoesntHave('personnel')),
             ])
             ->recordActions([
                 Action::make('approve')->icon('heroicon-m-check')->color('success')
@@ -135,6 +137,22 @@ class UserResource extends Resource
                     ->action(function (User $u) {
                         $u->update(['approval_status' => 'rejected']);
                         Notification::make()->title('User rejected')->send();
+                    }),
+                Action::make('linkPersonnel')->label('Link Personnel')->icon('heroicon-m-link')->color('info')
+                    ->modalHeading(fn (User $u) => 'Link ' . $u->name . ' To A Personnel Record')
+                    ->modalSubmitActionLabel('Link')
+                    ->fillForm(fn (User $u) => ['personnel_id' => $u->personnel?->id])
+                    ->schema([
+                        Select::make('personnel_id')->label('Personnel Record')
+                            ->options(fn () => \App\Models\Personnel::orderBy('employee_id')->get()
+                                ->mapWithKeys(fn ($r) => [$r->id => "{$r->employee_id} · {$r->full_name}"]))
+                            ->searchable()->required()
+                            ->helperText('Choose the employee record this login belongs to.'),
+                    ])
+                    ->action(function (User $u, array $data) {
+                        \App\Models\Personnel::where('user_id', $u->id)->update(['user_id' => null]);
+                        \App\Models\Personnel::where('id', $data['personnel_id'])->update(['user_id' => $u->id]);
+                        Notification::make()->success()->title('Linked')->body($u->name . ' is now linked to the selected personnel record.')->send();
                     }),
                 EditAction::make(),
             ])
