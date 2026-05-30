@@ -18,6 +18,7 @@ enum WorkflowStage: string
     case ResultsReleased  = 'results_released';   // pass/fail entered + released
     case QaReview         = 'qa_review';          // in QA approval queue
     case QaSignoff        = 'qa_signoff';         // QA signed off = Completed
+    case Archived         = 'archived';           // fully done, queued to move into run history
     case Failed           = 'failed';             // failed run, needs QA determination
 
     public function label(): string
@@ -32,6 +33,7 @@ enum WorkflowStage: string
             self::ResultsReleased => 'Results Released',
             self::QaReview        => 'QA Review',
             self::QaSignoff       => 'QA Sign-off (Complete)',
+            self::Archived        => 'Archived',
             self::Failed          => 'Failed, QA Determination',
         };
     }
@@ -49,6 +51,7 @@ enum WorkflowStage: string
             self::ResultsReleased => '#0E8A6E',
             self::QaReview        => '#A4123F',
             self::QaSignoff       => '#2E7D5B',
+            self::Archived        => '#5A5A62',
             self::Failed          => '#C8102E',
         };
     }

@@ -70,31 +70,30 @@
                     </div>
                 </div>
             @endforeach
-        </div></div>
 
-        {{-- Archive swimlane (QA signed-off / complete), collapsed by default --}}
-        @php $archive = $this->getArchive(); @endphp
-        <div class="sb-archive" x-data="{ open: false }">
-            <button type="button" @click="open = !open" class="sb-archive-head">
-                <x-filament::icon icon="heroicon-m-archive-box" style="width:16px;height:16px;"/>
-                <span>{{ $archive['label'] }}</span>
-                <span class="sb-count" style="background:{{ $archive['color'] }};">{{ count($archive['cards']) }}</span>
-                <x-filament::icon icon="heroicon-m-chevron-down" style="width:15px;height:15px;margin-left:auto;" x-bind:style="open && 'transform:rotate(180deg)'"/>
-            </button>
-            <div x-show="open" x-transition x-cloak class="sb-archive-body">
-                @forelse($archive['cards'] as $card)
-                    <div class="sb-card sb-card-archived" data-id="{{ $card['id'] }}" style="border-left-color:{{ $archive['color'] }};">
-                        <div class="sb-card-body" wire:click="showDetail({{ $card['id'] }})" style="cursor:pointer;">
-                            <div class="sb-name">{{ $card['name'] }}</div>
-                            <div class="sb-meta">{{ $card['employee_id'] }}</div>
-                            @if($card['due'])<div class="sb-due">Due {{ $card['due'] }}</div>@endif
+            {{-- Archive: far-right collapsed lane (fully-done records; automation moves these to run history) --}}
+            @php $archive = $this->getArchive(); @endphp
+            <div class="sb-col sb-archive-col" x-data="{ open: false }" :class="open ? 'sb-archive-open' : ''">
+                <div class="sb-head sb-archive-head" style="background:{{ $archive['color'] }};" @click="open = !open">
+                    <span x-show="open" class="sb-head-label" x-cloak>{{ $archive['label'] }}</span>
+                    <span x-show="!open" class="sb-archive-vlabel">{{ $archive['label'] }}</span>
+                    <span class="sb-count">{{ count($archive['cards']) }}</span>
+                </div>
+                <div class="sb-lane" data-stage="archived" x-show="open" x-cloak>
+                    @forelse($archive['cards'] as $card)
+                        <div class="sb-card sb-card-archived" data-id="{{ $card['id'] }}" style="border-left-color:{{ $archive['color'] }};">
+                            <div class="sb-card-body" wire:click="showDetail({{ $card['id'] }})" style="cursor:pointer;">
+                                <div class="sb-name">{{ $card['name'] }}</div>
+                                <div class="sb-meta">{{ $card['employee_id'] }}</div>
+                                @if($card['due'])<div class="sb-due">Due {{ $card['due'] }}</div>@endif
+                            </div>
                         </div>
-                    </div>
-                @empty
-                    <div class="gqs-empty" style="padding:16px;">No qualified records yet.</div>
-                @endforelse
+                    @empty
+                        <div class="gqs-empty" style="padding:14px;font-size:12px;">Empty.</div>
+                    @endforelse
+                </div>
             </div>
-        </div>
+        </div></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
@@ -230,12 +229,11 @@
         .sb-head-grab:active{cursor:grabbing;}
         .sb-col-ghost{opacity:.5;}
 
-        /* Archive swimlane */
-        .sb-archive{margin:14px 32px 0;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;background:#fff;}
-        .dark .sb-archive{background:#1A1A20;border-color:#2A2A32;}
-        .sb-archive-head{display:flex;align-items:center;gap:9px;width:100%;padding:12px 16px;background:transparent;border:none;cursor:pointer;font-weight:700;font-size:13.5px;color:var(--gqs-text,#1A1A1F);text-align:left;}
-        .dark .sb-archive-head{color:#fff;}
-        .sb-archive-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;padding:0 16px 16px;}
+        /* Archive: far-right collapsed lane */
+        .sb-archive-col{flex:0 0 48px;transition:flex-basis .18s;}
+        .sb-archive-col.sb-archive-open{flex:0 0 230px;}
+        .sb-archive-head{cursor:pointer;}
+        .sb-archive-vlabel{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11.5px;letter-spacing:.04em;}
         .sb-card-archived{cursor:pointer;}
     </style>
 </x-filament-panels::page>

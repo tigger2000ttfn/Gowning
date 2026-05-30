@@ -58,7 +58,6 @@ class StatusBoard extends Page
             ->groupBy(fn ($q) => $q->workflow_stage?->value ?? 'class_pending');
 
         foreach (WorkflowStage::pipeline() as $stage) {
-            if ($stage === WorkflowStage::QaSignoff) continue; // lives in the Archive swimlane
             $cards = ($byStage[$stage->value] ?? collect())->map(fn ($q) => [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
@@ -100,11 +99,11 @@ class StatusBoard extends Page
         return $out;
     }
 
-    /** The QA-signed-off / completed cards, shown in a collapsed Archive swimlane. */
+    /** Fully-done (Archived) records, shown in a collapsed far-right Archive lane. */
     public function getArchive(): array
     {
         $signed = Qualification::with('personnel')
-            ->where('workflow_stage', WorkflowStage::QaSignoff->value)
+            ->where('workflow_stage', WorkflowStage::Archived->value)
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
             ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('first_name', 'ilike', '%' . $this->search . '%')
@@ -120,8 +119,8 @@ class StatusBoard extends Page
             ])->values()->all();
 
         return [
-            'label' => \App\Models\WorkflowStatus::labelFor('run', 'qa_signoff', 'Qualified (Archive)'),
-            'color' => \App\Models\WorkflowStatus::colorFor('run', 'qa_signoff', WorkflowStage::QaSignoff->color()),
+            'label' => \App\Models\WorkflowStatus::labelFor('run', 'archived', 'Archived'),
+            'color' => \App\Models\WorkflowStatus::colorFor('run', 'archived', WorkflowStage::Archived->color()),
             'cards' => $signed,
         ];
     }
