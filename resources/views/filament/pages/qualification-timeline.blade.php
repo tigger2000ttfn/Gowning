@@ -155,7 +155,6 @@
 
     <style>
         .tl-fullbleed{ margin:0 -32px; }
-        .fi-main:has(.tl-fullbleed){ padding-left:0 !important; padding-right:0 !important; max-width:none !important; }
         .tl-legend{ display:flex; align-items:center; gap:8px; padding:4px 32px 12px; flex-wrap:wrap; }
         .tl-chip{ display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:20px; border:1.5px solid var(--gqs-border,#DADADF); background:transparent; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--gqs-text-dim,#6A6A72); }
         .tl-chip i{ width:10px; height:10px; border-radius:50%; }
