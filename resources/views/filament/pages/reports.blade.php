@@ -40,7 +40,7 @@
 
     <div class="gqs-panel">
         <div class="gqs-panel-head" style="background:linear-gradient(135deg,#6B2C91,#4A1E66);">
-            <x-filament::icon icon="heroicon-m-clock"/> Upcoming — Next 60 Days
+            <x-filament::icon icon="heroicon-m-clock"/> Upcoming, Next 60 Days
         </div>
         <div class="gqs-panel-body">
             @if ($this->upcoming->isEmpty())<div class="gqs-empty">None Upcoming.</div>@else

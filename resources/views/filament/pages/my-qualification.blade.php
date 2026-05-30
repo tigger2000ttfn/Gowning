@@ -26,7 +26,7 @@
                 <span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span>
             </div>
             <div class="gqs-stat {{ $qualification?->isPastDue() ? 'red' : 'magenta' }}">
-                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->format('M j, Y') ?? '—' }}</div>
+                <div class="n" style="font-size:22px;">{{ $qualification?->due_date?->format('M j, Y') ?? '-' }}</div>
                 <div class="l">Due Date @if($qualification?->due_date)· {{ $qualification->isPastDue() ? 'Overdue' : 'Current' }}@endif</div>
                 <span class="wm"><x-filament::icon icon="heroicon-o-calendar-days"/></span>
             </div>

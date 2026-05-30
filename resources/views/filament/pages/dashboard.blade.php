@@ -182,7 +182,7 @@
             @forelse($day['events'] as $ev)
                 <div class="wk-ev {{ $ev['type'] }}">{{ \Illuminate\Support\Str::limit(\Illuminate\Support\Str::title($ev['label']), 22) }}</div>
             @empty
-                <div class="wk-empty">—</div>
+                <div class="wk-empty">-</div>
             @endforelse
         </div>
     @endforeach
