@@ -59,6 +59,10 @@ class QualificationRunResource extends Resource
                     ])->required(),
                     TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')
                         ->placeholder('Worklist / batch reference from LIMS'),
+                    TextInput::make('veeva_doc_number')->label('Veeva Document Number')
+                        ->placeholder('Veeva report / doc number'),
+                    TextInput::make('veeva_url')->label('Veeva Link')->url()
+                        ->placeholder('https://...')->helperText('Direct link for QA to review in Veeva.'),
                     Textarea::make('notes')->columnSpanFull(),
                 ]),
             Section::make('Electronic Signature (21 CFR Part 11)')->icon('heroicon-o-finger-print')
@@ -80,6 +84,8 @@ class QualificationRunResource extends Resource
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
                 TextColumn::make('run_date')->icon('heroicon-m-beaker')->date()->sortable(),
                 TextColumn::make('lims_worklist_id')->label('Worklist')->placeholder('-')->toggleable(),
+                TextColumn::make('veeva_doc_number')->label('Veeva')->placeholder('-')->toggleable()
+                    ->url(fn ($record) => $record->veeva_url)->openUrlInNewTab(),
                 TextColumn::make('result')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s === RunResult::Pass ? 'success' : 'danger'),

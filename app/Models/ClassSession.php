@@ -14,7 +14,7 @@ class ClassSession extends Model
 
     protected $fillable = [
         'training_class_id', 'session_date', 'start_time', 'end_time',
-        'location', 'instructor', 'capacity', 'status',
+        'location', 'instructor', 'capacity', 'status', 'assigned_instructor_id',
     ];
 
     protected function casts(): array
@@ -44,4 +44,6 @@ class ClassSession extends Model
     {
         return $this->status === 'open' && $this->seatsLeft() > 0 && !$this->session_date->isPast();
     }
+
+    public function instructorUser() { return $this->belongsTo(\App\Models\User::class, 'assigned_instructor_id'); }
 }

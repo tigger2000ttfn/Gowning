@@ -34,7 +34,7 @@ class QualificationRun extends Model
         'personnel_id', 'qualification_id', 'run_slot_id', 'reservation_id',
         'run_date', 'result', 'cycle_type', 'notes', 'recorded_by',
         'signed_by', 'signed_at', 'signature_meaning',
-        'lims_worklist_id', 'results_entered_at', 'incubation_started_at', 'results_released_at', 'qa_signed_at', 'qa_signed_by', 'qa_notes',
+        'lims_worklist_id', 'veeva_doc_number', 'veeva_url', 'results_entered_at', 'incubation_started_at', 'results_released_at', 'qa_signed_at', 'qa_signed_by', 'qa_notes',
     ];
 
     protected function casts(): array

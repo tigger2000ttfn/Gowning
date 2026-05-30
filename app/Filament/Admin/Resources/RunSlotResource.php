@@ -45,6 +45,11 @@ class RunSlotResource extends Resource
                 TextInput::make('capacity')->numeric()->minValue(1)->default(1)->required(),
                 TimePicker::make('start_time'),
                 TimePicker::make('end_time'),
+                Select::make('assigned_analyst_id')->label('Assigned QC Micro Analyst')
+                    ->options(fn () => \App\Models\User::where('is_active', true)->get()
+                        ->filter(fn ($u) => $u->hasCapability(\App\Enums\Capability::RecordRuns) || $u->hasCapability(\App\Enums\Capability::ManageScheduling))
+                        ->pluck('name', 'id')->all())
+                    ->searchable()->placeholder('Unassigned'),
                 Textarea::make('notes')->columnSpanFull(),
             ]),
         ]);
@@ -58,6 +63,7 @@ class RunSlotResource extends Resource
                 TextColumn::make('cleanroom')->icon('heroicon-m-home-modern')->searchable(),
                 TextColumn::make('start_time')->time('H:i')->placeholder('—'),
                 TextColumn::make('capacity'),
+                TextColumn::make('analyst.name')->label('Analyst')->placeholder('Unassigned')->icon('heroicon-m-user'),
                 TextColumn::make('reservations_count')->counts('reservations')->label('Requests'),
                 TextColumn::make('status')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())

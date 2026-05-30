@@ -46,6 +46,13 @@
     }
     if ($admin) $sections[] = ['Setup & Settings', $admin];
 
+    // Team & Assignments (managers)
+    $team = [];
+    if ($can(\App\Enums\Capability::ManageScheduling)) {
+        $team[] = ['QCM Team View', \App\Filament\Admin\Pages\QcmTeamView::getUrl(), 'heroicon-o-user-group'];
+    }
+    if ($team) $sections[] = ['Team & Assignments', $team];
+
     // Compliance (rare but important)
     $compliance = [];
     if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::SystemSettings)) {

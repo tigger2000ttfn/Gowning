@@ -13,17 +13,29 @@
         </div>
         <div class="gqs-panel-body">
             @forelse ($queue as $q)
+                @php $latestRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->latest('id')->first(); @endphp
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                     <div>
                         <div style="font-weight:700;color:var(--gqs-text,#1A1A1F);">{{ $q->personnel?->full_name ?? 'Unknown' }}</div>
-                        <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">{{ $q->personnel?->employee_id }} · {{ $q->runs_completed }}/{{ $q->runs_required }} runs · {{ $q->workflow_stage?->label() }}</div>
+                        <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
+                            {{ $q->personnel?->employee_id }} · {{ $q->runs_completed }}/{{ $q->runs_required }} runs · {{ $q->workflow_stage?->label() }}
+                            @if($latestRun?->veeva_doc_number)
+                                · @if($latestRun->veeva_url)<a href="{{ $latestRun->veeva_url }}" target="_blank" style="color:#A4123F;font-weight:700;">Veeva {{ $latestRun->veeva_doc_number }} ↗</a>@else Veeva {{ $latestRun->veeva_doc_number }} @endif
+                            @endif
+                        </div>
                     </div>
-                    @if($canApprove)
-                        <div style="white-space:nowrap;">
+                    <div style="display:flex;align-items:center;gap:10px;white-space:nowrap;">
+                        <select wire:change="assignOwner({{ $q->id }}, $event.target.value)" style="font-size:12px;padding:5px 8px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:7px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
+                            <option value="">Owner: Unassigned</option>
+                            @foreach($this->qaReviewers() as $uid => $uname)
+                                <option value="{{ $uid }}" @selected($q->qa_owner_id == $uid)>{{ $uname }}</option>
+                            @endforeach
+                        </select>
+                        @if($canApprove)
                             {{ ($this->signOffAction)(['id' => $q->id]) }}
                             <button wire:click="markFailed({{ $q->id }})" class="sb-act sb-act-red">Fail</button>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             @empty<div class="gqs-empty">Nothing Awaiting Sign-off.</div>@endforelse
         </div>

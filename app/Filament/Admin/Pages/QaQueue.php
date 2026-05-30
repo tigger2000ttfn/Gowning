@@ -37,7 +37,7 @@ class QaQueue extends Page
 
     public function getQueue()
     {
-        return Qualification::with('personnel')
+        return Qualification::with('personnel', 'qaOwner')
             ->whereIn('workflow_stage', [WorkflowStage::QaReview->value, WorkflowStage::ResultsReleased->value])
             ->orderBy('stage_changed_at')
             ->get();
@@ -222,6 +222,23 @@ class QaQueue extends Page
                     ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run')
                         . ($retrain ? ' + class retraining.' : '.') . $bookedMsg)->send();
             });
+    }
+
+    /** Staff who can be assigned ownership of approvals (QA reviewers/approvers). */
+    public function qaReviewers(): array
+    {
+        return \App\Models\User::where('is_active', true)->get()
+            ->filter(fn ($u) => $u->hasCapability(Capability::QaReview) || $u->hasCapability(Capability::QaApprove))
+            ->pluck('name', 'id')->all();
+    }
+
+    public function assignOwner(int $id, $userId): void
+    {
+        $q = Qualification::find($id);
+        if (! $q) return;
+        $q->qa_owner_id = $userId ?: null;
+        $q->save();
+        Notification::make()->success()->title('Owner assigned')->send();
     }
 
     public function markFailed(int $id): void

@@ -15,7 +15,7 @@ class RunSlot extends Model
 
     protected $fillable = [
         'cleanroom', 'slot_date', 'start_time', 'end_time',
-        'capacity', 'status', 'notes', 'created_by',
+        'capacity', 'status', 'notes', 'created_by', 'assigned_analyst_id',
     ];
 
     protected function casts(): array
@@ -48,4 +48,6 @@ class RunSlot extends Model
     {
         return $this->approvedCount() < $this->capacity;
     }
+
+    public function analyst() { return $this->belongsTo(\App\Models\User::class, 'assigned_analyst_id'); }
 }
