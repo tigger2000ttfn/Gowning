@@ -15,6 +15,7 @@ class ClassEnrollment extends Model
         'class_session_id', 'personnel_id', 'name', 'email',
         'employee_id', 'status', 'signed_up_at',
         'attended_at', 'completed_at', 'marked_by', 'attendance_note',
+        'qa_completed_by', 'qa_completed_at',
     ];
 
     /**
@@ -33,14 +34,19 @@ class ClassEnrollment extends Model
         if ($status === 'completed') {
             if (! $this->attended_at) $this->attended_at = now();
             $this->completed_at = now();
+            $this->qa_completed_by = $byUserId;
+            $this->qa_completed_at = now();
         }
         $this->save();
 
-        // attended or completed = class done; advance the qualification
-        if (in_array($status, ['attended', 'completed'], true) && $this->personnel) {
+        // Only QA 'completed' (QA reviewed the signed classroom form) makes the class
+        // official: class on file, a ClassCompletion record, and the person becomes
+        // eligible to start qual runs (advance to Class Complete). 'attended' is just the
+        // trainer's attendance mark and does NOT make them run-eligible.
+        if ($status === 'completed' && $this->personnel) {
             $q = \App\Models\Qualification::firstOrCreate(
                 ['personnel_id' => $this->personnel->id],
-                ['type' => 'initial', 'status' => 'in_progress',
+                ['type' => 'initial', 'status' => 'pending',
                  'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3),
                  'runs_completed' => 0]
             );
@@ -51,6 +57,22 @@ class ClassEnrollment extends Model
                 $q->stage_changed_at = now();
             }
             $q->save();
+
+            // Create the specific ClassCompletion record (its own record; QA-approved).
+            $exists = \App\Models\ClassCompletion::where('personnel_id', $this->personnel->id)
+                ->where('class_name', $this->classSession?->trainingClass?->name ?? 'Gowning Class')
+                ->whereDate('completion_date', $this->completed_at?->toDateString())
+                ->exists();
+            if (! $exists) {
+                \App\Models\ClassCompletion::create([
+                    'personnel_id' => $this->personnel->id,
+                    'employee_id' => $this->personnel->employee_id,
+                    'class_name' => $this->classSession?->trainingClass?->name ?? 'Gowning Class',
+                    'completion_date' => $this->completed_at?->toDateString() ?? now()->toDateString(),
+                    'source' => 'manual',
+                ]);
+            }
+
             \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::ClassCompleted, ['personnel' => $this->personnel, 'qualification' => $q]);
         }
     }

@@ -32,8 +32,8 @@ class ClassBoard extends Page
 
     public array $lanes = [
         'signed_up' => ['label' => 'Signed Up', 'color' => '#1F6FB2'],
-        'attended'  => ['label' => 'Attended',  'color' => '#C79A2E'],
-        'completed' => ['label' => 'Completed', 'color' => '#2E7D5B'],
+        'attended'  => ['label' => 'Attended (Trainer)',  'color' => '#C79A2E'],
+        'completed' => ['label' => 'Completed (QA Approved)', 'color' => '#2E7D5B'],
         'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
     ];
 

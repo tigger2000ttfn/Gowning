@@ -33,7 +33,7 @@ class Qualification extends Model
     protected $fillable = [
         'personnel_id', 'type', 'status', 'runs_required',
         'runs_completed', 'qualified_date', 'due_date',
-        'workflow_stage', 'stage_changed_at', 'qa_recommendation', 'qa_recommendation_note', 'class_on_file', 'class_on_file_date', 'qa_owner_id', 'cycle_started_at', 'archived_at', 'pending_parent_run_id',
+        'workflow_stage', 'stage_changed_at', 'qa_recommendation', 'qa_recommendation_note', 'class_on_file', 'class_on_file_date', 'qa_owner_id', 'cycle_started_at', 'archived_at', 'pending_parent_run_id', 'lims_worklist_id',
     ];
 
     protected function casts(): array

@@ -40,8 +40,6 @@ class RunDayRoster extends Page
 
     // Per-reservation LIMS worklist inputs on the Attendance tab (keyed by reservation id).
     public array $worklists = [];
-    // Quick "apply to all" worklist value for a run day.
-    public string $bulkWorklist = '';
 
     /** Force an EM- prefix and trim; empty stays empty. */
     public function normalizeWorklist(?string $v): string
@@ -56,7 +54,11 @@ class RunDayRoster extends Page
         return $v;
     }
 
-    /** Save a single attendee's worklist without marking present (e.g. pre-entering). */
+    /**
+     * Save a person's LIMS worklist. Each person has ONE unique worklist for their whole
+     * qualification cycle (all 3 or 1 runs batch onto it in LIMS), so it lives on the
+     * qualification and propagates to this reservation and every run in the current cycle.
+     */
     public function saveWorklist(int $reservationId): void
     {
         $res = Reservation::find($reservationId);
@@ -64,24 +66,18 @@ class RunDayRoster extends Page
         $wl = $this->normalizeWorklist($this->worklists[$reservationId] ?? '');
         $res->update(['lims_worklist_id' => $wl]);
         $this->worklists[$reservationId] = $wl;
-    }
 
-    /** Apply one EM- worklist to every attendee on the given run day (quick entry). */
-    public function applyWorklistToAll(int $slotId): void
-    {
-        $wl = $this->normalizeWorklist($this->bulkWorklist);
-        if ($wl === '') {
-            Notification::make()->warning()->title('Enter a worklist first')->send();
-            return;
+        // store on the qualification (the per-person cycle worklist) and stamp all cycle runs
+        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        if ($q) {
+            $q->lims_worklist_id = $wl;
+            $q->save();
+            $runsQuery = \App\Models\QualificationRun::where('personnel_id', $res->personnel_id);
+            if ($q->cycle_started_at) {
+                $runsQuery->whereDate('run_date', '>=', $q->cycle_started_at);
+            }
+            $runsQuery->update(['lims_worklist_id' => $wl]);
         }
-        $slot = RunSlot::with('reservations')->find($slotId);
-        if (! $slot) return;
-        foreach ($slot->reservations as $res) {
-            $res->update(['lims_worklist_id' => $wl]);
-            $this->worklists[$res->id] = $wl;
-        }
-        $this->bulkWorklist = '';
-        Notification::make()->success()->title('Worklist applied to all attendees')->body($wl)->send();
     }
 
 
@@ -494,6 +490,16 @@ class RunDayRoster extends Page
         $res = Reservation::with('personnel')->find($reservationId);
         if (! $res || ! $res->personnel) {
             Notification::make()->danger()->title('Reservation not found')->send();
+            return;
+        }
+        // GATE: classroom training must be QA-completed (class on file) before a person can
+        // actually perform a qualification run. They are allowed to book a slot beforehand,
+        // but cannot be marked present until QA has signed off the classroom training.
+        $q = \App\Models\Qualification::where('personnel_id', $res->personnel_id)->first();
+        if (! $q || ! $q->class_on_file) {
+            Notification::make()->warning()->title('Classroom training not completed')
+                ->body($res->personnel->full_name . ' cannot perform a run until their gowning class is QA-approved (Completed) on the Class Board. They may stay booked until then.')
+                ->persistent()->send();
             return;
         }
         // Require a LIMS worklist (EM-...) before the run can be marked performed.

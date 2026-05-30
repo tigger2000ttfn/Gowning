@@ -291,14 +291,7 @@
                 </div>
                 <div class="gqs-panel-body">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
-                        <div style="display:flex;align-items:end;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-                            <div>
-                                <label class="gqs-flbl">Apply One LIMS Worklist To All</label>
-                                <input type="text" wire:model="bulkWorklist" placeholder="EM-..." class="gqs-fld" style="max-width:220px;">
-                            </div>
-                            <button type="button" wire:click="applyWorklistToAll({{ $slot->id }})" class="rd-act rd-act-magenta" style="height:38px;">Apply To All</button>
-                            <span style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Worklists always start with EM-. Each attendee needs one before being marked present.</span>
-                        </div>
+                        <div style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:10px;">Each person has their own unique LIMS worklist (EM-...); all of that person's runs batch onto it. Enter it once and it carries across their runs. Required before marking present.</div>
                         <table class="gqs-tbl">
                             <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>LIMS Worklist</th><th>Attendance</th><th>Runs</th><th>Actions</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
@@ -309,8 +302,8 @@
                                     $required = max(1, (int) ($rq->runs_required ?? 1));
                                     $readyForResults = $rq && $rq->workflow_stage === \App\Enums\WorkflowStage::AwaitingResults;
                                     $st = $res->status instanceof \BackedEnum ? $res->status->value : $res->status;
-                                    if (! array_key_exists($res->id, $this->worklists) && $res->lims_worklist_id) {
-                                        $this->worklists[$res->id] = $res->lims_worklist_id;
+                                    if (! array_key_exists($res->id, $this->worklists)) {
+                                        $this->worklists[$res->id] = $res->lims_worklist_id ?: ($rq?->lims_worklist_id ?: '');
                                     }
                                 @endphp
                                 <tr>
