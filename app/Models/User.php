@@ -35,7 +35,7 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name', 'email', 'password', 'role', 'is_active',
         'approval_status', 'approved_at', 'approved_by',
-        'team', 'is_team_manager',
+        'team', 'is_team_manager', 'reminder_days_before',
     ];
 
     protected $hidden = [

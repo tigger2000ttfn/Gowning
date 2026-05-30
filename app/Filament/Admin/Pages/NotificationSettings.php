@@ -19,9 +19,11 @@ class NotificationSettings extends Page
 
     /** @var array<string, array{in_app:bool,email:bool}> */
     public array $prefs = [];
+    public int $reminderDays = 2;
 
     public function mount(): void
     {
+        $this->reminderDays = (int) (Auth::user()?->reminder_days_before ?? 2);
         $existing = NotificationPreference::where('user_id', Auth::id())->get()->keyBy('event');
         foreach (NotificationEvent::cases() as $e) {
             $row = $existing->get($e->value);
@@ -45,6 +47,11 @@ class NotificationSettings extends Page
                 ['user_id' => Auth::id(), 'event' => $event],
                 ['in_app' => (bool) ($channels['in_app'] ?? false), 'email' => (bool) ($channels['email'] ?? false)]
             );
+        }
+        $u = Auth::user();
+        if ($u) {
+            $u->reminder_days_before = max(0, min(60, (int) $this->reminderDays));
+            $u->save();
         }
         \Filament\Notifications\Notification::make()->success()->title('Notification settings saved')->send();
     }
