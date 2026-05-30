@@ -256,6 +256,16 @@ class ClassBoard extends Page
         if (! array_key_exists($toStatus, $this->lanes) && $toStatus !== 'historical') {
             return;
         }
+        // Attendance and completion are GMP-gated: they are recorded by submitting the
+        // attendance sheet (trainer e-signature -> Pending QA) and QA approval (-> Completed),
+        // never by dragging a card. The board reflects those statuses; it does not set them.
+        if (in_array($toStatus, ['attended', 'pending_qa', 'completed'], true)) {
+            \Filament\Notifications\Notification::make()->warning()
+                ->title('Set Through Attendance and QA')
+                ->body('Attendance and completion are recorded by submitting the attendance sheet (with the trainer e-signature) and QA approval, not by dragging a card.')
+                ->send();
+            return;
+        }
         $e = ClassEnrollment::with('personnel')->find($id);
         if (! $e) {
             return;
