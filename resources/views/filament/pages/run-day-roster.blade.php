@@ -1,59 +1,43 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Qualification Run Day', 'subtitle' => 'Who's scheduled for each run slot.', 'icon' => 'heroicon-o-clipboard-document-list'])
+    @include('filament.page-hero', ['title' => 'Qualification Run Day', 'subtitle' => "Who's scheduled for each run slot.", 'icon' => 'heroicon-o-clipboard-document-list'])
+
     <div style="margin-bottom:18px;max-width:260px;">
-        <label style="font-weight:600;font-size:13px;display:block;margin-bottom:6px;">Select date</label>
+        <label style="font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);display:block;margin-bottom:6px;">Select Date</label>
         <input type="date" wire:model.live="date"
-               style="width:100%;padding:9px 12px;border:1px solid #C4C4CC;border-radius:9px;">
+               style="width:100%;padding:10px 12px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);">
     </div>
 
     @php $slots = $this->slots; @endphp
 
     @if ($slots->isEmpty())
-        <x-filament::section>
-            <p style="color:var(--gray-500)">No qualification run slots scheduled for this date.</p>
-        </x-filament::section>
+        <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No Qualification Run Slots Scheduled For This Date.</div></div>
     @else
         @foreach ($slots as $slot)
-            <x-filament::section style="margin-bottom:16px;">
-                <x-slot name="heading">
-                    {{ $slot->cleanroom }}
-                    @if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }} @endif
-                </x-slot>
-                <x-slot name="description">
-                    {{ $slot->reservations->count() }} attending · capacity {{ $slot->capacity }}
-                </x-slot>
-
-                @if ($slot->reservations->isEmpty())
-                    <p style="color:var(--gray-500)">No one scheduled yet.</p>
-                @else
-                    <table style="width:100%;border-collapse:collapse;font-size:14px;">
-                        <thead>
-                            <tr style="text-align:left;border-bottom:2px solid #A4123F;">
-                                <th style="padding:8px;">#</th>
-                                <th style="padding:8px;">Employee ID</th>
-                                <th style="padding:8px;">Name</th>
-                                <th style="padding:8px;">Status</th>
-                                <th style="padding:8px;">Sampling (fingers / chest / forearms)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($slot->reservations as $i => $res)
-                                <tr style="border-bottom:1px solid #E0E0E6;">
-                                    <td style="padding:8px;">{{ $i + 1 }}</td>
-                                    <td style="padding:8px;font-weight:600;">{{ $res->personnel?->employee_id }}</td>
-                                    <td style="padding:8px;">{{ $res->personnel?->full_name }}</td>
-                                    <td style="padding:8px;">
-                                        <span style="font-size:12px;font-weight:600;color:{{ $res->status === 'completed' ? '#2E7D5B' : '#B8860B' }};">
-                                            {{ ucfirst($res->status) }}
-                                        </span>
-                                    </td>
-                                    <td style="padding:8px;color:#9A9AA2;">☐ &nbsp; ☐ &nbsp; ☐</td>
+            <div class="gqs-panel">
+                <div class="gqs-panel-head" style="justify-content:space-between;">
+                    <span style="display:flex;align-items:center;gap:9px;">
+                        <x-filament::icon icon="heroicon-m-beaker"/>
+                        {{ $slot->cleanroom }}@if($slot->start_time) · {{ \Illuminate\Support\Carbon::parse($slot->start_time)->format('g:i A') }}@endif
+                    </span>
+                    <span style="font-size:12px;font-weight:600;opacity:.92;">{{ $slot->reservations->count() }} attending · cap {{ $slot->capacity }}</span>
+                </div>
+                <div class="gqs-panel-body">
+                    @if ($slot->reservations->isEmpty())<div class="gqs-empty">No One Scheduled Yet.</div>@else
+                        <table class="gqs-tbl">
+                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Sampling (Fingers / Chest / Forearms)</th></tr></thead>
+                            <tbody>@foreach ($slot->reservations as $i => $res)
+                                <tr>
+                                    <td>{{ $i + 1 }}</td>
+                                    <td style="font-weight:600;">{{ $res->personnel?->employee_id }}</td>
+                                    <td>{{ $res->personnel?->full_name }}</td>
+                                    <td><span class="gqs-pill {{ $res->status === 'completed' ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ ucfirst($res->status) }}</span></td>
+                                    <td style="color:#9A9AA2;font-size:16px;letter-spacing:6px;">☐ ☐ ☐</td>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </x-filament::section>
+                            @endforeach</tbody>
+                        </table>
+                    @endif
+                </div>
+            </div>
         @endforeach
     @endif
 </x-filament-panels::page>
