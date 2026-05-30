@@ -24,14 +24,14 @@
                 <div class="gqs-panel-body">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No One Scheduled Yet.</div>@else
                         <table class="gqs-tbl">
-                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Sampling (Fingers / Chest / Forearms)</th></tr></thead>
+                            <thead><tr><th>#</th><th>Employee ID</th><th>Name</th><th>Status</th><th>Sampling</th></tr></thead>
                             <tbody>@foreach ($slot->reservations as $i => $res)
                                 <tr>
                                     <td>{{ $i + 1 }}</td>
                                     <td style="font-weight:600;">{{ $res->personnel?->employee_id }}</td>
                                     <td>{{ $res->personnel?->full_name }}</td>
                                     <td><span class="gqs-pill {{ $res->status === 'completed' ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ ucfirst($res->status) }}</span></td>
-                                    <td style="color:#9A9AA2;font-size:16px;letter-spacing:6px;">☐ ☐ ☐</td>
+                                    <td>{{ ($this->recordSamplesAction)(['reservation_id' => $res->id]) }}</td>
                                 </tr>
                             @endforeach</tbody>
                         </table>
@@ -40,4 +40,6 @@
             </div>
         @endforeach
     @endif
+
+    <x-filament-actions::modals />
 </x-filament-panels::page>
