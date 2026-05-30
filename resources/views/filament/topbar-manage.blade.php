@@ -51,6 +51,9 @@
     if ($can(\App\Enums\Capability::ManageScheduling)) {
         $team[] = ['QCM Team View', \App\Filament\Admin\Pages\QcmTeamView::getUrl(), 'heroicon-o-user-group'];
     }
+    if ($can(\App\Enums\Capability::QaReview) || $can(\App\Enums\Capability::QaApprove)) {
+        $team[] = ['QA Team View', \App\Filament\Admin\Pages\QaTeamView::getUrl(), 'heroicon-o-clipboard-document-check'];
+    }
     if ($team) $sections[] = ['Team & Assignments', $team];
 
     // Compliance (rare but important)
