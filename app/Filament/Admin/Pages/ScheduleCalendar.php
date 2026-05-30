@@ -21,8 +21,8 @@ class ScheduleCalendar extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
     protected static ?string $navigationLabel = 'Schedule Calendar';
-    protected static string|\UnitEnum|null $navigationGroup = 'Scheduling';
-    protected static ?int $navigationSort = 4;
+    protected static string|\UnitEnum|null $navigationGroup = null;
+    protected static ?int $navigationSort = 1;
     protected static ?string $title = 'Schedule Calendar';
     public function getHeading(): string { return ''; }
 

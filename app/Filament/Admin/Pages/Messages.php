@@ -26,7 +26,7 @@ class Messages extends Page
     public string $body = '';
     public ?int $replyTo = null;
 
-    public static function shouldRegisterNavigation(): bool { return true; }
+    public static function shouldRegisterNavigation(): bool { return false; } // accessed via topbar inbox icon; Schedule Calendar takes the sidebar slot
 
     public static function getNavigationBadge(): ?string
     {
