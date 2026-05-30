@@ -81,6 +81,25 @@
                     </div>
                 </div>
             @endforeach
+
+            {{-- Archive: far-right collapsed lane (completed enrollments) --}}
+            @php $archive = $this->getArchive(); @endphp
+            <div class="kanban-col cb-archive-col" x-data="{ open: false }" :class="open ? 'cb-archive-open' : ''">
+                <div class="kanban-head cb-archive-head" style="background:{{ $archive['color'] }};" @click="open = !open">
+                    <span x-show="open" x-cloak>{{ $archive['label'] }}</span>
+                    <span x-show="!open" class="cb-archive-vlabel">{{ $archive['label'] }}</span>
+                    <span class="kanban-count">{{ count($archive['cards']) }}</span>
+                </div>
+                <div class="kanban-lane" data-lane="completed" x-show="open" x-cloak>
+                    @foreach ($archive['cards'] as $card)
+                        <div class="kanban-card" data-id="{{ $card['id'] }}" style="border-left-color:{{ $archive['color'] }};">
+                            <div class="kanban-name">{{ $card['name'] }}</div>
+                            <div class="kanban-meta">{{ $card['employee_id'] }}</div>
+                            @if($card['class'])<div class="kanban-slot">{{ $card['class'] }}@if($card['date']) · {{ $card['date'] }}@endif</div>@endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         </div></div>
     </div>
 
@@ -117,7 +136,11 @@
     <style>
         .sb-fullbleed{width:100%;}
         .kanban-wrap{display:flex;gap:14px;overflow-x:auto;padding:0 32px 12px;align-items:stretch;min-height:calc(100vh - 260px);}
-        .kanban-col{flex:0 0 250px;display:flex;flex-direction:column;}
+        .kanban-col{flex:0 0 320px;display:flex;flex-direction:column;}
+        .cb-archive-col{flex:0 0 48px;transition:flex-basis .18s;}
+        .cb-archive-col.cb-archive-open{flex:0 0 300px;}
+        .cb-archive-head{cursor:pointer;}
+        .cb-archive-vlabel{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:11.5px;letter-spacing:.04em;}
         .kanban-lane{flex:1;}
         .kanban-col{background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:10px;min-height:120px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
         .dark .kanban-col{background:#1A1A20;border-color:#2A2A32;}

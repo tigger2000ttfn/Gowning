@@ -33,9 +33,28 @@ class ClassBoard extends Page
     public array $lanes = [
         'signed_up' => ['label' => 'Signed Up', 'color' => '#1F6FB2'],
         'attended'  => ['label' => 'Attended',  'color' => '#C79A2E'],
-        'completed' => ['label' => 'Completed',  'color' => '#2E7D5B'],
         'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
     ];
+
+    /** Completed enrollments, shown in a collapsed far-right Archive lane. */
+    public function getArchive(): array
+    {
+        $cards = ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
+            ->where('status', 'completed')
+            ->latest('updated_at')->get()
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
+                'employee_id' => $e->employee_id,
+                'class' => $e->classSession?->trainingClass?->name,
+                'date' => $e->classSession?->session_date?->format('M j'),
+            ])->values()->all();
+        return [
+            'label' => \App\Models\WorkflowStatus::labelFor('class', 'completed', 'Completed'),
+            'color' => \App\Models\WorkflowStatus::colorFor('class', 'completed', '#2E7D5B'),
+            'cards' => $cards,
+        ];
+    }
 
     public function getColumns(): array
     {
@@ -117,7 +136,7 @@ class ClassBoard extends Page
                 'name' => $person?->full_name,
                 'email' => $person?->email,
                 'employee_id' => $person?->employee_id,
-                'status' => 'enrolled',
+                'status' => 'signed_up',
                 'signed_up_at' => now(),
             ]
         );
@@ -128,7 +147,8 @@ class ClassBoard extends Page
 
     public function moveCard(int $id, string $toStatus): void
     {
-        if (! array_key_exists($toStatus, $this->lanes)) {
+        // active lanes + the Archive (completed) lane
+        if (! array_key_exists($toStatus, $this->lanes) && $toStatus !== 'completed') {
             return;
         }
         $e = ClassEnrollment::with('personnel')->find($id);
