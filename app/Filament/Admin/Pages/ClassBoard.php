@@ -77,6 +77,51 @@ class ClassBoard extends Page
 
     public function closeDetail(): void { $this->detail = null; }
 
+    // Manual add-enrollment (analyst books a person into a class session)
+    public bool $showAdd = false;
+    public ?int $addSessionId = null;
+    public ?int $addPersonnelId = null;
+
+    public function openSessions(): array
+    {
+        return \App\Models\ClassSession::with('trainingClass')
+            ->where('status', 'open')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')->get()
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')])
+            ->all();
+    }
+
+    public function bookablePersonnel(): array
+    {
+        return \App\Models\Personnel::where('is_active', true)
+            ->orderBy('last_name')->orderBy('first_name')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => $p->full_name . ' (' . $p->employee_id . ')'])
+            ->all();
+    }
+
+    public function addEnrollment(): void
+    {
+        if (! $this->addSessionId || ! $this->addPersonnelId) {
+            \Filament\Notifications\Notification::make()->danger()->title('Pick a person and a session')->send();
+            return;
+        }
+        $person = \App\Models\Personnel::find($this->addPersonnelId);
+        ClassEnrollment::firstOrCreate(
+            ['class_session_id' => $this->addSessionId, 'personnel_id' => $this->addPersonnelId],
+            [
+                'name' => $person?->full_name,
+                'email' => $person?->email,
+                'employee_id' => $person?->employee_id,
+                'status' => 'enrolled',
+                'signed_up_at' => now(),
+            ]
+        );
+        $this->showAdd = false;
+        $this->addPersonnelId = null;
+        \Filament\Notifications\Notification::make()->success()->title('Enrollment added')->send();
+    }
+
     public function moveCard(int $id, string $toStatus): void
     {
         if (! array_key_exists($toStatus, $this->lanes)) {

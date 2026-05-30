@@ -1,6 +1,37 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Gowning Class Board', 'subtitle' => 'Track class enrollments. Completing a class advances the person to the run pipeline.', 'icon' => 'heroicon-o-academic-cap'])
 
+    <div style="margin-bottom:14px;">
+        <button type="button" wire:click="$set('showAdd', true)"
+                style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
+            <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add Enrollment
+        </button>
+    </div>
+
+    @if($showAdd)
+        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAdd', false)">
+            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:440px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;font-weight:800;font-size:16px;">Add Class Enrollment</div>
+                <div style="padding:18px 20px;">
+                    <label class="gqs-flbl">Person</label>
+                    <select wire:model="addPersonnelId" class="gqs-fld" style="margin-bottom:14px;">
+                        <option value="">Select a person...</option>
+                        @foreach($this->bookablePersonnel() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                    </select>
+                    <label class="gqs-flbl">Class Session</label>
+                    <select wire:model="addSessionId" class="gqs-fld">
+                        <option value="">Select a session...</option>
+                        @foreach($this->openSessions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                    </select>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
+                        <button type="button" wire:click="$set('showAdd', false)" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Cancel</button>
+                        <button type="button" wire:click="addEnrollment" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;border:none;font-weight:700;cursor:pointer;">Add Enrollment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div x-data="{
             init() { this.$nextTick(() => this.wire()); },
             wire() {
