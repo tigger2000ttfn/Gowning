@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Lab Review', 'subtitle' => 'QC Micro lab tracking: incubation, result evaluation, and submittal to QA.', 'icon' => 'heroicon-o-beaker'])
-
     @php
         $tab = $this->tab ?? 'incubating';
         $incubating = $this->getIncubating();
@@ -8,17 +6,18 @@
         $canEval = $this->canEvaluate();
     @endphp
 
+    @include('filament.page-hero', ['title' => 'Lab Review', 'icon' => 'heroicon-o-beaker', 'actions' => '
+        <button type="button" wire:click="setTab(\'incubating\')" class="gqs-tab ' . ($tab === 'incubating' ? 'active' : '') . '">Incubating (' . $incubating->count() . ')</button>
+        <button type="button" wire:click="setTab(\'evaluation\')" class="gqs-tab ' . ($tab === 'evaluation' ? 'active' : '') . '">Result Evaluation (' . $evaluation->count() . ')</button>
+        <button type="button" wire:click="setTab(\'history\')" class="gqs-tab ' . ($tab === 'history' ? 'active' : '') . '">History</button>
+    '])
+
     <div class="gqs-stats">
         <div class="gqs-stat gold"><div class="n">{{ $incubating->count() }}</div><div class="l">Incubating</div><span class="wm"><x-filament::icon icon="heroicon-o-beaker"/></span></div>
         <div class="gqs-stat magenta"><div class="n">{{ $evaluation->count() }}</div><div class="l">Ready To Evaluate</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-check"/></span></div>
         <div class="gqs-stat charcoal"><div class="n">{{ $this->incubationDays() }}d</div><div class="l">Incubation Period</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
     </div>
 
-    <div class="gqs-tabs" style="margin-bottom:16px;">
-        <button type="button" wire:click="setTab('incubating')" class="gqs-tab {{ $tab === 'incubating' ? 'active' : '' }}">Incubating ({{ $incubating->count() }})</button>
-        <button type="button" wire:click="setTab('evaluation')" class="gqs-tab {{ $tab === 'evaluation' ? 'active' : '' }}">Result Evaluation ({{ $evaluation->count() }})</button>
-        <button type="button" wire:click="setTab('history')" class="gqs-tab {{ $tab === 'history' ? 'active' : '' }}">History</button>
-    </div>
 
     @if($tab === 'incubating')
         <div class="gqs-panel">

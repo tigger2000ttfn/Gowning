@@ -55,14 +55,15 @@ class UserResource extends Resource
     {
         return $schema->components([
             Section::make('Account')->icon('heroicon-o-user-circle')->columns(2)->schema([
-                TextInput::make('name')->required(),
-                TextInput::make('email')->email()->required(),
-                Select::make('role')->options(
+                TextInput::make('first_name')->label('First Name')->required(),
+                TextInput::make('last_name')->label('Last Name')->required(),
+                TextInput::make('email')->label('Email Address')->email()->required()->unique(ignoreRecord: true),
+                Select::make('role')->label('Role')->options(
                     collect(Role::cases())->mapWithKeys(fn ($r) => [$r->value => $r->label()])->all()
                 )->required(),
-                Select::make('approval_status')->options([
+                Select::make('approval_status')->label('Approval Status')->options([
                     'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected',
-                ])->required(),
+                ])->default('approved')->required(),
                 Select::make('linked_personnel')->label('Linked Personnel Record')
                     ->options(fn () => \App\Models\Personnel::orderBy('employee_id')->get()
                         ->mapWithKeys(fn ($r) => [$r->id => "{$r->employee_id} · {$r->full_name}"]))
@@ -73,20 +74,28 @@ class UserResource extends Resource
                         \App\Models\Personnel::where('user_id', $record->id)->update(['user_id' => null]);
                         if ($state) { \App\Models\Personnel::where('id', $state)->update(['user_id' => $record->id]); }
                     })
-                    ->helperText('Link this login to an employee record so their qualification shows in My Qualification.'),
-                Toggle::make('is_active')->default(true),
+                    ->helperText('Link This Login To An Employee Record So Their Qualification Shows In My Qualification.'),
+                Toggle::make('is_active')->label('Active')->default(true),
+            ]),
+            Section::make('Password')->icon('heroicon-o-key')->columns(2)->schema([
+                TextInput::make('password')->label('Password')->password()->revealable()
+                    ->required(fn (string $operation) => $operation === 'create')
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->helperText('Set The Initial Password. Leave Blank When Editing To Keep The Current Password.'),
+                Toggle::make('must_change_password')->label('Require Password Change On First Login')
+                    ->default(true)->inline(false),
             ]),
             Section::make('Team Membership')->icon('heroicon-o-user-group')->columns(2)->schema([
                 Select::make('team')->label('Team')
                     ->options(\App\Enums\Team::options())
-                    ->placeholder('No team')
-                    ->helperText('Which working team this staff member belongs to.'),
+                    ->placeholder('No Team')
+                    ->helperText('Which Working Team This Staff Member Belongs To.'),
                 Toggle::make('is_team_manager')->label('Team Manager')
-                    ->helperText('Managers can assign work and see their team view.'),
+                    ->helperText('Managers Can Assign Work And See Their Team View.'),
                 Toggle::make('can_sample')->label('Qualified: Run Sampling')
-                    ->helperText('Can be assigned to perform qualification-run sampling on run days.'),
+                    ->helperText('Can Be Assigned To Perform Qualification-Run Sampling On Run Days.'),
                 Toggle::make('can_teach')->label('Qualified: Classroom Training')
-                    ->helperText('Can be assigned as the instructor for gowning class sessions.'),
+                    ->helperText('Can Be Assigned As The Instructor For Gowning Class Sessions.'),
             ]),
         ]);
     }
@@ -95,9 +104,9 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->icon('heroicon-m-user')->searchable()->sortable()->weight('bold'),
-                TextColumn::make('email')->icon('heroicon-m-envelope')->searchable()->copyable(),
-                TextColumn::make('role')->badge()->formatStateUsing(fn ($r) => $r?->label()),
+                TextColumn::make('name')->label('Name')->icon('heroicon-m-user')->searchable(['first_name','last_name'])->sortable()->weight('bold'),
+                TextColumn::make('email')->label('Email Address')->icon('heroicon-m-envelope')->searchable()->copyable(),
+                TextColumn::make('role')->label('Role')->badge()->formatStateUsing(fn ($r) => $r?->label()),
                 TextColumn::make('approval_status')->badge()->label('Approval')
                     ->color(fn ($s) => match($s) {
                         'approved' => 'success', 'rejected' => 'danger', default => 'warning',

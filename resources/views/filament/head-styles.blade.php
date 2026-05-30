@@ -78,8 +78,27 @@
         --tw-ring-color: transparent !important;
     }
     .fi-modal-window .fi-section-content { padding: 0 !important; }
-    /* keep the section heading (icon+label) but tighten it */
-    .fi-modal-window .fi-section-header { padding: 0 0 10px !important; }
+    /* Polished section look inside modals: a charcoal header bar per section, clean spacing,
+       no nested card. This is the canonical GQS modal/form look. */
+    .fi-modal-window .fi-section-header {
+        padding: 9px 14px !important;
+        margin: 0 0 14px !important;
+        background: #26262C !important;
+        border-radius: 9px !important;
+    }
+    .fi-modal-window .fi-section-header .fi-section-header-heading,
+    .fi-modal-window .fi-section-header-heading {
+        color: #fff !important;
+        font-weight: 700 !important;
+        font-size: 13.5px !important;
+        letter-spacing: .01em !important;
+    }
+    .fi-modal-window .fi-section-header .fi-icon,
+    .fi-modal-window .fi-section-header svg { color: #E8C24A !important; }
+    .fi-modal-window .fi-section-header-description { color: #C9C9D2 !important; font-size: 12px !important; }
+    .fi-modal-window .fi-section + .fi-section { margin-top: 18px !important; }
+    /* generous breathing room between fields in the modal */
+    .fi-modal-window .fi-fieldset, .fi-modal-window .fi-fo-field-wrp { margin-bottom: 2px; }
 
     /* ===== GQS SHARED PAGE COMPONENTS (match dashboard look across all pages) ===== */
     .gqs-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:18px; }
@@ -269,6 +288,10 @@
     .gqs-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:2px solid var(--gqs-border,#E2E2E6);flex-wrap:wrap;}
     .gqs-tab{background:none;border:none;padding:9px 16px;font-size:13.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;}
     .gqs-tab.on{color:#A4123F;border-bottom-color:#A4123F;}
+    /* header-integrated tabs (in .pg-head-r): pill style instead of underline */
+    .pg-head-r .gqs-tab{border:1px solid var(--gqs-border,#D6D6DC);border-radius:8px;padding:7px 14px;font-size:13px;margin:0;}
+    .pg-head-r .gqs-tab.active,.pg-head-r .gqs-tab.on{background:#A4123F;border-color:#A4123F;color:#fff;}
+    .dark .pg-head-r .gqs-tab{border-color:#3A3A44;color:#C9C9D2;}
     /* Form controls (modals, messages, notification settings, calendar) */
     /* Capitalize Filament action button labels (auto-generated names like 'no show' -> 'No Show') */
     .fi-btn .fi-btn-label, .fi-link .fi-link-label, .fi-dropdown-list-item-label { text-transform: capitalize; }

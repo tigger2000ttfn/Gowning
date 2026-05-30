@@ -44,8 +44,9 @@ class IncubationBoard extends Page
 
     public function mount(): void
     {
-        // opportunistic time-based advance whenever the page is viewed
-        app(\App\Services\IncubationAdvancer::class)->run();
+        // opportunistic time-based advance whenever the page is viewed; use the same
+        // multi-run-aware advancer as the daily cron so page-load and cron agree.
+        app(\App\Services\RunCycleAdvancer::class)->sweep();
     }
 
     public function incubationDays(): int { return (int) Setting::get('incubation_days', 8); }

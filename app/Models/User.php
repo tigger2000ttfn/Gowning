@@ -18,6 +18,14 @@ class User extends Authenticatable implements FilamentUser
 
     protected static function booted(): void
     {
+        static::saving(function ($user) {
+            if ($user->isDirty('password')) {
+                $user->password_changed_at = now();
+                // a freshly set password clears any lockout counters
+                $user->failed_login_attempts = 0;
+                $user->locked_until = null;
+            }
+        });
         static::created(function ($user) {
             if (($user->approval_status ?? null) === 'pending') {
                 \App\Services\Notifier::toCapability(
@@ -33,9 +41,10 @@ class User extends Authenticatable implements FilamentUser
     use Auditable, HasFactory, Notifiable, GqsActivityLog;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'is_active',
+        'name', 'first_name', 'last_name', 'email', 'password', 'role', 'is_active',
         'approval_status', 'approved_at', 'approved_by',
         'team', 'is_team_manager', 'reminder_days_before', 'can_sample', 'can_teach',
+        'must_change_password', 'password_changed_at', 'failed_login_attempts', 'locked_until',
     ];
 
     protected $hidden = [
@@ -53,7 +62,28 @@ class User extends Authenticatable implements FilamentUser
             'can_sample' => 'boolean',
             'can_teach' => 'boolean',
             'approved_at' => 'datetime',
+            'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
+            'failed_login_attempts' => 'integer',
+            'locked_until' => 'datetime',
         ];
+    }
+
+    /** Keep the single `name` field in sync from first + last when those are set. */
+    public function setFirstNameAttribute($v): void
+    {
+        $this->attributes['first_name'] = $v;
+        $this->syncFullName();
+    }
+    public function setLastNameAttribute($v): void
+    {
+        $this->attributes['last_name'] = $v;
+        $this->syncFullName();
+    }
+    protected function syncFullName(): void
+    {
+        $full = trim(($this->attributes['first_name'] ?? '') . ' ' . ($this->attributes['last_name'] ?? ''));
+        if ($full !== '') $this->attributes['name'] = $full;
     }
 
     /**

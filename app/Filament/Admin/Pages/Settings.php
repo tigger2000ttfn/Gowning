@@ -61,6 +61,11 @@ class Settings extends Page implements HasForms
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
+            'password_expiry_enabled' => (bool) Setting::get('password_expiry_enabled', false),
+            'password_expiry_days'  => Setting::get('password_expiry_days', '90'),
+            'lockout_enabled'       => (bool) Setting::get('lockout_enabled', false),
+            'lockout_threshold'     => Setting::get('lockout_threshold', '5'),
+            'lockout_minutes'       => Setting::get('lockout_minutes', '15'),
             'attendance_form_document_no' => Setting::get('attendance_form_document_no', ''),
             'attendance_form_revision_no' => Setting::get('attendance_form_revision_no', ''),
             'attendance_form_title'       => Setting::get('attendance_form_title', ''),
@@ -138,6 +143,21 @@ class Settings extends Page implements HasForms
                     Toggle::make('require_qa_signoff')->label('Require QA Sign-off To Complete')
                         ->helperText('A run is only Completed after QA approval.'),
                     Toggle::make('esig_required')->label('Require Electronic Signature On QA Sign-off'),
+                ]),
+                Section::make('Password & Account Security')->icon('heroicon-o-lock-closed')->columns(2)->schema([
+                    Toggle::make('password_expiry_enabled')->label('Enable Password Expiry')
+                        ->live()
+                        ->helperText('Off By Default. When On, Users Must Reset Their Password After The Set Number Of Days.'),
+                    TextInput::make('password_expiry_days')->label('Password Expiry (Days)')->numeric()->minValue(1)
+                        ->visible(fn ($get) => (bool) $get('password_expiry_enabled'))
+                        ->helperText('How Many Days A Password Is Valid Before A Reset Is Required.'),
+                    Toggle::make('lockout_enabled')->label('Enable Account Lockout')
+                        ->live()
+                        ->helperText('Off By Default. When On, Too Many Failed Logins Temporarily Locks The Account.'),
+                    TextInput::make('lockout_threshold')->label('Failed Attempts Before Lockout')->numeric()->minValue(1)
+                        ->visible(fn ($get) => (bool) $get('lockout_enabled')),
+                    TextInput::make('lockout_minutes')->label('Lockout Duration (Minutes)')->numeric()->minValue(1)
+                        ->visible(fn ($get) => (bool) $get('lockout_enabled')),
                 ]),
                 Section::make('Attendance Form (FORM-AST-36513)')->icon('heroicon-o-document-text')->columns(2)
                     ->description('Prefilled onto the Class Training Form. Update these as the controlled document version changes.')

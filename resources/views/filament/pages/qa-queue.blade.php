@@ -1,12 +1,10 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'QA Review', 'subtitle' => 'Approve classroom training and sign off completed runs.', 'icon' => 'heroicon-o-clipboard-document-check'])
-
     @php $tab = $this->tab ?? 'runs'; $canApprove = $this->canApprove(); @endphp
 
-    <div class="gqs-tabs" style="margin-bottom:16px;">
-        <button type="button" wire:click="setTab('runs')" class="gqs-tab {{ $tab === 'runs' ? 'active' : '' }}">Run Sign-off</button>
-        <button type="button" wire:click="setTab('classroom')" class="gqs-tab {{ $tab === 'classroom' ? 'active' : '' }}">Classroom Approval</button>
-    </div>
+    @include('filament.page-hero', ['title' => 'QA Review', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => '
+        <button type="button" wire:click="setTab(\'runs\')" class="gqs-tab ' . ($tab === 'runs' ? 'active' : '') . '">Run Sign-off</button>
+        <button type="button" wire:click="setTab(\'classroom\')" class="gqs-tab ' . ($tab === 'classroom' ? 'active' : '') . '">Classroom Approval</button>
+    '])
 
     @if($tab === 'classroom')
         @php $classQueue = $this->getClassroomQueue(); @endphp
