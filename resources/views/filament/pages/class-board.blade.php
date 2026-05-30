@@ -3,7 +3,7 @@
         <div class="sb-headrow-title">
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-academic-cap" /></span>
             <div class="pg-head-tx" style="min-width:0;">
-                <h1>Gowning Class Board</h1>
+                <h1>Class Board</h1>
             </div>
         </div>
         <div class="sb-headrow-filters">

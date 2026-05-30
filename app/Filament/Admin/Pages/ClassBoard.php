@@ -25,7 +25,7 @@ class ClassBoard extends Page
     protected static ?string $navigationLabel = 'Class Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Gowning Class Board';
+    protected static ?string $title = 'Class Board';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.class-board';

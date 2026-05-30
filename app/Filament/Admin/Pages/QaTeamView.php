@@ -23,7 +23,7 @@ class QaTeamView extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
     protected static ?string $navigationLabel = 'QA Team View';
-    protected static ?string $title = 'QA Team & Approval Ownership';
+    protected static ?string $title = 'QA Team View';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.qa-team-view';

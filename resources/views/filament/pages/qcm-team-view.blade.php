@@ -9,7 +9,7 @@
         }
     @endphp
 
-    @include('filament.page-hero', ['title' => 'QC Micro Team & Assignments', 'icon' => 'heroicon-o-user-group', 'actions' => $tabActions])
+    @include('filament.page-hero', ['title' => 'QCM Team View', 'icon' => 'heroicon-o-user-group', 'actions' => $tabActions])
 
     {{-- Manager + summary stats --}}
     <div class="gqs-stats">

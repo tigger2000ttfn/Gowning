@@ -45,7 +45,7 @@ class ClassReservations extends Page
     protected static ?string $navigationLabel = 'Class Reservations';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 2;
-    protected static ?string $title = 'Gowning Class Reservations';
+    protected static ?string $title = 'Class Reservations';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.class-reservations';

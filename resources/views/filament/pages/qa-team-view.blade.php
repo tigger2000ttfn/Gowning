@@ -10,7 +10,7 @@
         }
     @endphp
 
-    @include('filament.page-hero', ['title' => 'QA Team & Approval Ownership', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => $tabActions])
+    @include('filament.page-hero', ['title' => 'QA Team View', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => $tabActions])
 
     <div class="gqs-stats">
         <div class="gqs-stat charcoal"><div class="n" style="font-size:18px;">{{ $manager?->name ?? 'Unassigned' }}</div><div class="l">QA Manager</div><span class="wm"><x-filament::icon icon="heroicon-o-user-circle"/></span></div>

@@ -26,7 +26,7 @@ class ReservationBoard extends Page
     protected static ?string $navigationLabel = 'Run Reservation Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 4;
-    protected static ?string $title = 'Qualification Run Reservations';
+    protected static ?string $title = 'Run Reservation Board';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.reservation-board';

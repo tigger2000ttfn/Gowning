@@ -26,7 +26,7 @@ class StatusBoard extends Page
     protected static ?string $navigationLabel = 'Status Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Qualification Status Board';
+    protected static ?string $title = 'Status Board';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.status-board';

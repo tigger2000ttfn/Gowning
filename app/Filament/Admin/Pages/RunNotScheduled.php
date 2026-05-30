@@ -25,7 +25,7 @@ class RunNotScheduled extends Page
     protected static ?string $navigationLabel = 'Run Not Scheduled';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 3;
-    protected static ?string $title = 'Awaiting Run Booking';
+    protected static ?string $title = 'Run Not Scheduled';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.run-not-scheduled';

@@ -23,7 +23,7 @@
         <div class="sb-headrow-title">
             <span class="pg-head-ico"><x-filament::icon icon="heroicon-o-chart-bar" /></span>
             <div class="pg-head-tx" style="min-width:0;">
-                <h1>Qualification Timeline</h1>
+                <h1>Timeline</h1>
             </div>
         </div>
         <div class="sb-headrow-filters">

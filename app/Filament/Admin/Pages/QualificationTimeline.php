@@ -22,7 +22,7 @@ class QualificationTimeline extends Page
     protected static ?string $navigationLabel = 'Timeline';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 9;
-    protected static ?string $title = 'Qualification Timeline';
+    protected static ?string $title = 'Timeline';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.qualification-timeline';

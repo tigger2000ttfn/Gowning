@@ -23,7 +23,7 @@ class QcmTeamView extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'QCM Team View';
-    protected static ?string $title = 'QC Micro Team & Assignments';
+    protected static ?string $title = 'QCM Team View';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.qcm-team-view';
