@@ -74,28 +74,24 @@ class UserResource extends Resource
                         \App\Models\Personnel::where('user_id', $record->id)->update(['user_id' => null]);
                         if ($state) { \App\Models\Personnel::where('id', $state)->update(['user_id' => $record->id]); }
                     })
-                    ->helperText('Link This Login To An Employee Record So Their Qualification Shows In My Qualification.'),
+                    ->helperText('Links This Login To An Employee Record.'),
                 Toggle::make('is_active')->label('Active')->default(true),
             ]),
             Section::make('Password')->icon('heroicon-o-key')->columns(2)->schema([
                 TextInput::make('password')->label('Password')->password()->revealable()
                     ->required(fn (string $operation) => $operation === 'create')
                     ->dehydrated(fn ($state) => filled($state))
-                    ->helperText('Set The Initial Password. Leave Blank When Editing To Keep The Current Password.'),
+                    ->helperText('Leave Blank When Editing To Keep The Current Password.'),
                 Toggle::make('must_change_password')->label('Require Password Change On First Login')
                     ->default(true)->inline(false),
             ]),
             Section::make('Team Membership')->icon('heroicon-o-user-group')->columns(2)->schema([
                 Select::make('team')->label('Team')
                     ->options(\App\Enums\Team::options())
-                    ->placeholder('No Team')
-                    ->helperText('Which Working Team This Staff Member Belongs To.'),
-                Toggle::make('is_team_manager')->label('Team Manager')
-                    ->helperText('Managers Can Assign Work And See Their Team View.'),
-                Toggle::make('can_sample')->label('Qualified: Run Sampling')
-                    ->helperText('Can Be Assigned To Perform Qualification-Run Sampling On Run Days.'),
-                Toggle::make('can_teach')->label('Qualified: Classroom Training')
-                    ->helperText('Can Be Assigned As The Instructor For Gowning Class Sessions.'),
+                    ->placeholder('No Team'),
+                Toggle::make('is_team_manager')->label('Team Manager'),
+                Toggle::make('can_sample')->label('Qualified: Run Sampling'),
+                Toggle::make('can_teach')->label('Qualified: Classroom Training'),
             ]),
         ]);
     }

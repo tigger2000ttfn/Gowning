@@ -61,7 +61,7 @@ class PersonnelResource extends Resource
                         TextInput::make('email')->label('Email Address')->email(),
                         TextInput::make('phone')->label('Phone')->tel(),
                         TextInput::make('lims_username')->label('LIMS Username')
-                            ->helperText('QC LabWare LIMS Login. Used To Match This Person When Importing From A LIMS Upload.'),
+                            ->helperText('Used To Match This Person On A LIMS Upload.'),
                         TextInput::make('badge_id')->label('Badge ID'),
                         DatePicker::make('hire_date')->label('Hire Date'),
                     ]),
@@ -96,23 +96,21 @@ class PersonnelResource extends Resource
                             })
                             ->schema([
                                 Toggle::make('class_on_file')->label('Gowning Class Completed')
-                                    ->helperText('On = the 3-hour gowning class / OJT is on file (prerequisite met).')
+                                    ->helperText('On = Gowning Class / OJT Is On File.')
                                     ->live()->columnSpanFull(),
                                 DatePicker::make('class_on_file_date')->label('Class Completion Date')
                                     ->visible(fn ($get) => $get('class_on_file')),
                                 Select::make('type')->label('Qualification Type')
                                     ->options(['initial' => 'Initial', 'annual' => 'Annual (Requalification)'])->default('initial')
-                                    ->helperText('Initial = 3 runs · Annual = 1 run. Recomputed from the runs below.'),
+                                    ->helperText('Initial = 3 Runs · Annual = 1 Run.'),
                                 Select::make('status')->label('Current Status')
                                     ->options([
                                         'pending' => 'Pending', 'in_progress' => 'In Progress',
                                         'qualified' => 'Qualified', 'lapsed' => 'Lapsed',
-                                    ])->default('pending')
-                                    ->helperText('Recomputed from the runs below.'),
+                                    ])->default('pending'),
                                 Select::make('workflow_stage')->label('Workflow Stage')
                                     ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
-                                    ->default('class_pending')
-                                    ->helperText('Where they currently sit in the pipeline.'),
+                                    ->default('class_pending'),
                                 DatePicker::make('qualified_date')->label('Date Last Qualified')
                                     ->live()
                                     ->afterStateUpdated(function ($state, $set) {
@@ -120,9 +118,9 @@ class PersonnelResource extends Resource
                                         $cycle = (int) \App\Models\Setting::get('cycle_months', 12);
                                         $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
                                     })
-                                    ->helperText('Auto-calculates the Due Date. Usually set from the last passing run below.'),
+                                    ->helperText('Auto-Calculates The Due Date.'),
                                 DatePicker::make('due_date')->label('Qualification Due Date')
-                                    ->helperText('Auto-fills as Date Last Qualified + the cycle length. Override if needed.'),
+                                    ->helperText('Auto-Fills From Last Qualified + Cycle Length.'),
                             ]),
                         Section::make('Run History')
                             ->description('Each qualification run is its own record. Add every historical run here, pass or fail, and the engine adds the passes up into the overall record (runs completed, status, last-qualified, and due date). This is the authoritative source.')
