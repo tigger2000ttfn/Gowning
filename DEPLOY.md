@@ -123,7 +123,7 @@ if the lock file is out of date, e.g. after new packages are added). Manual equi
 ```bash
 cd /var/www/html/gowning
 sudo git pull
-# composer.json now declares spatie/laravel-activitylog, laravel-backup, laravel-medialibrary.
+# composer.json now declares spatie/laravel-activitylog and laravel-medialibrary.
 # 'install' uses the lock; if it complains the lock is out of date, run 'update' once:
 sudo COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader \
   || sudo COMPOSER_ALLOW_SUPERUSER=1 composer update --no-dev --optimize-autoloader
@@ -134,11 +134,10 @@ sudo systemctl restart apache2     # restart, not reload (see note)
 ```
 
 ### Package notes
-- **spatie/laravel-backup**: needs `pg_dump` on the server (Postgres client tools). Backups
-  run on the schedule (requires the cron line below). Storage disk per `config/backup.php`.
 - **spatie/laravel-medialibrary**: file uploads stored on the default disk; the `media`
   table is created by migration. No extra Filament plugin needed (ships in filament/filament v5).
-- **Cron** (so scheduled commands actually run, including backups + the automation chain):
+- **Cron** (so scheduled commands actually run, the automation chain: auto-schedule,
+  incubation advance, lifecycle lapse, email flush):
   `* * * * * cd /var/www/html/gowning && php artisan schedule:run >> /dev/null 2>&1`
 
 ---

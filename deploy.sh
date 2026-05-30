@@ -52,21 +52,13 @@ php artisan optimize:clear
 echo "==> Restarting Apache (full restart clears OPcache)"
 systemctl restart apache2
 
-echo "==> Ensuring the Laravel scheduler cron is installed (drives backups + automation)"
+echo "==> Ensuring the Laravel scheduler cron is installed (drives the automation chain)"
 CRON_LINE="* * * * * cd $APP_DIR && php artisan schedule:run >> /dev/null 2>&1"
 if ! crontab -l 2>/dev/null | grep -Fq "artisan schedule:run"; then
     ( crontab -l 2>/dev/null; echo "$CRON_LINE" ) | crontab -
     echo "    cron installed"
 else
     echo "    cron already present"
-fi
-
-echo "==> Checking pg_dump availability (needed by spatie/laravel-backup)"
-if command -v pg_dump >/dev/null 2>&1; then
-    echo "    pg_dump found: $(pg_dump --version 2>/dev/null | head -1)"
-else
-    echo "    !!! pg_dump NOT found - DB backups will fail until you install the Postgres client:"
-    echo "        sudo apt-get install -y postgresql-client"
 fi
 
 echo ""
