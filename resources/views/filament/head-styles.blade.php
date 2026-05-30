@@ -30,6 +30,26 @@
     }
     html:not(.dark) .fi-dropdown-list-item:hover { background-color: #F1F1F4 !important; }
 
+    /* Move the sidebar-collapse button OUT of the topbar and onto the sidebar edge */
+    .fi-topbar-collapse-sidebar-btn-ctn {
+        position: fixed !important;
+        top: 12px !important;
+        left: 0 !important;
+        z-index: 41 !important;
+    }
+    /* nudge it to sit at the right edge of the open sidebar */
+    .fi-body-has-sidebar-collapsible-on-desktop .fi-topbar-collapse-sidebar-btn-ctn {
+        left: calc(var(--sidebar-width, 16rem) - 38px) !important;
+        transition: left .2s;
+    }
+    .fi-topbar-collapse-sidebar-btn-ctn .fi-icon-btn {
+        background: #A4123F !important;
+        color: #fff !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+    }
+    .fi-topbar-collapse-sidebar-btn-ctn .fi-icon-btn svg { color: #fff !important; }
+
     /* Back To Login link on reset page - force Title Case appearance */
     .fi-simple-main a[href*="login"] { text-transform: capitalize; }
 
