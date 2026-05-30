@@ -19,9 +19,9 @@
             <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $group['title'] }}
                 <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($group['rows']) }} booked</span>
             </div>
-            <div class="gqs-panel-body">
+            <div class="gqs-panel-body" style="padding:0;">
                 @if(empty($group['rows']))
-                    <div class="gqs-empty">No One Booked Yet.</div>
+                    <div class="gqs-empty" style="padding:20px;">No One Booked Yet.</div>
                 @else
                     <table class="gqs-tbl">
                         <thead><tr><th>Employee</th><th>Name</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>

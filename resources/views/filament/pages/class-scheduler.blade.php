@@ -295,7 +295,10 @@
                                             wire:click="askConfirm('reopenAttendance', {{ $s->id }}, 'Reopen Session', 'Reopen this session? Attendees not yet QA-approved return to draft.', 'Reopen')">Reopen</button>
                                 </div>
                             @else
-                                <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:12px;">Tap a status to mark each person. Changes save automatically. Submit at the bottom when everyone is marked.</div>
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Tap a status to mark each person. Changes save automatically. Submit at the bottom when everyone is marked.</span>
+                                    <button type="button" wire:click="markAllAttended({{ $s->id }})" class="att-tog att-att">&check; Mark All Attended</button>
+                                </div>
                             @endif
 
                             <div class="att-list">
@@ -324,7 +327,7 @@
                                                     @if($row['status'] === 'no_show')&check; @endif No-Show
                                                 </button>
                                                 <button type="button" class="att-tog att-res"
-                                                        wire:click="askConfirm('rescheduleEnrollment', {{ $row['id'] }}, 'Reschedule', 'Move {{ addslashes($row['name']) }} to the next available class session?', 'Reschedule')">Reschedule</button>
+                                                        wire:click="openReschedule({{ $row['id'] }})">Reschedule</button>
                                             </div>
                                             <input type="text" class="att-note" placeholder="Notes (optional)"
                                                    value="{{ $row['note'] }}"
@@ -371,6 +374,33 @@
                     </div>
                 </div>
             @endif
+        @endif
+
+        {{-- Reschedule modal: pick a date OR book next available --}}
+        @if($showReschedule)
+            <div class="gqs-modal-overlay" wire:click.self="$set('showReschedule', false)">
+                <div class="gqs-modal">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-calendar-days"/></span>Reschedule</div>
+                    <div class="gqs-modal-body">
+                        <p style="font-size:13px;color:var(--gqs-text-dim,#6A6A72);margin:0;">{{ $rescheduleName }}</p>
+                        <div>
+                            <label class="gqs-flbl">Pick A Class Date</label>
+                            <select wire:model="rescheduleSessionId" class="gqs-fld">
+                                <option value="">Select A Class Date...</option>
+                                @foreach($this->openSessionOptions() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:10px;color:var(--gqs-text-dim,#9A9AA2);font-size:11.5px;font-weight:600;">
+                            <span style="flex:1;height:1px;background:var(--gqs-border,#E2E2E6);"></span> OR <span style="flex:1;height:1px;background:var(--gqs-border,#E2E2E6);"></span>
+                        </div>
+                        <button type="button" wire:click="rescheduleNextAvailable" class="gqs-btn gqs-btn-ghost" style="width:100%;justify-content:center;">Book Next Available</button>
+                    </div>
+                    <div class="gqs-modal-foot">
+                        <button type="button" wire:click="$set('showReschedule', false)" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="rescheduleToSelected" class="gqs-btn gqs-btn-primary">Move To Selected Date</button>
+                    </div>
+                </div>
+            </div>
         @endif
 
         {{-- in-app confirmation modal (replaces native confirm prompts) --}}

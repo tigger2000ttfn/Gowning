@@ -339,6 +339,66 @@ class ClassScheduler extends Page
     /** Reschedule one attendee to the next available open session. */
     public function rescheduleEnrollment(int $enrollmentId): void
     {
+        $this->moveEnrollmentToNextOpen($enrollmentId);
+    }
+
+    /** Mark every still-unmarked attendee on a session as Attended. */
+    public function markAllAttended(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
+        if (! $s || $s->attendance_submitted_at) return;
+        $n = 0;
+        foreach ($s->enrollments->whereIn('status', ['signed_up']) as $e) {
+            $e->markStatus('attended', \Illuminate\Support\Facades\Auth::id());
+            $n++;
+        }
+        Notification::make()->success()->title('Marked Attended')->body($n . ' marked attended.')->send();
+    }
+
+    // ----- Reschedule modal (attendance): pick a date OR book next available -----
+    public bool $showReschedule = false;
+    public ?int $rescheduleEnrollmentId = null;
+    public ?int $rescheduleSessionId = null;
+    public string $rescheduleName = '';
+
+    public function openReschedule(int $enrollmentId): void
+    {
+        $e = \App\Models\ClassEnrollment::find($enrollmentId);
+        if (! $e) return;
+        $this->rescheduleEnrollmentId = $enrollmentId;
+        $this->rescheduleName = $e->name ?: ($e->personnel?->full_name ?? 'Trainee');
+        $this->rescheduleSessionId = null;
+        $this->showReschedule = true;
+    }
+
+    public function rescheduleToSelected(): void
+    {
+        if (! $this->rescheduleSessionId) { Notification::make()->warning()->title('Pick A Date')->send(); return; }
+        $this->moveEnrollment($this->rescheduleEnrollmentId, (int) $this->rescheduleSessionId);
+        $this->showReschedule = false;
+    }
+
+    public function rescheduleNextAvailable(): void
+    {
+        $this->moveEnrollmentToNextOpen($this->rescheduleEnrollmentId);
+        $this->showReschedule = false;
+    }
+
+    protected function moveEnrollment(?int $enrollmentId, int $sessionId): void
+    {
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        $target = \App\Models\ClassSession::find($sessionId);
+        if (! $e || ! $target || $e->classSession?->attendance_submitted_at) return;
+        if ($target->seatsLeft() <= 0) { Notification::make()->warning()->title('Session Full')->send(); return; }
+        $e->class_session_id = $target->id;
+        $e->status = 'signed_up';
+        $e->save();
+        Notification::make()->success()->title('Rescheduled')
+            ->body($e->name . ' moved to ' . ($target->trainingClass?->name ?? 'class') . ' on ' . $target->session_date?->format('M j, Y') . '.')->send();
+    }
+
+    protected function moveEnrollmentToNextOpen(?int $enrollmentId): void
+    {
         $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
         if (! $e || $e->classSession?->attendance_submitted_at) return;
         $next = \App\Models\ClassSession::where('status', '!=', 'cancelled')
