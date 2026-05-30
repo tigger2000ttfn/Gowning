@@ -33,8 +33,7 @@ class TrainingClassResource extends Resource
     }
     public static function shouldRegisterNavigation(): bool
     {
-        $u = \Illuminate\Support\Facades\Auth::user();
-        return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
+        return false; // replaced by the ClassScheduler page (Classes tab); resource kept for CRUD URLs
     }
     public static function canViewAny(): bool
     {
