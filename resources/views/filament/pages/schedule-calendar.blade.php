@@ -28,12 +28,25 @@
                     if (!el || !data || !window.FullCalendar) return;
                     let events = [];
                     try { events = JSON.parse(data.getAttribute('data-events') || '[]'); } catch (e) {}
-                    if (cal) { cal.destroy(); cal = null; }
+                    if (cal) { try { window._gqsCalDate = cal.getDate(); window._gqsCalView = cal.view.type; } catch(e){} cal.destroy(); cal = null; }
                     cal = new FullCalendar.Calendar(el, {
-                        initialView: 'dayGridMonth',
+                        initialView: (window._gqsCalView || 'dayGridMonth'),
+                        initialDate: (window._gqsCalDate || undefined),
                         height: 'auto',
                         headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' },
                         events: events,
+                        editable: @json($this->canDrag()),
+                        eventStartEditable: @json($this->canDrag()),
+                        eventDurationEditable: false,
+                        datesSet: function (info) { window._gqsCalDate = cal ? cal.getDate() : info.start; window._gqsCalView = info.view.type; },
+                        eventDrop: function (info) {
+                            const id = info.event.id;
+                            const newDate = info.event.start ? info.event.startStr.substring(0, 10) : null;
+                            if (!id || !newDate) { info.revert(); return; }
+                            // due-date events are not movable
+                            if (id.startsWith('due:')) { info.revert(); return; }
+                            $wire.moveEvent(id, newDate).then(() => {}).catch(() => info.revert());
+                        },
                     });
                     cal.render();
                 }
