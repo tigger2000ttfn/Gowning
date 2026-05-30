@@ -373,7 +373,7 @@
                                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
                                     <button type="button" wire:click="unfocusSession" class="gqs-btn gqs-btn-ghost">Save &amp; Close</button>
                                     <button type="button" class="gqs-btn gqs-btn-primary"
-                                            wire:click="askConfirm('submitAttendance', {{ $s->id }}, 'Submit Attendance', 'Trainer of record: {{ addslashes($s->instructorUser?->name ?? auth()->user()->name . ' (you, the signer)') }}. Submitting signs the attendance, locks the session, and sends everyone marked Attended to the QA Classroom Approval queue. If no trainer is set, you are recorded as the trainer.', 'Submit To QA')">Submit Attendance To QA</button>
+                                            wire:click="openSubmitSign({{ $s->id }})">Submit Attendance To QA</button>
                                 </div>
                             @endif
                         @endif
@@ -484,6 +484,29 @@
             });
         });
     </script>
+
+    {{-- Trainer e-signature on attendance submit --}}
+    @if($signSubmitSid)
+        @php $ss = \App\Models\ClassSession::with('instructorUser')->find($signSubmitSid);
+             $trainerName = $ss?->instructorUser?->name ?? (auth()->user()->name . ' (You, The Signer)'); @endphp
+        <div class="gqs-modal-overlay" wire:click.self="closeSubmitSign">
+            <div class="gqs-modal" style="width:460px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-pencil-square"/></span>Sign &amp; Submit Attendance</div>
+                <div class="gqs-modal-body">
+                    <p style="margin:0 0 10px;font-size:13px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">
+                        Trainer Of Record: <strong>{{ $trainerName }}</strong>. Your electronic signature submits this attendance to QA, locks the session, and records your name as the trainer on FORM-AST-36513. If no trainer is set, you are recorded as the trainer.
+                    </p>
+                    <label class="gqs-flbl">Password</label>
+                    <input type="password" wire:model="signPassword" wire:keydown.enter="confirmSubmitSign" class="gqs-fld" autocomplete="off" placeholder="Enter your password to sign">
+                    <p style="margin:8px 0 0;font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Signed By {{ auth()->user()->name }} · {{ now()->format('d M Y H:i') }}</p>
+                </div>
+                <div class="gqs-modal-foot">
+                    <button type="button" wire:click="closeSubmitSign" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="confirmSubmitSign" class="gqs-btn gqs-btn-primary">Sign &amp; Submit</button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     <style>
         .rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}

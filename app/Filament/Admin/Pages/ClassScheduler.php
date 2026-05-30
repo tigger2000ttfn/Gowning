@@ -184,6 +184,68 @@ class ClassScheduler extends Page
     }
     public function cancelConfirm(): void { $this->confirm = []; }
 
+    // ---- Trainer e-signature on attendance submit ----
+    public ?int $signSubmitSid = null;
+    public string $signPassword = '';
+
+    public function openSubmitSign(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
+        if (! $s || $s->attendance_submitted_at) return;
+        $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
+        if ($active->where('status', 'signed_up')->count() > 0) {
+            Notification::make()->warning()->title('Mark Everyone First')
+                ->body('Mark each enrollee Attended or No-Show before submitting.')->send();
+            return;
+        }
+        if ($active->where('status', 'attended')->count() === 0) {
+            Notification::make()->warning()->title('No Attendees To Submit')->body('No one is marked Attended on this session.')->send();
+            return;
+        }
+        $this->signSubmitSid = $sessionId;
+        $this->signPassword = '';
+    }
+    public function closeSubmitSign(): void { $this->signSubmitSid = null; $this->signPassword = ''; }
+
+    public function confirmSubmitSign(): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($this->signSubmitSid);
+        if (! $s || $s->attendance_submitted_at) { $this->closeSubmitSign(); return; }
+
+        if ((bool) \App\Models\Setting::get('esig_required', true)
+            && ! \Illuminate\Support\Facades\Hash::check($this->signPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match. Attendance was not submitted.')->send();
+            return;
+        }
+
+        $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
+        foreach ($active->where('status', 'attended') as $e) {
+            $e->markStatus('pending_qa', Auth::id());
+        }
+        // The signer is the trainer of record. If none was set, record the signer; their
+        // signed name flows onto FORM-AST-36513 as the trainer.
+        if (! $s->assigned_instructor_id) {
+            $s->assigned_instructor_id = Auth::id();
+        }
+        $s->attendance_submitted_at = now();
+        $s->attendance_submitted_by = Auth::id();
+        $s->save();
+
+        $trainerName = $s->instructorUser?->name ?? Auth::user()->name;
+        \App\Models\ElectronicSignature::create([
+            'signable_type' => \App\Models\ClassSession::class, 'signable_id' => $s->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name,
+            'meaning' => 'Class Attendance Submission',
+            'statement' => 'Attendance submitted for ' . $active->where('status', 'attended')->count()
+                . ' attendee(s); trainer of record: ' . $trainerName . '.',
+            'signed_at' => now(),
+        ]);
+
+        $this->closeSubmitSign();
+        Notification::make()->success()->title('Attendance Submitted To QA')
+            ->body('Signed by ' . Auth::user()->name . '. Attendees are now in the QA Classroom Approval queue.')->send();
+    }
+
     // ---- session add / generate form ----
     public bool $showAddSession = false;
     public ?int $sessClassId = null;
