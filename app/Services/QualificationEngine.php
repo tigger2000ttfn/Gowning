@@ -75,11 +75,21 @@ class QualificationEngine
     {
         $qualification = $this->qualificationFor($personnel);
 
+        // If QA sent this person back for requalification, the first run of the new cycle
+        // descends from the failed run (parent/child trace). Consume the stash once.
+        $parentRunId = null;
+        if (! empty($qualification->pending_parent_run_id)) {
+            $parentRunId = $qualification->pending_parent_run_id;
+            $qualification->pending_parent_run_id = null;
+            $qualification->save();
+        }
+
         $run = $qualification->runs()->create(array_merge([
             'personnel_id' => $personnel->id,
             'run_date' => $attributes['run_date'] ?? now()->toDateString(),
             'result' => $result,
             'cycle_type' => $qualification->type,
+            'parent_run_id' => $parentRunId,
         ], $attributes, ['result' => $result]));
 
         $this->recompute($qualification);

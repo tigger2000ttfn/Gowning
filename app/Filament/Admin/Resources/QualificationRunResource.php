@@ -107,6 +107,14 @@ class QualificationRunResource extends Resource
                         default => 'warning',
                     }),
                 TextColumn::make('cycle_type')->label('Cycle')->formatStateUsing(fn ($s) => $s?->label())->toggleable(),
+                TextColumn::make('qa_determination')->label('QA Determination')
+                    ->formatStateUsing(fn ($s) => $s ? \Illuminate\Support\Str::title(str_replace('_', ' ', $s)) : null)
+                    ->badge()->color('info')->placeholder('-')->toggleable(),
+                \Filament\Tables\Columns\IconColumn::make('is_complete')->label('Complete')->boolean()->toggleable(),
+                TextColumn::make('parent_run_id')->label('Follows Run')
+                    ->formatStateUsing(fn ($state) => $state ? '#' . $state : null)
+                    ->placeholder('-')->toggleable(isToggledHiddenByDefault: true)
+                    ->tooltip('This run was opened from a prior failed run (QA requalification).'),
                 \Filament\Tables\Columns\IconColumn::make('is_seed')->label('Seed')->boolean()
                     ->trueIcon('heroicon-m-archive-box')->falseIcon('heroicon-m-beaker')
                     ->trueColor('warning')->falseColor('gray')->toggleable(),

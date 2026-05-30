@@ -212,10 +212,23 @@ class QaQueue extends Page
                     'signed_at' => now(),
                 ]);
 
-                // A fail determination opens a Non-Conformance for QA review (with a generated NC number),
-                // unless the failed run already spawned one.
+                // The failed run that triggered this determination is now terminal/complete.
                 $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
                     ->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
+                if ($failedRun) {
+                    $failedRun->update([
+                        'qa_determination' => $three ? 'fail_requalify' : ($retrain ? 'fail_retrain' : 'fail_redo'),
+                        'qa_determined_at' => now(),
+                        'is_complete' => true,
+                        'qa_signed_by' => Auth::id(),
+                        'qa_notes' => $data['note'] ?? null,
+                    ]);
+                    // The next run this person performs descends from this failed run (child record).
+                    $q->pending_parent_run_id = $failedRun->id;
+                }
+
+                // A fail determination opens a Non-Conformance for QA review (with a generated NC number),
+                // unless the failed run already spawned one.
                 $existingNc = $failedRun
                     ? \App\Models\NonConformance::where('qualification_run_id', $failedRun->id)->exists()
                     : false;

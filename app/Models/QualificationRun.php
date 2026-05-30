@@ -8,6 +8,7 @@ use App\Models\Concerns\Auditable;
 use App\Models\Concerns\GqsActivityLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -34,6 +35,7 @@ class QualificationRun extends Model implements HasMedia
 
     protected $fillable = [
         'personnel_id', 'qualification_id', 'run_slot_id', 'reservation_id',
+        'parent_run_id', 'qa_determination', 'qa_determined_at', 'is_complete',
         'run_date', 'result', 'cycle_type', 'notes', 'recorded_by', 'is_seed',
         'signed_by', 'signed_at', 'signature_meaning',
         'lims_worklist_id', 'veeva_doc_number', 'veeva_url', 'results_entered_at', 'incubation_started_at', 'results_released_at', 'qa_signed_at', 'qa_signed_by', 'qa_notes',
@@ -45,6 +47,8 @@ class QualificationRun extends Model implements HasMedia
             'run_date' => 'date',
             'result' => RunResult::class,
             'is_seed' => 'boolean',
+            'is_complete' => 'boolean',
+            'qa_determined_at' => 'datetime',
             'cycle_type' => QualificationType::class,
             'signed_at' => 'datetime',
             'incubation_started_at' => 'datetime',
@@ -53,6 +57,10 @@ class QualificationRun extends Model implements HasMedia
             'qa_signed_at' => 'datetime',
         ];
     }
+
+    /** The run this one descends from (e.g. a requal run spawned after a failed run's QA determination). */
+    public function parentRun(): BelongsTo { return $this->belongsTo(QualificationRun::class, 'parent_run_id'); }
+    public function childRuns(): HasMany { return $this->hasMany(QualificationRun::class, 'parent_run_id'); }
 
     public function personnel(): BelongsTo
     {
