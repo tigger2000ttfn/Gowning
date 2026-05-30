@@ -33,6 +33,17 @@ class QualificationResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
     protected static string|\UnitEnum|null $navigationGroup = 'Qualifications';
     protected static ?int $navigationSort = 6;
+    protected static ?string $navigationLabel = 'Active Qualifications';
+    protected static ?string $pluralModelLabel = 'Active Qualifications';
+    protected static ?string $modelLabel = 'Qualification';
+
+    /** This page is the live qualification picture: people due, in progress, lapsed, or
+     *  mid-pipeline. Completed/historic run records live under Run Completions, not here. */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('workflow_stage', '!=', \App\Enums\WorkflowStage::Archived->value);
+    }
 
     public static function table(Table $table): Table
     {

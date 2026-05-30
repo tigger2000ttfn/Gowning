@@ -44,6 +44,8 @@ class NonConformanceResource extends Resource
     {
         return $schema->components([
             Section::make('Non-Conformance')->columns(2)->schema([
+                TextInput::make('nc_number')->label('NC Number')
+                    ->helperText('Auto-generated on creation. Editable if you need to align it with TrackWise.'),
                 Select::make('personnel_id')->label('Person')
                     ->options(fn () => Personnel::orderBy('last_name')->get()->mapWithKeys(fn ($p) => [$p->id => $p->full_name])->all())
                     ->searchable(),
@@ -90,7 +92,8 @@ class NonConformanceResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('trackwise_id')->label('TrackWise')->placeholder('-')->weight('bold')->searchable(),
+                TextColumn::make('nc_number')->label('NC #')->weight('bold')->searchable()->sortable(),
+                TextColumn::make('trackwise_id')->label('TrackWise')->placeholder('-')->searchable(),
                 TextColumn::make('personnel.full_name')->label('Person')->searchable(),
                 TextColumn::make('nc_type')->label('Type')->badge()->formatStateUsing(fn ($state) => \Illuminate\Support\Str::title(str_replace('_', ' ', $state)))
                     ->color(fn ($state) => match ($state) { 'failed_run' => 'danger', 'mold_hit' => 'warning', 'bacteria_hit' => 'warning', default => 'gray' }),

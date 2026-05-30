@@ -212,6 +212,28 @@ class QaQueue extends Page
                     'signed_at' => now(),
                 ]);
 
+                // A fail determination opens a Non-Conformance for QA review (with a generated NC number),
+                // unless the failed run already spawned one.
+                $failedRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
+                    ->whereNull('deleted_at')->latest('run_date')->latest('id')->first();
+                $existingNc = $failedRun
+                    ? \App\Models\NonConformance::where('qualification_run_id', $failedRun->id)->exists()
+                    : false;
+                if (! $existingNc) {
+                    $nc = \App\Models\NonConformance::create([
+                        'qualification_id' => $q->id,
+                        'qualification_run_id' => $failedRun?->id,
+                        'personnel_id' => $q->personnel_id,
+                        'nc_type' => 'failed_run',
+                        'status' => 'open',
+                        'observed_date' => now()->toDateString(),
+                        'created_by' => Auth::id(),
+                        'summary' => 'Opened from QA determination (' . ($three ? '3-run' : '1-run') . ' requalification'
+                            . ($retrain ? ', retraining required' : '') . '). ' . ($data['note'] ?? ''),
+                    ]);
+                    \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
+                }
+
                 // AUTOMATION: if no retraining needed, auto-book the requal run(s) into the next day
                 $bookedMsg = '';
                 if (! $retrain) {

@@ -7,8 +7,8 @@ use Filament\Resources\Pages\ListRecords;
 class ListQualificationRuns extends ListRecords
 {
     use GqsListHero;
-    public ?string $gqsTitle = 'Qualification Runs';
-    public ?string $gqsSubtitle = 'Recorded cleanroom run results and LIMS / Veeva links.';
+    public ?string $gqsTitle = 'Run Completions';
+    public ?string $gqsSubtitle = 'The historic log of every completed qualification run, pass or fail. Each row is one run result with its LIMS / Veeva links.';
     public ?string $gqsIcon = 'heroicon-o-beaker';
     protected static string $resource = QualificationRunResource::class;
     protected function getHeaderActions(): array { return [CreateAction::make()->label('Record Run')]; }

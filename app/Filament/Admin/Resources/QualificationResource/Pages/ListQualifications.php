@@ -6,8 +6,8 @@ use Filament\Resources\Pages\ListRecords;
 class ListQualifications extends ListRecords
 {
     use GqsListHero;
-    public ?string $gqsTitle = 'Qualifications';
-    public ?string $gqsSubtitle = 'Engine-driven status, runs, and due dates.';
+    public ?string $gqsTitle = 'Active Qualifications';
+    public ?string $gqsSubtitle = 'Current qualification status for active people: due, in progress, lapsed, or mid-pipeline. Completed run history lives under Run Completions.';
     public ?string $gqsIcon = 'heroicon-o-shield-check';
     protected static string $resource = QualificationResource::class;
 }
