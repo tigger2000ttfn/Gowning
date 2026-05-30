@@ -1,8 +1,8 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Class Scheduler', 'icon' => 'heroicon-o-academic-cap', 'actions' => '
         <button type="button" wire:click="$set(\'tab\',\'overview\')" class="gqs-tab ' . ($tab==='overview' ? 'active' : '') . '">Overview</button>
-        <button type="button" wire:click="$set(\'tab\',\'classes\')" class="gqs-tab ' . ($tab==='classes' ? 'active' : '') . '">Classes</button>
-        <button type="button" wire:click="$set(\'tab\',\'sessions\')" class="gqs-tab ' . ($tab==='sessions' ? 'active' : '') . '">Sessions</button>
+        <button type="button" wire:click="$set(\'tab\',\'classes\')" class="gqs-tab ' . ($tab==='classes' ? 'active' : '') . '">Class Templates</button>
+        <button type="button" wire:click="$set(\'tab\',\'sessions\')" class="gqs-tab ' . ($tab==='sessions' ? 'active' : '') . '">Classes</button>
         <button type="button" wire:click="$set(\'tab\',\'attendance\')" class="gqs-tab ' . ($tab==='attendance' ? 'active' : '') . '">Attendance</button>
     '])
 
@@ -81,10 +81,10 @@
             <div class="gqs-panel-body" style="padding:0;">
                 @php $tpls = $this->templates(); @endphp
                 @if($tpls->isEmpty())
-                    <div class="gqs-empty" style="padding:28px;">No class templates yet. Create one, then generate sessions from it.</div>
+                    <div class="gqs-empty" style="padding:28px;">No class templates yet. Create one, then generate classes from it.</div>
                 @else
                     <table class="gqs-tbl">
-                        <thead><tr><th>Class</th><th>Code</th><th>Default Capacity</th><th>Validity</th><th>Prerequisite</th><th>Sessions</th><th></th></tr></thead>
+                        <thead><tr><th>Class Template</th><th>Code</th><th>Default Capacity</th><th>Validity</th><th>Prerequisite</th><th>Classes</th><th></th></tr></thead>
                         <tbody>
                             @foreach($tpls as $t)
                                 <tr>
@@ -95,7 +95,7 @@
                                     <td>@if($t->is_gowning_prerequisite)<span class="gqs-pill gqs-pill-green">Gowning Prereq</span>@else<span class="gqs-pill">No</span>@endif</td>
                                     <td>{{ $t->sessions_count }}</td>
                                     <td style="text-align:right;">
-                                        <button wire:click="$set('sessClassId', {{ $t->id }}); $set('tab','sessions'); $set('showAddSession', true)" class="rd-act rd-act-magenta">Generate Sessions</button>
+                                        <button wire:click="$set('sessClassId', {{ $t->id }}); $set('tab','sessions'); $set('showAddSession', true)" class="rd-act rd-act-magenta">Generate Classes</button>
                                     </td>
                                 </tr>
                             @endforeach
@@ -139,12 +139,12 @@
             </button>
         </div>
         @if($sessions->isEmpty())
-            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming classes. Generate some from a class template.</div></div>
         @else
             <div class="gqs-panel">
                 <div class="gqs-panel-body" style="padding:0;">
                     <table class="gqs-tbl">
-                        <thead><tr><th>Date</th><th>Time</th><th>Class</th><th>Location</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>
+                        <thead><tr><th>Date</th><th>Time</th><th>Class Template</th><th>Location</th><th>Instructor</th><th>Booked / Cap</th><th>Status</th><th style="text-align:right;">Manage</th></tr></thead>
                         <tbody>
                             @foreach($sessions as $s)
                                 <tr style="cursor:pointer;" wire:click="openSessionDetail({{ $s->id }})">
@@ -170,10 +170,10 @@
         @if($showAddSession)
             <div class="gqs-modal-overlay" wire:click.self="$set('showAddSession', false)">
                 <div class="gqs-modal" style="width:500px;">
-                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-plus"/></span>Add / Generate Class Sessions</div>
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-plus"/></span>Add / Generate Classes</div>
                     <div class="gqs-modal-body">
                         <div><label class="gqs-flbl">Class Template</label>
-                            <select wire:model="sessClassId" class="gqs-fld"><option value="">Select a class...</option>
+                            <select wire:model="sessClassId" class="gqs-fld"><option value="">Select a class template...</option>
                                 @foreach($this->classOptions() as $id => $name)<option value="{{ $id }}">{{ $name }}</option>@endforeach
                             </select></div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
