@@ -33,7 +33,8 @@ class StatusBoard extends Page
 
     public function getStages(): array
     {
-        // keep the board current: promote anything past its incubation period
+        // keep the board current: lapse overdue quals, then promote anything past incubation
+        app(\App\Services\LifecycleAdvancer::class)->run();
         app(\App\Services\IncubationAdvancer::class)->run();
         $out = [];
         $byStage = Qualification::with('personnel')

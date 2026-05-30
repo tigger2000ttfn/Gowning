@@ -16,3 +16,11 @@ Artisan::command('gqs:advance-incubation', function () {
 })->purpose('Advance qualifications past incubation when the period has elapsed');
 
 Schedule::command('gqs:advance-incubation')->dailyAt('06:00');
+
+// Yearly lifecycle: lapse anyone past their qualification due date into a 3-run requal.
+Artisan::command('gqs:advance-lifecycle', function () {
+    $n = app(\App\Services\LifecycleAdvancer::class)->run();
+    $this->info("Lifecycle advancer: {$n} qualification(s) lapsed into requalification.");
+})->purpose('Lapse qualifications past their due date into a 3-run requalification');
+
+Schedule::command('gqs:advance-lifecycle')->dailyAt('06:05');

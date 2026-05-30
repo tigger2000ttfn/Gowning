@@ -18,7 +18,7 @@ class Qualification extends Model
     protected $fillable = [
         'personnel_id', 'type', 'status', 'runs_required',
         'runs_completed', 'qualified_date', 'due_date',
-        'workflow_stage', 'stage_changed_at', 'qa_recommendation', 'qa_recommendation_note',
+        'workflow_stage', 'stage_changed_at', 'qa_recommendation', 'qa_recommendation_note', 'class_on_file', 'class_on_file_date',
     ];
 
     protected function casts(): array
@@ -28,6 +28,8 @@ class Qualification extends Model
             'status' => QualificationStatus::class,
             'workflow_stage' => \App\Enums\WorkflowStage::class,
             'stage_changed_at' => 'datetime',
+            'class_on_file' => 'boolean',
+            'class_on_file_date' => 'date',
             'runs_required' => 'integer',
             'runs_completed' => 'integer',
             'qualified_date' => 'date',

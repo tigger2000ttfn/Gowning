@@ -161,6 +161,10 @@ class QaQueue extends Page
                         'requal_one' => 'Annual requalification, 1 successful run required',
                     ])
                     ->default('requal_three')->required(),
+                \Filament\Forms\Components\Toggle::make('require_retraining')
+                    ->label('Require Gowning Class Retraining')
+                    ->helperText('On = clears the class on file; the person must retake the gowning class before runs. Off = class stays on file (the normal case).')
+                    ->default(false),
                 TextInput::make('note')->label('Determination Note')->columnSpanFull(),
             ])
             ->action(function (array $data, array $arguments) {
@@ -172,6 +176,7 @@ class QaQueue extends Page
                 if (! $q) return;
 
                 $three = ($data['recommendation'] ?? 'requal_three') === 'requal_three';
+                $retrain = (bool) ($data['require_retraining'] ?? false);
                 $q->qa_recommendation = $data['recommendation'] ?? 'requal_three';
                 $q->qa_recommendation_note = $data['note'] ?? null;
                 $q->runs_required = $three
@@ -179,8 +184,16 @@ class QaQueue extends Page
                     : (int) Setting::get('annual_runs_required', 1);
                 $q->runs_completed = 0;
                 $q->status = 'in_progress';
-                // back to Class Complete so they can be scheduled for the required run(s)
-                $q->workflow_stage = WorkflowStage::ClassComplete;
+
+                if ($retrain) {
+                    // QA requires retraining: clear class on file, back to Class Pending
+                    $q->class_on_file = false;
+                    $q->class_on_file_date = null;
+                    $q->workflow_stage = WorkflowStage::ClassPending;
+                } else {
+                    // class stays on file: straight to ready-to-book for the required run(s)
+                    $q->workflow_stage = WorkflowStage::ClassComplete;
+                }
                 $q->stage_changed_at = now();
                 $q->save();
 
@@ -191,12 +204,14 @@ class QaQueue extends Page
                     'user_id' => Auth::id(),
                     'signer_name' => Auth::user()->name,
                     'meaning' => 'QA Determination',
-                    'statement' => 'Requalification path: ' . ($three ? '3 runs' : '1 run') . '. ' . ($data['note'] ?? ''),
+                    'statement' => 'Requalification: ' . ($three ? '3 runs' : '1 run')
+                        . ($retrain ? ', class retraining required' : ', class stays on file') . '. ' . ($data['note'] ?? ''),
                     'signed_at' => now(),
                 ]);
 
                 Notification::make()->success()->title('Determination recorded')
-                    ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run') . ' required.')->send();
+                    ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run')
+                        . ($retrain ? ' + class retraining.' : '.'))->send();
             });
     }
 

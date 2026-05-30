@@ -110,11 +110,16 @@ class SessionsRelationManager extends RelationManager
                                         ['type' => 'initial', 'status' => 'in_progress',
                                          'runs_required' => (int) \App\Models\Setting::get('initial_runs_required', 3), 'runs_completed' => 0]
                                     );
+                                    // PERSISTENT: class is on file now, survives all future requal cycles
+                                    if (! $q->class_on_file) {
+                                        $q->class_on_file = true;
+                                        $q->class_on_file_date = $record->session_date->toDateString();
+                                    }
                                     if (in_array($q->workflow_stage?->value, [null, 'class_pending'], true)) {
                                         $q->workflow_stage = \App\Enums\WorkflowStage::ClassComplete;
                                         $q->stage_changed_at = now();
-                                        $q->save();
                                     }
+                                    $q->save();
                                 }
                                 $marked++;
                             } else {
