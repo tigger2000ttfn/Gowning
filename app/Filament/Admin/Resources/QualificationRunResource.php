@@ -11,6 +11,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Columns\TextColumn;
@@ -56,6 +57,8 @@ class QualificationRunResource extends Resource
                         RunResult::Pass->value => 'Pass',
                         RunResult::Fail->value => 'Fail',
                     ])->required(),
+                    TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')
+                        ->placeholder('Worklist / batch reference from LIMS'),
                     Textarea::make('notes')->columnSpanFull(),
                 ]),
             Section::make('Electronic Signature (21 CFR Part 11)')->icon('heroicon-o-finger-print')
@@ -76,6 +79,7 @@ class QualificationRunResource extends Resource
                 TextColumn::make('personnel.employee_id')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
                 TextColumn::make('run_date')->icon('heroicon-m-beaker')->date()->sortable(),
+                TextColumn::make('lims_worklist_id')->label('Worklist')->placeholder('-')->toggleable(),
                 TextColumn::make('result')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s === RunResult::Pass ? 'success' : 'danger'),
