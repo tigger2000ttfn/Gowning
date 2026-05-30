@@ -1,71 +1,54 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Reservation Board', 'subtitle' => 'Drag reservations between stages.', 'icon' => 'heroicon-o-rectangle-stack'])
-    <div
-        x-data="{
-            init() {
-                this.$nextTick(() => this.wire());
-            },
-            wire() {
-                document.querySelectorAll('[data-lane]').forEach(lane => {
-                    if (lane._sortable) return;
-                    lane._sortable = Sortable.create(lane, {
-                        group: 'reservations',
-                        animation: 150,
-                        ghostClass: 'kanban-ghost',
-                        onEnd: (evt) => {
-                            const id = evt.item.getAttribute('data-id');
-                            const toStatus = evt.to.getAttribute('data-lane');
-                            $wire.moveCard(parseInt(id), toStatus);
-                        }
-                    });
-                });
-            }
-        }"
-        x-init="init()"
-        wire:key="board-{{ now()->timestamp }}"
-    >
-        <div class="kanban-wrap">
-            @foreach ($this->getColumns() as $status => $col)
-                <div class="kanban-col">
-                    <div class="kanban-head kanban-{{ $status }}">
-                        <span>{{ $col['label'] }}</span>
-                        <span class="kanban-count">{{ count($col['cards']) }}</span>
-                    </div>
-                    <div class="kanban-lane" data-lane="{{ $status }}">
-                        @foreach ($col['cards'] as $card)
-                            <div class="kanban-card" data-id="{{ $card['id'] }}">
-                                <div class="kanban-name">{{ $card['name'] }}</div>
-                                <div class="kanban-meta">{{ $card['employee_id'] }}</div>
-                                @if($card['slot'])
-                                    <div class="kanban-slot">{{ $card['slot'] }} · {{ $card['date'] }}</div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    </div>
+    @include('filament.page-hero', ['title' => 'Qualification Run Reservations', 'subtitle' => 'Reservations grouped by run day. Click status to advance.', 'icon' => 'heroicon-o-calendar-days'])
 
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    @php $groups = $this->getGroupedByDay(); @endphp
+
+    @forelse ($groups as $group)
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-calendar-days"/> {{ $group['day'] }}
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($group['rows']) }} reserved</span>
+            </div>
+            <div class="gqs-panel-body">
+                <table class="gqs-tbl">
+                    <thead><tr><th>Employee</th><th>Name</th><th>Cleanroom</th><th>Time</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach ($group['rows'] as $row)
+                            <tr>
+                                <td style="font-weight:600;">{{ $row['employee_id'] }}</td>
+                                <td>{{ $row['name'] }}</td>
+                                <td>{{ $row['cleanroom'] }}</td>
+                                <td>{{ $row['time'] ?? '—' }}</td>
+                                <td>
+                                    <span class="gqs-pill {{ [
+                                        'requested' => 'gqs-pill-gold',
+                                        'approved'  => 'gqs-pill-green',
+                                        'completed' => 'gqs-pill-purple',
+                                        'no_show'   => 'gqs-pill-red',
+                                        'rejected'  => 'gqs-pill-red',
+                                    ][$row['status']] ?? 'gqs-pill-gold' }}">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$row['status'])) }}</span>
+                                </td>
+                                <td style="text-align:right;white-space:nowrap;">
+                                    @if($row['status'] === 'requested')
+                                        <button wire:click="moveCard({{ $row['id'] }}, 'approved')" class="sb-act sb-act-green">Approve</button>
+                                        <button wire:click="moveCard({{ $row['id'] }}, 'rejected')" class="sb-act sb-act-red">Reject</button>
+                                    @elseif($row['status'] === 'approved')
+                                        <button wire:click="moveCard({{ $row['id'] }}, 'completed')" class="sb-act sb-act-green">Complete</button>
+                                        <button wire:click="moveCard({{ $row['id'] }}, 'no_show')" class="sb-act sb-act-red">No-Show</button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @empty
+        <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No Run Reservations Yet.</div></div>
+    @endforelse
+
     <style>
-        .kanban-wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start;}
-        @media(max-width:900px){.kanban-wrap{grid-template-columns:repeat(2,1fr);}}
-        .kanban-col{background:rgba(120,120,130,.06);border-radius:12px;padding:10px;min-height:120px;}
-        .kanban-head{display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;padding:8px 10px;border-radius:8px;color:#fff;margin-bottom:10px;}
-        .kanban-requested{background:#B8860B;}
-        .kanban-approved{background:#2E7D5B;}
-        .kanban-completed{background:#1F6FB2;}
-        .kanban-no_show{background:#C8102E;}
-        .kanban-count{background:rgba(255,255,255,.25);border-radius:20px;padding:1px 9px;font-size:12px;}
-        .kanban-lane{display:flex;flex-direction:column;gap:8px;min-height:60px;}
-        .kanban-card{background:#fff;border:1px solid #DCDCE2;border-left:4px solid #A4123F;border-radius:9px;padding:10px 12px;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.08);}
-        .kanban-card:active{cursor:grabbing;}
-        .kanban-name{font-weight:700;font-size:14px;color:#1A1A1F;}
-        .kanban-meta{font-size:12px;color:#6A6A72;}
-        .kanban-slot{font-size:12px;color:#A4123F;font-weight:600;margin-top:4px;}
-        .kanban-ghost{opacity:.4;}
-        .dark .kanban-card{background:#1F1F25;color:#E5E5EA;}
-        .dark .kanban-name{color:#fff;}
+        .sb-act{font-size:12px;font-weight:700;padding:4px 11px;border-radius:7px;border:none;cursor:pointer;margin-left:5px;color:#fff;}
+        .sb-act-green{background:#2E7D5B;} .sb-act-green:hover{background:#246148;}
+        .sb-act-red{background:#C8102E;} .sb-act-red:hover{background:#9A0C23;}
     </style>
 </x-filament-panels::page>
