@@ -10,9 +10,7 @@
                 &middot; {{ $slot->cleanroom }}</p>
             <form method="POST" action="{{ route('public.run.signup.store', $slot) }}">
                 @csrf
-                <label>Employee ID</label>
-                <input name="employee_id" value="{{ old('employee_id') }}" required placeholder="e.g. EMP1001">
-                @error('employee_id')<div class="err">{{ $message }}</div>@enderror
+                @include('public.partials.person-lookup-fields', ['people' => $people])
                 <button class="submit" type="submit">Request this slot</button>
             </form>
         </div>

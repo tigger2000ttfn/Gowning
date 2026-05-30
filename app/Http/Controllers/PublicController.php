@@ -84,7 +84,17 @@ class PublicController extends Controller
     public function showRunSignup(RunSlot $slot)
     {
         abort_unless($slot->status === \App\Enums\RunSlotStatus::Open && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
-        return view('public.run-signup', ['slot' => $slot]);
+        return view('public.run-signup', ['slot' => $slot, 'people' => $this->personnelOptions()]);
+    }
+
+    /** Compact personnel list for the public self-identification lookup. */
+    protected function personnelOptions()
+    {
+        return Personnel::query()
+            ->orderBy('last_name')->orderBy('first_name')
+            ->get(['first_name', 'last_name', 'email', 'employee_id'])
+            ->map(fn ($p) => ['f' => $p->first_name, 'l' => $p->last_name, 'e' => $p->email, 'id' => $p->employee_id])
+            ->values();
     }
 
     /** Record a run-slot reservation request from the public page. */
@@ -93,12 +103,24 @@ class PublicController extends Controller
         abort_unless($slot->status === \App\Enums\RunSlotStatus::Open && $slot->hasCapacity() && ! $slot->slot_date->isPast(), 404);
 
         $data = $request->validate([
+            'first_name'  => ['required', 'string', 'max:120'],
+            'last_name'   => ['required', 'string', 'max:120'],
+            'email'       => ['required', 'email', 'max:255'],
             'employee_id' => ['required', 'string', 'max:50'],
         ]);
 
+        // Resolve by Employee ID. If the person is not on the roster yet, create a
+        // pending (inactive) record from their self-identification; QC Micro verifies
+        // it when approving the request.
         $person = Personnel::where('employee_id', $data['employee_id'])->first();
         if (! $person) {
-            return back()->withErrors(['employee_id' => 'No personnel record matches that Employee ID. Contact QC Micro.'])->withInput();
+            $person = Personnel::create([
+                'employee_id' => $data['employee_id'],
+                'first_name'  => $data['first_name'],
+                'last_name'   => $data['last_name'],
+                'email'       => $data['email'],
+                'is_active'   => false,
+            ]);
         }
 
         Reservation::firstOrCreate(
