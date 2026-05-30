@@ -197,14 +197,14 @@ class ClassScheduler extends Page
         $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
         if (! $s || $s->attendance_submitted_at) return;
         $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
-        // Everyone must have an intended status marked (in memory) before submitting.
-        $unmarked = $active->filter(fn ($e) => ! in_array(($this->attIntent[$e->id] ?? null), ['attended', 'no_show'], true))->count();
+        // Everyone must have a draft mark before submitting.
+        $unmarked = $active->filter(fn ($e) => ! in_array($e->draft_attendance, ['attended', 'no_show'], true))->count();
         if ($unmarked > 0) {
             Notification::make()->warning()->title('Mark Everyone First')
                 ->body($unmarked . ' enrollee(s) are still unmarked. Mark each Attended or No-Show before submitting.')->send();
             return;
         }
-        $attendedCount = $active->filter(fn ($e) => ($this->attIntent[$e->id] ?? null) === 'attended')->count();
+        $attendedCount = $active->filter(fn ($e) => $e->draft_attendance === 'attended')->count();
         if ($attendedCount === 0) {
             Notification::make()->warning()->title('No Attendees To Submit')->body('No one is marked Attended on this session.')->send();
             return;
@@ -227,13 +227,14 @@ class ClassScheduler extends Page
 
         $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
         foreach ($active as $e) {
-            $intent = $this->attIntent[$e->id] ?? null;
+            $intent = $e->draft_attendance;
             if ($intent === 'attended') {
                 $e->markStatus('pending_qa', Auth::id());
             } elseif ($intent === 'no_show') {
                 $e->markStatus('no_show', Auth::id());
             }
-            unset($this->attIntent[$e->id]);
+            $e->draft_attendance = null;
+            $e->save();
         }
         $attendedCount = $active->filter(fn ($e) => $e->fresh()->status === 'pending_qa')->count();
         // The signer is the trainer of record. If none was set, record the signer; their
@@ -408,6 +409,7 @@ class ClassScheduler extends Page
                 'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'status' => $e->status,
+                'draft' => $e->draft_attendance,
                 'note' => $e->attendance_note,
             ])->values()->all();
     }
@@ -422,13 +424,11 @@ class ClassScheduler extends Page
                 ->body('Reopen the session to change attendance.')->send();
             return;
         }
-        // Deferred: record the INTENDED status in memory only. The enrollment stays
-        // "Signed Up" everywhere (Class Reservations, Class Board) until QCM submits.
-        if (($this->attIntent[$enrollmentId] ?? null) === $status) {
-            unset($this->attIntent[$enrollmentId]);
-        } else {
-            $this->attIntent[$enrollmentId] = $status;
-        }
+        // DRAFT ONLY: store the intended mark in its own column. The real `status` stays
+        // "Signed Up" everywhere (Class Reservations, Class Board, the qualification) until
+        // QCM submits with the trainer e-signature. Tapping the same mark again clears it.
+        $e->draft_attendance = ($e->draft_attendance === $status) ? null : $status;
+        $e->save();
     }
 
     public function saveAttendanceNote(int $enrollmentId, ?string $note): void
@@ -452,7 +452,8 @@ class ClassScheduler extends Page
         if (! $s || $s->attendance_submitted_at) return;
         $n = 0;
         foreach ($s->enrollments->whereNotIn('status', ['cancelled', 'historical']) as $e) {
-            $this->attIntent[$e->id] = 'attended';
+            $e->draft_attendance = 'attended';
+            $e->save();
             $n++;
         }
         Notification::make()->success()->title('Marked Attended')->body($n . ' marked attended (not submitted yet).')->send();
@@ -566,8 +567,12 @@ class ClassScheduler extends Page
     {
         $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
         if (! $s) return;
-        foreach ($s->enrollments->where('status', 'pending_qa') as $e) {
-            $e->markStatus('attended', \Illuminate\Support\Facades\Auth::id());
+        foreach ($s->enrollments->whereIn('status', ['pending_qa', 'no_show']) as $e) {
+            // Return to DRAFT: the real status goes back to Signed Up and the prior mark is
+            // restored only as a draft (it is NOT left as a real "attended" status).
+            $e->draft_attendance = $e->status === 'no_show' ? 'no_show' : 'attended';
+            $e->status = 'signed_up';
+            $e->save();
         }
         $s->attendance_submitted_at = null;
         $s->attendance_submitted_by = null;

@@ -335,7 +335,7 @@
 
                             <div class="att-list">
                                 @foreach($attendees as $row)
-                                    @php $aIntent = $this->attIntent[$row['id']] ?? null;
+                                    @php $aIntent = $row['draft'] ?? null;
                                          $tintKey = $submitted ? (in_array($row['status'], ['attended','completed','pending_qa']) ? 'attended' : ($row['status'] === 'no_show' ? 'no_show' : ($row['status'] === 'rescheduled' ? 'rescheduled' : null))) : $aIntent; @endphp
                                     <div class="att-row {{ $tintKey === 'attended' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                         <div class="att-who">

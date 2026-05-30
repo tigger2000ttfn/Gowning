@@ -13,7 +13,7 @@ class ClassEnrollment extends Model
 
     protected $fillable = [
         'class_session_id', 'personnel_id', 'name', 'email',
-        'employee_id', 'status', 'signed_up_at',
+        'employee_id', 'status', 'draft_attendance', 'signed_up_at',
         'attended_at', 'completed_at', 'marked_by', 'attendance_note',
         'qa_completed_by', 'qa_completed_at',
     ];
