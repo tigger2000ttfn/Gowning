@@ -56,6 +56,7 @@ class QualificationRunResource extends Resource
                     Select::make('result')->options([
                         RunResult::Pass->value => 'Pass',
                         RunResult::Fail->value => 'Fail',
+                        RunResult::Pending->value => 'Pending (Awaiting Results)',
                     ])->required(),
                     TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')
                         ->placeholder('Worklist / batch reference from LIMS'),
@@ -95,13 +96,17 @@ class QualificationRunResource extends Resource
                     ->url(fn ($record) => $record->veeva_url)->openUrlInNewTab(),
                 TextColumn::make('result')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
-                    ->color(fn ($s) => $s === RunResult::Pass ? 'success' : 'danger'),
+                    ->color(fn ($s) => match ($s) {
+                        RunResult::Pass => 'success',
+                        RunResult::Fail => 'danger',
+                        default => 'warning',
+                    }),
                 TextColumn::make('cycle_type')->label('Cycle')->formatStateUsing(fn ($s) => $s?->label())->toggleable(),
                 TextColumn::make('recordedBy.name')->label('Recorded By')->toggleable(),
                 TextColumn::make('signed_at')->dateTime()->label('Signed')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('result')->options(['pass' => 'Pass', 'fail' => 'Fail']),
+                SelectFilter::make('result')->options(['pass' => 'Pass', 'fail' => 'Fail', 'pending' => 'Pending']),
             ])
             ->defaultSort('run_date', 'desc');
     }
