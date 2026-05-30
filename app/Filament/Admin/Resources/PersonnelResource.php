@@ -98,10 +98,10 @@ class PersonnelResource extends Resource
                                     ->default('class_pending')
                                     ->helperText('Where they currently sit in the pipeline.'),
                                 DatePicker::make('due_date')->label('Qualification Due Date')
-                                    ->helperText('Next requalification due date.'),
+                                    ->helperText('Calculated from the last qualifying run (Date Last Qualified + cycle). Set Date Last Qualified to drive this.'),
                                 TextInput::make('runs_required')->label('Runs Required')->numeric()->default(3),
                                 TextInput::make('runs_completed')->label('Runs Already Completed')->numeric()->default(0)
-                                    ->helperText('How many successful runs are already on file.'),
+                                    ->helperText('Successful runs on file for the current cycle. Saving creates that many run-history entries dated within the last year, so you do not back-enter older runs. Entering anyone as qualified/in-progress marks their gowning class as on file.'),
                                 DatePicker::make('qualified_date')->label('Date Last Qualified'),
                                 Toggle::make('class_on_file')->label('Gowning Class Already Completed')
                                     ->helperText('On = class is on file (will not be flagged to retake). Set for anyone who already took it.')
