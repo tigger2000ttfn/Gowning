@@ -351,8 +351,8 @@
     }
     /* Page hero header (shared by the partial and resource-list view) - clean theme-aware bar */
     .pg-head{display:flex;align-items:center;gap:16px;padding:13px 20px;margin-bottom:16px;margin-top:6px;
-        background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E6);border-bottom:3px solid #A4123F;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-    .dark .pg-head{background:#1A1A20;border-color:#2A2A32;border-bottom-color:#A4123F;}
+        background:transparent;border:none;border-bottom:2px solid var(--gqs-border,#DADADF);border-radius:0;box-shadow:none;}
+    .dark .pg-head{border-bottom-color:#2A2A32;}
     .pg-head-ico{width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#850F33);box-shadow:0 3px 10px rgba(164,18,63,.28);}
     .pg-head-ico svg{width:24px;height:24px;color:#fff;}
     .pg-head-tx h1{font-size:22px;font-weight:800;margin:0;color:#1A1A1F;}

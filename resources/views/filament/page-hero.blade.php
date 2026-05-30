@@ -2,9 +2,9 @@
      Title on the left, optional actions/tabs on the right. No subtitle (saves vertical space). --}}
 <style>
     .pg-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-        padding:13px 18px;margin-bottom:16px;margin-top:4px;background:var(--gqs-surface,#fff);border-radius:10px;
-        border:1px solid var(--gqs-border,#E2E2E6);border-bottom:3px solid #A4123F;box-shadow:0 1px 4px rgba(0,0,0,.05);}
-    .dark .pg-head{background:#1A1A20;border-color:#2A2A32;border-bottom-color:#A4123F;}
+        padding:6px 0 12px;margin-bottom:14px;margin-top:4px;background:transparent;border-radius:0;
+        border:none;border-bottom:2px solid var(--gqs-border,#DADADF);box-shadow:none;}
+    .dark .pg-head{border-bottom-color:#2A2A32;}
     .pg-head-l{display:flex;align-items:center;gap:14px;min-width:0;}
     .pg-head-ico{width:42px;height:42px;flex:0 0 42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
         background:linear-gradient(135deg,#A4123F,#850F33);box-shadow:0 3px 10px rgba(164,18,63,.28);}
