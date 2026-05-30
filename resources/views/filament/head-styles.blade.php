@@ -317,6 +317,15 @@
     .gqs-btn-primary:hover{background:#85102F;}
     .gqs-btn-ghost{background:transparent;border:1px solid var(--gqs-border,#C4C4CC);color:var(--gqs-text,#1A1A1F);}
     .dark .gqs-btn-ghost{color:#ECECF0;border-color:#3A3A44;}
+    /* small inline action buttons used across boards/rosters */
+    .sb-act{font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;border:none;cursor:pointer;margin-left:6px;color:#fff;background:#6A6A72;}
+    .sb-act-green{background:#2E7D5B;} .sb-act-green:hover{background:#246148;}
+    .sb-act-red{background:#C8102E;} .sb-act-red:hover{background:#9A0C23;}
+    .sb-act-magenta{background:#A4123F;} .sb-act-magenta:hover{background:#85102F;}
+    .rd-act{font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;color:#fff;background:#6A6A72;margin-left:4px;}
+    .rd-act-magenta{background:#A4123F;} .rd-act-magenta:hover{background:#85102F;}
+    .rd-act-green{background:#2E7D5B;} .rd-act-green:hover{background:#246148;}
+    .dark .gqs-btn-ghost{color:#ECECF0;border-color:#3A3A44;}
     .gqs-mini-btn{background:#A4123F;color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;}
     .gqs-mini-btn:hover{background:#850F33;}
 </style>

@@ -156,6 +156,76 @@ class ClassScheduler extends Page
         $this->dispatch('open-url', url: $url);
     }
 
+    // ----- Attendance marking (trainer/admin work, lives on the scheduler) -----
+
+    /** Attendees for one session, for the attendance roster. */
+    public function sessionAttendees(int $sessionId): array
+    {
+        $s = \App\Models\ClassSession::with('enrollments.personnel')->find($sessionId);
+        if (! $s) return [];
+        return $s->enrollments->whereNotIn('status', ['cancelled'])
+            ->map(fn ($e) => [
+                'id' => $e->id,
+                'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
+                'employee_id' => $e->employee_id,
+                'status' => $e->status,
+            ])->values()->all();
+    }
+
+    public function markAttendance(int $enrollmentId, string $status): void
+    {
+        if (! in_array($status, ['attended', 'no_show', 'signed_up'], true)) return;
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        if ($e->classSession?->attendance_submitted_at) {
+            Notification::make()->warning()->title('Attendance already submitted')
+                ->body('Reopen the session to change attendance.')->send();
+            return;
+        }
+        $e->markStatus($status, \Illuminate\Support\Facades\Auth::id());
+        Notification::make()->success()->title('Attendance updated')->send();
+    }
+
+    /** Submit a session's attendance: lock it and push attendees to QA classroom approval. */
+    public function submitAttendance(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
+        if (! $s) return;
+        if ($s->attendance_submitted_at) { Notification::make()->warning()->title('Already submitted')->send(); return; }
+        $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
+        $undecided = $active->where('status', 'signed_up')->count();
+        if ($undecided > 0) {
+            Notification::make()->warning()->title('Mark Everyone First')
+                ->body($undecided . ' enrollee(s) are still Signed Up. Mark each Attended or No-Show before submitting.')->send();
+            return;
+        }
+        if ($active->where('status', 'attended')->count() === 0) {
+            Notification::make()->warning()->title('No Attendees To Submit')->body('No one is marked Attended on this session.')->send();
+            return;
+        }
+        foreach ($active->where('status', 'attended') as $e) {
+            $e->markStatus('pending_qa', \Illuminate\Support\Facades\Auth::id());
+        }
+        $s->attendance_submitted_at = now();
+        $s->attendance_submitted_by = \Illuminate\Support\Facades\Auth::id();
+        $s->save();
+        Notification::make()->success()->title('Attendance Submitted To QA')
+            ->body('Attendees are now in the QA Classroom Approval queue.')->send();
+    }
+
+    public function reopenAttendance(int $sessionId): void
+    {
+        $s = \App\Models\ClassSession::with('enrollments')->find($sessionId);
+        if (! $s) return;
+        foreach ($s->enrollments->where('status', 'pending_qa') as $e) {
+            $e->markStatus('attended', \Illuminate\Support\Facades\Auth::id());
+        }
+        $s->attendance_submitted_at = null;
+        $s->attendance_submitted_by = null;
+        $s->save();
+        Notification::make()->success()->title('Session Reopened')->send();
+    }
+
 
     public function sessions()
     {

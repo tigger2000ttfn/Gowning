@@ -122,41 +122,65 @@
             </button>
         </div>
         @php $sessions = $this->sessions(); @endphp
-        <div class="gqs-panel">
-            <div class="gqs-panel-body" style="padding:0;">
-                @if($sessions->isEmpty())
-                    <div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div>
-                @else
-                    <table class="gqs-tbl">
-                        <thead><tr>
-                            <th wire:click="sortSessions('session_date')" style="cursor:pointer;">Date @if($sessSort==='session_date'){{ $sessDir==='asc'?'▲':'▼' }}@endif</th>
-                            <th>Time</th>
-                            <th wire:click="sortSessions('class')" style="cursor:pointer;">Class @if($sessSort==='class'){{ $sessDir==='asc'?'▲':'▼' }}@endif</th>
-                            <th>Location</th>
-                            <th>Instructor</th>
-                            <th wire:click="sortSessions('booked')" style="cursor:pointer;">Booked / Cap @if($sessSort==='booked'){{ $sessDir==='asc'?'▲':'▼' }}@endif</th>
-                            <th></th>
-                        </tr></thead>
-                        <tbody>
-                            @foreach($sessions as $s)
-                                <tr>
-                                    <td style="font-weight:700;">{{ $s->session_date->format('D, M j, Y') }}</td>
-                                    <td>{{ $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') : '—' }}</td>
-                                    <td>{{ $s->trainingClass?->name }}</td>
-                                    <td>{{ $s->location ?: '—' }}</td>
-                                    <td>{{ $s->instructorUser?->name ?? $s->instructor ?? 'Unassigned' }}</td>
-                                    <td><span class="gqs-pill {{ $s->seats_left > 0 ? 'gqs-pill-green' : 'gqs-pill-gold' }}">{{ $s->booked }} / {{ $s->capacity }}</span></td>
-                                    <td style="text-align:right;">
-                                        <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Attendance Form</button>
-                                        <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel</button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
-            </div>
-        </div>
+        @if($sessions->isEmpty())
+            <div class="gqs-panel"><div class="gqs-empty" style="padding:28px;">No upcoming sessions. Generate some from a class template.</div></div>
+        @else
+            @foreach($sessions as $s)
+                @php $attendees = $this->sessionAttendees($s->id); $submitted = (bool) $s->attendance_submitted_at; @endphp
+                <div class="gqs-panel" style="margin-bottom:16px;">
+                    <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                        <x-filament::icon icon="heroicon-m-academic-cap"/>
+                        <span>{{ $s->trainingClass?->name }} · {{ $s->session_date->format('D, M j, Y') }}@if($s->start_time) · {{ \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') }}@endif</span>
+                        <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span style="font-size:12px;font-weight:600;opacity:.9;">{{ $s->instructorUser?->name ?? $s->instructor ?? 'No Instructor' }} · {{ $s->booked }} / {{ $s->capacity }}</span>
+                            @if($submitted)<span class="gqs-pill gqs-pill-green">Submitted</span>@endif
+                            <button type="button" wire:click="openAttendanceForm({{ $s->id }})" class="rd-act rd-act-magenta">Print Attendance Form</button>
+                            <button wire:click="cancelSession({{ $s->id }})" wire:confirm="Cancel this session?" class="rd-act" style="background:#C8102E;">Cancel Session</button>
+                        </span>
+                    </div>
+                    <div class="gqs-panel-body">
+                        @if(empty($attendees))
+                            <div class="gqs-empty">No One Enrolled Yet. Enrollments Are Managed On Class Reservations.</div>
+                        @else
+                            @if(! $submitted)
+                                <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+                                    <button type="button" wire:click="submitAttendance({{ $s->id }})"
+                                            wire:confirm="Submit this session's attendance to QA? It will be locked and attendees sent to the QA Classroom Approval queue."
+                                            class="gqs-btn gqs-btn-primary">Submit Attendance</button>
+                                </div>
+                            @else
+                                <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+                                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Submitted {{ \Illuminate\Support\Carbon::parse($s->attendance_submitted_at)->format('M j, Y g:i A') }} · awaiting QA classroom approval.</span>
+                                    <button type="button" wire:click="reopenAttendance({{ $s->id }})"
+                                            wire:confirm="Reopen this session? Attendees not yet QA-approved return to draft." class="gqs-btn gqs-btn-ghost">Reopen</button>
+                                </div>
+                            @endif
+                            <table class="gqs-tbl">
+                                <thead><tr><th>Employee</th><th>Name</th><th>Status</th><th style="text-align:right;">Attendance</th></tr></thead>
+                                <tbody>
+                                    @foreach($attendees as $row)
+                                        <tr>
+                                            <td style="font-weight:600;">{{ $row['employee_id'] }}</td>
+                                            <td>{{ $row['name'] }}</td>
+                                            <td><span class="gqs-pill {{ [
+                                                'signed_up' => 'gqs-pill-purple', 'attended' => 'gqs-pill-gold',
+                                                'pending_qa' => 'gqs-pill-purple', 'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
+                                            ][$row['status']] ?? 'gqs-pill-purple' }}">{{ ucwords(str_replace('_',' ',$row['status'])) }}</span></td>
+                                            <td style="text-align:right;white-space:nowrap;">
+                                                @if(! $submitted && in_array($row['status'], ['signed_up','attended','no_show']))
+                                                    <button wire:click="markAttendance({{ $row['id'] }}, 'attended')" class="sb-act sb-act-green">Attended</button>
+                                                    <button wire:click="markAttendance({{ $row['id'] }}, 'no_show')" class="sb-act sb-act-red">No-Show</button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+                    </div>
+                </div>
+            @endforeach
+        @endif
 
         @if($showAddSession)
             <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="$set('showAddSession', false)">

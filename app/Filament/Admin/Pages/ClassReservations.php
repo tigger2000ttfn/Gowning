@@ -30,7 +30,7 @@ class ClassReservations extends Page
 
     protected string $view = 'filament.pages.class-reservations';
 
-    /** Enrollments grouped by class session, for the per-session list view. */
+    /** Enrollments grouped by class session, booking-management view. */
     public function getGroupedBySession(): array
     {
         return ClassSession::with(['trainingClass', 'enrollments.personnel'])
@@ -44,7 +44,6 @@ class ClassReservations extends Page
                 'seats' => $s->seatsLeft(),
                 'capacity' => $s->capacity,
                 'submitted' => (bool) $s->attendance_submitted_at,
-                'submitted_at' => $s->attendance_submitted_at?->format('M j, Y g:i A'),
                 'rows' => $s->enrollments
                     ->whereNotIn('status', ['cancelled'])
                     ->map(fn ($e) => [
@@ -56,72 +55,93 @@ class ClassReservations extends Page
             ])->values()->all();
     }
 
-    public function setStatus(int $id, string $status): void
+    /** Open future sessions a booking can be moved to (id => label). */
+    public function openSessions(): array
     {
-        $e = ClassEnrollment::with('personnel', 'classSession')->find($id);
+        return ClassSession::with('trainingClass')
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')
+            ->get()
+            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->format('M j, Y')])
+            ->all();
+    }
+
+    // ---- Booking management: move / reschedule / cancel (NOT attendance) ----
+
+    public bool $showMove = false;
+    public ?int $moveEnrollmentId = null;
+    public ?int $moveSessionId = null;
+    public string $moveName = '';
+
+    public function openMove(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::with('personnel')->find($enrollmentId);
         if (! $e) return;
-        // Cannot change attendance once the session has been submitted to QA.
+        $this->moveEnrollmentId = $enrollmentId;
+        $this->moveName = $e->personnel?->full_name ?? $e->name ?? 'Trainee';
+        $this->moveSessionId = null;
+        $this->showMove = true;
+    }
+
+    public function move(): void
+    {
+        $e = ClassEnrollment::with('classSession')->find($this->moveEnrollmentId);
+        if (! $e || ! $this->moveSessionId) {
+            Notification::make()->warning()->title('Pick A Session')->send();
+            return;
+        }
         if ($e->classSession?->attendance_submitted_at) {
-            Notification::make()->warning()->title('Attendance already submitted')
-                ->body('Reopen the session to change attendance.')->send();
+            Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
             return;
         }
-        // Trainer only marks attended / no-show (draft). Completed is a QA action.
-        if (! in_array($status, ['signed_up', 'attended', 'no_show'], true)) return;
-        $e->markStatus($status, \Illuminate\Support\Facades\Auth::id());
-        Notification::make()->success()->title('Attendance updated')->send();
+        $target = ClassSession::find($this->moveSessionId);
+        if (! $target) return;
+        if ($target->seatsLeft() <= 0) {
+            Notification::make()->warning()->title('Session Full')->send();
+            return;
+        }
+        $e->class_session_id = $this->moveSessionId;
+        $e->status = 'signed_up';
+        $e->save();
+        $this->showMove = false;
+        Notification::make()->success()->title('Booking Moved')->send();
     }
 
-    /**
-     * Submit a session's attendance: lock it, and push everyone marked Attended into the
-     * QA Classroom Approval queue (pending_qa). The signed FORM-AST-36513 is printed before
-     * this. Requires that no one is still left undecided (signed_up).
-     */
-    public function submitAttendance(int $sessionId): void
+    /** Move to the next available future session automatically. */
+    public function reschedule(int $enrollmentId): void
     {
-        $s = ClassSession::with('enrollments')->find($sessionId);
-        if (! $s) return;
-        if ($s->attendance_submitted_at) {
-            Notification::make()->warning()->title('Already submitted')->send();
+        $e = ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        if ($e->classSession?->attendance_submitted_at) {
+            Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
             return;
         }
-        $active = $s->enrollments->whereNotIn('status', ['cancelled', 'historical']);
-        $undecided = $active->where('status', 'signed_up')->count();
-        if ($undecided > 0) {
-            Notification::make()->warning()->title('Mark everyone first')
-                ->body($undecided . ' enrollee(s) are still Signed Up. Mark each Attended or No-Show before submitting.')->send();
+        $next = ClassSession::where('status', '!=', 'cancelled')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->where('id', '!=', $e->class_session_id)
+            ->orderBy('session_date')->get()
+            ->first(fn ($s) => $s->seatsLeft() > 0);
+        if (! $next) {
+            Notification::make()->warning()->title('No Open Session')->body('No future session has an open seat.')->send();
             return;
         }
-        if ($active->where('status', 'attended')->count() === 0) {
-            Notification::make()->warning()->title('No attendees to submit')
-                ->body('No one is marked Attended on this session.')->send();
-            return;
-        }
-
-        // push attended -> pending_qa; lock the session
-        foreach ($active->where('status', 'attended') as $e) {
-            $e->markStatus('pending_qa', \Illuminate\Support\Facades\Auth::id());
-        }
-        $s->attendance_submitted_at = now();
-        $s->attendance_submitted_by = \Illuminate\Support\Facades\Auth::id();
-        $s->save();
-
-        Notification::make()->success()->title('Attendance submitted to QA')
-            ->body('Attendees are now in the QA Classroom Approval queue.')->send();
+        $e->class_session_id = $next->id;
+        $e->status = 'signed_up';
+        $e->save();
+        Notification::make()->success()->title('Rescheduled')
+            ->body('Moved to ' . ($next->trainingClass?->name ?? 'class') . ' on ' . $next->session_date?->format('M j, Y') . '.')->send();
     }
 
-    /** Reopen a submitted session so attendance can be corrected (admins). */
-    public function reopenAttendance(int $sessionId): void
+    public function cancelBooking(int $enrollmentId): void
     {
-        $s = ClassSession::with('enrollments')->find($sessionId);
-        if (! $s) return;
-        // pending_qa (not yet QA-approved) goes back to attended; QA-completed stays.
-        foreach ($s->enrollments->where('status', 'pending_qa') as $e) {
-            $e->markStatus('attended', \Illuminate\Support\Facades\Auth::id());
+        $e = ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        if ($e->classSession?->attendance_submitted_at) {
+            Notification::make()->warning()->title('Locked')->body('This session\'s attendance is already submitted.')->send();
+            return;
         }
-        $s->attendance_submitted_at = null;
-        $s->attendance_submitted_by = null;
-        $s->save();
-        Notification::make()->success()->title('Session reopened')->send();
+        $e->markStatus('cancelled', \Illuminate\Support\Facades\Auth::id());
+        Notification::make()->success()->title('Booking Cancelled')->send();
     }
 }
