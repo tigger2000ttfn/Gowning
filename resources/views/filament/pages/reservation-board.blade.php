@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    @include('filament.page-hero', ['title' => 'Reservation Board', 'subtitle' => 'Drag reservations between stages.', 'icon' => 'heroicon-o-rectangle-stack'])
     <div
         x-data="{
             init() {
