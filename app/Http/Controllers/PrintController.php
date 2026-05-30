@@ -50,6 +50,59 @@ class PrintController extends Controller
         ]);
     }
 
+    /** Astellas QCM Gowning Qualification Approval (FORM-AST-36749), prefilled for a qualification. */
+    public function approvalForm(\Illuminate\Http\Request $request, Qualification $qualification)
+    {
+        $this->guard();
+        $qualification->load('personnel');
+
+        // Latest cycle runs to determine outcome + the QCM analyst/date.
+        $runs = QualificationRun::where('personnel_id', $qualification->personnel_id)
+            ->orderBy('run_date')->orderBy('id')->get();
+        $lastRun = $runs->last();
+        $type = $qualification->type instanceof \BackedEnum ? $qualification->type->value : $qualification->type;
+        $isInitial = $type === 'initial';
+        $status = $qualification->status instanceof \BackedEnum ? $qualification->status->value : $qualification->status;
+        $passed = $status === 'qualified';
+
+        // QCM "completed by" = whoever recorded the last run; QA = whoever signed off.
+        $qcmBy = optional($lastRun?->recordedBy)->name;
+        $qcmDate = $lastRun?->run_date?->format('d M Y');
+        $qaSig = \App\Models\ElectronicSignature::where('signable_type', Qualification::class)
+            ->where('signable_id', $qualification->id)->where('meaning', 'like', '%Approv%')
+            ->latest('signed_at')->first();
+
+        $data = [
+            'personnel_name' => $qualification->personnel?->full_name,
+            'is_initial' => $isInitial,
+            'is_requal' => ! $isInitial,
+            'result_initial' => $isInitial ? ($passed ? 'yes' : 'no') : null,
+            'result_requal' => ! $isInitial ? ($passed ? 'yes' : 'no') : null,
+            'passed' => $passed,
+            'results_attached' => true,
+            'qcm_by' => $qcmBy,
+            'qcm_date' => $qcmDate,
+            'qa_by' => $qaSig?->signer_name,
+            'qa_date' => $qaSig?->signed_at?->format('d M Y'),
+            'registered' => $passed,
+            'next_sample_date' => $qualification->due_date?->format('d M Y'),
+            'qa_completed_by' => $qaSig?->signer_name,
+            'qa_completed_date' => $qaSig?->signed_at?->format('d M Y'),
+        ];
+
+        try {
+            $bytes = app(\App\Services\ApprovalFormFiller::class)->fill($data);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Approval form fill failed: ' . $e->getMessage());
+            abort(500, 'Could not generate the approval form: ' . $e->getMessage());
+        }
+        $fname = 'FORM-AST-36749-' . ($qualification->personnel?->employee_id ?? $qualification->id) . '.pdf';
+        return response($bytes, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fname . '"',
+        ]);
+    }
+
     private function guard(): void
     {
         abort_unless(Auth::check(), 403);

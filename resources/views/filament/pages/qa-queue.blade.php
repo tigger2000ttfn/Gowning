@@ -46,6 +46,7 @@
                             {{ ($this->signOffAction)(['id' => $q->id]) }}
                             <button wire:click="markFailed({{ $q->id }})" class="sb-act sb-act-red">Fail</button>
                         @endif
+                        <a href="{{ route('print.approval', $q->id) }}" target="_blank" class="sb-act" style="background:#1C1C21;color:#fff;text-decoration:none;">Approval Form</a>
                     </div>
                 </div>
             @empty<div class="gqs-empty">Nothing Awaiting Sign-off.</div>@endforelse
