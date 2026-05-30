@@ -64,6 +64,35 @@ class RunDayRoster extends Page
         return collect(explode(',', $raw))->map(fn ($s) => trim($s))->filter()->values()->all();
     }
 
+    /** Mark a run as performed (the run attendance sheet). Records the run + advances the stage. */
+    public function markPerformedAction(): Action
+    {
+        return Action::make('markPerformed')
+            ->label('Mark Performed')
+            ->icon('heroicon-m-check-circle')
+            ->color('success')
+            ->requiresConfirmation()
+            ->modalHeading('Mark Run Performed')
+            ->modalDescription('Confirms this operator gowned through the cleanroom. Records the run and advances their qualification.')
+            ->action(function (array $arguments) {
+                $resId = $arguments['reservation_id'] ?? null;
+                $res = $resId ? Reservation::with('personnel')->find($resId) : null;
+                if (! $res || ! $res->personnel) {
+                    Notification::make()->danger()->title('Reservation not found')->send();
+                    return;
+                }
+                $res->update(['status' => 'completed']);
+                // record the run through the engine (advances workflow_stage to RunPerformed)
+                app(\App\Services\QualificationEngine::class)
+                    ->recordRun($res->personnel, \App\Enums\RunResult::Pass, [
+                        'run_date' => now()->toDateString(),
+                        'recorded_by' => Auth::id(),
+                    ]);
+                Notification::make()->success()->title('Run performed')
+                    ->body(($res->personnel->full_name ?? 'Operator') . ' recorded. Ready for sampling.')->send();
+            });
+    }
+
     /** Record microbiological samples (per site pass/fail) for one reservation. */
     public function recordSamplesAction(): Action
     {
