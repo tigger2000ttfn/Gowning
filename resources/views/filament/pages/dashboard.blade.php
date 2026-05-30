@@ -7,6 +7,19 @@
 <style>
     /* tighter rhythm: one spacing variable */
     .dash-sec{margin-bottom:16px;}
+    .my-status{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+        background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#DADADF);border-left:4px solid #A4123F;border-radius:12px;padding:14px 18px;}
+    .my-status-l{display:flex;align-items:center;gap:13px;}
+    .my-status-ic{width:34px;height:34px;color:#A4123F;}
+    .my-status-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gqs-text-dim,#6A6A72);}
+    .my-status-name{font-size:16px;font-weight:800;color:var(--gqs-text,#1A1A1F);}
+    .my-status-r{display:flex;align-items:center;gap:12px;}
+    .my-status-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;}
+    .my-qualified{background:#DDF3E9;color:#1E7A52;}
+    .my-in_progress{background:#FBF3DC;color:#8A6D0B;}
+    .my-pending{background:#EFE6F5;color:#6B2C91;}
+    .my-lapsed{background:#FBE3E7;color:#C8102E;}
+    .my-status-due{font-size:13px;color:var(--gqs-text-dim,#6A6A72);font-weight:600;}
     .dash-section-title{font-size:15px;font-weight:700;margin:0 0 10px;color:var(--gqs-text,#1A1A1F);display:flex;align-items:center;gap:8px;}
 
     /* FULL-BLEED HERO: break out of Filament's page padding entirely */
@@ -68,6 +81,8 @@
     .dc-overdue h3{background:linear-gradient(135deg,#C8102E,#920B22);}
     .dc-runs h3{background:linear-gradient(135deg,#A4123F,#850F33);}
     .dc-appr h3{background:linear-gradient(135deg,#6B2C91,#4A1E66);}
+    .dc-fail h3{background:linear-gradient(135deg,#C8102E,#920B22);}
+    .dc-req h3{background:linear-gradient(135deg,#C79A2E,#9E7818);}
     .dash-row{display:flex;justify-content:space-between;align-items:center;padding:9px 16px;border-bottom:1px solid var(--gqs-border,#EEE);font-size:14px;color:var(--gqs-text,#1A1A1F);}
     .dash-row:last-child{border-bottom:none;}
     .dash-row .muted{color:var(--gqs-text-dim,#6A6A72);font-size:13px;}
@@ -110,13 +125,32 @@
     </div>
 </div>
 
+
+@if($myQual)
+<div class="dash-pad" style="margin-bottom:16px;">
+    <div class="my-status">
+        <div class="my-status-l">
+            <x-filament::icon icon="heroicon-o-user-circle" class="my-status-ic"/>
+            <div>
+                <div class="my-status-label">Your Qualification</div>
+                <div class="my-status-name">{{ $myName }}</div>
+            </div>
+        </div>
+        <div class="my-status-r">
+            <span class="my-status-badge my-{{ $myQual->status }}">{{ \Illuminate\Support\Str::title(str_replace('_',' ',$myQual->status instanceof \BackedEnum ? $myQual->status->value : $myQual->status)) }}</span>
+            @if($myQual->due_date)<span class="my-status-due">Due {{ $myQual->due_date->format('M j, Y') }}</span>@endif
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="dash-pad">
 <div class="dash-grid">
     <div class="dash-stat s-green"><span class="ic"><x-filament::icon icon="heroicon-o-shield-check"/></span><div class="n">{{ $qualified }}</div><div class="l">Qualified</div></div>
     <div class="dash-stat s-gold"><span class="ic"><x-filament::icon icon="heroicon-o-arrow-path"/></span><div class="n">{{ $inProgress }}</div><div class="l">In Progress</div></div>
     <div class="dash-stat s-purple"><span class="ic"><x-filament::icon icon="heroicon-o-clock"/></span><div class="n">{{ $dueSoon }}</div><div class="l">Due Within 30 Days</div></div>
     <div class="dash-stat s-red"><span class="ic"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span><div class="n">{{ $lapsed }}</div><div class="l">Lapsed</div></div>
-    <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-user-plus"/></span><div class="n">{{ $pendingUsers }}</div><div class="l">Pending Approvals</div></div>
+    <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-academic-cap"/></span><div class="n">{{ $classSignups }}</div><div class="l">Class Signups</div></div>
     <div class="dash-stat s-charcoal"><span class="ic"><x-filament::icon icon="heroicon-o-ticket"/></span><div class="n">{{ $pendingRes }}</div><div class="l">Run Requests</div></div>
 </div>
 
@@ -172,10 +206,27 @@
     </div>
 
     <div class="dash-card dc-appr">
-        <h3>Pending Approvals</h3>
-        @forelse($pendingApprovals as $u)
-            <div class="dash-row"><span>{{ $u->name }}</span><span class="pill pill-gold">Review</span></div>
-        @empty<div class="dash-empty">No Accounts Awaiting Approval.</div>@endforelse
+        <h3><x-filament::icon icon="heroicon-m-academic-cap" style="width:17px;height:17px;"/> Personnel Signed Up For Classes</h3>
+        @forelse($classSignupList as $e)
+            <div class="dash-row"><span>{{ $e->personnel?->full_name ?? $e->employee_id }}</span>
+                <span class="muted">{{ \Illuminate\Support\Str::title($e->classSession?->trainingClass?->name) }}</span></div>
+        @empty<div class="dash-empty">No Class Signups Yet.</div>@endforelse
+    </div>
+
+    <div class="dash-card dc-fail">
+        <h3><x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:17px;height:17px;"/> Failed Runs — QA Review</h3>
+        @forelse($failedRuns as $r)
+            <div class="dash-row"><span>{{ $r->personnel?->full_name }}</span>
+                <span class="pill pill-red">{{ $r->run_date?->format('M j') }}</span></div>
+        @empty<div class="dash-empty">No Failed Runs Awaiting Review.</div>@endforelse
+    </div>
+
+    <div class="dash-card dc-req">
+        <h3><x-filament::icon icon="heroicon-m-ticket" style="width:17px;height:17px;"/> Run Requests — Approve</h3>
+        @forelse($runRequests as $res)
+            <div class="dash-row"><span>{{ $res->personnel?->full_name }}</span>
+                <span class="muted">{{ $res->runSlot?->slot_date?->format('M j') }}</span></div>
+        @empty<div class="dash-empty">No Pending Run Requests.</div>@endforelse
     </div>
 </div>
 

@@ -72,22 +72,36 @@ class Dashboard extends BaseDashboard
 
     public function getViewData(): array
     {
+        $me = Auth::user();
+        $myPersonnel = $me?->personnel
+            ?? \App\Models\Personnel::where('email', $me?->email)->first();
+        $myQual = $myPersonnel
+            ? \App\Models\Qualification::where('personnel_id', $myPersonnel->id)->first()
+            : null;
+
         return [
-            'userName'    => Auth::user()?->name,
+            'userName'    => $me?->name,
             'qualified'   => Qualification::where('status', 'qualified')->count(),
             'inProgress'  => Qualification::where('status', 'in_progress')->count(),
             'dueSoon'     => Qualification::whereNotNull('due_date')->whereBetween('due_date', [now(), now()->addDays(30)])->count(),
             'lapsed'      => Qualification::where('status', 'lapsed')->count(),
-            'pendingUsers'=> User::where('approval_status', 'pending')->count(),
+            'classSignups'=> \App\Models\ClassEnrollment::where('status', 'signed_up')->count(),
             'pendingRes'  => Reservation::where('status', 'requested')->count(),
             'overdueList' => Qualification::with('personnel')->whereNotNull('due_date')
                                 ->whereDate('due_date', '<', now())->orderBy('due_date')->limit(6)->get(),
             'upcomingRuns'=> ClassSession::with('trainingClass')
                                 ->whereDate('session_date', '>=', now())->where('status','open')
                                 ->orderBy('session_date')->limit(5)->get(),
-            'pendingApprovals' => User::where('approval_status', 'pending')->latest()->limit(5)->get(),
+            'classSignupList' => \App\Models\ClassEnrollment::with(['personnel', 'classSession.trainingClass'])
+                                ->where('status', 'signed_up')->latest('signed_up_at')->limit(6)->get(),
+            'failedRuns'  => QualificationRun::with('personnel')
+                                ->where('result', 'fail')->latest('run_date')->limit(5)->get(),
+            'runRequests' => Reservation::with(['personnel', 'runSlot'])
+                                ->where('status', 'requested')->latest()->limit(5)->get(),
             'recentComments' => \App\Models\QualificationComment::with(['qualification.personnel'])
                                     ->latest()->limit(6)->get(),
+            'myQual'      => $myQual,
+            'myName'      => $myPersonnel?->full_name ?? $me?->name,
             'weekDays' => $this->buildWeek(),
             'quickLinks' => $this->buildQuickLinks(),
         ];
