@@ -32,3 +32,24 @@ Artisan::command('gqs:auto-schedule', function () {
 })->purpose('Auto-book qualification runs into the next available run day');
 
 Schedule::command('gqs:auto-schedule')->dailyAt('06:10');
+
+// Flush queued emails once the mail relay (Postfix) is configured.
+// Until then rows sit in queued_emails with sent_at = null.
+Artisan::command('gqs:flush-emails', function () {
+    $pending = \App\Models\QueuedEmail::whereNull('sent_at')->limit(200)->get();
+    $sent = 0;
+    foreach ($pending as $email) {
+        if (! $email->to_email) { continue; }
+        try {
+            \Illuminate\Support\Facades\Mail::raw($email->body, function ($m) use ($email) {
+                $m->to($email->to_email, $email->to_name)->subject($email->subject);
+            });
+            $email->update(['sent_at' => now()]);
+            $sent++;
+        } catch (\Throwable $e) {
+            $this->warn("Failed to send to {$email->to_email}: {$e->getMessage()}");
+            break; // relay likely still down; stop
+        }
+    }
+    $this->info("Flushed {$sent} queued email(s).");
+})->purpose('Send queued notification emails once the mail relay is up');

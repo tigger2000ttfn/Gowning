@@ -209,9 +209,18 @@ class QaQueue extends Page
                     'signed_at' => now(),
                 ]);
 
+                // AUTOMATION: if no retraining needed, auto-book the requal run(s) into the next day
+                $bookedMsg = '';
+                if (! $retrain) {
+                    $res = app(\App\Services\AutoScheduler::class)->bookNext($q->fresh());
+                    if ($res) {
+                        $bookedMsg = ' Auto-booked for the next available run day.';
+                    }
+                }
+
                 Notification::make()->success()->title('Determination recorded')
                     ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ($three ? '3 runs' : '1 run')
-                        . ($retrain ? ' + class retraining.' : '.'))->send();
+                        . ($retrain ? ' + class retraining.' : '.') . $bookedMsg)->send();
             });
     }
 

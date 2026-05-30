@@ -34,7 +34,7 @@ class MyQualification extends Page
             ->first();
     }
 
-    /** Operator self-reschedule: move their own pending/approved reservation to another open slot. */
+    /** Operator self-reschedule: move their own reservation to another open slot with capacity. */
     public function rescheduleAction(): Action
     {
         return Action::make('reschedule')
@@ -42,16 +42,29 @@ class MyQualification extends Page
             ->icon('heroicon-m-arrows-right-left')
             ->color('primary')
             ->visible(fn () => $this->myActiveReservation() !== null)
+            ->modalHeading('Reschedule My Qualification Run')
+            ->modalDescription('Move to the next available day, or pick a specific open day.')
             ->form([
+                \Filament\Forms\Components\Radio::make('mode')
+                    ->label('Choose')
+                    ->options([
+                        'next' => 'Next available run day (soonest with space)',
+                        'pick' => 'Pick a specific open day',
+                    ])->default('next')->live()->required(),
                 Select::make('run_slot_id')
-                    ->label('Pick A New Slot')
-                    ->required()
-                    ->options(fn () => RunSlot::query()
-                        ->whereDate('slot_date', '>=', now()->toDateString())
-                        ->orderBy('slot_date')
-                        ->get()
-                        ->filter(fn ($s) => $s->hasCapacity())
-                        ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ' — ' . $s->cleanroom . ' (' . $s->start_time . ')'])),
+                    ->label('Pick A New Day')
+                    ->visible(fn ($get) => $get('mode') === 'pick')
+                    ->required(fn ($get) => $get('mode') === 'pick')
+                    ->options(function () {
+                        $scheduler = app(\App\Services\AutoScheduler::class);
+                        return RunSlot::query()
+                            ->where('status', 'open')
+                            ->whereDate('slot_date', '>=', now()->toDateString())
+                            ->orderBy('slot_date')->get()
+                            ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
+                            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->format('M j, Y') . ', ' . $s->cleanroom
+                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('g:i A') . ')' : '')]);
+                    }),
             ])
             ->action(function (array $data) {
                 $res = $this->myActiveReservation();
@@ -59,9 +72,31 @@ class MyQualification extends Page
                     Notification::make()->danger()->title('No active reservation to reschedule')->send();
                     return;
                 }
-                $res->update(['run_slot_id' => $data['run_slot_id'], 'status' => 'requested']);
+                $scheduler = app(\App\Services\AutoScheduler::class);
+
+                if (($data['mode'] ?? 'next') === 'next') {
+                    $slot = $scheduler->nextAvailableSlot();
+                    if (! $slot) {
+                        Notification::make()->warning()->title('No open day available')
+                            ->body('No run day with space was found. Please try again later or contact scheduling.')->send();
+                        return;
+                    }
+                    $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
+                    Notification::make()->success()->title('Run rescheduled')
+                        ->body('You are now booked for ' . $slot->slot_date->format('M j, Y') . '.')->send();
+                    return;
+                }
+
+                // specific pick: verify capacity still available
+                $slot = RunSlot::find($data['run_slot_id'] ?? null);
+                if (! $slot || $scheduler->seatsLeft($slot) <= 0) {
+                    Notification::make()->warning()->title('That day just filled up')
+                        ->body('Please pick another day or choose next available.')->send();
+                    return;
+                }
+                $res->update(['run_slot_id' => $slot->id, 'status' => 'approved', 'notes' => 'Self-rescheduled']);
                 Notification::make()->success()->title('Run rescheduled')
-                    ->body('Your request has been moved and is pending approval.')->send();
+                    ->body('You are now booked for ' . $slot->slot_date->format('M j, Y') . '.')->send();
             });
     }
 
