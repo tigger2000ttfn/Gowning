@@ -41,6 +41,20 @@ class RunDayRoster extends Page
     // Per-reservation LIMS worklist inputs on the Attendance tab (keyed by reservation id).
     public array $worklists = [];
 
+    /** Deferred attendance intent per reservation: 'present' | 'no_show' | 'rescheduled'. Committed on submit. */
+    public array $intent = [];
+
+    public function setIntent(int $reservationId, string $status): void
+    {
+        if (! in_array($status, ['present', 'no_show', 'rescheduled'], true)) return;
+        // Tap the active status again to clear it.
+        if (($this->intent[$reservationId] ?? null) === $status) {
+            unset($this->intent[$reservationId]);
+        } else {
+            $this->intent[$reservationId] = $status;
+        }
+    }
+
     /** Force an EM- prefix and trim; empty stays empty. */
     public function normalizeWorklist(?string $v): string
     {
@@ -567,7 +581,7 @@ class RunDayRoster extends Page
         $slot = RunSlot::with('reservations.personnel')->find($slotId);
         if (! $slot) return;
         if ($slot->attendance_submitted_at) {
-            Notification::make()->warning()->title('Already submitted')->send();
+            Notification::make()->warning()->title('Already Submitted')->send();
             return;
         }
 
@@ -577,28 +591,47 @@ class RunDayRoster extends Page
             return ! in_array($st, ['completed', 'no_show', 'rescheduled'], true);
         });
 
-        // Verify each has a worklist before submitting.
+        // Everyone must have an intent marked, and every Present must have a worklist.
+        $unmarked = [];
         $missing = [];
         foreach ($pending as $r) {
-            $wl = $this->normalizeWorklist($this->worklists[$r->id] ?? $r->lims_worklist_id ?? '');
-            if ($wl === '') $missing[] = $r->personnel?->full_name ?? ('#' . $r->id);
+            $intent = $this->intent[$r->id] ?? null;
+            if (! $intent) { $unmarked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
+            if ($intent === 'present') {
+                $wl = $this->normalizeWorklist($this->worklists[$r->id] ?? $r->lims_worklist_id ?? '');
+                if ($wl === '') $missing[] = $r->personnel?->full_name ?? ('#' . $r->id);
+            }
+        }
+        if (! empty($unmarked)) {
+            Notification::make()->warning()->title('Mark Everyone First')
+                ->body('Mark Present, No-Show, or Reschedule for: ' . implode(', ', $unmarked) . ' before submitting.')
+                ->persistent()->send();
+            return;
         }
         if (! empty($missing)) {
-            Notification::make()->warning()->title('LIMS worklist missing')
+            Notification::make()->warning()->title('LIMS Worklist Missing')
                 ->body('Enter a worklist for: ' . implode(', ', $missing) . ' before submitting.')
                 ->persistent()->send();
             return;
         }
 
-        // Mark each present (markPerformed enforces the classroom-QA gate per person).
+        // Commit each person's marked intent.
         $blocked = [];
         foreach ($pending as $r) {
-            $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
-            if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
-            $this->markPerformed($r->id);
+            $intent = $this->intent[$r->id] ?? null;
+            if ($intent === 'present') {
+                $q = \App\Models\Qualification::where('personnel_id', $r->personnel_id)->first();
+                if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
+                $this->markPerformed($r->id);
+            } elseif ($intent === 'no_show') {
+                $this->rosterNoShow($r->id);
+            } elseif ($intent === 'rescheduled') {
+                $this->rosterReschedule($r->id);
+            }
+            unset($this->intent[$r->id]);
         }
         if (! empty($blocked)) {
-            Notification::make()->warning()->title('Some not classroom-complete')
+            Notification::make()->warning()->title('Some Not Classroom-Complete')
                 ->body('Not submitted (classroom not QA-approved): ' . implode(', ', $blocked) . '. Others were submitted.')
                 ->persistent()->send();
         }
@@ -607,8 +640,8 @@ class RunDayRoster extends Page
         $slot->attendance_submitted_by = Auth::id();
         $slot->save();
 
-        Notification::make()->success()->title('Run day submitted')
-            ->body('Attendees marked present and the day is locked.')->send();
+        Notification::make()->success()->title('Run Day Submitted')
+            ->body('Attendance committed and the day is locked.')->send();
     }
 
     /** Reopen a submitted run day to correct attendance. */

@@ -340,7 +340,7 @@
                 <div class="gqs-panel-body" style="padding:14px 16px;">
                     @if ($slot->reservations->isEmpty())<div class="gqs-empty">No one scheduled yet.</div>@else
                         @if(! $slot->attendance_submitted_at)
-                            <div class="att-hint" style="margin-bottom:12px;">Enter each person's LIMS worklist, then mark Present, No-Show, or Reschedule. Changes save automatically. Submit the day at the bottom when done.</div>
+                            <div class="att-hint" style="margin-bottom:12px;">Enter each person's LIMS worklist and mark Present, No-Show, or Reschedule. Nothing is committed until you Submit the day · the worklist is required for everyone marked Present.</div>
                         @else
                             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
                                 <span class="att-hint">Submitted {{ \Illuminate\Support\Carbon::parse($slot->attendance_submitted_at)->format('d M Y H:i') }} · locked.</span>
@@ -364,8 +364,10 @@
                                         $this->worklists[$res->id] = preg_replace('/^EM-/i', '', $res->lims_worklist_id ?: ($rq?->lims_worklist_id ?: ''));
                                     }
                                     $actionable = ! in_array($st, ['completed','no_show','rescheduled'], true);
+                                    $intent = $this->intent[$res->id] ?? null;
+                                    $tintKey = $intent ?? ($st === 'completed' ? 'present' : ($st === 'no_show' ? 'no_show' : ($st === 'rescheduled' ? 'rescheduled' : null)));
                                 @endphp
-                                <div class="att-row">
+                                <div class="att-row {{ $tintKey === 'present' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                     <div class="att-who">
                                         <div class="att-name">{{ $i + 1 }}. {{ $res->personnel?->full_name }}</div>
                                         <div class="att-eid">
@@ -392,11 +394,12 @@
 
                                     <div class="att-toggles">
                                         @if($actionable)
-                                            <button type="button" wire:click="markPerformed({{ $res->id }})" class="att-tog att-att">Present</button>
-                                            <button type="button" wire:click="rosterNoShow({{ $res->id }})"
-                                                    wire:confirm="Mark as no-show? They will be returned for rebooking." class="att-tog att-no">No-Show</button>
-                                            <button type="button" wire:click="rosterReschedule({{ $res->id }})"
-                                                    wire:confirm="Reschedule to the next available run day?" class="att-tog att-res">Reschedule</button>
+                                            <button type="button" wire:click="setIntent({{ $res->id }}, 'present')"
+                                                    class="att-tog att-att {{ $intent === 'present' ? 'on' : '' }}"><span class="att-box"></span> Present</button>
+                                            <button type="button" wire:click="setIntent({{ $res->id }}, 'no_show')"
+                                                    class="att-tog att-no {{ $intent === 'no_show' ? 'on' : '' }}"><span class="att-box"></span> No-Show</button>
+                                            <button type="button" wire:click="setIntent({{ $res->id }}, 'rescheduled')"
+                                                    class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>
                                             <span class="att-hint">{{ $readyForResults ? 'Ready · evaluate on Lab Review' : ($performed < $required ? 'Incubating · awaiting next run' : 'Incubating · awaiting plates') }}</span>
@@ -412,7 +415,7 @@
                             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--gqs-border,#E6E6EA);">
                                 <button type="button" wire:click="$set('tab', 'reservations')" class="gqs-btn gqs-btn-ghost">Save &amp; Close</button>
                                 <button type="button" wire:click="submitRunDay({{ $slot->id }})"
-                                        wire:confirm="Submit this run day? Everyone scheduled with a worklist will be marked present and the day will be locked."
+                                        wire:confirm="Submit this run day? Everyone marked Present (with a worklist) is recorded as performed, No-Shows and Reschedules are processed, and the day is locked."
                                         class="gqs-btn gqs-btn-primary">Submit Attendance</button>
                             </div>
                         @endif
