@@ -67,18 +67,15 @@ class PrintController extends Controller
         $status = $qualification->status instanceof \BackedEnum ? $qualification->status->value : $qualification->status;
         $passed = $status === 'qualified';
 
-        // QCM "completed by" = the QC Micro analyst who signed off the result evaluation. Prefer the
-        // run's recorded qcm_signed_by; then the QCM Sign-off electronic signature; and if the form is
-        // being downloaded BEFORE sign-off (to wet-sign), fall back to the current QC Micro user so the
-        // printed form carries their name to sign.
+        // QCM "completed by" = the QC Micro analyst recorded on the GQS record as having signed off the
+        // result evaluation (run.qcm_signed_by, or the QCM Sign-off e-signature). This comes from the GQS
+        // record, which LIMS auto-import/backfill and sync keep current; it is NOT the person viewing.
         $qcmSignedRun = $runs->first(fn ($r) => $r->qcm_signed_by) ?: $lastRun;
         $qcmSig = \App\Models\ElectronicSignature::where('signable_type', QualificationRun::class)
             ->whereIn('signable_id', $runs->pluck('id'))
             ->where('meaning', 'like', '%QCM%')
             ->latest('signed_at')->first();
-        $qcmBy = optional($qcmSignedRun?->qcmSignedBy)->name
-            ?? $qcmSig?->signer_name
-            ?? \Illuminate\Support\Facades\Auth::user()?->name;
+        $qcmBy = optional($qcmSignedRun?->qcmSignedBy)->name ?? $qcmSig?->signer_name;
         $qcmDate = ($qcmSignedRun?->qcm_signed_at ?? $qcmSig?->signed_at)?->gmp()
             ?? $lastRun?->run_date?->gmp();
         $qaSig = \App\Models\ElectronicSignature::where('signable_type', Qualification::class)
