@@ -17,6 +17,20 @@ class ListAutomationRules extends ListRecords
     public function getHeading(): string { return ''; }
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()->label('New Rule')];
+        return [
+            \Filament\Actions\Action::make('history')
+                ->label('Run History')
+                ->icon('heroicon-m-clock')
+                ->color('gray')
+                ->modalHeading('Automation Run History')
+                ->modalIcon('heroicon-o-clock')
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close')
+                ->modalWidth('5xl')
+                ->modalContent(fn () => view('filament.automation-history', [
+                    'runs' => \App\Models\AutomationRun::with('rule')->latest()->limit(200)->get(),
+                ])),
+            CreateAction::make()->label('New Rule'),
+        ];
     }
 }

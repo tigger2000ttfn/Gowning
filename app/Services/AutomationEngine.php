@@ -40,9 +40,30 @@ class AutomationEngine
                 static::runAction($rule, $ctx);
                 $rule->increment('run_count');
                 $rule->forceFill(['last_fired_at' => now()])->saveQuietly();
+                static::log($rule, $ctx, 'success', null);
             } catch (\Throwable $e) {
                 report($e); // never let an automation failure break the workflow
+                static::log($rule, $ctx, 'failed', $e->getMessage());
             }
+        }
+    }
+
+    /** Record one rule firing (success or failure) for the automation history. */
+    protected static function log(AutomationRule $rule, array $ctx, string $status, ?string $detail): void
+    {
+        try {
+            $person = $ctx['personnel'] ?? ($ctx['qualification']->personnel ?? null);
+            \App\Models\AutomationRun::create([
+                'automation_rule_id' => $rule->id,
+                'rule_name' => $rule->name,
+                'trigger' => $rule->trigger,
+                'action' => $rule->action,
+                'status' => $status,
+                'subject' => $person?->full_name ?? ($person?->employee_id ?? null),
+                'detail' => $detail ? \Illuminate\Support\Str::limit($detail, 480) : null,
+            ]);
+        } catch (\Throwable $e) {
+            // history logging must never break the workflow
         }
     }
 
