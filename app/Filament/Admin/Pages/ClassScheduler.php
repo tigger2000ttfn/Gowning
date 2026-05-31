@@ -180,7 +180,7 @@ class ClassScheduler extends Page
     public function runConfirm(): void
     {
         $m = $this->confirm['method'] ?? null;
-        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession', 'rescheduleEnrollment'];
+        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession', 'rescheduleEnrollment', 'cancelEnrollment'];
         if ($m && in_array($m, $allowed, true)) {
             $this->{$m}($this->confirm['arg']);
         }
@@ -413,6 +413,7 @@ class ClassScheduler extends Page
         $s = \App\Models\ClassSession::with('enrollments.personnel')->find($sessionId);
         if (! $s) return [];
         return $s->enrollments->whereNotIn('status', ['cancelled'])
+            ->filter(fn ($e) => $e->personnel_id !== null || trim((string) $e->name) !== '')
             ->map(fn ($e) => [
                 'id' => $e->id,
                 'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
@@ -482,6 +483,26 @@ class ClassScheduler extends Page
         $this->rescheduleName = $e->name ?: ($e->personnel?->full_name ?? 'Trainee');
         $this->rescheduleSessionId = null;
         $this->showReschedule = true;
+    }
+
+    /** Cancel one person's class enrollment (frees their seat). Routed through the confirm modal. */
+    public function cancelEnrollment(int $enrollmentId): void
+    {
+        if (! Auth::user()?->hasCapability(\App\Enums\Capability::ManageScheduling)) {
+            Notification::make()->danger()->title('Not Authorized')->send();
+            return;
+        }
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        if ($e->classSession?->attendance_submitted_at) {
+            Notification::make()->warning()->title('Attendance Submitted')
+                ->body('This session is already submitted. Reopen attendance first if you need to change it.')->send();
+            return;
+        }
+        $name = $e->name ?: ($e->personnel?->full_name ?? 'Trainee');
+        $e->markStatus('cancelled', Auth::id());
+        Notification::make()->success()->title('Enrollment Cancelled')
+            ->body($name . "'s class enrollment was cancelled and their seat freed.")->send();
     }
 
     public function rescheduleToSelected(): void

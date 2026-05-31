@@ -27,6 +27,22 @@ class Personnel extends Model
         return ['is_active' => 'boolean', 'hire_date' => 'date'];
     }
 
+    protected static function booted(): void
+    {
+        // Personnel uses soft deletes, so DB-level cascade does NOT fire on delete(). Clean up the
+        // person's active bookings and enrollments here so nothing dangling shows after they're removed.
+        static::deleting(function (Personnel $p) {
+            // Cancel active class enrollments (frees seats; submitted/historical stay as the record).
+            \App\Models\ClassEnrollment::where('personnel_id', $p->id)
+                ->whereNotIn('status', ['cancelled', 'completed', 'historical'])
+                ->update(['status' => 'cancelled']);
+            // Cancel active run reservations.
+            \App\Models\Reservation::where('personnel_id', $p->id)
+                ->whereIn('status', ['requested', 'approved'])
+                ->update(['status' => 'cancelled']);
+        });
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");

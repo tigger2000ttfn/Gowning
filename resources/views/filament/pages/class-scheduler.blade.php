@@ -362,6 +362,8 @@
                                                 </button>
                                                 <button type="button" class="att-tog att-res"
                                                         wire:click="openReschedule({{ $row['id'] }})">Reschedule</button>
+                                                <button type="button" class="att-tog att-cancel"
+                                                        wire:click="askConfirm('cancelEnrollment', {{ $row['id'] }}, 'Cancel Enrollment', 'Cancel this person\'s class enrollment and free their seat?', 'Cancel Enrollment', true)">Cancel</button>
                                             </div>
                                             <input type="text" class="att-note" placeholder="Notes (optional)"
                                                    value="{{ $row['note'] }}"

@@ -159,6 +159,8 @@
     .att-tog.att-att.on:hover,.att-tog.att-no.on:hover{color:#fff;}
     .att-tog.att-res{border-style:dashed;}
     .att-tog.att-res:hover{border-color:#A4123F;color:#A4123F;}
+    .att-tog.att-cancel{border-style:dashed;color:#C8102E;}
+    .att-tog.att-cancel:hover{border-color:#C8102E;background:#C8102E;color:#fff;}
     /* Dark-theme: make the attendance card and its controls stand out from the page */
     .dark .att-row{background:#2A2A33;border-color:#43434F;box-shadow:0 1px 3px rgba(0,0,0,.35);}
     .dark .att-tog{border-color:#54545F;color:#D2D2DA;}
