@@ -70,8 +70,17 @@ class StatusBoard extends Page
                 // Cycle-aware: only count runs in the CURRENT cycle, so a fresh cycle
                 // doesn't show prior-cycle runs or an old worklist/date.
                 $cycleRuns = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q);
-                $lastRun = $cycleRuns->last();
-                $passes = $cycleRuns->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
+                // Show the SAME pass count the Active Runs list shows (the stored, engine-maintained value).
+                // cycleRuns() requires incubation_started_at, so backfilled/seed runs (no incubation stamp)
+                // would otherwise read 0 here and disagree with the list - use runs_completed as the source
+                // of truth and only fall back to the live count if the stored value is missing.
+                $passes = (int) ($q->runs_completed ?? 0);
+                if ($passes === 0) {
+                    $passes = $cycleRuns->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
+                }
+                // Last run for display: prefer a cycle run, else the person's most recent run overall.
+                $lastRun = $cycleRuns->last()
+                    ?? \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
                 return [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
