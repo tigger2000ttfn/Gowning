@@ -2,6 +2,7 @@
     @include('filament.page-hero', ['title' => 'My Qualification', 'icon' => 'heroicon-o-identification'])
 
     <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
+        @if($this->bookClassAction->isVisible()){{ $this->bookClassAction }}@endif
         @if($this->requestRunAction->isVisible()){{ $this->requestRunAction }}@endif
         @if($this->rescheduleAction->isVisible()){{ $this->rescheduleAction }}@endif
     </div>

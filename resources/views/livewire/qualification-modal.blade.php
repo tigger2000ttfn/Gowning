@@ -1,7 +1,7 @@
 <div>
 @if($detail)
     <div class="gqs-modal-overlay" wire:click.self="close" style="z-index:9999;">
-        <div class="gqs-modal qm-modal" style="width:680px;max-width:96vw;">
+        <div class="gqs-modal qm-modal" style="width:820px;max-width:96vw;">
             <div class="qm-head" style="background:linear-gradient(135deg,{{ $detail['stage_color'] }},{{ $detail['stage_color'] }}CC);">
                 <div style="flex:1;min-width:0;">
                     <div class="qm-head-name">

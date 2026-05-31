@@ -113,6 +113,68 @@ class MyQualification extends Page
             });
     }
 
+    /** Whether this operator should book a class (no class on file, no active class enrollment). */
+    public function canBookClass(): bool
+    {
+        if (! $this->person) return false;
+        if ((bool) $this->person->qualification?->class_on_file) return false; // already has class on file
+        $hasActive = \App\Models\ClassEnrollment::where('personnel_id', $this->person->id)
+            ->whereIn('status', \App\Models\ClassEnrollment::ACTIVE_STATUSES)->exists();
+        return ! $hasActive;
+    }
+
+    /** Self-serve: sign up for an open gowning class session. */
+    public function bookClassAction(): Action
+    {
+        return Action::make('bookClass')
+            ->label('Book A Class')
+            ->icon('heroicon-m-academic-cap')
+            ->color('gray')
+            ->visible(fn () => $this->canBookClass())
+            ->modalHeading('Book A Gowning Class')
+            ->modalDescription('Sign up for an upcoming gowning class. The gowning class must be completed before a qualification run.')
+            ->form([
+                Select::make('class_session_id')
+                    ->label('Class Session')
+                    ->required()
+                    ->options(function () {
+                        return \App\Models\ClassSession::with('trainingClass')
+                            ->where('status', 'open')
+                            ->whereDate('session_date', '>=', now()->toDateString())
+                            ->orderBy('session_date')->get()
+                            ->filter(fn ($s) => $s->seatsLeft() > 0)
+                            ->mapWithKeys(fn ($s) => [$s->id => ($s->trainingClass?->name ?: 'Gowning Class') . ' - ' . $s->session_date->gmp()
+                                . ($s->start_time ? ' (' . \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') . ')' : '')
+                                . ($s->location ? ' - ' . $s->location : '')]);
+                    })
+                    ->helperText('Only open, upcoming sessions with space are shown.'),
+            ])
+            ->action(function (array $data) {
+                if (! $this->canBookClass()) {
+                    Notification::make()->warning()->title('Cannot Book A Class')
+                        ->body('You may already be enrolled or already have a class on file.')->send();
+                    return;
+                }
+                $session = \App\Models\ClassSession::find($data['class_session_id'] ?? null);
+                if (! $session || $session->seatsLeft() <= 0) {
+                    Notification::make()->warning()->title('Class Not Available')
+                        ->body('That session is full or no longer open. Please pick another.')->send();
+                    return;
+                }
+                \App\Models\ClassEnrollment::create([
+                    'class_session_id' => $session->id,
+                    'personnel_id' => $this->person->id,
+                    'name' => $this->person->full_name,
+                    'email' => $this->person->email,
+                    'employee_id' => $this->person->employee_id,
+                    'status' => 'signed_up',
+                    'signed_up_at' => now(),
+                ]);
+                Notification::make()->success()->title('Class Booked')
+                    ->body('You are signed up for ' . $session->session_date->gmpL() . '.')->send();
+            });
+    }
+
     /** Operator self-reschedule: move their own reservation to another open slot with capacity. */
     public function rescheduleAction(): Action
     {

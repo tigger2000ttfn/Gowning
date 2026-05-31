@@ -31,7 +31,7 @@
                         </div>
                     @endif
                     @if(!empty($card['last_run_worklist']))
-                        <div class="sb-line"><span class="sb-line-l">Worklist</span> {{ $card['last_run_worklist'] }}</div>
+                        <div class="sb-line" style="font-weight:700;color:var(--gqs-text-dim,#5A5A62);">{{ $card['last_run_worklist'] }}</div>
                     @endif
                 </div>
                 @if($stage['key'] === 'class_complete' && empty($card['has_booking']) && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))

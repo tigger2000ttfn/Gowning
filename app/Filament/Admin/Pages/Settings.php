@@ -19,7 +19,7 @@ use Filament\Notifications\Notification;
 
 class Settings extends Page implements HasForms
 {
-    public function getHeading(): string { return ''; }
+    public function getHeading(): string { return 'Settings'; }
     public static function canAccessNavigation(): bool
     {
         $u = \Illuminate\Support\Facades\Auth::user();
