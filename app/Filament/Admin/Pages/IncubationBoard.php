@@ -180,10 +180,12 @@ class IncubationBoard extends Page
     /** Recently evaluated runs (results entered), for the History tab. */
     public function getHistory()
     {
+        // Historical = the QCM has signed off the result evaluation (which sends it to QA). A worklist
+        // showing Pass with results auto-entered is NOT historical until that sign-off; it stays in the
+        // Result Evaluation tab awaiting the QCM signature.
         return QualificationRun::with('personnel')
-            ->whereNotNull('results_entered_at')
-            ->where('result', '!=', \App\Enums\RunResult::Pending->value)
-            ->latest('results_entered_at')->latest('id')->limit(60)->get()
+            ->whereNotNull('qcm_signed_at')
+            ->latest('qcm_signed_at')->latest('id')->limit(60)->get()
             ->map(fn ($r) => (object) [
                 'id' => $r->id,
                 'name' => $r->personnel?->full_name ?? 'Unknown',
