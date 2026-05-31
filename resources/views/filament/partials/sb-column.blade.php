@@ -41,15 +41,9 @@
                 @if($stage['key'] === 'class_complete' && empty($card['has_booking']) && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
                     <button type="button" wire:click="openBookRun({{ $card['id'] }})" @click.stop class="sb-book-run">Book Run</button>
                 @endif
-                <div class="sb-card-actions" @click.stop>
-                    @if(!empty($card['form_url']))
-                        <a href="{{ $card['form_url'] }}" target="_blank" rel="noopener" class="sb-cact" title="Approval Form (FORM-AST-36749)">Form</a>
-                    @endif
-                    @if(!empty($card['quick_url']) && !empty($card['quick_label']))
-                        <a href="{{ $card['quick_url'] }}" class="sb-cact sb-cact-go">{{ $card['quick_label'] }} &rarr;</a>
-                    @endif
-                    <a href="{{ $card['view_url'] }}" class="sb-cact">Record</a>
-                </div>
+                @if(!empty($card['review_url']) && !empty($card['review_label']))
+                    <a href="{{ $card['review_url'] }}" @click.stop class="sb-review-btn">{{ $card['review_label'] }} &rarr;</a>
+                @endif
             </div>
         @endforeach
     </div>

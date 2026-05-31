@@ -10,7 +10,7 @@
     <div class="gqs-stats">
         <div class="gqs-stat charcoal"><div class="n">{{ $stats['total'] }}</div><div class="l">Active Records</div><span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span></div>
         <div class="gqs-stat gold"><div class="n">{{ $stats['in_pipeline'] }}</div><div class="l">In Run Pipeline</div><span class="wm"><x-filament::icon icon="heroicon-o-arrow-path"/></span></div>
-        <div class="gqs-stat" style="--g1:#1F6FB2;--g2:#185A92;"><div class="n">{{ $stats['awaiting_class'] }}</div><div class="l">Awaiting / Done Class</div><span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span></div>
+        <div class="gqs-stat blue"><div class="n">{{ $stats['awaiting_class'] }}</div><div class="l">Awaiting / Done Class</div><span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span></div>
         <div class="gqs-stat purple"><div class="n">{{ $stats['in_qa'] }}</div><div class="l">In QA Review</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-check"/></span></div>
         <div class="gqs-stat gold"><div class="n">{{ $stats['due_soon'] }}</div><div class="l">Due Soon</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
         <div class="gqs-stat red"><div class="n">{{ $stats['past_due'] }}</div><div class="l">Past Due</div><span class="wm"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span></div>

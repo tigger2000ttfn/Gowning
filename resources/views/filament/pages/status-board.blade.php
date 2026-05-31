@@ -236,11 +236,8 @@
         .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
         .sb-book-run{margin-top:9px;display:block;width:100%;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:7px;border:none;background:#2E7D5B;color:#fff;cursor:pointer;}
         .sb-book-run:hover{background:#246148;}
-        .sb-card-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;padding-top:9px;border-top:1px solid var(--gqs-border,#E5E5EA);}
-        .sb-cact{font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;text-decoration:none;background:var(--gqs-surface-2,#F1F1F4);color:var(--gqs-text,#1A1A1F);border:1px solid var(--gqs-border,#E5E5EA);white-space:nowrap;}
-        .sb-cact:hover{background:#E4E4E9;}
-        .sb-cact-go{background:#1F6FB2;color:#fff;border-color:#1F6FB2;}
-        .sb-cact-go:hover{background:#185A92;}
+        .sb-review-btn{margin-top:9px;display:flex;align-items:center;justify-content:center;gap:4px;width:100%;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:7px;border:none;background:#1F6FB2;color:#fff;cursor:pointer;text-decoration:none;}
+        .sb-review-btn:hover{background:#185A92;}
     </style>
     <style>
         .sb-fullbleed{width:100%;}

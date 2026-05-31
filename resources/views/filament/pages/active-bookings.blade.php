@@ -8,9 +8,9 @@
 
     <div class="gqs-stats">
         <div class="gqs-stat charcoal"><div class="n">{{ $stats['total'] }}</div><div class="l">Active Bookings</div><span class="wm"><x-filament::icon icon="heroicon-o-user-group"/></span></div>
-        <div class="gqs-stat" style="--g1:#1F6FB2;--g2:#185A92;"><div class="n">{{ $stats['scheduled'] }}</div><div class="l">Scheduled</div><span class="wm"><x-filament::icon icon="heroicon-o-calendar"/></span></div>
+        <div class="gqs-stat blue"><div class="n">{{ $stats['scheduled'] }}</div><div class="l">Scheduled</div><span class="wm"><x-filament::icon icon="heroicon-o-calendar"/></span></div>
         <div class="gqs-stat gold"><div class="n">{{ $stats['attended'] }}</div><div class="l">Attended</div><span class="wm"><x-filament::icon icon="heroicon-o-check"/></span></div>
-        <div class="gqs-stat" style="--g1:#2563EB;--g2:#1E50C0;"><div class="n">{{ $stats['qcm'] }}</div><div class="l">QCM Reviewed</div><span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span></div>
+        <div class="gqs-stat royal"><div class="n">{{ $stats['qcm'] }}</div><div class="l">QCM Reviewed</div><span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span></div>
         <div class="gqs-stat purple"><div class="n">{{ $stats['pending_qa'] }}</div><div class="l">Pending QA</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
     </div>
 

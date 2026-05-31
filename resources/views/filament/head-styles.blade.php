@@ -136,6 +136,9 @@
     .gqs-stat.gold { background:linear-gradient(135deg,#C79A2E,#9E7818); }
     .gqs-stat.magenta { background:linear-gradient(135deg,#A4123F,#760D2D); }
     .gqs-stat.charcoal { background:linear-gradient(135deg,#2A2A31,#1C1C21); }
+    .gqs-stat.blue { background:linear-gradient(135deg,#1F6FB2,#185A92); }
+    .gqs-stat.royal { background:linear-gradient(135deg,#2563EB,#1E50C0); }
+    .gqs-stat.teal { background:linear-gradient(135deg,#0F766E,#0B5650); }
 
     .gqs-panel { background:var(--gqs-surface,#fff); border:1px solid var(--gqs-border,#DADADF); border-radius:14px; overflow:hidden; margin-bottom:16px; }
     .gqs-panel-head { display:flex; align-items:center; gap:9px; padding:13px 16px; font-weight:700; font-size:14px; color:#fff; background:linear-gradient(135deg,#A4123F,#850F33); }

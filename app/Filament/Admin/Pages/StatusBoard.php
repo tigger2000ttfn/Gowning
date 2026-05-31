@@ -138,14 +138,23 @@ class StatusBoard extends Page
                 'has_booking' => $q->personnel_id
                     ? \App\Models\Reservation::where('personnel_id', $q->personnel_id)->whereIn('status', ['requested', 'approved'])->exists()
                     : false,
-                // Inline card actions: stage-appropriate quick link, the Active Runs record, and (when the
-                // run is at QCM review) the approval form - so common steps are reachable from the card.
-                'quick_url' => $this->quickActionUrl($q),
-                'quick_label' => $this->quickActionShort($q),
-                'view_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
-                'form_url' => $q->workflow_stage?->value === 'results_released'
-                    ? route('print.approval', ['qualification' => $q->id])
-                    : null,
+                // Card review link: ONLY for stages PAST incubating (awaiting results onward), routing to
+                // the review screen where the work happens. Earlier-stage cards have no button - click the
+                // card for detail. Awaiting Results / Results Released -> Lab Review; QA stages -> QA Review.
+                'review_url' => (function () use ($q) {
+                    return match ($q->workflow_stage?->value) {
+                        'awaiting_results', 'results_released' => \App\Filament\Admin\Pages\IncubationBoard::getUrl(),
+                        'qa_review', 'qa_signoff', 'failed' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
+                        default => null,
+                    };
+                })(),
+                'review_label' => (function () use ($q) {
+                    return match ($q->workflow_stage?->value) {
+                        'awaiting_results', 'results_released' => 'Lab Review',
+                        'qa_review', 'qa_signoff', 'failed' => 'QA Review',
+                        default => null,
+                    };
+                })(),
             ];
             })->values()->all();
 
