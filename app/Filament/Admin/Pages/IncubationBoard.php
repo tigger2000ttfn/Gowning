@@ -44,6 +44,68 @@ class IncubationBoard extends Page
     public string $tab = 'incubating';
     public function setTab(string $t): void { $this->tab = in_array($t, ['incubating', 'evaluation', 'history'], true) ? $t : 'incubating'; }
 
+    // Undo a released plate-read result for re-entry (reason required, reverts stage, logged).
+    public ?int $undoRunId = null;
+    public string $undoReason = '';
+    public string $undoComment = '';
+    public string $undoPassword = '';
+    public function openResultUndo(int $runId): void { $this->undoRunId = $runId; $this->undoReason = ''; $this->undoComment = ''; $this->undoPassword = ''; }
+    public function closeResultUndo(): void { $this->undoRunId = null; }
+
+    public function undoReasons(): array
+    {
+        return [
+            'misread' => 'Plate Misread',
+            'data_error' => 'Data Entry Error',
+            'wrong_worklist' => 'Wrong Worklist',
+            'recount' => 'Recount Required',
+            'other' => 'Other (See Comment)',
+        ];
+    }
+
+    /** Revert a released result back to Awaiting Results so the QCM analyst can re-enter it. */
+    public function finalizeResultUndo(): void
+    {
+        if (! $this->canEvaluate()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $run = QualificationRun::find($this->undoRunId);
+        if (! $run) { $this->undoRunId = null; return; }
+        $reason = trim($this->undoReason);
+        $comment = trim($this->undoComment);
+        if ($reason === '' || $comment === '') {
+            Notification::make()->warning()->title('Reason And Comment Required')->body('Provide a reason and comment to undo this result.')->send();
+            return;
+        }
+        if ((bool) Setting::get('esig_required', true) && ! \Illuminate\Support\Facades\Hash::check($this->undoPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+            return;
+        }
+        $q = $run->qualification_id ? Qualification::find($run->qualification_id) : Qualification::currentFor($run->personnel_id);
+
+        \App\Models\ElectronicSignature::create([
+            'signable_type' => QualificationRun::class, 'signable_id' => $run->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'Lab Result Reverted',
+            'statement' => 'Reverted a released plate-read result for re-entry. Reason: ' . $reason . '. Comment: ' . $comment,
+            'signed_at' => now(),
+        ]);
+        if ($q) {
+            $q->comments()->create([
+                'user_id' => Auth::id(), 'author_name' => Auth::user()?->name,
+                'body' => 'Lab result reverted for re-entry. Reason: ' . $reason . '. ' . $comment,
+            ]);
+        }
+        // Clear the result + release stamps so it returns to evaluation as not-yet-entered.
+        $run->result = \App\Enums\RunResult::Pending->value;
+        $run->results_released_at = null;
+        $run->save();
+        if ($q) {
+            $q->workflow_stage = WorkflowStage::AwaitingResults;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+        $this->undoRunId = null;
+        Notification::make()->success()->title('Result Reverted')->body('Returned to evaluation for re-entry.')->send();
+    }
+
     public function mount(): void
     {
         // opportunistic time-based advance whenever the page is viewed; use the same
@@ -130,6 +192,8 @@ class IncubationBoard extends Page
                 'result' => $r->result instanceof \BackedEnum ? ucfirst($r->result->value) : ucfirst((string) $r->result),
                 'entered_at' => $r->results_entered_at,
                 'run_date' => $r->run_date,
+                // QCM sign-off locks the result; once signed to QA it should not be undone here.
+                'locked' => (bool) $r->qcm_signed_at,
             ]);
     }
 

@@ -102,7 +102,7 @@
                     <div class="gqs-empty">No results entered yet.</div>
                 @else
                     <table class="gqs-tbl">
-                        <thead><tr><th>Employee</th><th>Name</th><th>Worklist</th><th>Run Date</th><th>Result</th><th>Evaluated</th></tr></thead>
+                        <thead><tr><th>Employee</th><th>Name</th><th>Worklist</th><th>Run Date</th><th>Result</th><th>Evaluated</th><th style="text-align:right;">Action</th></tr></thead>
                         <tbody>
                             @foreach($history as $r)
                                 <tr>
@@ -112,11 +112,42 @@
                                     <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->gmp() : '—' }}</td>
                                     <td><span class="gqs-pill {{ $r->result === 'Pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $r->result }}</span></td>
                                     <td>{{ $r->entered_at ? \Illuminate\Support\Carbon::parse($r->entered_at)->gmpDt() : '—' }}</td>
+                                    <td style="text-align:right;">
+                                        @if($this->canEvaluate() && ! $r->locked)
+                                            <button type="button" wire:click="openResultUndo({{ $r->id }})" class="sb-act" style="background:#6A6A72;">Undo</button>
+                                        @elseif($r->locked)
+                                            <span class="gqs-pill gqs-pill-gray">Signed To QA</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- Lab result undo (revert a released result for re-entry) --}}
+    @if($undoRunId)
+        <div class="gqs-modal-overlay" wire:click.self="closeResultUndo">
+            <div class="gqs-modal" style="width:480px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-arrow-uturn-left"/></span>Undo Result</div>
+                <div class="gqs-modal-body">
+                    <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">This returns the run to evaluation so the result can be re-entered. A reason and comment are required and recorded.</div>
+                    <div><label class="gqs-flbl">Reason <span style="color:#C8102E;">*</span></label>
+                        <select wire:model="undoReason" class="gqs-fld">
+                            <option value="">Select a reason...</option>
+                            @foreach($this->undoReasons() as $val => $lbl)<option value="{{ $val }}">{{ $lbl }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div><label class="gqs-flbl">Comment <span style="color:#C8102E;">*</span></label><input type="text" wire:model="undoComment" class="gqs-fld" placeholder="What was wrong?"></div>
+                    @if((bool) \App\Models\Setting::get('esig_required', true))<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="undoPassword" class="gqs-fld"></div>@endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeResultUndo" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="finalizeResultUndo" class="gqs-btn" style="background:#6A6A72;color:#fff;">Revert For Re-entry</button>
+                </div>
             </div>
         </div>
     @endif
