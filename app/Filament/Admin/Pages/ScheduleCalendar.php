@@ -106,6 +106,13 @@ class ScheduleCalendar extends Page
     /** Upcoming schedule as a flat, date-sorted list (run days + class sessions). */
     public function listItems(): array
     {
+        $fmt = fn ($t) => $t ? \Illuminate\Support\Carbon::parse($t)->format('H:i') : null;
+        $range = function ($start, $end) use ($fmt) {
+            $s = $fmt($start); $e = $fmt($end);
+            if ($s && $e) return $s . ' - ' . $e;
+            if ($s) return $s;
+            return 'All day';
+        };
         $items = [];
         foreach (RunSlot::with('analyst')->where('status', '!=', 'cancelled')
             ->whereDate('slot_date', '>=', now()->subDay()->toDateString())->get() as $s) {
@@ -113,8 +120,10 @@ class ScheduleCalendar extends Page
                 'type' => 'Run Day', 'color' => '#A4123F',
                 'date' => $s->slot_date, 'sort' => $s->slot_date->toDateString() . ($s->start_time ?? '00:00'),
                 'title' => $s->cleanroom ?: 'Run Day',
-                'sub' => ($s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : 'All day')
-                    . ($s->analyst ? ' · ' . $s->analyst->name : ''),
+                'time' => $range($s->start_time, $s->end_time),
+                'sub' => $range($s->start_time, $s->end_time)
+                    . ($s->analyst ? ' · ' . $s->analyst->name : '')
+                    . (($s->is_special ?? false) ? ' · Special' : ''),
             ];
         }
         foreach (ClassSession::with('trainingClass')->where('status', '!=', 'cancelled')
@@ -123,7 +132,9 @@ class ScheduleCalendar extends Page
                 'type' => 'Class', 'color' => '#2E7D5B',
                 'date' => $s->session_date, 'sort' => $s->session_date->toDateString() . ($s->start_time ?? '00:00'),
                 'title' => $s->trainingClass?->name ?? 'Gowning Class',
-                'sub' => $s->start_time ? \Illuminate\Support\Carbon::parse($s->start_time)->format('H:i') : 'All day',
+                'time' => $range($s->start_time, $s->end_time),
+                'sub' => $range($s->start_time, $s->end_time)
+                    . ($s->location ? ' · ' . $s->location : ''),
             ];
         }
         usort($items, fn ($a, $b) => strcmp($a['sort'], $b['sort']));
