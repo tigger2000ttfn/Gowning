@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Auth;
  */
 class ActiveBookings extends Page
 {
-    use \App\Filament\Admin\Concerns\HasPersonDetailModal;
-
     protected static function allowed(): bool
     {
         $u = Auth::user();
@@ -39,6 +37,79 @@ class ActiveBookings extends Page
     public string $search = '';
 
     public function setTab(string $t): void { $this->tab = in_array($t, ['roster', 'dashboard'], true) ? $t : 'roster'; }
+
+    public function isSuperUser(): bool { return (bool) Auth::user()?->hasCapability(Capability::ManageUsers); }
+
+    // ===================== BOOKING DETAIL MODAL (class booking + qualification snapshot) =====================
+    public ?array $bookingDetail = null;
+    public function closeBooking(): void { $this->bookingDetail = null; }
+
+    public function openBooking(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::with(['personnel', 'classSession.trainingClass', 'classSession.instructorUser'])->find($enrollmentId);
+        if (! $e) { $this->bookingDetail = null; return; }
+        $p = $e->personnel;
+        $session = $e->classSession;
+        $status = $e->status instanceof \BackedEnum ? $e->status->value : (string) $e->status;
+        [$label, $color] = $this->statusMeta($status);
+
+        // Qualification snapshot for this person.
+        $q = $p ? \App\Models\Qualification::currentFor($p->id) : null;
+        $qual = null;
+        if ($q) {
+            $type = $q->type instanceof \BackedEnum ? $q->type->value : $q->type;
+            $qstatus = $q->status instanceof \BackedEnum ? $q->status->value : $q->status;
+            $dueTag = ($qstatus === 'lapsed' || $q->isPastDue()) ? 'Lapsed' : ($type === 'annual' ? 'Requal' : 'Initial');
+            $qual = [
+                'id' => $q->id,
+                'type' => $q->sessionLabel(),
+                'stage' => $q->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label()) : '-',
+                'status' => ucwords(str_replace('_', ' ', (string) $qstatus)),
+                'due' => $q->due_date?->gmp(),
+                'due_label' => $type === 'annual' ? 'Requal Due' : 'Initial Due',
+                'due_tag' => $dueTag,
+                'past_due' => $q->isPastDue(),
+                'class_on_file' => (bool) $q->class_on_file,
+                'record_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $q->id]),
+            ];
+        }
+
+        $this->bookingDetail = [
+            'id' => $e->id,
+            'personnel_id' => $e->personnel_id,
+            'name' => $p?->full_name ?? $e->name ?? 'Unknown',
+            'employee_id' => $p?->employee_id ?? $e->employee_id,
+            'department' => $p?->department,
+            'job_title' => $p?->job_title,
+            'class' => $session?->trainingClass?->name ?? 'Class',
+            'session_date' => $session?->session_date?->gmp(),
+            'session_past' => $session?->session_date ? $session->session_date->isPast() : false,
+            'start_time' => $session?->start_time,
+            'end_time' => $session?->end_time,
+            'instructor' => $session?->instructorUser?->name ?? $session?->instructor,
+            'location' => $session?->location,
+            'status' => $status,
+            'status_label' => $label,
+            'status_color' => $color,
+            'submitted' => (bool) $session?->attendance_submitted_at,
+            'signed_up_at' => $e->signed_up_at?->gmp(),
+            'attended_at' => $e->attended_at?->gmp(),
+            'qual' => $qual,
+            'scheduler_url' => \App\Filament\Admin\Pages\ClassScheduler::getUrl(),
+        ];
+    }
+
+    /** HARD delete an enrollment (super user) - to fix stuck/duplicate bookings. */
+    public function deleteBooking(int $enrollmentId): void
+    {
+        if (! $this->isSuperUser()) { Notification::make()->danger()->title('Not Authorized')->body('Super user required.')->send(); return; }
+        $e = ClassEnrollment::find($enrollmentId);
+        if (! $e) { Notification::make()->warning()->title('Already Gone')->send(); return; }
+        $name = $e->personnel?->full_name ?? $e->name ?? 'Enrollment';
+        $e->delete();
+        if ($this->bookingDetail && ($this->bookingDetail['id'] ?? null) === $enrollmentId) $this->bookingDetail = null;
+        Notification::make()->success()->title('Booking Deleted')->body($name . '\'s enrollment record was permanently removed.')->send();
+    }
 
     public function statusOptions(): array
     {
