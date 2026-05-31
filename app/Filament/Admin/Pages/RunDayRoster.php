@@ -569,7 +569,8 @@ class RunDayRoster extends Page
                 'capacity' => 1,
                 'assigned_analyst_id' => $this->moveSpecialAnalystId ?: null,
                 'status' => 'open',
-                'notes' => 'Special one-off run day (created from a reschedule).',
+                'is_special' => true,
+                'notes' => 'Special one-off run day (created from a reschedule). Private - not offered for self-service booking.',
             ]);
             $r->update(['run_slot_id' => $special->id, 'status' => 'approved']);
             $when = \Illuminate\Support\Carbon::parse($this->moveSpecialDate)->format('d M Y');
@@ -871,7 +872,7 @@ class RunDayRoster extends Page
                 ->exists();
             if (! $alreadyBooked) {
                 $scheduler = app(\App\Services\AutoScheduler::class);
-                $nextSlot = method_exists($scheduler, 'nextOpenSlot') ? $scheduler->nextOpenSlot() : RunSlot::where('status', '!=', 'cancelled')
+                $nextSlot = method_exists($scheduler, 'nextOpenSlot') ? $scheduler->nextOpenSlot() : RunSlot::where('status', '!=', 'cancelled')->where('is_special', false)
                     ->whereDate('slot_date', '>', now()->toDateString())
                     ->orderBy('slot_date')->get()
                     ->first(fn ($s) => $s->reservations()->whereIn('status', ['requested', 'approved', 'completed'])->count() < (int) ($s->capacity ?? 1));

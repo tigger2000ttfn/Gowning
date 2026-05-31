@@ -329,6 +329,7 @@ class StatusBoard extends Page
     {
         $scheduler = app(\App\Services\AutoScheduler::class);
         return \App\Models\RunSlot::where('status', 'open')
+            ->where('is_special', false)
             ->whereDate('slot_date', '>=', now()->toDateString())
             ->orderBy('slot_date')->orderBy('start_time')->get()
             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)

@@ -41,7 +41,7 @@ class AutoScheduler
     public function nextAvailableSlot(?CarbonImmutable $after = null): ?RunSlot
     {
         $earliest = $after ?? CarbonImmutable::now()->addWeeks($this->weeksOut())->startOfDay();
-        $slots = RunSlot::where('status', 'open')
+        $slots = RunSlot::where('status', 'open')->where('is_special', false)
             ->whereDate('slot_date', '>=', $earliest->toDateString())
             ->orderBy('slot_date')->orderBy('start_time')
             ->get();

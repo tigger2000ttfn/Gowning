@@ -83,7 +83,7 @@
                         <tbody>
                             @foreach($days as $d)
                                 <tr>
-                                    <td style="font-weight:700;">{{ $d->slot_date->gmpD() }}</td>
+                                    <td style="font-weight:700;">{{ $d->slot_date->gmpD() }}@if($d->is_special ?? false) <span class="gqs-pill gqs-pill-purple" title="Private one-off session - not offered for self-service booking">Special</span>@endif</td>
                                     <td>{{ $d->start_time ? \Illuminate\Support\Carbon::parse($d->start_time)->format('H:i') : '—' }}@if($d->end_time) – {{ \Illuminate\Support\Carbon::parse($d->end_time)->format('H:i') }}@endif</td>
                                     <td>{{ $d->cleanroom ?: '—' }}</td>
                                     <td>{{ $d->analyst?->name ?? 'Unassigned' }}</td>

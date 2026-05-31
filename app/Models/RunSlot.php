@@ -15,7 +15,7 @@ class RunSlot extends Model
 
     protected $fillable = [
         'cleanroom', 'slot_date', 'start_time', 'end_time',
-        'capacity', 'status', 'notes', 'created_by', 'assigned_analyst_id', 'attendance_submitted_at', 'attendance_submitted_by',
+        'capacity', 'status', 'is_special', 'notes', 'created_by', 'assigned_analyst_id', 'attendance_submitted_at', 'attendance_submitted_by',
     ];
 
     protected function casts(): array

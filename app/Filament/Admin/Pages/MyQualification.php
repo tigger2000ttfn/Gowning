@@ -69,6 +69,7 @@ class MyQualification extends Page
                         $scheduler = app(\App\Services\AutoScheduler::class);
                         return RunSlot::query()
                             ->where('status', 'open')
+                            ->where('is_special', false)
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
@@ -137,6 +138,7 @@ class MyQualification extends Page
                         $scheduler = app(\App\Services\AutoScheduler::class);
                         return RunSlot::query()
                             ->where('status', 'open')
+                            ->where('is_special', false)
                             ->whereDate('slot_date', '>=', now()->toDateString())
                             ->orderBy('slot_date')->get()
                             ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
