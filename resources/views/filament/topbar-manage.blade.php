@@ -49,6 +49,7 @@
     }
     if ($can(\App\Enums\Capability::ManageScheduling) || $can(\App\Enums\Capability::QaApprove) || $can(\App\Enums\Capability::QaReview)) {
         $admin[] = ['NC Catalog', \App\Filament\Admin\Pages\NcCatalog::getUrl(), 'heroicon-o-exclamation-triangle'];
+        $admin[] = ['Worklist Catalog', \App\Filament\Admin\Pages\WorklistCatalog::getUrl(), 'heroicon-o-beaker'];
     }
     // Notification Settings is available to everyone (personal prefs)
     $admin[] = ['Notification Settings', \App\Filament\Admin\Pages\NotificationSettings::getUrl(), 'heroicon-o-bell-alert'];

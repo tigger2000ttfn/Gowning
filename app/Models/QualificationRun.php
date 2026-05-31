@@ -43,7 +43,7 @@ class QualificationRun extends Model implements HasMedia
         'parent_run_id', 'qa_determination', 'qa_determined_at', 'is_complete',
         'run_date', 'result', 'cycle_type', 'notes', 'recorded_by', 'is_seed',
         'signed_by', 'signed_at', 'signature_meaning',
-        'lims_worklist_id', 'veeva_doc_number', 'veeva_url', 'results_entered_at', 'incubation_started_at', 'results_released_at', 'qa_signed_at', 'qa_signed_by', 'qa_notes', 'qcm_signed_at', 'qcm_signed_by',
+        'lims_worklist_id', 'lims_evaluation', 'lims_sample_status', 'lims_inc_status', 'lims_all_final', 'lims_qcm_ready', 'lims_synced_at', 'veeva_doc_number', 'veeva_url', 'results_entered_at', 'incubation_started_at', 'results_released_at', 'qa_signed_at', 'qa_signed_by', 'qa_notes', 'qcm_signed_at', 'qcm_signed_by',
     ];
 
     protected function casts(): array
@@ -60,6 +60,9 @@ class QualificationRun extends Model implements HasMedia
             'results_released_at' => 'datetime',
             'results_entered_at' => 'datetime',
             'qa_signed_at' => 'datetime',
+            'lims_all_final' => 'boolean',
+            'lims_qcm_ready' => 'boolean',
+            'lims_synced_at' => 'datetime',
         ];
     }
 
