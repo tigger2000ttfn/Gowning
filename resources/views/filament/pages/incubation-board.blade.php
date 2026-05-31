@@ -34,7 +34,7 @@
                             @foreach($incubating as $r)
                                 <tr>
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
-                                    <td><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $r->id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a></td>
+                                    <td><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $r->id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a></td>
                                     <td>
                                         @if($r->worklist){{ $r->worklist }}
                                         @elseif($this->canEvaluate())
@@ -73,7 +73,7 @@
                             @foreach($evaluation as $r)
                                 <tr>
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
-                                    <td><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $r->id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a></td>
+                                    <td><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $r->id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a></td>
                                     <td>{{ $r->cycle }}</td>
                                     <td>{{ $r->run_uid ?: '—' }}</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
@@ -120,7 +120,7 @@
                             @foreach($history as $r)
                                 <tr>
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
-                                    <td>@if($r->qualification_id ?? null)<a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $r->qualification_id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a>@else {{ $r->name }} @endif</td>
+                                    <td>@if($r->qualification_id ?? null)<a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $r->qualification_id]) }}" style="color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $r->name }}</a>@else {{ $r->name }} @endif</td>
                                     <td>{{ $r->worklist ?: '—' }}</td>
                                     <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->gmp() : '—' }}</td>
                                     <td><span class="gqs-pill {{ $r->result === 'Pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $r->result }}</span></td>

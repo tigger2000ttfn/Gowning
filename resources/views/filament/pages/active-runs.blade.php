@@ -211,8 +211,14 @@
                 </div>
                 <div class="gqs-modal-body">
                     <label class="gqs-flbl">LIMS Worklist <span style="color:#C8102E;">*</span></label>
-                    <input type="text" wire:model="wlValue" class="gqs-fld" placeholder="EM-..." wire:keydown.enter="saveLinkWorklist">
-                    <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:6px;">Links the run to its LIMS worklist so incubation status, evaluation, and NC data sync automatically.</div>
+                    <div style="display:flex;align-items:stretch;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;overflow:hidden;">
+                        <span style="display:flex;align-items:center;padding:0 12px;background:var(--gqs-surface-2,#F1F1F4);font-weight:800;color:var(--gqs-text-dim,#6A6A72);border-right:1px solid var(--gqs-border,#C4C4CC);">EM-</span>
+                        <input type="text" wire:model.live.debounce.250ms="wlValue" class="gqs-fld" list="wl-suggest" style="border:none;border-radius:0;flex:1;" placeholder="type the numbers" wire:keydown.enter="saveLinkWorklist" autofocus>
+                    </div>
+                    <datalist id="wl-suggest">
+                        @foreach($this->worklistSuggestions() as $s)<option value="{{ $s }}"></option>@endforeach
+                    </datalist>
+                    <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:6px;">Just type the numbers - EM- is added automatically. Matching worklists suggest as you type. Links the run so incubation status, evaluation, and NC data sync.</div>
                 </div>
                 <div class="gqs-modal-foot" style="justify-content:flex-end;">
                     <button wire:click="closeLinkWorklist" class="gqs-btn gqs-btn-ghost">Cancel</button>

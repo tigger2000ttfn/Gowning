@@ -128,7 +128,7 @@
                 @php $latestRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->latest('id')->first(); @endphp
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                     <div>
-                        <div style="font-weight:700;color:var(--gqs-text,#1A1A1F);"><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]) }}" style="color:var(--gqs-text,#1A1A1F);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $q->personnel?->full_name ?? 'Unknown' }}</a></div>
+                        <div style="font-weight:700;color:var(--gqs-text,#1A1A1F);"><a href="{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $q->id]) }}" style="color:var(--gqs-text,#1A1A1F);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record in Active Runs">{{ $q->personnel?->full_name ?? 'Unknown' }}</a></div>
                         <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">
                             {{ $q->personnel?->employee_id }} · {{ $q->runs_completed }}/{{ $q->runs_required }} runs · {{ $q->workflow_stage?->label() }}
                             @if($latestRun?->run_uid) · <span style="font-weight:700;color:#A4123F;">{{ $latestRun->run_uid }}</span>@endif

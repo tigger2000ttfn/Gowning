@@ -86,7 +86,7 @@
         <div style="min-width:0;">
             <h2>{{ $q->personnel?->full_name ?? 'Qualification' }}</h2>
             <div class="sub">{{ $q->personnel?->employee_id ?: 'No ID' }}@if($q->personnel?->job_title) · {{ $q->personnel->job_title }}@endif@if($q->personnel?->department) · {{ $q->personnel->department }}@endif</div>
-            <div class="sub" style="margin-top:5px;">{{ $q->sessionLabel() }} · Cycle {{ $q->cycle_number ?: 1 }}@if($q->superseded_at) (superseded){{-- --}}@endif</div>
+            <div class="sub" style="margin-top:5px;">{{ $q->sessionLabel() }}@if(($q->cycle_number ?: 1) > 1) · Cycle {{ $q->cycle_number }}@endif@if($q->superseded_at) (superseded){{-- --}}@endif</div>
         </div>
         <span class="ar-pill" style="background:{{ $pillBg }};">{{ $pillTxt }}</span>
     </div>

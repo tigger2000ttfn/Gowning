@@ -30,6 +30,13 @@ class ListQualifications extends ListRecords
     public string $filterStage = '';               // '' | stage value
     public string $search = '';
 
+    /** When arriving via ?view={id} (e.g. a cross-link from Lab Review / QA Review), pop the detail modal. */
+    public function mount(): void
+    {
+        $viewId = request()->integer('view');
+        if ($viewId) { $this->openRow($viewId); }
+    }
+
     public function getTitle(): string { return 'Active Runs'; }
 
     public function setTab(string $t): void { $this->tab = in_array($t, ['roster', 'dashboard'], true) ? $t : 'roster'; }
@@ -271,6 +278,18 @@ class ListQualifications extends ListRecords
     // ---- Link-worklist modal (fix the gap right here) ----
     public ?int $wlQid = null;
     public string $wlValue = '';
+
+    /** Worklist suggestions for the autocomplete datalist (numbers only; the EM- prefix is shown in the UI). */
+    public function worklistSuggestions(): array
+    {
+        $term = trim($this->wlValue);
+        $q = \App\Models\LimsWorklist::query()->orderByDesc('id')->limit(15);
+        if ($term !== '') {
+            $q->where('worklist', 'ilike', '%' . preg_replace('/^EM[-\s]*/i', '', $term) . '%');
+        }
+        return $q->pluck('worklist')->map(fn ($w) => preg_replace('/^EM-/i', '', (string) $w))->filter()->unique()->values()->all();
+    }
+
     public function openLinkWorklist(int $qid): void
     {
         $q = Qualification::find($qid);
