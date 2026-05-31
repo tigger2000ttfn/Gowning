@@ -110,15 +110,33 @@
         @endforeach
     </div>
 
+    {{-- Person --}}
+    <div class="ar-sec">
+        <h3>Person</h3>
+        <div class="ar-grid">
+            <div class="ar-f"><div class="l">Employee ID</div><div class="v">{{ $q->personnel?->employee_id ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">Department</div><div class="v">{{ $q->personnel?->department ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">Job Title</div><div class="v">{{ $q->personnel?->job_title ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">LIMS Username</div><div class="v">{{ $q->personnel?->lims_username ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">Email</div><div class="v">{{ $q->personnel?->email ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">Phone</div><div class="v">{{ $q->personnel?->phone ?: '—' }}</div></div>
+            <div class="ar-f"><div class="l">Supervisor</div><div class="v">{{ $q->personnel?->supervisor ?: '—' }}</div></div>
+        </div>
+    </div>
+
     {{-- Qualification details --}}
     <div class="ar-sec">
         <h3>Qualification</h3>
         <div class="ar-grid">
             <div class="ar-f"><div class="l">Status</div><div class="v"><span class="ar-chip" style="background:{{ $pillBg }}1A;color:{{ $pillBg }};">{{ $statusLabel }}</span></div></div>
             <div class="ar-f"><div class="l">Type</div><div class="v">{{ $q->sessionLabel() }}</div></div>
-            <div class="ar-f"><div class="l">Class On File</div><div class="v">{{ $q->class_on_file ? 'Yes' : 'No' }}</div></div>
-            <div class="ar-f"><div class="l">Class Completed</div><div class="v">{{ $q->class_on_file_date?->gmp() ?? '—' }}</div></div>
-            <div class="ar-f"><div class="l">Cycle Started</div><div class="v">{{ $q->cycle_started_at?->gmp() ?? '—' }}</div></div>
+            <div class="ar-f"><div class="l">Runs</div><div class="v">{{ (int) $q->runs_completed }} / {{ (int) $q->runs_required }} passing</div></div>
+            <div class="ar-f"><div class="l">Due Date</div><div class="v">{{ $q->due_date?->gmp() ?? '—' }}</div></div>
+            <div class="ar-f"><div class="l">Qualified Date</div><div class="v">{{ $q->qualified_date?->gmp() ?? 'Not yet (awaiting QA)' }}</div></div>
+            <div class="ar-f"><div class="l">QA Owner</div><div class="v">{{ $q->qaOwner()?->name ?? 'Unassigned' }}</div></div>
+            <div class="ar-f"><div class="l">Cycle</div><div class="v">#{{ (int) ($q->cycle_number ?: 1) }}@if($q->cycle_started_at) · started {{ $q->cycle_started_at->gmp() }}@endif</div></div>
+            <div class="ar-f"><div class="l">Class On File</div><div class="v">{{ $q->class_on_file ? 'Yes' : 'No' }}@if($q->class_on_file_date) · {{ $q->class_on_file_date->gmp() }}@endif</div></div>
+            <div class="ar-f"><div class="l">LMS Number</div><div class="v">{{ $q->lms_number ?: '—' }}</div></div>
             <div class="ar-f"><div class="l">Last QA Determination</div><div class="v">{{ $q->qa_recommendation ? \Illuminate\Support\Str::title(str_replace('_',' ',$q->qa_recommendation)) : '—' }}</div></div>
             @if($q->needsRetrainingFirst())
                 <div class="ar-f"><div class="l">Retraining</div><div class="v"><span class="ar-chip" style="background:#FCEEF0;color:#C8102E;">Required First</span></div></div>
@@ -142,7 +160,8 @@
                 </div></div>
                 <div class="ar-f"><div class="l">1st Incubation (30-35C)</div><div class="v">{{ trim(($lrun->lims_inc1_incubator ? $lrun->lims_inc1_incubator.': ' : '').($lrun->lims_inc1_start ?: '?').($lrun->lims_inc1_end ? ' -> '.$lrun->lims_inc1_end : '')) ?: '—' }}</div></div>
                 <div class="ar-f"><div class="l">2nd Incubation (20-25C)</div><div class="v">{{ trim(($lrun->lims_inc2_incubator ? $lrun->lims_inc2_incubator.': ' : '').($lrun->lims_inc2_start ?: '?').($lrun->lims_inc2_end ? ' -> '.$lrun->lims_inc2_end : '')) ?: '—' }}</div></div>
-                @if($lrun->lims_nc_number)<div class="ar-f"><div class="l">NC / TrackWise</div><div class="v">{{ $lrun->lims_nc_number }}</div></div>@endif
+                <div class="ar-f"><div class="l">NC / TrackWise</div><div class="v">@if($lrun->lims_nc_number)@if($lrun->lims_nc_url)<a href="{{ $lrun->lims_nc_url }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $lrun->lims_nc_number }} &nearr;</a>@else{{ $lrun->lims_nc_number }}@endif @else — @endif</div></div>
+                <div class="ar-f"><div class="l">Veeva Report</div><div class="v">@if($lrun->veeva_doc_number)@if($lrun->veeva_url)<a href="{{ $lrun->veeva_url }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $lrun->veeva_doc_number }} &nearr;</a>@else{{ $lrun->veeva_doc_number }}@endif @else — @endif</div></div>
             </div>
         </div>
     @endif
@@ -152,15 +171,50 @@
         <div class="ar-sec">
             <h3>Run History</h3>
             <table class="ar-tbl">
-                <thead><tr><th>Date</th><th>Result</th><th>Worklist</th><th>Cycle</th></tr></thead>
+                <thead><tr><th>Date</th><th>Result</th><th>Worklist</th><th>Inc Status</th><th>Evaluation</th><th>NC</th><th>Veeva</th></tr></thead>
                 <tbody>
                     @foreach($recentRuns as $r)
-                        @php $res = strtolower((string) ($r->result instanceof \BackedEnum ? $r->result->value : $r->result)); $rc = $res==='pass'?'#2E7D5B':($res==='fail'?'#C8102E':'#6B6B73'); @endphp
+                        @php
+                            $res = strtolower((string) ($r->result instanceof \BackedEnum ? $r->result->value : $r->result));
+                            $rc = $res==='pass'?'#2E7D5B':($res==='fail'?'#C8102E':'#6B6B73');
+                            $rinc = $r->lims_inc2_end ? 'Complete' : ($r->lims_inc1_start ? 'Incubating' : '—');
+                        @endphp
                         <tr>
-                            <td>{{ $r->run_date?->gmp() ?? '—' }}</td>
+                            <td style="white-space:nowrap;">{{ $r->run_date?->gmp() ?? '—' }}</td>
                             <td><span class="ar-chip" style="background:{{ $rc }}1A;color:{{ $rc }};">{{ ucfirst($res ?: 'pending') }}</span></td>
                             <td>{{ $r->lims_worklist_id ?: '—' }}</td>
-                            <td>{{ $r->cycle_type instanceof \BackedEnum ? ucfirst($r->cycle_type->value) : ucfirst((string) ($r->cycle_type ?: '—')) }}</td>
+                            <td>{{ $rinc }}</td>
+                            <td>{{ $r->lims_evaluation ?: '—' }}</td>
+                            <td>@if($r->lims_nc_number)@if($r->lims_nc_url)<a href="{{ $r->lims_nc_url }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $r->lims_nc_number }} &nearr;</a>@else{{ $r->lims_nc_number }}@endif @else — @endif</td>
+                            <td>@if($r->veeva_doc_number)@if($r->veeva_url)<a href="{{ $r->veeva_url }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $r->veeva_doc_number }} &nearr;</a>@else{{ $r->veeva_doc_number }}@endif @else — @endif</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    {{-- Cycle history (prior/superseded cycles for this person) --}}
+    @php
+        $cycles = \App\Models\Qualification::where('personnel_id', $q->personnel_id)
+            ->where('id', '!=', $q->id)
+            ->orderByDesc('cycle_number')->orderByDesc('id')->limit(12)->get();
+    @endphp
+    @if($cycles->count())
+        <div class="ar-sec">
+            <h3>Cycle History</h3>
+            <table class="ar-tbl">
+                <thead><tr><th>Cycle</th><th>Type</th><th>Started</th><th>Qualified</th><th>Due</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach($cycles as $c)
+                        @php $cs = $c->status instanceof \BackedEnum ? $c->status->value : (string) $c->status; @endphp
+                        <tr>
+                            <td>#{{ (int) ($c->cycle_number ?: 1) }}@if($c->superseded_at) <span class="ar-chip" style="background:#6B6B731A;color:#6B6B73;">superseded</span>@endif</td>
+                            <td>{{ $c->sessionLabel() }}</td>
+                            <td>{{ $c->cycle_started_at?->gmp() ?? '—' }}</td>
+                            <td>{{ $c->qualified_date?->gmp() ?? '—' }}</td>
+                            <td>{{ $c->due_date?->gmp() ?? '—' }}</td>
+                            <td>{{ \Illuminate\Support\Str::title(str_replace('_',' ',$cs)) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
