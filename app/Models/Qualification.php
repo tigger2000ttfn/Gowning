@@ -17,6 +17,18 @@ class Qualification extends Model
 
     protected static function booted(): void
     {
+        // Safety net: the type column is NOT NULL with a DB default of 'initial', but an explicit null
+        // from any code path (or a replay that could not infer a type) would throw a 23502 on insert.
+        // Guarantee a non-null type on every save so no create/fill path can null it.
+        static::saving(function (Qualification $q) {
+            if ($q->type === null) {
+                $q->type = \App\Enums\QualificationType::Initial;
+            }
+            if ($q->status === null) {
+                $q->status = \App\Enums\QualificationStatus::Pending;
+            }
+        });
+
         // Central StageChanged automation: fire once whenever workflow_stage actually changes,
         // no matter which code path moved it (auto-scheduler, approve, perform, results, drag).
         static::updated(function (Qualification $q) {
