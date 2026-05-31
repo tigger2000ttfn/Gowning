@@ -110,6 +110,10 @@ Artisan::command('gqs:sync-worklists', function () {
 
 Schedule::command('gqs:sync-worklists')->dailyAt('06:18');
 
+// After the LIMS sync, reconcile forgotten attendance: if LIMS shows a worklist for a person whose past
+// run day was never marked present, record the run from LIMS so the workflow advances. Runs after the sync.
+Schedule::command('gqs:reconcile-attendance --force')->dailyAt('06:19');
+
 // Flush queued emails once the mail relay (Postfix) is configured.
 // Until then rows sit in queued_emails with sent_at = null.
 Artisan::command('gqs:flush-emails', function () {
