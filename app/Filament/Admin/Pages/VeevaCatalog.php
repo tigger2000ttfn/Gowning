@@ -42,6 +42,7 @@ class VeevaCatalog extends Page implements HasForms
     public ?array $data = [];
     public array $headers = [];
     public array $rows = [];
+    public array $hyperlinks = [];   // [rowIndexInRows][colIndex] => url (from xlsx embedded links)
     public array $preview = [];
     public bool $parsed = false;
     public bool $imported = false;
@@ -59,11 +60,11 @@ class VeevaCatalog extends Page implements HasForms
         return $schema->statePath('data')->components([
             Section::make('1. Load The Weekly Veeva Export')->icon('heroicon-o-arrow-up-tray')->schema([
                 FileUpload::make('csv')
-                    ->label('Veeva Export CSV')
-                    ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                    ->label('Veeva Export (CSV or XLSX)')
+                    ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
                     ->storeFiles(true)
                     ->directory('imports')
-                    ->helperText('A Veeva export with a header row: document number, link, title, type, status, version. Or paste below.'),
+                    ->helperText('A Veeva export with a header row: document number, link, title, type, status, version. XLSX is preferred when the document number is a hyperlink (the link is read from the cell). CSV drops hyperlinks, so include a link/permalink column if exporting CSV.'),
                 Textarea::make('paste')
                     ->label('Or Paste CSV / TSV')
                     ->rows(5)
@@ -75,7 +76,12 @@ class VeevaCatalog extends Page implements HasForms
     public function parse(): void
     {
         $rows = [];
+        $this->hyperlinks = [];
         $paste = trim((string) ($this->data['paste'] ?? ''));
+        $path = $this->data['csv'] ?? null;
+        $full = $path ? Storage::disk('local')->path($path) : null;
+        $isXlsx = $full && preg_match('/\.xlsx$/i', $full);
+
         if ($paste !== '') {
             $lines = preg_split('/\r\n|\r|\n/', $paste);
             $delim = str_contains($lines[0] ?? '', "\t") ? "\t" : ',';
@@ -83,10 +89,32 @@ class VeevaCatalog extends Page implements HasForms
                 if (trim($ln) === '') continue;
                 $rows[] = str_getcsv($ln, $delim);
             }
+        } elseif ($isXlsx) {
+            if (! is_file($full)) { Notification::make()->danger()->title('File Not Found')->send(); return; }
+            $read = \App\Support\XlsxReader::read($full);
+            $rows = $read['rows'];
+            // Re-index hyperlinks from absolute row index to the row's position after the header is shifted.
+            // We shift by one (header row) below; capture raw here and remap after array_shift.
+            $rawLinks = $read['hyperlinks'];
+            if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
+            // Drop empty rows but keep a mapping so hyperlinks line up.
+            $this->headers = array_map('trim', $rows[0]);
+            $body = array_slice($rows, 1);
+            // Remap hyperlinks: rawLinks is keyed by absolute row index; body row b corresponds to abs index b+1.
+            $remapped = [];
+            foreach ($body as $b => $_) {
+                $abs = $b + 1;
+                if (isset($rawLinks[$abs])) $remapped[$b] = $rawLinks[$abs];
+            }
+            $this->rows = $body;
+            $this->hyperlinks = $remapped;
+            $this->guessColumns();
+            $this->preview = array_slice($this->rows, 0, 8);
+            $this->parsed = true;
+            $this->imported = false;
+            return;
         } else {
-            $path = $this->data['csv'] ?? null;
             if (! $path) { Notification::make()->danger()->title('Upload Or Paste First')->send(); return; }
-            $full = Storage::disk('local')->path($path);
             if (! is_file($full)) { Notification::make()->danger()->title('File Not Found')->send(); return; }
             $fh = fopen($full, 'r');
             while (($r = fgetcsv($fh)) !== false) {
@@ -100,7 +128,15 @@ class VeevaCatalog extends Page implements HasForms
 
         $this->headers = array_map('trim', array_shift($rows));
         $this->rows = $rows;
+        $this->guessColumns();
 
+        $this->preview = array_slice($this->rows, 0, 8);
+        $this->parsed = true;
+        $this->imported = false;
+    }
+
+    protected function guessColumns(): void
+    {
         $guess = function (array $names) {
             foreach ($this->headers as $i => $h) {
                 $hl = strtolower($h);
@@ -114,10 +150,6 @@ class VeevaCatalog extends Page implements HasForms
         $this->data['map_type']    = $guess(['type', 'doc type', 'subtype']);
         $this->data['map_status']  = $guess(['status', 'state', 'lifecycle']);
         $this->data['map_version'] = $guess(['version', 'rev']);
-
-        $this->preview = array_slice($this->rows, 0, 8);
-        $this->parsed = true;
-        $this->imported = false;
     }
 
     public function columnOptions(): array
@@ -139,10 +171,17 @@ class VeevaCatalog extends Page implements HasForms
         }
 
         $created = 0; $updated = 0;
-        foreach ($this->rows as $row) {
+        foreach ($this->rows as $ri => $row) {
             $number = $col($row, 'map_number');
             if (! $number) continue;
             $url = $col($row, 'map_url');
+            // If no link column value, use a hyperlink embedded in the link cell or the number cell
+            // (Veeva often hyperlinks the document number itself; CSV loses this, xlsx keeps it).
+            if (! $url) {
+                $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
+                $numCol = (int) $m['map_number'];
+                $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
+            }
             $docId = VeevaDocument::extractDocId($url);
 
             $existing = VeevaDocument::where('doc_number', $number)->first();
