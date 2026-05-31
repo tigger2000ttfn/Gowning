@@ -108,7 +108,12 @@
                                     <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}</td>
                                     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $d['description'] }}">{{ $d['description'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;">{{ $d['type'] ?: '—' }}</td>
+                                    <td style="white-space:nowrap;">
+                                        @if($d['routine'])<span class="gqs-pill gqs-pill-gray">Routine EM</span>
+                                        @else {{ $d['type'] ?: '—' }}@if($d['type_inferred'])<span class="gqs-pill gqs-pill-gold" style="margin-left:5px;" title="Type inferred from the worklist description">inferred</span>@endif
+                                        @endif
+                                        @if($d['date_review'])<span class="gqs-pill gqs-pill-gold" style="margin-left:5px;" title="A run was marked rescheduled but its date is missing - confirm on the next refresh">date?</span>@endif
+                                    </td>
                                     <td>
                                         @if(strcasecmp((string)$d['evaluation'],'pass')===0)<span class="gqs-pill gqs-pill-green">Pass</span>
                                         @elseif(strcasecmp((string)$d['evaluation'],'fail')===0)<span class="gqs-pill gqs-pill-red">Fail</span>

@@ -97,4 +97,99 @@ class LimsWorklist extends Model
     {
         return $this->isAuthorized() && $this->isFail();
     }
+
+    /** Routine EM monitoring (not a gowning qual) - skip from qual processing. */
+    public function isRoutineEm(): bool
+    {
+        return stripos((string) $this->em_area, 'routine em') !== false;
+    }
+
+    /**
+     * The effective qualification type. Uses QUALIFICATION TYPE when present; otherwise infers from the
+     * worklist description ("Initial" vs "Re-qual/Annual" vs "Additional"). Returns null for routine EM
+     * or when nothing can be inferred.
+     */
+    public function effectiveType(): ?string
+    {
+        if ($this->isRoutineEm()) return null;
+        $t = strtolower(trim((string) $this->qualification_type));
+        if ($t !== '') {
+            if (str_contains($t, 'initial')) return 'Initial Gowning Qualification';
+            if (str_contains($t, 'additional')) return 'Additional Requalification';
+            if (str_contains($t, 'annual') || str_contains($t, 'requal')) return 'Annual Requalification';
+            return $this->qualification_type;
+        }
+        // infer from the description
+        $d = strtolower(trim((string) $this->worklist_description));
+        if ($d === '') return null;
+        if (str_contains($d, 'additional')) return 'Additional Requalification';
+        if (str_contains($d, 're-qual') || str_contains($d, 'requal') || str_contains($d, 're qual') || str_contains($d, 'annual')) return 'Annual Requalification';
+        if (str_contains($d, 'initial') || str_contains($d, 'qual')) return 'Initial Gowning Qualification';
+        return null;
+    }
+
+    /** Whether the type was inferred from the description rather than the explicit column. */
+    public function typeWasInferred(): bool
+    {
+        return trim((string) $this->qualification_type) === '' && $this->effectiveType() !== null;
+    }
+
+    /** Defensive date parse: try ISO (Y-M-D), then D-M-Y, then M/D/Y. Returns a Carbon date or null. */
+    public static function parseLimsDate(?string $raw): ?\Illuminate\Support\Carbon
+    {
+        $raw = trim((string) $raw);
+        if ($raw === '') return null;
+        foreach (['Y-m-d', 'd-m-Y', 'd/m/Y', 'm/d/Y', 'n/j/Y', 'j-n-Y'] as $fmt) {
+            try {
+                $d = \Illuminate\Support\Carbon::createFromFormat($fmt, $raw);
+                if ($d !== false) return $d->startOfDay();
+            } catch (\Throwable $e) {}
+        }
+        try { return \Illuminate\Support\Carbon::parse($raw)->startOfDay(); } catch (\Throwable $e) { return null; }
+    }
+
+    protected function yes(?string $v): bool
+    {
+        return in_array(strtolower(trim((string) $v)), ['yes', 'y', 'true', '1'], true);
+    }
+
+    /**
+     * Derive the effective run dates from the date columns + reschedule flags, since analysts may copy
+     * the same date into all three and reschedules are the real signal.
+     *
+     * - Run 1 = Qual Date 1.
+     * - Run 2 = Qual Date 2 if RUN 2 RESCHEDULED and Date 2 present; if rescheduled but blank -> Date 1
+     *   (and flagged needs_review). Otherwise -> Date 1.
+     * - Run 3 = Qual Date 3 if RUN 3 RESCHEDULED and Date 3 present; if rescheduled but blank -> run 2's
+     *   date (and flagged needs_review). Otherwise -> run 2's date.
+     *
+     * @return array{run1: ?\Illuminate\Support\Carbon, run2: ?\Illuminate\Support\Carbon, run3: ?\Illuminate\Support\Carbon, needs_review: bool}
+     */
+    public function effectiveRunDates(): array
+    {
+        $d1 = self::parseLimsDate($this->qual_date_1);
+        $d2 = self::parseLimsDate($this->qual_date_2);
+        $d3 = self::parseLimsDate($this->qual_date_3);
+        $r2 = $this->yes($this->run2_rescheduled);
+        $r3 = $this->yes($this->run3_rescheduled);
+        $needsReview = false;
+
+        $run1 = $d1;
+
+        if ($r2) {
+            if ($d2) { $run2 = $d2; }
+            else { $run2 = $d1; $needsReview = true; } // rescheduled but missing the date (possibly mid-stream)
+        } else {
+            $run2 = $d1; // same day as run 1
+        }
+
+        if ($r3) {
+            if ($d3) { $run3 = $d3; }
+            else { $run3 = $run2; $needsReview = true; }
+        } else {
+            $run3 = $run2; // same day as run 2
+        }
+
+        return ['run1' => $run1, 'run2' => $run2, 'run3' => $run3, 'needs_review' => $needsReview];
+    }
 }
