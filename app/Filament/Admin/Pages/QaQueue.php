@@ -366,6 +366,7 @@ class QaQueue extends Page
     public string $wizNote = '';
     public string $wizReason = '';       // approval/reject reason (dropdown)
     public string $wizComment = '';      // free-text comment
+    public ?string $wizApprovalDate = null; // QA approval date - drives the next due date
 
     public function openSignoff(int $qid): void
     {
@@ -378,6 +379,7 @@ class QaQueue extends Page
         $this->wizNote = '';
         $this->wizReason = '';
         $this->wizComment = '';
+        $this->wizApprovalDate = now()->toDateString();
     }
     public function closeSignoff(): void { $this->wizQid = null; }
     public function openDetermination(int $qid): void { $this->openSignoff($qid); $this->wizStep = 'fail'; }
@@ -480,8 +482,12 @@ class QaQueue extends Page
         $q->workflow_stage = WorkflowStage::QaSignoff;
         $q->stage_changed_at = now();
         $q->status = 'qualified';
-        if (! $q->qualified_date) $q->qualified_date = now();
-        if (! $q->due_date) $q->due_date = now()->addMonths((int) Setting::get('cycle_months', 12));
+        // The QA approval date (entered in the wizard) is the qualification date and drives the NEXT due
+        // date = approval date + cycle length. Falls back to today if somehow unset.
+        $approval = $this->wizApprovalDate ? \Illuminate\Support\Carbon::parse($this->wizApprovalDate) : now();
+        $q->qualified_date = $approval->toDateString();
+        $q->due_date = $approval->copy()->addMonths((int) Setting::get('cycle_months', 12))->toDateString();
+        $q->requal_started_at = null; // reset the requal-kickoff marker for the new cycle
         $q->save();
         \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Qualified, ['personnel' => $q->personnel, 'qualification' => $q]);
         $this->wizQid = null;

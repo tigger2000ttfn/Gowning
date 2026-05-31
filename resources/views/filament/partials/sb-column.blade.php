@@ -36,7 +36,7 @@
                     @if(!empty($card['last_run_date']))
                         <div class="sb-line"><span class="sb-line-l">Last run</span> {{ $card['last_run_date'] }}@if($card['last_run_worklist']) · {{ $card['last_run_worklist'] }}@endif</div>
                     @endif
-                    @if($card['due'] ?? false)<div class="sb-line"><span class="sb-line-l">Next due</span> {{ $card['due'] }}</div>@endif
+                    @if($card['due'] ?? false)<div class="sb-line"><span class="sb-line-l">Due</span> {{ $card['due'] }}</div>@endif
                 </div>
                 @if($stage['key'] === 'class_complete' && empty($card['has_booking']) && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
                     <button type="button" wire:click="openBookRun({{ $card['id'] }})" @click.stop class="sb-book-run">Book Run</button>

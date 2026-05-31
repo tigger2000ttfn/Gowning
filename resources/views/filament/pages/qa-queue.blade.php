@@ -282,6 +282,13 @@
                     @elseif($wizStep === 'pass')
                         <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Approve this qualification as complete for <strong>{{ $wz['name'] }}</strong>.</div>
                         @if(! $wz['veeva'])<div style="font-size:12px;color:#C8102E;font-weight:600;">No Veeva report number is recorded for this run. The report should be linked before sign-off.</div>@endif
+                        <div><label class="gqs-flbl">QA Approval Date <span style="color:#C8102E;">*</span></label>
+                            <input type="date" wire:model.live="wizApprovalDate" class="gqs-fld">
+                            <div style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">
+                                @php $cm = (int) \App\Models\Setting::get('cycle_months', 12); @endphp
+                                Next qualification due: <strong>{{ $wizApprovalDate ? \Illuminate\Support\Carbon::parse($wizApprovalDate)->addMonths($cm)->format('d-M-Y') : '—' }}</strong> (approval date + {{ $cm }} months).
+                            </div>
+                        </div>
                         <div><label class="gqs-flbl">Reason (Optional)</label>
                             <select wire:model="wizReason" class="gqs-fld">
                                 <option value="">No reason needed</option>
