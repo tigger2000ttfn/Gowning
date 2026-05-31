@@ -66,6 +66,7 @@
 
         @php $days = $this->scheduleDays(); @endphp
         <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-calendar-days"/> Run Days</div>
             <div class="gqs-panel-body" style="padding:0;">
                 @if($days->isEmpty())
                     <div class="gqs-empty" style="padding:28px;">No upcoming run days. Add one to start scheduling.</div>
@@ -198,12 +199,19 @@
     @elseif($tab === 'reservations')
         {{-- RESERVATIONS TAB --}}
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
-            <select wire:model.live="resStatusFilter" class="gqs-fld" style="max-width:200px;">
-                <option value="">All Statuses</option>
-                <option value="requested">Requested</option>
-                <option value="approved">Scheduled</option>
-                <option value="completed">Completed</option>
-            </select>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                <select wire:model.live="resStatusFilter" class="gqs-fld" style="max-width:200px;">
+                    <option value="">All Active Statuses</option>
+                    <option value="requested">Requested</option>
+                    <option value="approved">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="rescheduled">Rescheduled</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);cursor:pointer;">
+                    <input type="checkbox" wire:model.live="showCancelled"> Show Cancelled / Rescheduled
+                </label>
+            </div>
             <button type="button" wire:click="$set('showAddRes', true)"
                     style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;">
                 <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Book A Person
@@ -428,12 +436,12 @@
                                             <button type="button" wire:click="setIntent({{ $res->id }}, 'rescheduled')"
                                                     class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
                                             @if($required > 1)
-                                                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);margin-left:8px;{{ $intent === 'present' ? '' : 'opacity:.45;' }}"
-                                                       title="Check if the operator performed all remaining runs today (one sample and incubation each)">
+                                                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-left:8px;{{ $intent === 'present' ? '' : 'opacity:.45;' }}"
+                                                       title="On by default - the operator performed all remaining runs in this visit. Uncheck to record just one run today and keep the rest scheduled.">
                                                     <input type="checkbox" wire:model="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
-                                                    Attended all {{ $required }} runs today
+                                                    Did All {{ $required }} Runs (default)
                                                 </label>
-                                                <div class="att-hint" style="flex-basis:100%;margin-left:8px;font-size:11.5px;">Checked records all {{ $required }} runs today. Unchecked records one run; the other {{ $required - 1 }} stay scheduled for their own days.</div>
+                                                <div class="att-hint" style="flex-basis:100%;margin-left:8px;font-size:11.5px;">Default records all {{ $required }} runs from this visit. Uncheck to record just one run; the other {{ $required - 1 }} stay scheduled for their own days (use Reschedule on those rows to move them to another day or a special session).</div>
                                             @endif
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>

@@ -53,8 +53,16 @@ class RunDayRoster extends Page
         // Tap the active status again to clear it.
         if (($this->intent[$reservationId] ?? null) === $status) {
             unset($this->intent[$reservationId]);
+            unset($this->performAll[$reservationId]);
         } else {
             $this->intent[$reservationId] = $status;
+            // Attending ALL remaining runs in one visit is the norm, so default it on when marking Present.
+            // Uncheck it to record just one run and keep the others scheduled for their own days.
+            if ($status === 'present') {
+                $this->performAll[$reservationId] = true;
+            } else {
+                unset($this->performAll[$reservationId]);
+            }
         }
     }
 
@@ -419,6 +427,7 @@ class RunDayRoster extends Page
     public ?int $addResSlotId = null;
     public ?int $addResPersonnelId = null;
     public string $resStatusFilter = '';
+    public bool $showCancelled = false;
 
     public function openSlotsForBooking(): array
     {
@@ -444,6 +453,9 @@ class RunDayRoster extends Page
         return Reservation::with(['personnel', 'runSlot'])
             ->whereHas('runSlot')
             ->when($this->resStatusFilter !== '', fn ($q) => $q->where('status', $this->resStatusFilter))
+            // Cancelled/rejected (and, unless asked, rescheduled) bookings are hidden by default - the toggle
+            // brings them back when you want the full history.
+            ->when(! $this->showCancelled && $this->resStatusFilter === '', fn ($q) => $q->whereNotIn('status', ['cancelled', 'rejected', 'rescheduled']))
             ->get()
             ->sortBy(fn ($r) => $r->runSlot?->slot_date)
             ->groupBy(fn ($r) => $r->runSlot?->slot_date?->format('Y-m-d') ?? 'unscheduled')
