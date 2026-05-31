@@ -241,6 +241,11 @@ class RunDayRoster extends Page
     {
         $this->date = now()->toDateString();
 
+        // Pre-fill the new-run-day form with the configured defaults (user can still change them).
+        $this->newCleanroom = $this->newCleanroom ?: (\App\Models\Setting::get('default_run_cleanroom', '') ?: null);
+        $defAnalyst = \App\Models\Setting::get('default_run_analyst_id');
+        if (! $this->newAnalystId && $defAnalyst) { $this->newAnalystId = (int) $defAnalyst; }
+
         // Deep-link from a record: ?person=<personnelId> opens the attendance roster on that person's
         // scheduled run day; ?tab + ?date allow direct landings too.
         $tab = request()->query('tab');

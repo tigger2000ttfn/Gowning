@@ -120,6 +120,7 @@ class MyQualification extends Page
     public function canBookClass(): bool
     {
         if (! $this->person) return false;
+        if (! (bool) \App\Models\Setting::get('allow_self_book_class', true)) return false;
         if ((bool) $this->person->qualification?->class_on_file) return false; // already has class on file
         $hasActive = \App\Models\ClassEnrollment::where('personnel_id', $this->person->id)
             ->whereIn('status', \App\Models\ClassEnrollment::ACTIVE_STATUSES)->exists();

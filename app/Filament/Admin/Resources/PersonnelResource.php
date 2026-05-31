@@ -60,13 +60,11 @@ class PersonnelResource extends Resource
                         TextInput::make('last_name')->label('Last Name')->required(),
                         TextInput::make('email')->label('Email Address')->email(),
                         TextInput::make('phone')->label('Phone')->tel(),
-                        TextInput::make('lims_username')->label('LIMS Username')
-                            ->helperText('Used To Match This Person On A LIMS Upload.'),
+                        TextInput::make('lims_username')->label('LIMS Username'),
                         TextInput::make('badge_id')->label('Badge ID'),
                         DatePicker::make('hire_date')->native(false)->displayFormat('d-M-Y')->label('Hire Date'),
                     ]),
                 Step::make('Assignment')->icon('heroicon-o-link')
-                    ->description('Department, role, shift')
                     ->columns(2)
                     ->schema([
                         Select::make('department')->label('Department')
@@ -81,8 +79,7 @@ class PersonnelResource extends Resource
                         TextInput::make('supervisor'),
                         Select::make('user_id')->label('Linked System User')
                             ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all())
-                            ->searchable()->preload()->placeholder('Not linked')
-                            ->helperText('Link this person to their login account. Their identity and any class signups they made under that account are tied to this record automatically.'),
+                            ->searchable()->preload()->placeholder('Not linked'),
                         Textarea::make('notes')->rows(2)->columnSpanFull(),
                     ]),
                 Step::make('Onboarding')->icon('heroicon-o-rocket-launch')
@@ -90,7 +87,6 @@ class PersonnelResource extends Resource
                     ->visibleOn('create')
                     ->schema([
                         Section::make('Gowning Qualification Target')
-                            ->description('Pick whether this is a brand-new initial qualification or a transfer who is already qualified, then set the due date. This kicks the person into the workflow.')
                             ->columns(2)
                             ->schema([
                                 Select::make('onboard_type')->label('Qualification Type')
@@ -106,7 +102,6 @@ class PersonnelResource extends Resource
                                         : 'The date their initial gowning qualification needs to be done by.')
                                     ->columnSpanFull(),
                                 Toggle::make('onboard_class_done')->label('Already Took The Gowning Class')
-                                    ->helperText('Transfers only. If on, enter the class completion date and they skip the class step (it is recorded to their class completion history).')
                                     ->visible(fn ($get) => $get('onboard_type') === 'annual')
                                     ->live()->columnSpanFull(),
                                 DatePicker::make('onboard_class_date')->native(false)->displayFormat('d-M-Y')->label('Class Completion Date')
@@ -120,7 +115,6 @@ class PersonnelResource extends Resource
                     ->description('Record the classroom approval, then build the run history. The next due date is driven off the QA approval date.')
                     ->schema([
                         Section::make('Classroom History')
-                            ->description('Gowning classroom training. This is the prerequisite for runs.')
                             ->columns(2)
                             ->relationship('qualification')
                             ->disabled(function ($record) {

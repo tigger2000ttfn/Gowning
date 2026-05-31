@@ -61,6 +61,10 @@ class Settings extends Page implements HasForms
             'lapsed_runs_required'  => (int) Setting::get('lapsed_runs_required', 3),
             'allow_self_reschedule' => (bool) Setting::get('allow_self_reschedule', true),
             'allow_self_request_run' => (bool) Setting::get('allow_self_request_run', true),
+            'allow_self_book_class' => (bool) Setting::get('allow_self_book_class', true),
+            'default_run_cleanroom' => Setting::get('default_run_cleanroom', ''),
+            'default_run_analyst_id' => Setting::get('default_run_analyst_id'),
+            'incubation_overdue_days' => (int) Setting::get('incubation_overdue_days', 1),
             'sampling_sites'        => Setting::get('sampling_sites', 'Fingertips, Chest, Forearms'),
             'require_qa_signoff'    => (bool) Setting::get('require_qa_signoff', true),
             'esig_required'         => (bool) Setting::get('esig_required', true),
@@ -134,6 +138,9 @@ class Settings extends Page implements HasForms
                         ->helperText('Days plates incubate before results are released.'),
                     TextInput::make('sampling_sites')->label('Sampling Sites')
                         ->helperText('Comma-separated body sites sampled per run.'),
+                    TextInput::make('incubation_overdue_days')->label('Incubation Overdue Alert (Days Past Due)')
+                        ->numeric()->minValue(0)
+                        ->helperText('Flag a plate as overdue this many days after its incubation due-out. Default 1.'),
                 ]),
                 Section::make('Auto-Scheduling')->icon('heroicon-o-calendar-days')->columns(2)->schema([
                     Toggle::make('auto_schedule')->label('Auto-schedule Qualification Runs')
@@ -151,6 +158,13 @@ class Settings extends Page implements HasForms
                         ->helperText('Let Operators Move Their Own Run From My Qualification.'),
                     Toggle::make('allow_self_request_run')->label('Allow Operator Self-Request Run')
                         ->helperText('Let Operators Book Their Own Run From My Qualification (After The Class Is On File).'),
+                    Toggle::make('allow_self_book_class')->label('Allow Operator Self-Book Class')->default(true)
+                        ->helperText('Let Operators Sign Up For An Open Gowning Class From My Qualification.'),
+                    TextInput::make('default_run_cleanroom')->label('Default Cleanroom For New Run Days')
+                        ->placeholder('e.g. CR-1'),
+                    \Filament\Forms\Components\Select::make('default_run_analyst_id')->label('Default Analyst For New Run Days')
+                        ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all())
+                        ->searchable()->placeholder('None'),
                 ]),
 ]),
                 Tab::make('Quality')->icon('heroicon-o-shield-check')->schema([
