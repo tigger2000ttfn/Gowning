@@ -35,6 +35,75 @@ class ListQualifications extends ListRecords
     public function setTab(string $t): void { $this->tab = in_array($t, ['roster', 'dashboard'], true) ? $t : 'roster'; }
     public function isSuperUser(): bool { return (bool) Auth::user()?->hasCapability(Capability::ManageUsers); }
 
+    // ===================== ROW DETAIL MODAL (info before drilling into the record) =====================
+    public ?array $rowDetail = null;
+    public function closeRowDetail(): void { $this->rowDetail = null; }
+
+    public function openRow(int $qid): void
+    {
+        $q = Qualification::with(['personnel'])->find($qid);
+        if (! $q) { $this->rowDetail = null; return; }
+
+        $runs = $q->runs()->orderByDesc('run_date')->orderByDesc('id')->limit(6)->get()
+            ->map(fn ($r) => [
+                'date' => $r->run_date?->gmp(),
+                'result' => ucfirst((string) ($r->result instanceof \BackedEnum ? $r->result->value : $r->result)),
+                'worklist' => $r->lims_worklist_id,
+                'inc_status' => $r->lims_inc_status,
+                'evaluation' => $r->lims_evaluation,
+                'nc' => $r->lims_nc_number,
+                'nc_url' => $r->lims_nc_url,
+            ])->all();
+
+        [$pillTxt, $pillColor] = $this->statusPill($q);
+        $stageVal = $q->workflow_stage?->value;
+
+        // Cross-link: send the user to where this record is worked next.
+        $reviewUrl = match ($stageVal) {
+            'awaiting_results', 'results_released' => \App\Filament\Admin\Pages\IncubationBoard::getUrl(),
+            'qa_review', 'qa_signoff', 'failed' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
+            'class_pending', 'class_complete' => \App\Filament\Admin\Pages\ClassScheduler::getUrl(),
+            'run_scheduled', 'run_performed', 'incubating' => \App\Filament\Admin\Pages\RunDayRoster::getUrl(),
+            default => null,
+        };
+        $reviewLabel = match ($stageVal) {
+            'awaiting_results', 'results_released' => 'Open In Lab Review',
+            'qa_review', 'qa_signoff', 'failed' => 'Open In QA Review',
+            'class_pending', 'class_complete' => 'Open In Class Scheduler',
+            'run_scheduled', 'run_performed', 'incubating' => 'Open In Run Scheduler',
+            default => null,
+        };
+
+        $latestRun = $q->runs()->whereNotNull('lims_worklist_id')->latest('id')->first();
+
+        $this->rowDetail = [
+            'id' => $q->id,
+            'name' => $q->personnel?->full_name ?? 'Unknown',
+            'employee_id' => $q->personnel?->employee_id,
+            'department' => $q->personnel?->department,
+            'job_title' => $q->personnel?->job_title,
+            'type' => $q->sessionLabel(),
+            'stage_label' => $q->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $stageVal, $q->workflow_stage->label()) : '-',
+            'stage_color' => $q->workflow_stage?->color() ?? '#6B6B73',
+            'status_pill' => $pillTxt,
+            'status_color' => $pillColor,
+            'passes' => (int) $q->runs_completed,
+            'required' => (int) $q->runs_required,
+            'due' => $q->due_date?->gmp(),
+            'past_due' => $q->isPastDue(),
+            'qualified_date' => $q->qualified_date?->gmp(),
+            'class_on_file' => (bool) $q->class_on_file,
+            'class_on_file_date' => $q->class_on_file_date?->gmp(),
+            'worklist' => $latestRun?->lims_worklist_id ?? $q->lims_worklist_id,
+            'needs_worklist' => in_array($stageVal, ['run_performed', 'incubating', 'awaiting_results'], true) && ! ($latestRun?->lims_worklist_id ?? $q->lims_worklist_id),
+            'qa_owner' => $q->qaOwner?->name,
+            'runs' => $runs,
+            'review_url' => $reviewUrl,
+            'review_label' => $reviewLabel,
+            'record_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
+        ];
+    }
+
     // ===================== ROSTER DATA =====================
 
     protected function activeQuery()

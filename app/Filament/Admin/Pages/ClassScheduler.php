@@ -25,7 +25,7 @@ class ClassScheduler extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationLabel = 'Class Scheduler';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
     protected static ?string $title = 'Class Scheduler';
     public function getHeading(): string { return ''; }
 

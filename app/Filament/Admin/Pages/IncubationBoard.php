@@ -188,6 +188,7 @@ class IncubationBoard extends Page
             ->latest('qcm_signed_at')->latest('id')->limit(60)->get()
             ->map(fn ($r) => (object) [
                 'id' => $r->id,
+                'qualification_id' => $r->qualification_id,
                 'name' => $r->personnel?->full_name ?? 'Unknown',
                 'employee_id' => $r->personnel?->employee_id,
                 'worklist' => $r->lims_worklist_id,
