@@ -70,7 +70,7 @@
                 <div class="tl-names">
                     <div class="tl-names-head">Person</div>
                     @foreach($rows as $r)
-                        <div class="tl-name-row" wire:click="showDetail({{ $r['id'] }})">
+                        <div class="tl-name-row" wire:click="$dispatch('open-qual-modal', { id: {{ $r['id'] }} })">
                             <div class="tl-name">{{ $r['name'] }}</div>
                             <div class="tl-sub">{{ $r['employee_id'] }} · {{ $r['stage'] }}</div>
                         </div>
@@ -91,7 +91,7 @@
                         @endif
                         @foreach($rows as $r)
                             @php $l = $pct($r['start']); $w = max(1.5, $pct($r['end']) - $l); @endphp
-                            <div class="tl-row" wire:click="showDetail({{ $r['id'] }})">
+                            <div class="tl-row" wire:click="$dispatch('open-qual-modal', { id: {{ $r['id'] }} })">
                                 <div class="tl-bar tl-{{ $r['class'] }}" style="left:{{ $l }}%;width:{{ $w }}%;" title="{{ $r['name'] }} · due {{ $r['due'] }}">
                                     <div class="tl-bar-fill" style="width:{{ $r['progress'] }}%;"></div>
                                     <span class="tl-bar-lbl">{{ $r['runs'] }}@if($r['due']) · due {{ $r['due'] }}@endif</span>
@@ -105,32 +105,6 @@
     </div>
 
     {{-- Detail modal --}}
-    @php $d = $this->detail(); @endphp
-    @if($d)
-        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="closeDetail">
-            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:420px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-weight:800;font-size:17px;">{{ $d['name'] }}</div>
-                        <div style="font-size:12px;opacity:.8;">{{ $d['employee_id'] }}@if($d['department']) · {{ $d['department'] }}@endif</div>
-                    </div>
-                    <button wire:click="closeDetail" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.7;">&times;</button>
-                </div>
-                <div style="padding:18px 20px;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;font-size:13px;">
-                        <div><div class="dm-l">Stage</div><div class="dm-v">{{ $d['stage'] }}</div></div>
-                        <div><div class="dm-l">Status</div><div class="dm-v">{{ $d['status'] }}</div></div>
-                        <div><div class="dm-l">Runs</div><div class="dm-v">{{ $d['runs'] }}</div></div>
-                        <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $d['due'] ?? '—' }}</div></div>
-                    </div>
-                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                        <button wire:click="closeDetail" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Close</button>
-                        @if($d['edit_url'])<a href="{{ $d['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Open Record</a>@endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 
     <div wire:ignore>
         <script>
