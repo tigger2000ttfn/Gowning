@@ -11,7 +11,8 @@ class NcDocument extends Model
 
     protected $fillable = [
         'nc_number', 'record_id', 'url', 'workflow_status', 'created_date', 'date_closed',
-        'qa_approver', 'department', 'reference_numbers', 'site', 'sub_group', 'catalog_synced_at',
+        'qa_approver', 'department', 'reference_numbers', 'site', 'sub_group',
+        'description', 'short_description', 'catalog_synced_at',
     ];
 
     protected function casts(): array

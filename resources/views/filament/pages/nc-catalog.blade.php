@@ -103,12 +103,13 @@
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="gqs-tbl">
-                        <thead><tr><th>NC Number</th><th>Status</th><th>Created</th><th>Closed</th><th>QA Approver</th><th>Link</th><th>Synced</th></tr></thead>
+                        <thead><tr><th>NC Number</th><th>Status</th><th>Short Description</th><th>Created</th><th>Closed</th><th>QA Approver</th><th>Link</th><th>Synced</th></tr></thead>
                         <tbody>
                             @forelse ($this->catalogRows() as $d)
                                 <tr>
                                     <td style="font-weight:700;">{{ $d['nc_number'] }}</td>
                                     <td>@if($d['closed'])<span class="gqs-pill gqs-pill-gray">{{ $d['status'] ?: 'Closed' }}</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['status'] ?: 'Open' }}</span>@endif</td>
+                                    <td style="max-width:280px;">{{ \Illuminate\Support\Str::limit($d['short_description'] ?? '', 80) ?: '—' }}</td>
                                     <td>{{ $d['created'] ?: '—' }}</td>
                                     <td>{{ $d['date_closed'] ?: '—' }}</td>
                                     <td>{{ $d['approver'] ?: '—' }}</td>
@@ -116,7 +117,7 @@
                                     <td>{{ $d['synced'] ?: '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No NCs in the catalog yet. Load a TrackWise export on the Upload tab.</td></tr>
+                                <tr><td colspan="8" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No NCs in the catalog yet. Load a TrackWise export on the Upload tab.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

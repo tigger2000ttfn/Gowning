@@ -186,6 +186,15 @@ class NcCatalog extends Page implements HasForms
         $this->data['map_refs']      = $guess(['reference number', 'reference']);
         $this->data['map_site']      = $guess(['site']);
         $this->data['map_subgroup']  = $guess(['sub-group', 'subgroup', 'sub group']);
+        $this->data['map_shortdesc'] = $guess(['short description', 'short desc']);
+        // "description" also matches "short description"; pick the header that is description but NOT short.
+        $this->data['map_desc'] = (function () {
+            foreach ($this->headers as $i => $h) {
+                $hl = strtolower($h);
+                if (str_contains($hl, 'description') && ! str_contains($hl, 'short')) return (string) $i;
+            }
+            return null;
+        })();
     }
 
     public function columnOptions(): array
@@ -240,6 +249,8 @@ class NcCatalog extends Page implements HasForms
                     'reference_numbers' => $col($row, 'map_refs') ?: ($existing->reference_numbers ?? null),
                     'site' => $col($row, 'map_site') ?: ($existing->site ?? null),
                     'sub_group' => $col($row, 'map_subgroup') ?: ($existing->sub_group ?? null),
+                    'description' => $col($row, 'map_desc') ?: ($existing->description ?? null),
+                    'short_description' => $col($row, 'map_shortdesc') ?: ($existing->short_description ?? null),
                     'catalog_synced_at' => now(),
                 ];
                 if ($existing) { $existing->update($payload); $updated++; }
@@ -310,7 +321,7 @@ class NcCatalog extends Page implements HasForms
         $q = NcDocument::query()->latest('catalog_synced_at');
         if (trim($this->search) !== '') {
             $s = '%' . trim($this->search) . '%';
-            $q->where(fn ($w) => $w->where('nc_number', 'ilike', $s)->orWhere('workflow_status', 'ilike', $s)->orWhere('qa_approver', 'ilike', $s));
+            $q->where(fn ($w) => $w->where('nc_number', 'ilike', $s)->orWhere('workflow_status', 'ilike', $s)->orWhere('qa_approver', 'ilike', $s)->orWhere('short_description', 'ilike', $s));
         }
         return $q->limit(50)->get()->map(fn ($d) => [
             'nc_number' => $d->nc_number,
@@ -319,6 +330,7 @@ class NcCatalog extends Page implements HasForms
             'created' => $d->created_date?->format('d-M-Y'),
             'date_closed' => $d->date_closed?->format('d-M-Y'),
             'approver' => $d->qa_approver,
+            'short_description' => $d->short_description,
             'url' => $d->url,
             'synced' => $d->catalog_synced_at?->gmpDt(),
         ])->all();
