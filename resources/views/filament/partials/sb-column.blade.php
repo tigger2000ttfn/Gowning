@@ -14,17 +14,11 @@
                 </label>
                 @endif
                 <div class="sb-card-body" wire:click="$dispatch('open-qual-modal', { id: {{ $card['id'] }} })" style="cursor:pointer;">
-                    <div class="sb-name-row">
-                        <span class="sb-name">{{ $card['name'] }}</span>
-                        @if(!empty($card['employee_id']))<span class="sb-emp">{{ $card['employee_id'] }}</span>@endif
-                    </div>
-                    <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;">
-                        @if(!empty($card['flag']))
-                            <span class="sb-pill sb-pill-{{ $card['flag_key'] }}">{{ $card['flag'] }}</span>
-                        @endif
-                        @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
-                        @if(!empty($card['department']))<span class="sb-tag">{{ $card['department'] }}</span>@endif
-                    </div>
+                    <div class="sb-name">{{ $card['name'] }}</div>
+                    @if(!empty($card['employee_id']))<div class="sb-emp">{{ $card['employee_id'] }}</div>@endif
+                    @if(!empty($card['flag']))
+                        <div style="margin-top:5px;"><span class="sb-pill sb-pill-{{ $card['flag_key'] }}">{{ $card['flag'] }}</span></div>
+                    @endif
                     @if(!empty($card['nc']))
                         <div class="sb-line"><span class="sb-line-l">NC</span> @if(!empty($card['nc_url']))<a href="{{ $card['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $card['nc'] }} ↗</a>@else {{ $card['nc'] }} @endif@if(!empty($card['nc_status'])) · {{ $card['nc_status'] }}@endif</div>
                     @endif
@@ -36,12 +30,8 @@
                             <span class="sb-runs-lbl">{{ $card['runs_done'] }}/{{ $card['runs_req'] }} runs</span>
                         </div>
                     @endif
-                    <div class="sb-foot">
-                        @if(!empty($card['last_run_date']))<span class="sb-foot-i" title="Last run">Last: {{ $card['last_run_date'] }}</span>@endif
-                        @if(!empty($card['last_run_worklist']))<span class="sb-foot-i sb-wl" title="Worklist {{ $card['last_run_worklist'] }}">{{ $card['last_run_worklist'] }}</span>@endif
-                    </div>
-                    @if($card['due'] ?? false)
-                        <div class="sb-line"><span class="sb-line-l">Due Date</span> {{ $card['due'] }}@if(!empty($card['due_tag'])) <span class="sb-tag {{ $card['due_tag'] === 'Lapsed' ? 'sb-tag-red' : '' }}">{{ $card['due_tag'] }}</span>@endif</div>
+                    @if(!empty($card['last_run_worklist']))
+                        <div class="sb-line"><span class="sb-line-l">Worklist</span> {{ $card['last_run_worklist'] }}</div>
                     @endif
                 </div>
                 @if($stage['key'] === 'class_complete' && empty($card['has_booking']) && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
