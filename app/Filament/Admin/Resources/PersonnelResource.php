@@ -81,7 +81,38 @@ class PersonnelResource extends Resource
                         TextInput::make('supervisor'),
                         Textarea::make('notes')->rows(2)->columnSpanFull(),
                     ]),
+                Step::make('Onboarding')->icon('heroicon-o-rocket-launch')
+                    ->description('Set the qualification target so this person enters the workflow.')
+                    ->visibleOn('create')
+                    ->schema([
+                        Section::make('Gowning Qualification Target')
+                            ->description('Pick whether this is a brand-new initial qualification or a transfer who is already qualified, then set the due date. This kicks the person into the workflow.')
+                            ->columns(2)
+                            ->schema([
+                                Select::make('onboard_type')->label('Qualification Type')
+                                    ->options(['initial' => 'Initial Gowning Qualification (3 runs)', 'annual' => 'Requalification Transfer (already qualified)'])
+                                    ->default('initial')->required()->live()
+                                    ->helperText('Initial = starts at the class. Transfer = already qualified elsewhere, tracked toward their next requal.')
+                                    ->columnSpanFull(),
+                                DatePicker::make('onboard_due_date')->native(false)->displayFormat('d-M-Y')
+                                    ->label(fn ($get) => $get('onboard_type') === 'annual' ? 'Next Requalification Due Date' : 'Initial Qualification Must Be Completed By')
+                                    ->required()
+                                    ->helperText(fn ($get) => $get('onboard_type') === 'annual'
+                                        ? 'When their next requal is due.'
+                                        : 'The date their initial gowning qualification needs to be done by.')
+                                    ->columnSpanFull(),
+                                Toggle::make('onboard_class_done')->label('Already Took The Gowning Class')
+                                    ->helperText('Transfers only. If on, enter the class completion date and they skip the class step (it is recorded to their class completion history).')
+                                    ->visible(fn ($get) => $get('onboard_type') === 'annual')
+                                    ->live()->columnSpanFull(),
+                                DatePicker::make('onboard_class_date')->native(false)->displayFormat('d-M-Y')->label('Class Completion Date')
+                                    ->visible(fn ($get) => $get('onboard_type') === 'annual' && $get('onboard_class_done'))
+                                    ->required(fn ($get) => $get('onboard_type') === 'annual' && $get('onboard_class_done'))
+                                    ->columnSpanFull(),
+                            ]),
+                    ]),
                 Step::make('Qualification Setup')->icon('heroicon-o-shield-check')
+                    ->visibleOn('edit')
                     ->description('Record the classroom approval, then build the run history. The next due date is driven off the QA approval date.')
                     ->schema([
                         Section::make('Classroom History')
