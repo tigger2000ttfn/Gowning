@@ -43,6 +43,16 @@
         .stars i.g{background:#E8C24A;box-shadow:0 0 7px 1px rgba(232,194,74,.7);}
         .stars i.p{background:#B98CE0;box-shadow:0 0 7px 1px rgba(185,140,224,.7);}
         @keyframes tw{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.3)}}
+
+        /* Shooting stars (sprinkled by JS into .hero / .pagehead) */
+        .shooting-star{position:absolute;z-index:1;height:2px;border-radius:2px;opacity:0;pointer-events:none;
+            background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform-origin:center;
+            filter:drop-shadow(0 0 6px rgba(255,255,255,.65));}
+        .shooting-star::after{content:'';position:absolute;right:0;top:-1.5px;width:5px;height:5px;border-radius:50%;
+            background:#fff;box-shadow:0 0 9px 2px rgba(255,255,255,.9);}
+        @keyframes shoot{0%{opacity:0;transform:translate(0,0) rotate(var(--ang,22deg));}
+            12%{opacity:1;}100%{opacity:0;transform:translate(var(--dx,320px),var(--dy,130px)) rotate(var(--ang,22deg));}}
+        @media(prefers-reduced-motion:reduce){.shooting-star{display:none;}}
         .hero-inner{position:relative;z-index:1;max-width:760px;margin:0 auto;}
         .hero-star{width:64px;height:64px;margin-bottom:14px;filter:drop-shadow(0 6px 20px rgba(200,16,46,.5));animation:spin 40s linear infinite;}
         @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
@@ -185,5 +195,43 @@
     <div class="foot">
         &copy; {{ date('Y') }} Astellas &middot; MATC Gowning Qualification
     </div>
+    <script>
+    (function(){
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var heroes = Array.prototype.slice.call(document.querySelectorAll('.hero, .pagehead'));
+        if (!heroes.length) return;
+        heroes.forEach(function(h){
+            if (getComputedStyle(h).position === 'static') h.style.position = 'relative';
+            h.style.overflow = 'hidden';
+        });
+        var colors = ['#ffffff','#ffffff','#ffffff','#E8C24A','#B98CE0'];
+        function spawn(){
+            var h = heroes[Math.floor(Math.random()*heroes.length)];
+            var r = h.getBoundingClientRect();
+            if (r.width < 60 || r.height < 30){ schedule(); return; }
+            var s = document.createElement('span');
+            s.className = 'shooting-star';
+            var ang = 14 + Math.random()*26;                 // 14-40deg, downward
+            var rad = ang*Math.PI/180;
+            var dist = 200 + Math.random()*280;
+            var len = 80 + Math.random()*100;
+            var dur = 650 + Math.random()*750;               // 0.65-1.4s
+            var col = colors[Math.floor(Math.random()*colors.length)];
+            s.style.left = (Math.random()*r.width*0.6) + 'px';
+            s.style.top = (Math.random()*r.height*0.45) + 'px';
+            s.style.width = len + 'px';
+            s.style.background = 'linear-gradient(90deg,rgba(255,255,255,0),' + col + ')';
+            s.style.setProperty('--ang', ang + 'deg');
+            s.style.setProperty('--dx', (Math.cos(rad)*dist) + 'px');
+            s.style.setProperty('--dy', (Math.sin(rad)*dist) + 'px');
+            s.style.animation = 'shoot ' + dur + 'ms ease-out forwards';
+            h.appendChild(s);
+            setTimeout(function(){ s.remove(); }, dur + 120);
+            schedule();
+        }
+        function schedule(){ setTimeout(spawn, 2500 + Math.random()*5500); }
+        schedule();
+    })();
+    </script>
 </body>
 </html>
