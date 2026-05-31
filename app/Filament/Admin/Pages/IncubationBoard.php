@@ -210,7 +210,11 @@ class IncubationBoard extends Page
 
     // ---- Custom Enter-Results modal (reliable in a table loop; worklist editable here) ----
     public ?int $erQid = null;
-    public array $er = ['worklist' => '', 'lms_number' => '', 'overall' => '', 'trackwise_id' => '', 'nc_note' => ''];
+    public array $er = ['worklist' => '', 'lms_number' => '', 'overall' => '', 'trackwise_id' => '', 'nc_note' => '', 'veeva' => ''];
+
+    // Whether LIMS has already returned a result for the linked worklist (so manual pass/fail is optional).
+    public bool $erHasLimsResult = false;
+    public ?string $erLimsResult = null;   // 'pass' | 'fail' inferred from LIMS, when present
 
     public function openEnterResults(int $qid): void
     {
@@ -218,12 +222,29 @@ class IncubationBoard extends Page
         $q = Qualification::find($qid);
         $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first() : null;
         $this->erQid = $qid;
+
+        // Self-aware: did LIMS return a result on this worklist? If so we show it and the QCM just signs off;
+        // if not, the QCM enters the pass/fail manually. We look at the synced LIMS fields + the worklist row.
+        $this->erHasLimsResult = false;
+        $this->erLimsResult = null;
+        $wl = $run?->lims_worklist_id ? \App\Models\LimsWorklist::findByWorklist($run->lims_worklist_id) : null;
+        if ($run && (($run->result instanceof \BackedEnum ? $run->result->value : $run->result) !== null)) {
+            // The run already carries a result (from a prior LIMS sync / QCM-ready release).
+            $this->erHasLimsResult = true;
+            $this->erLimsResult = ($run->result instanceof \BackedEnum ? $run->result->value : $run->result);
+        } elseif ($wl && ($wl->worklist_all_final || $wl->isQcmReady())) {
+            // LIMS marked the worklist final/QCM-ready: treat as a result present (pass unless an excursion).
+            $this->erHasLimsResult = true;
+            $this->erLimsResult = $wl->isQcmReady() ? 'pass' : null;
+        }
+
         $this->er = [
-            'worklist' => $run?->lims_worklist_id ?? '',
+            'worklist' => $run?->lims_worklist_id ? preg_replace('/^EM-/i', '', (string) $run->lims_worklist_id) : '',
             'lms_number' => $q?->lms_number ?? '',
-            'overall' => '',
-            'trackwise_id' => '',
+            'overall' => $this->erHasLimsResult && $this->erLimsResult ? $this->erLimsResult : '',
+            'trackwise_id' => $run?->lims_nc_number ? preg_replace('/^NC-/i', '', (string) $run->lims_nc_number) : '',
             'nc_note' => '',
+            'veeva' => $run?->veeva_doc_number ? preg_replace('/^RPT-AST-/i', '', (string) $run->veeva_doc_number) : '',
         ];
     }
     public function closeEnterResults(): void { $this->erQid = null; }
@@ -301,6 +322,16 @@ class IncubationBoard extends Page
             $run->results_released_at = now();
             $run->recorded_by = $run->recorded_by ?: Auth::id();
             $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
+            // Veeva report number (RPT-AST- added; input collects numbers only). The model saving-hook
+            // auto-fills veeva_url from the catalog.
+            $vv = trim((string) ($this->er['veeva'] ?? ''));
+            if ($vv !== '') {
+                $vv = strtoupper($vv);
+                if (! str_starts_with($vv, 'RPT-AST-')) { $vv = 'RPT-AST-' . ltrim(preg_replace('/^RPT-AST[-\s]*/i', '', $vv), '-'); }
+                $run->veeva_doc_number = $vv;
+            }
+            // TrackWise NC on a fail (the model saving-hook auto-fills lims_nc_url from the catalog).
+            if ($overall === 'fail') { $run->lims_nc_number = $this->er['trackwise_id']; }
             $run->save();
         }
         app(\App\Services\QualificationEngine::class)->recompute($q->fresh());

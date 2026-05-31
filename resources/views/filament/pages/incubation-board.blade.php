@@ -207,7 +207,28 @@
                         <input type="text" wire:model="er.lms_number" class="gqs-fld" placeholder="Optional tracking number">
                     </div>
                     <div>
-                        <label class="gqs-flbl">Overall Result <span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(optional - leave blank to record worklist only)</span></label>
+                        <label class="gqs-flbl">Veeva Report Number (Optional)</label>
+                        <div style="display:flex;align-items:stretch;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;overflow:hidden;">
+                            <span style="display:flex;align-items:center;padding:0 12px;background:var(--gqs-surface-2,#F1F1F4);font-weight:800;color:var(--gqs-text-dim,#6A6A72);border-right:1px solid var(--gqs-border,#C4C4CC);">RPT-AST-</span>
+                            <input type="text" wire:model="er.veeva" class="gqs-fld" style="border:none;border-radius:0;flex:1;" placeholder="type the numbers">
+                        </div>
+                        <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Type only the numbers - RPT-AST- is added automatically. The Veeva link fills in automatically if the report is in the catalog.</div>
+                    </div>
+
+                    @if($erHasLimsResult)
+                        <div style="padding:11px 14px;border-radius:10px;background:#EAF6EF;border:1px solid #BBE0CB;font-size:12.5px;color:#1F6B45;display:flex;align-items:flex-start;gap:8px;">
+                            <x-filament::icon icon="heroicon-m-check-badge" style="width:18px;height:18px;flex-shrink:0;"/>
+                            <div>LIMS has returned a result for this worklist@if($erLimsResult) (<strong>{{ ucfirst($erLimsResult) }}</strong>)@endif. Confirm or override the Pass/Fail below, then sign off.</div>
+                        </div>
+                    @else
+                        <div style="padding:11px 14px;border-radius:10px;background:#FFF6E5;border:1px solid #F0D9A8;font-size:12.5px;color:#8A5A00;display:flex;align-items:flex-start;gap:8px;">
+                            <x-filament::icon icon="heroicon-m-exclamation-circle" style="width:18px;height:18px;flex-shrink:0;"/>
+                            <div>No result found on this worklist from LIMS yet. Enter the Pass/Fail manually to sign off, or save the worklist and come back once LIMS posts the read.</div>
+                        </div>
+                    @endif
+
+                    <div>
+                        <label class="gqs-flbl">Overall Result @if($erHasLimsResult)<span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(confirm LIMS result or override)</span>@else<span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(manual - leave blank to record worklist only)</span>@endif</label>
                         <div style="display:flex;gap:8px;margin-top:4px;">
                             <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'pass' ? '' : 'pass')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='pass' ? 'background:#2E7D5B;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Pass</button>
                             <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'fail' ? '' : 'fail')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='fail' ? 'background:#C8102E;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Fail</button>
