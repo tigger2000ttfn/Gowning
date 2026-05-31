@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Veeva Catalog', 'icon' => 'heroicon-o-document-magnifying-glass'])
 
-    <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Load the weekly Veeva export so report links auto-fill from the document number entered at sign-off. The Veeva link cannot be derived from the document number, so this catalog is the lookup. Re-importing updates existing entries and adds new ones, then backfills links on reports that have a number but no link.</div>
+    <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Load the weekly Veeva export so report links auto-fill from the document number entered at sign-off. Links are built from the Document ID column using the Vault address ({{ \App\Models\VeevaDocument::baseUrl() }}), or taken from a link column / embedded hyperlink when present. Re-importing updates existing entries and adds new ones, then backfills links on reports that have a number but no link.</div>
 
     <form wire:submit.prevent>{{ $this->form }}</form>
 
@@ -17,7 +17,8 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
                     @php $fields = [
                         'map_number'  => 'Document Number *',
-                        'map_url'     => 'Permalink / Link',
+                        'map_vaultid' => 'Document ID (builds link)',
+                        'map_url'     => 'Link / Permalink',
                         'map_title'   => 'Title',
                         'map_type'    => 'Type',
                         'map_status'  => 'Status',

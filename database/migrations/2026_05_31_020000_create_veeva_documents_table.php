@@ -20,6 +20,7 @@ return new class extends Migration
                 $table->id();
                 $table->string('doc_number')->unique();   // e.g. RPT-AST-150240 (business id)
                 $table->string('doc_id')->nullable();      // e.g. V0Z0000000ZS022 (permalink surrogate key)
+                $table->string('vault_id')->nullable();    // e.g. 1112135 (numeric doc id for doc_info URL)
                 $table->text('url')->nullable();           // full permalink URL
                 $table->string('title')->nullable();
                 $table->string('type')->nullable();

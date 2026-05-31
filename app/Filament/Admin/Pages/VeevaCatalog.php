@@ -144,10 +144,11 @@ class VeevaCatalog extends Page implements HasForms
             }
             return null;
         };
-        $this->data['map_number']  = $guess(['document number', 'doc number', 'docnumber', 'number', 'rpt', 'name']);
-        $this->data['map_url']     = $guess(['permalink', 'link', 'url']);
-        $this->data['map_title']   = $guess(['title', 'name']);
-        $this->data['map_type']    = $guess(['type', 'doc type', 'subtype']);
+        $this->data['map_number']  = $guess(['document number', 'doc number', 'docnumber', 'number', 'rpt']);
+        $this->data['map_url']     = $guess(['document link', 'source link', 'permalink', 'link', 'url']);
+        $this->data['map_vaultid'] = $guess(['document id', 'doc id', 'docid', 'document i']);
+        $this->data['map_title']   = $guess(['title', 'document name']);
+        $this->data['map_type']    = $guess(['type']);
         $this->data['map_status']  = $guess(['status', 'state', 'lifecycle']);
         $this->data['map_version'] = $guess(['version', 'rev']);
     }
@@ -182,12 +183,19 @@ class VeevaCatalog extends Page implements HasForms
                 $numCol = (int) $m['map_number'];
                 $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
             }
+            // Capture the numeric Vault document id and, if we still have no URL, build one from it
+            // using the documented doc_info scheme (the most reliable path for these exports).
+            $vaultId = $col($row, 'map_vaultid');
+            if (! $url && $vaultId) {
+                $url = VeevaDocument::urlFromVaultId($vaultId);
+            }
             $docId = VeevaDocument::extractDocId($url);
 
             $existing = VeevaDocument::where('doc_number', $number)->first();
             $payload = [
                 'doc_number' => $number,
                 'doc_id' => $docId ?: ($existing->doc_id ?? null),
+                'vault_id' => $vaultId ?: ($existing->vault_id ?? null),
                 'url' => $url ?: ($existing->url ?? null),
                 'title' => $col($row, 'map_title') ?: ($existing->title ?? null),
                 'type' => $col($row, 'map_type') ?: ($existing->type ?? null),
