@@ -42,9 +42,13 @@ class ViewQualification extends ViewRecord
             ]),
 
             Section::make('Qualification')->columns(3)->schema([
-                TextEntry::make('type')->label('Type')->badge()
-                    ->formatStateUsing(fn ($s) => $s?->label())
-                    ->color(fn ($s) => match ($s?->value) { 'annual' => 'success', 'initial' => 'info', default => 'gray' }),
+                TextEntry::make('type')->label('Session Type')->badge()
+                    ->state(fn ($record) => $record->sessionLabel())
+                    ->color(fn ($record) => match ($record->qa_recommendation) {
+                        'requal_three' => 'danger',
+                        'requal_one' => 'warning',
+                        default => $record->type?->value === 'initial' ? 'info' : 'success',
+                    }),
                 TextEntry::make('status')->label('Status')->badge()
                     ->formatStateUsing(fn ($s) => $s?->label())
                     ->color(fn ($s) => $s?->color() ?? 'gray'),
@@ -65,6 +69,30 @@ class ViewQualification extends ViewRecord
                     ->state(fn ($record) => $record->cycle_started_at?->gmp() ?? '—'),
                 TextEntry::make('qa_recommendation')->label('Last QA Determination')->placeholder('—')
                     ->formatStateUsing(fn ($s) => $s ? Str::title(str_replace('_', ' ', $s)) : null),
+            ]),
+
+            Section::make('Cycle & Lineage')->columns(3)->schema([
+                TextEntry::make('cycle_number')->label('Cycle')->badge()
+                    ->state(fn ($record) => 'Cycle ' . ($record->cycle_number ?: 1))
+                    ->color(fn ($record) => $record->superseded_at ? 'gray' : 'success'),
+                TextEntry::make('cycle_state')->label('Cycle Status')->badge()
+                    ->state(fn ($record) => $record->superseded_at ? 'Superseded (History)' : 'Active Cycle')
+                    ->color(fn ($record) => $record->superseded_at ? 'gray' : 'success'),
+                TextEntry::make('retraining')->label('Retraining')->badge()
+                    ->state(fn ($record) => $record->needsRetrainingFirst() ? 'Required First' : '—')
+                    ->color(fn ($record) => $record->needsRetrainingFirst() ? 'danger' : 'gray'),
+                TextEntry::make('parent_link')->label('Requalification Of')->placeholder('—')
+                    ->state(fn ($record) => $record->parent_qualification_id
+                        ? ('Cycle ' . max(1, (int) ($record->cycle_number ?: 2) - 1) . ' (failed)') : null)
+                    ->url(fn ($record) => $record->parent_qualification_id
+                        ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $record->parent_qualification_id]) : null)
+                    ->color('primary'),
+                TextEntry::make('child_link')->label('Superseded By')->placeholder('—')
+                    ->state(fn ($record) => $record->children->first()
+                        ? ('Cycle ' . $record->children->first()->cycle_number . ' · ' . $record->children->first()->sessionLabel()) : null)
+                    ->url(fn ($record) => $record->children->first()
+                        ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $record->children->first()->id]) : null)
+                    ->color('primary'),
             ]),
 
             Section::make('Run History')->schema([
