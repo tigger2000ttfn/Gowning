@@ -124,8 +124,13 @@ class WorklistSync
         // QCM-result-ready: record the result + release, but DO NOT advance to QA. The QCM still reviews
         // and creates the cover page. We mirror the manual release (result + timestamps + recompute) and
         // land in Results Released so it is QCM-reviewable, exactly like a manually-entered pass.
+        // GATE: only release to QCM review once ALL required runs are performed (an initial qual needs all
+        // 3 done before Lab Review / QCM sign-off). A partial cycle stays Incubating and is NOT shown in
+        // Lab Review, even if this one worklist is final in LIMS.
+        $required = max(1, (int) ($q->runs_required ?? 1));
+        $performedCount = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
+        $allRunsDone = $performedCount >= $required;
         if ($wl->isQcmReady()) {
-            $advanceFrom = [WorkflowStage::Incubating, WorkflowStage::AwaitingResults, WorkflowStage::RunPerformed];
             if ($run->result === null || (($run->result->value ?? $run->result) !== 'pass')) {
                 $run->result = \App\Enums\RunResult::Pass;
                 $run->results_entered_at = $run->results_entered_at ?: now();
@@ -136,7 +141,8 @@ class WorklistSync
                 $q = $q->fresh();
                 $stage = $q->workflow_stage;
             }
-            if (in_array($stage, $advanceFrom, true)) {
+            $advanceFrom = [WorkflowStage::Incubating, WorkflowStage::AwaitingResults, WorkflowStage::RunPerformed];
+            if ($allRunsDone && in_array($stage, $advanceFrom, true)) {
                 $q->workflow_stage = WorkflowStage::ResultsReleased;
                 $q->stage_changed_at = now();
                 $q->save();
