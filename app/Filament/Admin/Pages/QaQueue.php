@@ -70,7 +70,10 @@ class QaQueue extends Page
                 'submitted_at' => $s->attendance_submitted_at?->gmpDt(),
                 'submitted_by' => $s->submittedBy?->name,
                 'trainer' => $s->instructorUser?->name ?? $s->instructor,
-                'form_url' => route('print.class-attendance', [$s->id, 'FORM-AST-36513-' . ($s->session_uid ?: 'Class') . '.pdf']),
+                // QA reviews the signed form in Veeva (the training PDF is downloaded, wet-signed and
+                // uploaded by QCM). Prefer the Veeva link; fall back to the doc number for reference.
+                'veeva_url' => $s->veeva_url,
+                'veeva_doc_number' => $s->veeva_doc_number,
                 'rows' => $s->enrollments->where('status', 'pending_qa')->map(fn ($e) => [
                     'id' => $e->id,
                     'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',

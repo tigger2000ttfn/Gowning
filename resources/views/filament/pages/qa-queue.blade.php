@@ -29,8 +29,14 @@
                     <span style="font-size:12px;font-weight:600;opacity:.92;">{{ count($session['rows']) }} Pending · Submitted {{ $session['submitted_at'] }}@if($session['submitted_by']) by {{ $session['submitted_by'] }}@endif</span>
                 </div>
                 <div class="gqs-panel-body">
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-                        <a href="{{ $session['form_url'] }}" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">View Signed Form</a>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+                        @if($session['veeva_url'])
+                            <a href="{{ $session['veeva_url'] }}" target="_blank" class="gqs-btn gqs-btn-ghost" style="text-decoration:none;">View Signed Form In Veeva ↗</a>
+                        @elseif($session['veeva_doc_number'])
+                            <span class="gqs-pill gqs-pill-green">Veeva {{ $session['veeva_doc_number'] }}</span>
+                        @else
+                            <span class="gqs-pill gqs-pill-gold">Awaiting Veeva Upload</span>
+                        @endif
                         @if($canApprove)
                             <button type="button" wire:click="openClassSignoff({{ $session['id'] }})" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Sign Off Session</button>
                         @endif
@@ -274,7 +280,7 @@
                             <div><label class="gqs-flbl">LMS Number (Optional)</label><input type="text" wire:model="clsLms" class="gqs-fld"></div>
                             <div style="grid-column:1 / -1;"><label class="gqs-flbl">Veeva Link (Optional)</label><input type="url" wire:model="clsVeevaUrl" class="gqs-fld"></div>
                         </div>
-                        <div style="font-size:13px;line-height:1.5;">By signing, I, <strong>{{ auth()->user()->name }}</strong>, certify the classroom training record is reviewed and approved as complete. This electronic signature is the legally binding equivalent of my handwritten signature.</div>
+                        <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Approve the classroom training as complete for these trainees. Your signature is recorded.</div>
                         @if($cd['signer_is_trainee'])
                             <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;">Two-person rule: you are a trainee on this session and cannot sign it off.</div>
                         @endif
