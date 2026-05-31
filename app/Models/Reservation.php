@@ -29,7 +29,7 @@ class Reservation extends Model
     use Auditable, SoftDeletes, GqsActivityLog;
 
     protected $fillable = [
-        'run_slot_id', 'personnel_id', 'status',
+        'run_slot_id', 'personnel_id', 'parent_reservation_id', 'status',
         'requested_at', 'decided_by', 'decided_at', 'notes', 'lims_worklist_id',
     ];
 
@@ -50,6 +50,18 @@ class Reservation extends Model
     public function personnel(): BelongsTo
     {
         return $this->belongsTo(Personnel::class);
+    }
+
+    /** The original booking this follow-up was split from (for rescheduled remaining runs). */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_reservation_id');
+    }
+
+    /** Follow-up bookings split off this one. */
+    public function children(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(self::class, 'parent_reservation_id');
     }
 
     public function decidedBy(): BelongsTo

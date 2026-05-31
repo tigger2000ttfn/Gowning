@@ -470,7 +470,7 @@ class RunDayRoster extends Page
                     'cleanroom' => $r->runSlot?->cleanroom,
                     'time' => $r->runSlot?->start_time ? \Illuminate\Support\Carbon::parse($r->runSlot->start_time)->format('H:i') : null,
                     'status' => $r->status instanceof \BackedEnum ? $r->status->value : $r->status,
-                    'follow_up' => str_starts_with((string) $r->notes, 'Follow-up'),
+                    'follow_up' => $r->parent_reservation_id !== null || str_starts_with((string) $r->notes, 'Follow-up'),
                 ])->values()->all(),
             ])->values()->all();
     }
@@ -880,6 +880,7 @@ class RunDayRoster extends Page
                     Reservation::create([
                         'run_slot_id' => $nextSlot->id,
                         'personnel_id' => $res->personnel_id,
+                        'parent_reservation_id' => $res->id,
                         'status' => 'approved',
                         'requested_at' => now(),
                         'notes' => 'Follow-up for remaining run(s) (parent reservation #' . $res->id . ').',
