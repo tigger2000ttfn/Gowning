@@ -16,6 +16,10 @@ echo "==> Fetching and FORCE-resetting to origin/main (discards local edits)"
 git fetch origin main
 git reset --hard origin/main
 
+echo "==> Clearing view + optimize caches EARLY (so blade/view changes apply even if a later step fails)"
+php artisan view:clear || true
+php artisan optimize:clear || true
+
 echo "==> Installing PHP dependencies"
 # If composer.json declares packages not in the lock file, sync the lock first.
 if ! COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader 2>/dev/null; then
