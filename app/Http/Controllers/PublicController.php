@@ -173,6 +173,16 @@ class PublicController extends Controller
 
         $person = $this->resolvePersonnel($data);
 
+        // Hard block: one active class enrollment at a time. Prevents double-booking a class.
+        $active = ClassEnrollment::activeForPersonnel($person->id);
+        if ($active) {
+            return back()->withErrors([
+                'employee_id' => 'You already have a gowning class scheduled'
+                    . ($active->classSession?->session_date ? ' on ' . $active->classSession->session_date->format('M j, Y') : '')
+                    . '. Please attend or cancel that one before signing up again.',
+            ])->withInput();
+        }
+
         ClassEnrollment::create([
             'class_session_id' => $session->id,
             'personnel_id' => $person->id,

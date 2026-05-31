@@ -153,6 +153,16 @@ class ClassScheduler extends Page
             $this->showSchedule = false;
             return;
         }
+        // Hard block: a person may only have ONE active class enrollment at a time (any session).
+        $active = \App\Models\ClassEnrollment::activeForPersonnel($p->id);
+        if ($active) {
+            $when = $active->classSession?->session_date?->gmp();
+            Notification::make()->danger()->title('Already Has A Class Scheduled')
+                ->body($p->full_name . ' is already enrolled in ' . ($active->classSession?->trainingClass?->name ?? 'a class')
+                    . ($when ? ' on ' . $when : '') . '. Reschedule or cancel that one first.')->send();
+            $this->showSchedule = false;
+            return;
+        }
         \App\Models\ClassEnrollment::create([
             'class_session_id' => $session->id,
             'personnel_id' => $p->id,

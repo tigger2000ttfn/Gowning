@@ -18,6 +18,24 @@ class ClassEnrollment extends Model
         'qa_completed_by', 'qa_completed_at',
     ];
 
+    /** Statuses that represent an active (not finished, not cancelled) class enrollment. */
+    public const ACTIVE_STATUSES = ['signed_up', 'attended', 'pending_qa', 'qcm_reviewed'];
+
+    /**
+     * The person's current active class enrollment, if any (across all sessions). Used to hard-block
+     * a second class booking - a person should only be working through one class at a time.
+     * Optionally ignore a specific enrollment id (e.g. when rescheduling that same enrollment).
+     */
+    public static function activeForPersonnel(int $personnelId, ?int $ignoreId = null): ?self
+    {
+        return static::query()
+            ->where('personnel_id', $personnelId)
+            ->whereIn('status', self::ACTIVE_STATUSES)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->with('classSession.trainingClass')
+            ->latest('id')->first();
+    }
+
     /**
      * Robustly set attendance status, stamping who/when, and advancing the
      * person's qualification (class_on_file + ClassComplete + ClassCompleted automation)
