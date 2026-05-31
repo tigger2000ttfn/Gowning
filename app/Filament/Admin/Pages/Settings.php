@@ -87,6 +87,13 @@ class Settings extends Page implements HasForms
             'site_name'             => Setting::get('site_name', 'Manufacturing Technology Center'),
             'qcm_manager_id'        => Setting::get('qcm_manager_id'),
             'qa_manager_id'         => Setting::get('qa_manager_id'),
+            // Class Board lane labels (stored in workflow_statuses, domain=class).
+            'lane_class_signed_up'    => \App\Models\WorkflowStatus::labelFor('class', 'signed_up', 'Scheduled'),
+            'lane_class_attended'     => \App\Models\WorkflowStatus::labelFor('class', 'attended', 'Attended'),
+            'lane_class_qcm_reviewed' => \App\Models\WorkflowStatus::labelFor('class', 'qcm_reviewed', 'QCM Reviewed'),
+            'lane_class_pending_qa'   => \App\Models\WorkflowStatus::labelFor('class', 'pending_qa', 'Pending QA'),
+            'lane_class_completed'    => \App\Models\WorkflowStatus::labelFor('class', 'completed', 'QA Approved'),
+            'lane_class_no_show'      => \App\Models\WorkflowStatus::labelFor('class', 'no_show', 'No-Show'),
         ]);
     }
 
@@ -193,6 +200,17 @@ class Settings extends Page implements HasForms
                         Toggle::make('board_show_failed')->label('Show Failed Lane')->default(true)
                             ->helperText('Include the off-pipeline Failed column on the board.'),
                     ]),
+                Section::make('Class Board Lane Labels')->icon('heroicon-o-rectangle-stack')->columns(2)
+                    ->description('The Class Board kanban lane names. These also drive the status pill on each class card.')
+                    ->schema([
+                        \Filament\Forms\Components\TextInput::make('lane_class_signed_up')->label('Lane: Scheduled'),
+                        \Filament\Forms\Components\TextInput::make('lane_class_attended')->label('Lane: Attended'),
+                        \Filament\Forms\Components\TextInput::make('lane_class_qcm_reviewed')->label('Lane: QCM Reviewed'),
+                        \Filament\Forms\Components\TextInput::make('lane_class_pending_qa')->label('Lane: Pending QA'),
+                        \Filament\Forms\Components\TextInput::make('lane_class_completed')->label('Lane: QA Approved (final)')
+                            ->helperText('The final lane after QA approval. Defaults to "QA Approved".'),
+                        \Filament\Forms\Components\TextInput::make('lane_class_no_show')->label('Lane: No-Show'),
+                    ]),
                 Section::make('Email Delivery')->icon('heroicon-o-at-symbol')->columns(2)
                     ->description('Outbound mail relay. Emails queue until this is reachable, then send automatically.')
                     ->schema([
@@ -279,9 +297,26 @@ class Settings extends Page implements HasForms
 
     public function save(): void
     {
+        // Class Board lane labels persist to the workflow_statuses table, not the settings store.
+        $laneMap = [
+            'lane_class_signed_up' => 'signed_up', 'lane_class_attended' => 'attended',
+            'lane_class_qcm_reviewed' => 'qcm_reviewed', 'lane_class_pending_qa' => 'pending_qa',
+            'lane_class_completed' => 'completed', 'lane_class_no_show' => 'no_show',
+        ];
         foreach ($this->form->getState() as $key => $value) {
+            if (isset($laneMap[$key])) {
+                $label = trim((string) $value);
+                if ($label !== '') {
+                    \App\Models\WorkflowStatus::updateOrCreate(
+                        ['domain' => 'class', 'key' => $laneMap[$key]],
+                        ['label' => $label]
+                    );
+                }
+                continue; // not a Setting
+            }
             Setting::put($key, is_bool($value) ? ($value ? '1' : '0') : (string) $value);
         }
+        \App\Models\WorkflowStatus::flushCache();
         Notification::make()->success()->title('Settings saved')->send();
     }
 

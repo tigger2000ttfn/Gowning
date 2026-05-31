@@ -43,4 +43,10 @@ class WorkflowStatus extends Model
         }
         return static::$cache[$ck] = $row;
     }
+
+    /** Clear the in-request resolve cache (call after editing labels in Settings). */
+    public static function flushCache(): void
+    {
+        static::$cache = [];
+    }
 }
