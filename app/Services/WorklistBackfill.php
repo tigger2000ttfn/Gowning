@@ -102,77 +102,89 @@ class WorklistBackfill
 
             if ($preview) { $created += $runCount; $quals++; continue; }
 
-            // ---- write ----
+            // ---- write (atomic per worklist) ----
+            // Wrap each worklist's qualification + run rows in a transaction so a failure midway
+            // through ONE worklist rolls back cleanly instead of leaving half-created records. We
+            // capture how many run rows this worklist added so the running total stays accurate.
             $cycleType = $type === 'annual' ? QualificationType::Annual : QualificationType::Initial;
             $runsRequired = $cycleType->runsRequired();
             $firstDate = $dates[array_key_first($dates)];
 
-            $qual = Qualification::create([
-                'personnel_id' => $person->id,
-                'type' => $cycleType,
-                'status' => \App\Enums\QualificationStatus::InProgress,
-                'runs_required' => $runsRequired,
-                'runs_completed' => 0,
-                'cycle_started_at' => $firstDate->toDateString(),
-                'lims_worklist_id' => $wl->worklist,
-                'workflow_stage' => WorkflowStage::AwaitingResults,
-                'stage_changed_at' => now(),
-            ]);
+            try {
+                $createdThisWorklist = \Illuminate\Support\Facades\DB::transaction(function () use ($wl, $person, $cycleType, $runsRequired, $firstDate, $dates, $type, $isFail, $isPass) {
+                    $added = 0;
+                    $qual = Qualification::create([
+                        'personnel_id' => $person->id,
+                        'type' => $cycleType,
+                        'status' => \App\Enums\QualificationStatus::InProgress,
+                        'runs_required' => $runsRequired,
+                        'runs_completed' => 0,
+                        'cycle_started_at' => $firstDate->toDateString(),
+                        'lims_worklist_id' => $wl->worklist,
+                        'workflow_stage' => WorkflowStage::AwaitingResults,
+                        'stage_changed_at' => now(),
+                    ]);
 
-            $result = $isFail ? RunResult::Fail : ($isPass ? RunResult::Pass : RunResult::Pending);
-            foreach ($dates as $runNo => $date) {
-                QualificationRun::create([
-                    'personnel_id' => $person->id,
-                    'qualification_id' => $qual->id,
-                    'run_date' => $date->toDateString(),
-                    'result' => $result,
-                    'cycle_type' => $cycleType,
-                    'lims_worklist_id' => $wl->worklist,
-                    // Historic backfill = the run was performed and its plates incubated; we mark the
-                    // attendance/performance + incubation as complete (the only outstanding step is the
-                    // QCM result sign-off). incubation_started_at makes it a fully-formed performed run.
-                    'incubation_started_at' => $date->toDateString(),
-                    'results_entered_at' => $isPass || $isFail ? now() : null,
-                    'results_released_at' => $isPass ? now() : null,
-                    'notes' => 'Historic backfill from LIMS worklist ' . $wl->worklist,
-                ]);
-                $created++;
-            }
-            $quals++;
+                    $result = $isFail ? RunResult::Fail : ($isPass ? RunResult::Pass : RunResult::Pending);
+                    foreach ($dates as $runNo => $date) {
+                        QualificationRun::create([
+                            'personnel_id' => $person->id,
+                            'qualification_id' => $qual->id,
+                            'run_date' => $date->toDateString(),
+                            'result' => $result,
+                            'cycle_type' => $cycleType,
+                            'lims_worklist_id' => $wl->worklist,
+                            'incubation_started_at' => $date->toDateString(),
+                            'results_entered_at' => $isPass || $isFail ? now() : null,
+                            'results_released_at' => $isPass ? now() : null,
+                            'notes' => 'Historic backfill from LIMS worklist ' . $wl->worklist,
+                        ]);
+                        $added++;
+                    }
 
-            // Recompute counts/status, then place at the right stage WITHOUT submitting to QA.
-            app(QualificationEngine::class)->recompute($qual->fresh());
-            $qual = $qual->fresh();
-            // Make sure the pass count reflects the recorded passes (a backfilled Pass counts immediately).
-            $passCount = $qual->runs()->where('result', RunResult::Pass->value)->count();
-            if ((int) $qual->runs_completed !== $passCount) {
-                $qual->runs_completed = $passCount;
-            }
-            if ($isFail) {
-                $qual->workflow_stage = WorkflowStage::Failed;
-            } else {
-                // Pass (or pending): land at Results Released so the QCM reviews + builds the cover page.
-                $qual->workflow_stage = WorkflowStage::ResultsReleased;
-            }
-            $qual->stage_changed_at = now();
+                    // Recompute counts/status, then place at the right stage WITHOUT submitting to QA.
+                    app(QualificationEngine::class)->recompute($qual->fresh());
+                    $qual = $qual->fresh();
+                    $passCount = $qual->runs()->where('result', RunResult::Pass->value)->count();
+                    if ((int) $qual->runs_completed !== $passCount) {
+                        $qual->runs_completed = $passCount;
+                    }
+                    if ($isFail) {
+                        $qual->workflow_stage = WorkflowStage::Failed;
+                    } else {
+                        $qual->workflow_stage = WorkflowStage::ResultsReleased;
+                    }
+                    $qual->stage_changed_at = now();
 
-            // Inferred classroom completion: a requal (and any historic qual) implies the gowning class
-            // was taken at some point. We cannot reliably enter years of historic class data, so we record
-            // an INFERRED completion (source=inferred) that QA can edit/confirm on the Class Completions
-            // page, and mark class_on_file so the run pipeline does not flag "missing class". Only when none
-            // already exists.
-            if (! \App\Models\ClassCompletion::where('personnel_id', $person->id)->exists()) {
-                \App\Models\ClassCompletion::create([
-                    'personnel_id' => $person->id,
-                    'employee_id' => $person->employee_id,
-                    'class_name' => 'Gowning Qualification Class (Inferred)',
-                    'completion_date' => $firstDate->toDateString(),
-                    'source' => 'inferred',
-                ]);
-                $qual->class_on_file = true;
-                $qual->class_on_file_date = $firstDate->toDateString();
+                    // Inferred classroom completion (only when none already exists).
+                    if (! \App\Models\ClassCompletion::where('personnel_id', $person->id)->exists()) {
+                        \App\Models\ClassCompletion::create([
+                            'personnel_id' => $person->id,
+                            'employee_id' => $person->employee_id,
+                            'class_name' => 'Gowning Qualification Class (Inferred)',
+                            'completion_date' => $firstDate->toDateString(),
+                            'source' => 'inferred',
+                        ]);
+                        $qual->class_on_file = true;
+                        $qual->class_on_file_date = $firstDate->toDateString();
+                    }
+                    $qual->save();
+                    return $added;
+                });
+                $created += $createdThisWorklist;
+                $quals++;
+            } catch (\Throwable $e) {
+                // One worklist failed and was rolled back (no partial rows). Record it and keep going
+                // so a single bad row never aborts the whole backfill or leaves a mess behind.
+                report($e);
+                $rows[] = [
+                    'worklist' => $wl->worklist,
+                    'person' => $person->full_name ?? '-',
+                    'type' => $type,
+                    'status' => 'ERROR: ' . \Illuminate\Support\Str::limit($e->getMessage(), 160),
+                ];
+                $skipped++;
             }
-            $qual->save();
         }
 
         if (! $preview && $created > 0) {

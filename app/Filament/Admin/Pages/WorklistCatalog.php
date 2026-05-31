@@ -520,6 +520,13 @@ SQL;
                 ->body('The one-time bulk backfill has already run. Use per-person backfill for individual additions.')->send();
             return;
         }
+        $errs = collect($result['rows'] ?? [])->filter(fn ($r) => str_starts_with((string) ($r['status'] ?? ''), 'ERROR'));
+        if ($errs->isNotEmpty()) {
+            Notification::make()->warning()->title('Backfill Finished With ' . $errs->count() . ' Error(s)')
+                ->body("Created {$result['created']} run(s) across {$result['quals']} qualification(s). " . $errs->count() . ' worklist(s) were rolled back (no partial data). First error: ' . \Illuminate\Support\Str::limit((string) $errs->first()['status'], 200))
+                ->persistent()->send();
+            return;
+        }
         Notification::make()->success()->title('Backfill Complete')
             ->body("Created {$result['created']} run(s) across {$result['quals']} qualification(s). Matched {$result['matched']}, unmatched {$result['unmatched']}, skipped {$result['skipped']}.")->send();
     }
