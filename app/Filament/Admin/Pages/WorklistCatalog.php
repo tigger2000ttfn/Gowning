@@ -47,9 +47,123 @@ class WorklistCatalog extends Page implements HasForms
     public int $lastSkipped = 0;
     public string $search = '';
     public string $tab = 'upload';
-    public function setTab(string $t): void { $this->tab = in_array($t, ['upload', 'catalog'], true) ? $t : 'upload'; }
+    public string $sqlQuery = '';
+    public function setTab(string $t): void { $this->tab = in_array($t, ['upload', 'catalog', 'sql'], true) ? $t : 'upload'; }
 
-    public function mount(): void { $this->form->fill(); }
+    public function mount(): void
+    {
+        $this->form->fill();
+        $this->sqlQuery = (string) \App\Models\Setting::get('lims_sql_query', $this->defaultSqlQuery());
+    }
+
+    public function saveSql(): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        \App\Models\Setting::put('lims_sql_query', $this->sqlQuery);
+        Notification::make()->success()->title('Query Saved')->body('The LIMS SQL query has been stored.')->send();
+    }
+
+    protected function defaultSqlQuery(): string
+    {
+        return <<<'SQL'
+-- LIMS (LabWare) gowning worklist export.
+-- Pulls the QC_EM_PERSONNEL_QUAL meta-sample per worklist and joins the QC_INC_META incubation sample.
+SELECT t.BATCH AS Worklist,
+       b.DESCRIPTION AS Worklist_Description,
+       s.SAMPLE_NUMBER,
+       s.STATUS AS Sample_Status,
+       COUNT(*) OVER (PARTITION BY t.BATCH) AS Samples_On_Worklist,
+       SUM(CASE WHEN s.STATUS NOT IN ('A','C') THEN 1 ELSE 0 END)
+           OVER (PARTITION BY t.BATCH) AS Non_Final_Count,
+       CASE WHEN SUM(CASE WHEN s.STATUS NOT IN ('A','C') THEN 1 ELSE 0 END)
+                 OVER (PARTITION BY t.BATCH) = 0
+            THEN 'Yes' ELSE 'No' END AS Worklist_All_Final,
+       MAX(CASE WHEN r.NAME = 'Qualification Type' THEN r.FORMATTED_ENTRY END) AS [Qualification Type],
+       MAX(CASE WHEN r.NAME = 'Personnel' THEN r.FORMATTED_ENTRY END) AS [Personnel],
+       MAX(CASE WHEN r.NAME = 'Initial Gowning Qualification Run #' THEN r.FORMATTED_ENTRY END) AS [Initial Gowning Qualification Run #],
+       MAX(CASE WHEN r.NAME = 'Annual ReQualification' THEN r.FORMATTED_ENTRY END) AS [Annual ReQualification],
+       MAX(CASE WHEN r.NAME = 'Additional Requalification' THEN r.FORMATTED_ENTRY END) AS [Additional Requalification],
+       MAX(CASE WHEN r.NAME = 'Gowning Qual/Requal Evaluation' THEN r.FORMATTED_ENTRY END) AS [Gowning Qual/Requal Evaluation],
+       MAX(CASE WHEN r.NAME = 'EM Area' THEN r.FORMATTED_ENTRY END) AS [EM Area],
+       MAX(CASE WHEN r.NAME = 'CR Grade 1' THEN r.FORMATTED_ENTRY END) AS [CR Grade 1],
+       MAX(CASE WHEN r.NAME = 'CR Grade 2' THEN r.FORMATTED_ENTRY END) AS [CR Grade 2],
+       MAX(CASE WHEN r.NAME = 'CR Grade 3' THEN r.FORMATTED_ENTRY END) AS [CR Grade 3],
+       MAX(CASE WHEN r.NAME = 'Grade A Critical Ops MFG Selected' THEN r.FORMATTED_ENTRY END) AS [Grade A Critical Ops MFG Selected],
+       MAX(CASE WHEN r.NAME = 'Grade B Critical Ops MFG Selected' THEN r.FORMATTED_ENTRY END) AS [Grade B Critical Ops MFG Selected],
+       MAX(CASE WHEN r.NAME = 'Qual Date 1' THEN CONVERT(char(10), TRY_CONVERT(date, r.FORMATTED_ENTRY, 105), 23) END) AS [Qual Date 1],
+       MAX(CASE WHEN r.NAME = 'Qual Date 2' THEN CONVERT(char(10), TRY_CONVERT(date, r.FORMATTED_ENTRY, 105), 23) END) AS [Qual Date 2],
+       MAX(CASE WHEN r.NAME = 'Qual Date 3' THEN CONVERT(char(10), TRY_CONVERT(date, r.FORMATTED_ENTRY, 105), 23) END) AS [Qual Date 3],
+       MAX(CASE WHEN r.NAME = 'Run 2 Rescheduled ?' THEN r.FORMATTED_ENTRY END) AS [Run 2 Rescheduled ?],
+       MAX(CASE WHEN r.NAME = 'Run 3 Rescheduled ?' THEN r.FORMATTED_ENTRY END) AS [Run 3 Rescheduled ?],
+       MAX(CASE WHEN r.NAME = 'TSA Contact Plate' THEN r.FORMATTED_ENTRY END) AS [TSA Contact Plate],
+       MAX(CASE WHEN r.NAME = 'TSA Contact Plate 1' THEN r.FORMATTED_ENTRY END) AS [TSA Contact Plate 1],
+       MAX(CASE WHEN r.NAME = 'TSA Contact Plate 2' THEN r.FORMATTED_ENTRY END) AS [TSA Contact Plate 2],
+       MAX(CASE WHEN r.NAME = 'TSA Contact Plate 3' THEN r.FORMATTED_ENTRY END) AS [TSA Contact Plate 3],
+       MAX(CASE WHEN r.NAME = 'TSA Control Sample ID 1' THEN r.FORMATTED_ENTRY END) AS [TSA Control Sample ID 1],
+       MAX(CASE WHEN r.NAME = 'TSA Control Sample ID 2' THEN r.FORMATTED_ENTRY END) AS [TSA Control Sample ID 2],
+       MAX(CASE WHEN r.NAME = 'TSA Control Sample ID 3' THEN r.FORMATTED_ENTRY END) AS [TSA Control Sample ID 3],
+       MAX(CASE WHEN r.NAME = 'Reference' THEN r.FORMATTED_ENTRY END) AS [Qual Reference],
+       inc.Inc_Sample_Number,
+       inc.Inc_Sample_Status,
+       inc.[30-35C Incubator for Incubation 1],
+       inc.[Store Samples in Incubation Bin],
+       inc.[1st Incubation Start Date/Time],
+       inc.[1st Incubation End Date/Time],
+       inc.[1st Incubation Due to End],
+       inc.[1st Total Incubation Time],
+       inc.[20-25C Incubator for Incubation 2],
+       inc.[2nd Incubation Start Date/Time],
+       inc.[2nd Incubation End Date/Time],
+       inc.[2nd Incubation Due to End],
+       inc.[2nd Total Incubation Time],
+       inc.[3rd Storage Location],
+       inc.[3rd Storage Movement Start Date/Time],
+       inc.[Inc Reference]
+FROM TEST t
+INNER JOIN SAMPLE s ON t.SAMPLE_NUMBER = s.SAMPLE_NUMBER
+LEFT JOIN RESULT r ON r.TEST_NUMBER = t.TEST_NUMBER
+LEFT JOIN BATCH b ON b.NAME = t.BATCH
+LEFT JOIN (
+    SELECT t2.BATCH,
+           MAX(s2.SAMPLE_NUMBER) AS Inc_Sample_Number,
+           MAX(s2.STATUS)        AS Inc_Sample_Status,
+           MAX(CASE WHEN r2.NAME IN ('30-35C Incubator for Incubation 1','Incubator for Incubation 1')
+                    THEN r2.FORMATTED_ENTRY END) AS [30-35C Incubator for Incubation 1],
+           MAX(CASE WHEN r2.NAME = 'Store Samples in Incubation Bin' THEN r2.FORMATTED_ENTRY END) AS [Store Samples in Incubation Bin],
+           MAX(CASE WHEN r2.NAME = '1st Incubation Start Date/Time' THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [1st Incubation Start Date/Time],
+           MAX(CASE WHEN r2.NAME = '1st Incubation End Date/Time'   THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [1st Incubation End Date/Time],
+           MAX(CASE WHEN r2.NAME = '1st Incubation Due to End'      THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [1st Incubation Due to End],
+           MAX(CASE WHEN r2.NAME = '1st  Total Incubation Time'     THEN r2.FORMATTED_ENTRY END) AS [1st Total Incubation Time],
+           MAX(CASE WHEN r2.NAME IN ('20-25C Incubator for Incubation 2','Incubator for Incubation 2')
+                    THEN r2.FORMATTED_ENTRY END) AS [20-25C Incubator for Incubation 2],
+           MAX(CASE WHEN r2.NAME = '2nd Incubation Start Date/Time' THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [2nd Incubation Start Date/Time],
+           MAX(CASE WHEN r2.NAME = '2nd Incubation End Date/Time'   THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [2nd Incubation End Date/Time],
+           MAX(CASE WHEN r2.NAME = '2nd Incubation Due to End'      THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [2nd Incubation Due to End],
+           MAX(CASE WHEN r2.NAME = '2nd Total Incubation Time'      THEN r2.FORMATTED_ENTRY END) AS [2nd Total Incubation Time],
+           MAX(CASE WHEN r2.NAME = '3rd Storage Location'           THEN r2.FORMATTED_ENTRY END) AS [3rd Storage Location],
+           MAX(CASE WHEN r2.NAME = '3rd Storage Movement Start Date/Time' THEN CONVERT(varchar(16), TRY_CONVERT(datetime, r2.FORMATTED_ENTRY, 105), 120) END) AS [3rd Storage Movement Start Date/Time],
+           MAX(CASE WHEN r2.NAME = 'Reference' THEN r2.FORMATTED_ENTRY END) AS [Inc Reference]
+    FROM TEST t2
+    INNER JOIN SAMPLE s2 ON t2.SAMPLE_NUMBER = s2.SAMPLE_NUMBER
+    LEFT JOIN RESULT r2  ON r2.TEST_NUMBER = t2.TEST_NUMBER
+    WHERE t2.ANALYSIS = 'QC_INC_META'
+    GROUP BY t2.BATCH
+) inc ON inc.BATCH = t.BATCH
+WHERE t.ANALYSIS = 'QC_EM_PERSONNEL_QUAL'
+GROUP BY t.BATCH, b.DESCRIPTION, s.SAMPLE_NUMBER, s.STATUS,
+         inc.Inc_Sample_Number, inc.Inc_Sample_Status,
+         inc.[30-35C Incubator for Incubation 1],
+         inc.[Store Samples in Incubation Bin], inc.[1st Incubation Start Date/Time],
+         inc.[1st Incubation End Date/Time], inc.[1st Incubation Due to End],
+         inc.[1st Total Incubation Time],
+         inc.[20-25C Incubator for Incubation 2],
+         inc.[2nd Incubation Start Date/Time], inc.[2nd Incubation End Date/Time],
+         inc.[2nd Incubation Due to End], inc.[2nd Total Incubation Time],
+         inc.[3rd Storage Location], inc.[3rd Storage Movement Start Date/Time],
+         inc.[Inc Reference]
+ORDER BY t.BATCH, s.SAMPLE_NUMBER
+SQL;
+    }
 
     public function form(Schema $schema): Schema
     {
@@ -214,13 +328,13 @@ class WorklistCatalog extends Page implements HasForms
             'qual_reference' => $find(['qual reference']),
             'inc_sample_number' => $find(['inc_sample_number']),
             'inc_sample_status' => $find(['inc_sample_status']),
-            'inc1_incubator' => $find(['incubator 1', 'incubator for incubation 1']),
+            'inc1_incubator' => $find(['30-35c incubator for incubation 1', 'incubator for incubation 1', 'incubator 1']),
             'inc1_bin' => $find(['store samples in incubation bin']),
             'inc1_start' => $find(['1st incubation start date/time']),
             'inc1_end' => $find(['1st incubation end date/time']),
             'inc1_due' => $find(['1st incubation due to end']),
             'inc1_total' => $find(['1st total incubation time']),
-            'inc2_incubator' => $find(['incubator 2', 'incubator for incubation 2']),
+            'inc2_incubator' => $find(['20-25c incubator for incubation 2', 'incubator for incubation 2', 'incubator 2']),
             'inc2_start' => $find(['2nd incubation start date/time']),
             'inc2_end' => $find(['2nd incubation end date/time']),
             'inc2_due' => $find(['2nd incubation due to end']),

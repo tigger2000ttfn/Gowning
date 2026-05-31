@@ -4,6 +4,7 @@
     @include('filament.page-hero', ['title' => 'Worklist Catalog', 'icon' => 'heroicon-o-beaker', 'actions' => '
         <button type="button" wire:click="setTab(\'upload\')" class="gqs-tab ' . ($tab === 'upload' ? 'active' : '') . '">Upload</button>
         <button type="button" wire:click="setTab(\'catalog\')" class="gqs-tab ' . ($tab === 'catalog' ? 'active' : '') . '">Catalog</button>
+        <button type="button" wire:click="setTab(\'sql\')" class="gqs-tab ' . ($tab === 'sql' ? 'active' : '') . '">SQL Query</button>
     '])
 
     @if ($tab === 'upload')
@@ -88,7 +89,7 @@
                 </div>
             </div>
         @endif
-    @else
+    @elseif ($tab === 'catalog')
         <div class="gqs-panel">
             <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-beaker"/> Worklist Catalog
                 <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $this->catalogCount() }} worklists</span>
@@ -124,6 +125,23 @@
                             @endforelse
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+    @else
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-circle-stack"/> LIMS SQL Query
+                <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">Reference</span>
+            </div>
+            <div class="gqs-panel-body" style="padding:16px;">
+                <p style="margin:0 0 12px;font-size:13px;color:var(--gqs-text-dim,#6A6A72);">The LabWare query that produces the worklist export loaded on the Upload tab. Stored here for reference and easy copy. Edit and Save to keep your current version.</p>
+                <textarea wire:model="sqlQuery" spellcheck="false" style="width:100%;min-height:420px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;padding:12px 14px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:10px;background:#1C1C21;color:#E6E6EA;resize:vertical;"></textarea>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                    <button type="button" wire:click="saveSql" class="gqs-btn gqs-btn-primary">Save Query</button>
+                    <button type="button"
+                            x-data
+                            x-on:click="navigator.clipboard.writeText($wire.sqlQuery); $el.textContent='Copied'; setTimeout(()=>$el.textContent='Copy To Clipboard',1500)"
+                            class="gqs-btn gqs-btn-ghost">Copy To Clipboard</button>
                 </div>
             </div>
         </div>
