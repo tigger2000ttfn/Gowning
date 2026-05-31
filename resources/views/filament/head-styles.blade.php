@@ -1,6 +1,8 @@
 {{-- Critical admin overrides injected directly into <head>, after Filament's stylesheet,
      so they win regardless of cascade layers / compiled-CSS quirks. --}}
 <style>
+    /* Hide Alpine x-cloak elements until Alpine initializes (prevents flash of upload-state text) */
+    [x-cloak] { display: none !important; }
     /* Dark charcoal header in BOTH themes */
     .fi-topbar {
         background-color: #1C1C21 !important;
