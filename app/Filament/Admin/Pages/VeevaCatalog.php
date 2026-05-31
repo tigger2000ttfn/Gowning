@@ -210,6 +210,15 @@ class VeevaCatalog extends Page implements HasForms
         $this->parsed = false;
         $this->rows = [];
         $this->preview = [];
+        $this->hyperlinks = [];
+
+        // The import is committed to the database; the uploaded file is no longer needed, so delete it.
+        $path = $this->data['csv'] ?? null;
+        if ($path) {
+            try { Storage::disk('local')->delete($path); } catch (\Throwable $e) { /* best-effort cleanup */ }
+            $this->data['csv'] = null;
+        }
+        $this->headers = [];
 
         // After loading the catalog, backfill any reports that have a number but no link yet.
         $back = $this->backfillLinks();
