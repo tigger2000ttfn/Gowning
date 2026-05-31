@@ -422,6 +422,8 @@ class QaQueue extends Page
             'veeva_url' => $run?->veeva_url,
             'lms' => $q->lms_number,
             'nc' => $nc?->nc_number,
+            'nc_url' => $nc?->trackwise_url ?: ($nc?->trackwise_id ? \App\Models\NcDocument::urlForNumber($nc->trackwise_id) : null),
+            'nc_status' => $nc?->trackwise_status,
             'is_subject' => $this->signerIsSubject($q),
             'esig' => (bool) Setting::get('esig_required', true),
         ];

@@ -113,12 +113,17 @@ class StatusBoard extends Page
         }
         // Failed lane at the end (toggleable in Settings)
         if ((bool) \App\Models\Setting::get('board_show_failed', true)) {
-            $failed = ($byStage['failed'] ?? collect())->map(fn ($q) => [
-                'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
-                'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
-                'department' => $q->personnel?->department, 'job_title' => $q->personnel?->job_title,
-                'type' => $q->sessionLabel(), 'due_bucket' => $q->due_date ? 'Later' : 'No Due Date',
-            ])->values()->all();
+            $failed = ($byStage['failed'] ?? collect())->map(function ($q) {
+                $nc = \App\Models\NonConformance::where('personnel_id', $q->personnel_id)
+                    ->whereNotNull('trackwise_id')->latest('id')->first();
+                return [
+                    'id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown',
+                    'employee_id' => $q->personnel?->employee_id, 'meta' => 'Needs determination', 'due' => null,
+                    'department' => $q->personnel?->department, 'job_title' => $q->personnel?->job_title,
+                    'type' => $q->sessionLabel(), 'due_bucket' => $q->due_date ? 'Later' : 'No Due Date',
+                    'nc' => $nc?->trackwise_id, 'nc_url' => $nc?->trackwise_url, 'nc_status' => $nc?->trackwise_status,
+                ];
+            })->values()->all();
             $out[] = ['key' => 'failed', 'label' => \App\Models\WorkflowStatus::labelFor('run', 'failed', WorkflowStage::Failed->label()), 'color' => \App\Models\WorkflowStatus::colorFor('run', 'failed', WorkflowStage::Failed->color()), 'cards' => $failed];
         }
 

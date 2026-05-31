@@ -22,6 +22,9 @@
                         @endif
                         @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
                     </div>
+                    @if(!empty($card['nc']))
+                        <div class="sb-line"><span class="sb-line-l">NC</span> @if(!empty($card['nc_url']))<a href="{{ $card['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $card['nc'] }} ↗</a>@else {{ $card['nc'] }} @endif@if(!empty($card['nc_status'])) · {{ $card['nc_status'] }}@endif</div>
+                    @endif
                     @if(($card['runs_req'] ?? 0) > 0)
                         <div class="sb-runs" title="{{ $card['runs_done'] }} of {{ $card['runs_req'] }} runs">
                             @for($r = 0; $r < $card['runs_req']; $r++)

@@ -47,6 +47,9 @@
     if ($can(\App\Enums\Capability::ManageScheduling) || $can(\App\Enums\Capability::QaApprove)) {
         $admin[] = ['Veeva Catalog', \App\Filament\Admin\Pages\VeevaCatalog::getUrl(), 'heroicon-o-document-magnifying-glass'];
     }
+    if ($can(\App\Enums\Capability::ManageScheduling) || $can(\App\Enums\Capability::QaApprove) || $can(\App\Enums\Capability::QaReview)) {
+        $admin[] = ['NC Catalog', \App\Filament\Admin\Pages\NcCatalog::getUrl(), 'heroicon-o-exclamation-triangle'];
+    }
     // Notification Settings is available to everyone (personal prefs)
     $admin[] = ['Notification Settings', \App\Filament\Admin\Pages\NotificationSettings::getUrl(), 'heroicon-o-bell-alert'];
     if ($admin) $sections[] = ['Setup & Settings', $admin];

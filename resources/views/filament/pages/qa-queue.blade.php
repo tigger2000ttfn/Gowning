@@ -166,7 +166,7 @@
                 @endphp
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border-bottom:1px solid var(--gqs-border,#F2F2F4);">
                     <span><strong>{{ $q->personnel?->full_name }}</strong> <span style="color:var(--gqs-text-dim,#6A6A72);font-size:12.5px;">· {{ $q->personnel?->employee_id }}@if($failedRun?->run_uid) · {{ $failedRun->run_uid }}@endif</span>
-                        @if($nc)<span class="gqs-pill gqs-pill-red" style="margin-left:6px;">NC {{ $nc->nc_number }}@if($nc->trackwise_id) · TW {{ $nc->trackwise_id }}@endif</span>@endif
+                        @if($nc)<a @if($nc->trackwise_url) href="{{ $nc->trackwise_url }}" target="_blank" rel="noopener" @endif class="gqs-pill gqs-pill-red" style="margin-left:6px;text-decoration:none;">NC {{ $nc->nc_number }}@if($nc->trackwise_id) · TW {{ $nc->trackwise_id }}@endif@if($nc->trackwise_url) ↗@endif</a>@endif
                     </span>
                     @if($canApprove)
                         <button type="button" wire:click="openDetermination({{ $q->id }})" class="gqs-btn" style="background:#C8102E;color:#fff;padding:6px 13px;">QA Determination</button>
@@ -273,7 +273,7 @@
                                 <div style="color:var(--gqs-text-dim,#6A6A72);">Run</div><div>{{ $wz['run_uid'] ?: '—' }}</div>
                                 <div style="color:var(--gqs-text-dim,#6A6A72);">Veeva</div><div>@if($wz['veeva'])@if($wz['veeva_url'])<a href="{{ $wz['veeva_url'] }}" target="_blank" style="color:#A4123F;font-weight:700;">{{ $wz['veeva'] }} ↗</a>@else {{ $wz['veeva'] }} @endif @else <span style="color:#C8102E;">Not entered</span> @endif</div>
                                 <div style="color:var(--gqs-text-dim,#6A6A72);">LMS Number</div><div>{{ $wz['lms'] ?: '—' }}</div>
-                                @if($wz['nc'])<div style="color:var(--gqs-text-dim,#6A6A72);">Non-Conformance</div><div><span class="gqs-pill gqs-pill-red">{{ $wz['nc'] }}</span></div>@endif
+                                @if($wz['nc'])<div style="color:var(--gqs-text-dim,#6A6A72);">Non-Conformance</div><div>@if($wz['nc_url'])<a href="{{ $wz['nc_url'] }}" target="_blank" rel="noopener" class="gqs-pill gqs-pill-red" style="text-decoration:none;">{{ $wz['nc'] }} ↗</a>@else<span class="gqs-pill gqs-pill-red">{{ $wz['nc'] }}</span>@endif @if($wz['nc_status'])<span style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-left:6px;">{{ $wz['nc_status'] }}</span>@endif</div>@endif
                             </div>
                         </div>
                         @if($wz['is_subject'])

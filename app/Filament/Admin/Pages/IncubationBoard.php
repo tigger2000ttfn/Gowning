@@ -211,8 +211,16 @@ class IncubationBoard extends Page
                         ]
                     );
                     if (! empty($data['trackwise_id']) && $nc->trackwise_id !== $data['trackwise_id']) {
-                        $nc->update(['trackwise_id' => $data['trackwise_id']]);
+                        $nc->trackwise_id = $data['trackwise_id'];
                     }
+                    // Auto-fill the NC link + workflow status from the NC catalog when known.
+                    if (! empty($nc->trackwise_id)) {
+                        if ($doc = \App\Models\NcDocument::findByNumber($nc->trackwise_id)) {
+                            $nc->trackwise_url = $doc->url ?: $nc->trackwise_url;
+                            $nc->trackwise_status = $doc->workflow_status ?: $nc->trackwise_status;
+                        }
+                    }
+                    $nc->save();
                     \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
                 }
                 Notification::make()->success()->title($overall === 'fail' ? 'Failed, Sent To QA Determination' : 'Results Released')

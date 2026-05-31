@@ -17,7 +17,7 @@ class NonConformance extends Model implements HasMedia
     protected $fillable = [
         'nc_number',
         'qualification_id', 'qualification_run_id', 'personnel_id',
-        'trackwise_id', 'nc_type', 'organism', 'site', 'cfu_count',
+        'trackwise_id', 'trackwise_url', 'trackwise_status', 'nc_type', 'organism', 'site', 'cfu_count',
         'over_threshold', 'status', 'summary', 'observed_date',
         'assigned_to', 'created_by',
     ];
