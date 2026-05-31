@@ -467,7 +467,10 @@
     /* Capitalize Filament action button labels (auto-generated names like 'no show' -> 'No Show') */
     .fi-btn .fi-btn-label, .fi-link .fi-link-label, .fi-dropdown-list-item-label { text-transform: capitalize; }
     .gqs-flbl{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#6A6A72);margin-bottom:5px;}
-    .gqs-fld{width:100%;padding:9px 11px;border:1px solid var(--gqs-border,#C4C4CC);border-radius:8px;background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);font-size:14px;font-family:inherit;}
+    .gqs-fld{width:100%;padding:9px 11px;border:1px solid #C4C4CC;border-radius:8px;background:#fff;color:var(--gqs-text,#1A1A1F);font-size:14px;font-family:inherit;}
+    select.gqs-fld{appearance:auto;-webkit-appearance:auto;cursor:pointer;}
+    .gqs-fld:hover{border-color:#9A9AA4;}
+    .gqs-fld:focus{outline:none;border-color:#A4123F;box-shadow:0 0 0 3px rgba(164,18,63,.12);}
     .gqs-fld:focus{outline:none;border-color:#A4123F;box-shadow:0 0 0 3px rgba(164,18,63,.12);}
     .dark .gqs-fld{background:#23232B;border-color:#3A3A44;color:#ECECF0;}
 
