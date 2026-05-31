@@ -30,6 +30,7 @@ class VeevaCatalog extends Page implements HasForms
         $u = Auth::user();
         return (bool) ($u && ($u->hasCapability(Capability::ManageScheduling) || $u->hasCapability(Capability::QaApprove)));
     }
+    public static function shouldRegisterNavigation(): bool { return false; }
     public static function canViewAny(): bool { return static::canAccessNavigation(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-magnifying-glass';
@@ -49,6 +50,8 @@ class VeevaCatalog extends Page implements HasForms
     public int $lastCreated = 0;
     public int $lastUpdated = 0;
     public string $search = '';
+    public string $tab = 'upload';
+    public function setTab(string $t): void { $this->tab = in_array($t, ['upload', 'catalog'], true) ? $t : 'upload'; }
 
     public function mount(): void
     {

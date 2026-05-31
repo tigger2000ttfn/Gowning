@@ -44,6 +44,9 @@
         $admin[] = ['Statuses', \App\Filament\Admin\Resources\WorkflowStatusResource::getUrl(), 'heroicon-o-swatch'];
         $admin[] = ['Email Templates', \App\Filament\Admin\Resources\EmailTemplateResource::getUrl(), 'heroicon-o-envelope'];
     }
+    if ($can(\App\Enums\Capability::ManageScheduling) || $can(\App\Enums\Capability::QaApprove)) {
+        $admin[] = ['Veeva Catalog', \App\Filament\Admin\Pages\VeevaCatalog::getUrl(), 'heroicon-o-document-magnifying-glass'];
+    }
     // Notification Settings is available to everyone (personal prefs)
     $admin[] = ['Notification Settings', \App\Filament\Admin\Pages\NotificationSettings::getUrl(), 'heroicon-o-bell-alert'];
     if ($admin) $sections[] = ['Setup & Settings', $admin];
