@@ -100,7 +100,7 @@
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="gqs-tbl">
-                        <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>Synced</th></tr></thead>
+                        <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>NC Ref</th><th>Synced</th></tr></thead>
                         <tbody>
                             @forelse ($this->catalogRows() as $d)
                                 <tr>
@@ -116,10 +116,11 @@
                                     <td>@if($d['sample_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['sample_status'] }}</span>@endif</td>
                                     <td>@if($d['inc_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['inc_status'] }}</span>@endif</td>
                                     <td>@if($d['qcm_ready'])<span class="gqs-pill gqs-pill-green">Ready</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</td>
+                                    <td style="white-space:nowrap;">{{ $d['reference'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['synced'] ?: '—' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="9" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists in the catalog yet. Load a LIMS export on the Upload tab.</td></tr>
+                                <tr><td colspan="10" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists in the catalog yet. Load a LIMS export on the Upload tab.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

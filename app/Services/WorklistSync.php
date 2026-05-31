@@ -72,12 +72,16 @@ class WorklistSync
         $changed = false;
 
         // Record LIMS state on the run for display + cover-page pre-fill.
+        $ncNumber = trim((string) $wl->qual_reference) ?: null;
+        $ncUrl = $ncNumber ? \App\Models\NcDocument::urlForNumber($ncNumber) : null;
         $newState = [
             'lims_evaluation' => $wl->evaluation ?: null,
             'lims_sample_status' => $wl->sample_status ?: null,
             'lims_inc_status' => $wl->inc_sample_status ?: null,
             'lims_all_final' => $wl->worklist_all_final,
             'lims_qcm_ready' => $wl->isQcmReady(),
+            'lims_nc_number' => $ncNumber,
+            'lims_nc_url' => $ncUrl,
             'lims_synced_at' => now(),
         ];
         foreach ($newState as $k => $v) {
