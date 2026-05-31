@@ -54,9 +54,24 @@ class AutoScheduler
     }
 
     /** Book one person into the next available day. Returns the reservation or null. */
-    public function bookNext(Qualification $q, ?CarbonImmutable $after = null): ?Reservation
+    /**
+     * Advance a qualification to Run Scheduled when a run is booked, regardless of which path booked
+     * it (auto-scheduler, the Reservation Board, or operator self-service). This is the single source
+     * of truth so a booking always moves the card consistently. Only advances from the pre-run stages
+     * (class pending/complete, or unset); never drags a card backwards from an in-progress run.
+     */
+    public static function markScheduled(Qualification $q): void
     {
-        if (! $q->personnel_id) return null;
+        $pre = [WorkflowStage::ClassPending->value, WorkflowStage::ClassComplete->value, null];
+        if (in_array($q->workflow_stage?->value, $pre, true)) {
+            $q->workflow_stage = WorkflowStage::RunScheduled;
+            $q->stage_changed_at = now();
+            $q->save();
+        }
+    }
+
+    public function bookNext(Qualification $q, ?CarbonImmutable $after = null): ?Reservation
+    {        if (! $q->personnel_id) return null;
 
         // already actively booked? skip
         $active = Reservation::where('personnel_id', $q->personnel_id)
@@ -75,12 +90,8 @@ class AutoScheduler
             'notes' => 'Auto-scheduled',
         ]);
 
-        // advance the card to Run Scheduled
-        if (in_array($q->workflow_stage?->value, ['class_complete', null], true)) {
-            $q->workflow_stage = WorkflowStage::RunScheduled;
-            $q->stage_changed_at = now();
-            $q->save();
-        }
+        // advance the card to Run Scheduled (single source of truth for every booking path)
+        self::markScheduled($q);
 
         $this->notifier->toPersonnel(
             $q->personnel,

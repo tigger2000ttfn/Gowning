@@ -122,58 +122,9 @@ class ViewQualification extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        $canApprove = fn () => (bool) (Auth::user()?->hasCapability(Capability::QaApprove));
-
-        return [
-            Action::make('override_due')
-                ->label('Override Due Date')
-                ->icon('heroicon-m-calendar')
-                ->color('warning')
-                ->visible($canApprove)
-                ->schema([
-                    DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('New Due Date')->required(),
-                    Textarea::make('reason')->label('Reason (Recorded For Audit)')->required()->rows(2),
-                ])
-                ->fillForm(fn ($record) => ['due_date' => $record->due_date])
-                ->action(function ($record, array $data) {
-                    $old = $record->due_date?->toDateString();
-                    $record->update(['due_date' => $data['due_date']]);
-                    $record->comments()->create([
-                        'user_id' => Auth::id(),
-                        'author_name' => Auth::user()?->name,
-                        'body' => "QA overrode due date ({$old} to {$data['due_date']}). Reason: {$data['reason']}",
-                    ]);
-                    Notification::make()->success()->title('Due date updated')->send();
-                }),
-
-            Action::make('determination')
-                ->label('QA Determination')
-                ->icon('heroicon-m-clipboard-document-check')
-                ->color('info')
-                ->visible($canApprove)
-                ->schema([
-                    Select::make('outcome')->label('Determination')->options([
-                        'retrain' => 'Require retraining (gowning class again)',
-                        'requalify' => 'Requalify (reset to 3 initial runs)',
-                        'continue' => 'Continue current cycle (no change)',
-                    ])->required(),
-                    Textarea::make('note')->label('QA Note')->required()->rows(3),
-                ])
-                ->action(function ($record, array $data) {
-                    $record->comments()->create([
-                        'user_id' => Auth::id(),
-                        'author_name' => Auth::user()?->name,
-                        'body' => "QA determination: {$data['outcome']}. {$data['note']}",
-                    ]);
-                    if ($data['outcome'] === 'requalify') {
-                        $record->update([
-                            'status' => 'pending',
-                            'runs_completed' => 0,
-                            'runs_required' => (int) Setting::get('initial_runs_required', 3),
-                        ]);
-                    }
-                    Notification::make()->success()->title('Determination recorded')->send();
-                }),
-        ];
+        // QA determination and due-date overrides are NOT done here. Determinations belong to the
+        // QA Review pipeline (Lab Review -> QCM sign-off -> QA Review), and due-date overrides are an
+        // admin function handled elsewhere. Active Runs is a read-only view of the live cycle.
+        return [];
     }
 }

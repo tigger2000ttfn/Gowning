@@ -102,6 +102,11 @@ class MyQualification extends Page
                     'decided_at' => now(),
                     'notes' => 'Self-requested',
                 ]);
+                // advance the card to Run Scheduled so the booking shows on the boards and Active Runs
+                $q = \App\Models\Qualification::currentFor($this->person->id);
+                if ($q) {
+                    \App\Services\AutoScheduler::markScheduled($q);
+                }
                 Notification::make()->success()->title('Run Requested')
                     ->body('You are booked for ' . $slot->slot_date->gmpL() . '.')->send();
             });

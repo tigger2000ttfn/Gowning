@@ -85,12 +85,10 @@ class ReservationBoard extends Page
             'decided_at' => now(),
             'notes' => 'Added by analyst',
         ]);
-        // advance the person to Run Scheduled if they were waiting
+        // advance the person to Run Scheduled if they were waiting (shared helper, consistent everywhere)
         $q = \App\Models\Qualification::currentFor($this->addPersonnelId);
-        if ($q && in_array($q->workflow_stage?->value, ['class_complete', 'class_pending', null], true)) {
-            $q->workflow_stage = \App\Enums\WorkflowStage::RunScheduled;
-            $q->stage_changed_at = now();
-            $q->save();
+        if ($q) {
+            \App\Services\AutoScheduler::markScheduled($q);
         }
         $this->showAdd = false;
         $this->addPersonnelId = null;

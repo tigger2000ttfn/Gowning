@@ -70,6 +70,9 @@ class QualificationResource extends Resource
                         default => null,
                     })
                     ->color(fn ($s) => $s?->color() ?? 'gray'),
+                TextColumn::make('workflow_stage')->label('Stage')->badge()->sortable()
+                    ->formatStateUsing(fn ($s) => $s ? \App\Models\WorkflowStatus::labelFor('run', $s->value, $s->label()) : '—')
+                    ->color(fn ($s) => $s ? \Filament\Support\Colors\Color::hex($s->color()) : 'gray'),
                 TextColumn::make('runs_completed')->label('Passes')->icon('heroicon-m-check-circle')
                     ->formatStateUsing(fn ($state, $record) => "{$state} / {$record->runs_required}"),
                 TextColumn::make('qualified_date')->date()->placeholder('—')->sortable(),
