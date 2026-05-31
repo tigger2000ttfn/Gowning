@@ -251,12 +251,14 @@ class QaQueue extends Page
      *  full initial (3 runs) or annual requal (1 run). Resets the qualification accordingly. */
     // ===================== QA SIGN-OFF WIZARD (custom modal) =====================
     public ?int $wizQid = null;          // qualification under review
-    public string $wizStep = 'review';   // review | pass | fail
+    public string $wizStep = 'review';   // review | pass | reject | fail
     public string $wizMeaning = 'Approved';
     public string $wizPassword = '';
     public string $wizPath = 'requal_three';
     public bool $wizRetrain = false;
     public string $wizNote = '';
+    public string $wizReason = '';       // approval/reject reason (dropdown)
+    public string $wizComment = '';      // free-text comment
 
     public function openSignoff(int $qid): void
     {
@@ -267,10 +269,35 @@ class QaQueue extends Page
         $this->wizPath = 'requal_three';
         $this->wizRetrain = false;
         $this->wizNote = '';
+        $this->wizReason = '';
+        $this->wizComment = '';
     }
     public function closeSignoff(): void { $this->wizQid = null; }
     public function openDetermination(int $qid): void { $this->openSignoff($qid); $this->wizStep = 'fail'; }
-    public function wizSetStep(string $s): void { if (in_array($s, ['review','pass','fail'], true)) $this->wizStep = $s; }
+
+    /** Optional reasons a QA approver might note when approving. */
+    public function approveReasons(): array
+    {
+        return [
+            'meets_criteria' => 'Meets Acceptance Criteria',
+            'reviewed_complete' => 'Record Reviewed And Complete',
+            'veeva_verified' => 'Veeva Report Verified',
+        ];
+    }
+
+    /** Reasons for sending a run back to Lab Review. */
+    public function rejectReasons(): array
+    {
+        return [
+            'incomplete_data' => 'Incomplete Data',
+            'veeva_missing' => 'Veeva Report Missing Or Wrong',
+            'worklist_mismatch' => 'Worklist Mismatch',
+            'needs_reread' => 'Plate Read Needs Another Look',
+            'wrong_result' => 'Result Looks Incorrect',
+            'other' => 'Other (See Comment)',
+        ];
+    }
+    public function wizSetStep(string $s): void { if (in_array($s, ['review','pass','reject','fail'], true)) $this->wizStep = $s; }
 
     /** Details payload for the wizard's review step. */
     public function wizData(): ?array
@@ -324,12 +351,23 @@ class QaQueue extends Page
     {
         $q = Qualification::with('personnel')->find($this->wizQid);
         if (! $q || ! $this->wizGuard($q)) return;
+        $reason = trim($this->wizReason);
+        $comment = trim($this->wizComment);
         ElectronicSignature::create([
             'signable_type' => Qualification::class, 'signable_id' => $q->id,
             'user_id' => Auth::id(), 'signer_name' => Auth::user()->name,
-            'meaning' => $this->wizMeaning ?: 'Approved',
-            'statement' => 'QA sign-off: qualification approved as complete.', 'signed_at' => now(),
+            'meaning' => 'QA Approved',
+            'statement' => 'QA approved this qualification as complete.'
+                . ($reason ? ' Reason: ' . $reason . '.' : '')
+                . ($comment ? ' Comment: ' . $comment : ''),
+            'signed_at' => now(),
         ]);
+        if ($reason || $comment) {
+            $q->comments()->create([
+                'user_id' => Auth::id(), 'author_name' => Auth::user()?->name,
+                'body' => 'QA approved.' . ($reason ? ' Reason: ' . $reason . '.' : '') . ($comment ? ' ' . $comment : ''),
+            ]);
+        }
         $q->workflow_stage = WorkflowStage::QaSignoff;
         $q->stage_changed_at = now();
         $q->status = 'qualified';
@@ -338,7 +376,39 @@ class QaQueue extends Page
         $q->save();
         \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::Qualified, ['personnel' => $q->personnel, 'qualification' => $q]);
         $this->wizQid = null;
-        Notification::make()->success()->title('Signed Off')->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
+        Notification::make()->success()->title('Approved')->body(($q->personnel?->full_name ?? 'Qualification') . ' is now Qualified.')->send();
+    }
+
+    /** REJECT: send the run back to Lab Review for another look, with a required reason + comment. */
+    public function finalizeReject(): void
+    {
+        $q = Qualification::with('personnel')->find($this->wizQid);
+        if (! $q || ! $this->wizGuard($q)) return;
+        $reason = trim($this->wizReason);
+        $comment = trim($this->wizComment);
+        if ($reason === '' || $comment === '') {
+            Notification::make()->warning()->title('Reason And Comment Required')
+                ->body('Select a reason and add a comment to send this back to Lab Review.')->send();
+            return;
+        }
+        ElectronicSignature::create([
+            'signable_type' => Qualification::class, 'signable_id' => $q->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name,
+            'meaning' => 'QA Returned To Lab',
+            'statement' => 'QA returned this qualification to Lab Review. Reason: ' . $reason . '. Comment: ' . $comment,
+            'signed_at' => now(),
+        ]);
+        $q->comments()->create([
+            'user_id' => Auth::id(), 'author_name' => Auth::user()?->name,
+            'body' => 'QA returned to Lab Review. Reason: ' . $reason . '. ' . $comment,
+        ]);
+        // Send it back to the lab's evaluation stage so QCM can re-review and re-release.
+        $q->workflow_stage = WorkflowStage::AwaitingResults;
+        $q->stage_changed_at = now();
+        $q->save();
+        $this->wizQid = null;
+        Notification::make()->success()->title('Returned To Lab Review')
+            ->body(($q->personnel?->full_name ?? 'Qualification') . ' was sent back to Lab Review.')->send();
     }
 
     /** FAIL: QA determination -> requalification path. */

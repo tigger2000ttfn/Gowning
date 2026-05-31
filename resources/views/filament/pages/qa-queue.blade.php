@@ -198,9 +198,25 @@
                             <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;">Two-person rule: you cannot sign off your own qualification.</div>
                         @endif
                     @elseif($wizStep === 'pass')
-                        <div style="font-size:13px;line-height:1.5;">By signing, I, <strong>{{ auth()->user()->name }}</strong>, certify I have reviewed this qualification record and approve it as complete. This electronic signature is the legally binding equivalent of my handwritten signature.</div>
-                        @if(! $wz['veeva'])<div style="font-size:12px;color:#C8102E;font-weight:600;">No Veeva report number is recorded for this run. Per SOP the report should be linked before sign-off.</div>@endif
-                        <div><label class="gqs-flbl">Signature Meaning</label><input type="text" wire:model="wizMeaning" class="gqs-fld"></div>
+                        <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Approve this qualification as complete for <strong>{{ $wz['name'] }}</strong>.</div>
+                        @if(! $wz['veeva'])<div style="font-size:12px;color:#C8102E;font-weight:600;">No Veeva report number is recorded for this run. The report should be linked before sign-off.</div>@endif
+                        <div><label class="gqs-flbl">Reason (Optional)</label>
+                            <select wire:model="wizReason" class="gqs-fld">
+                                <option value="">No reason needed</option>
+                                @foreach($this->approveReasons() as $val => $lbl)<option value="{{ $val }}">{{ $lbl }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div><label class="gqs-flbl">Comment (Optional)</label><input type="text" wire:model="wizComment" class="gqs-fld" placeholder="Optional note"></div>
+                        @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
+                    @elseif($wizStep === 'reject')
+                        <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Send this back to Lab Review for another look. A reason and comment are required.</div>
+                        <div><label class="gqs-flbl">Reason <span style="color:#C8102E;">*</span></label>
+                            <select wire:model="wizReason" class="gqs-fld">
+                                <option value="">Select a reason...</option>
+                                @foreach($this->rejectReasons() as $val => $lbl)<option value="{{ $val }}">{{ $lbl }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div><label class="gqs-flbl">Comment <span style="color:#C8102E;">*</span></label><input type="text" wire:model="wizComment" class="gqs-fld" placeholder="What needs another look?"></div>
                         @if($wz['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="wizPassword" class="gqs-fld"></div>@endif
                     @else
                         <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;line-height:1.5;">
@@ -222,11 +238,15 @@
                     <button type="button" wire:click="closeSignoff" class="gqs-btn gqs-btn-ghost">Cancel</button>
                     <span style="display:flex;gap:8px;">
                         @if($wizStep === 'review')
+                            <button type="button" wire:click="wizSetStep('reject')" class="gqs-btn" style="background:#6A6A72;color:#fff;" @disabled($wz['is_subject'])>Reject · Back To Lab</button>
                             <button type="button" wire:click="wizSetStep('fail')" class="gqs-btn" style="background:#C8102E;color:#fff;" @disabled($wz['is_subject'])>Fail · Determination</button>
-                            <button type="button" wire:click="wizSetStep('pass')" class="gqs-btn" style="background:#2E7D5B;color:#fff;" @disabled($wz['is_subject'])>Pass · Sign Off</button>
+                            <button type="button" wire:click="wizSetStep('pass')" class="gqs-btn" style="background:#2E7D5B;color:#fff;" @disabled($wz['is_subject'])>Approve</button>
                         @elseif($wizStep === 'pass')
                             <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
-                            <button type="button" wire:click="finalizeSignoff" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Sign Off → Qualified</button>
+                            <button type="button" wire:click="finalizeSignoff" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Approve → Qualified</button>
+                        @elseif($wizStep === 'reject')
+                            <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
+                            <button type="button" wire:click="finalizeReject" class="gqs-btn" style="background:#6A6A72;color:#fff;">Send Back To Lab</button>
                         @else
                             <button type="button" wire:click="wizSetStep('review')" class="gqs-btn gqs-btn-ghost">Back</button>
                             <button type="button" wire:click="finalizeFail" class="gqs-btn" style="background:#C8102E;color:#fff;">Record Determination → Requal</button>
