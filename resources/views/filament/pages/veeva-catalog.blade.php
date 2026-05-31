@@ -7,7 +7,7 @@
     '])
 
     @if ($tab === 'upload')
-        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Load the weekly Veeva export so report links auto-fill from the document number entered at sign-off. Links are built from the Document ID column using the Vault address ({{ \App\Models\VeevaDocument::baseUrl() }}), or taken from a link column / embedded hyperlink when present. Re-importing updates existing entries and adds new ones, then backfills links on reports that have a number but no link.</div>
+        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Upload the weekly Veeva export, then map the columns and import. Report links are built automatically.</div>
 
         <form wire:submit.prevent>{{ $this->form }}</form>
 

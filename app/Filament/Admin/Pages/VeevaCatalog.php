@@ -5,12 +5,10 @@ namespace App\Filament\Admin\Pages;
 use App\Enums\Capability;
 use App\Models\VeevaDocument;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -61,18 +59,12 @@ class VeevaCatalog extends Page implements HasForms
     public function form(Schema $schema): Schema
     {
         return $schema->statePath('data')->components([
-            Section::make('1. Load The Weekly Veeva Export')->icon('heroicon-o-arrow-up-tray')->schema([
-                FileUpload::make('csv')
-                    ->label('Veeva Export (CSV or XLSX)')
-                    ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
-                    ->storeFiles(true)
-                    ->directory('imports')
-                    ->helperText('A Veeva export with a header row: document number, link, title, type, status, version. XLSX is preferred when the document number is a hyperlink (the link is read from the cell). CSV drops hyperlinks, so include a link/permalink column if exporting CSV.'),
-                Textarea::make('paste')
-                    ->label('Or Paste CSV / TSV')
-                    ->rows(5)
-                    ->helperText('Paste rows including a header. Tabs or commas both work.'),
-            ]),
+            FileUpload::make('csv')
+                ->label('Veeva Export File')
+                ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
+                ->storeFiles(true)
+                ->directory('imports')
+                ->helperText('Excel (.xlsx) or CSV with a header row.'),
         ]);
     }
 
@@ -80,22 +72,26 @@ class VeevaCatalog extends Page implements HasForms
     {
         $rows = [];
         $this->hyperlinks = [];
-        $paste = trim((string) ($this->data['paste'] ?? ''));
         $path = $this->data['csv'] ?? null;
         $full = $path ? Storage::disk('local')->path($path) : null;
-        $isXlsx = $full && preg_match('/\.xlsx$/i', $full);
+        if (! $path || ! $full || ! is_file($full)) {
+            Notification::make()->danger()->title('Upload A File First')->send();
+            return;
+        }
+        // Detect xlsx by content signature (PK zip header), not extension - Filament's stored
+        // filename may not keep .xlsx, which previously caused xlsx to be read as CSV and fail.
+        $isXlsx = false;
+        $fh0 = fopen($full, 'rb');
+        if ($fh0) {
+            $sig = fread($fh0, 4);
+            fclose($fh0);
+            $isXlsx = (substr($sig, 0, 2) === 'PK') || preg_match('/\.xlsx$/i', (string) $full);
+        }
 
-        if ($paste !== '') {
-            $lines = preg_split('/\r\n|\r|\n/', $paste);
-            $delim = str_contains($lines[0] ?? '', "\t") ? "\t" : ',';
-            foreach ($lines as $ln) {
-                if (trim($ln) === '') continue;
-                $rows[] = str_getcsv($ln, $delim);
-            }
-        } elseif ($isXlsx) {
-            if (! is_file($full)) { Notification::make()->danger()->title('File Not Found')->send(); return; }
+        if ($isXlsx) {
             $read = \App\Support\XlsxReader::read($full);
             $rows = $read['rows'];
+            if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The Excel File')->body('No rows were found. Try re-saving as .xlsx, or export as CSV.')->send(); return; }
             // Re-index hyperlinks from absolute row index to the row's position after the header is shifted.
             // We shift by one (header row) below; capture raw here and remap after array_shift.
             $rawLinks = $read['hyperlinks'];
@@ -117,8 +113,6 @@ class VeevaCatalog extends Page implements HasForms
             $this->imported = false;
             return;
         } else {
-            if (! $path) { Notification::make()->danger()->title('Upload Or Paste First')->send(); return; }
-            if (! is_file($full)) { Notification::make()->danger()->title('File Not Found')->send(); return; }
             $fh = fopen($full, 'r');
             while (($r = fgetcsv($fh)) !== false) {
                 if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
