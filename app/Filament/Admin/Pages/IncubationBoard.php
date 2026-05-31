@@ -228,6 +228,15 @@ class IncubationBoard extends Page
     }
     public function closeEnterResults(): void { $this->erQid = null; }
 
+    /** Worklist suggestions for autocomplete (numbers only; EM- shown in the UI). */
+    public function erWorklistSuggestions(): array
+    {
+        $term = preg_replace('/^EM[-\s]*/i', '', trim((string) ($this->er['worklist'] ?? '')));
+        $q = \App\Models\LimsWorklist::query()->orderByDesc('id')->limit(15);
+        if ($term !== '') $q->where('worklist', 'ilike', '%' . $term . '%');
+        return $q->pluck('worklist')->map(fn ($w) => preg_replace('/^EM-/i', '', (string) $w))->filter()->unique()->values()->all();
+    }
+
     public function erPersonName(): ?string
     {
         return $this->erQid ? (Qualification::with('personnel')->find($this->erQid)?->personnel?->full_name ?? 'Operator') : null;
@@ -239,8 +248,31 @@ class IncubationBoard extends Page
         $q = Qualification::with('personnel')->find($this->erQid);
         if (! $q) { $this->erQid = null; return; }
         $overall = $this->er['overall'] ?? '';
+
+        // The worklist can be recorded WITHOUT a result yet (the pass/fail comes later, separately). If no
+        // result is chosen, we just save/link the worklist and leave the run pending - no stage change.
+        $wlInput = trim((string) ($this->er['worklist'] ?? ''));
         if (! in_array($overall, ['pass', 'fail'], true)) {
-            Notification::make()->danger()->title('Select A Result')->body('Choose Pass or Fail.')->send();
+            if ($wlInput === '') {
+                Notification::make()->danger()->title('Nothing To Save')->body('Enter the worklist (and optionally a Pass/Fail result).')->send();
+                return;
+            }
+            $wl = strtoupper($wlInput);
+            if (! str_starts_with($wl, 'EM-')) { $wl = 'EM-' . ltrim(preg_replace('/^EM[-\s]*/i', '', $wl), '-'); }
+            $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+            if ($run) {
+                $run->lims_worklist_id = $wl;
+                if (($run->result instanceof \BackedEnum ? $run->result->value : $run->result) === null) {
+                    $run->result = \App\Enums\RunResult::Pending;
+                }
+                $run->save();
+                app(\App\Services\WorklistSync::class)->syncRun($run);
+            }
+            $q->lims_worklist_id = $wl;
+            if (($this->er['lms_number'] ?? '') !== '') $q->lms_number = $this->er['lms_number'];
+            $q->save();
+            $this->erQid = null;
+            Notification::make()->success()->title('Worklist Saved')->body($wl . ' linked. Enter the Pass/Fail result when the read is complete.')->send();
             return;
         }
         $worklist = trim((string) ($this->er['worklist'] ?? ''));
@@ -248,9 +280,18 @@ class IncubationBoard extends Page
             Notification::make()->danger()->title('Worklist Required')->body('Enter the LIMS worklist before recording results.')->send();
             return;
         }
+        // Normalize the EM- worklist prefix (the input collects numbers only).
+        $worklist = strtoupper($worklist);
+        if (! str_starts_with($worklist, 'EM-')) { $worklist = 'EM-' . ltrim(preg_replace('/^EM[-\s]*/i', '', $worklist), '-'); }
         if ($overall === 'fail' && trim((string) ($this->er['trackwise_id'] ?? '')) === '') {
             Notification::make()->danger()->title('TrackWise NC Required')->body('A fail requires the TrackWise NC number (per SOP-AST-28480).')->send();
             return;
+        }
+        // Normalize the NC- TrackWise prefix on a fail (input collects numbers only).
+        if ($overall === 'fail') {
+            $tw = strtoupper(trim((string) $this->er['trackwise_id']));
+            if (! str_starts_with($tw, 'NC-')) { $tw = 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', $tw), '-'); }
+            $this->er['trackwise_id'] = $tw;
         }
         if (! empty($this->er['lms_number'])) { $q->lms_number = $this->er['lms_number']; }
         $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();

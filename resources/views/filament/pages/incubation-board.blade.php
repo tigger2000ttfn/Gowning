@@ -195,25 +195,32 @@
                 <div class="gqs-modal-body" style="display:flex;flex-direction:column;gap:13px;">
                     <div>
                         <label class="gqs-flbl">LIMS Worklist <span style="color:#C8102E;">*</span></label>
-                        <input type="text" wire:model="er.worklist" class="gqs-fld" placeholder="EM-...">
-                        <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Required. Links this run to its LIMS worklist so results and incubation sync.</div>
+                        <div style="display:flex;align-items:stretch;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;overflow:hidden;">
+                            <span style="display:flex;align-items:center;padding:0 12px;background:var(--gqs-surface-2,#F1F1F4);font-weight:800;color:var(--gqs-text-dim,#6A6A72);border-right:1px solid var(--gqs-border,#C4C4CC);">EM-</span>
+                            <input type="text" wire:model.live.debounce.250ms="er.worklist" list="er-wl-suggest" class="gqs-fld" style="border:none;border-radius:0;flex:1;" placeholder="type the numbers">
+                        </div>
+                        <datalist id="er-wl-suggest">@foreach($this->erWorklistSuggestions() as $s)<option value="{{ $s }}"></option>@endforeach</datalist>
+                        <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Type only the numbers - EM- is added automatically. You can save the worklist now and enter the result later.</div>
                     </div>
                     <div>
                         <label class="gqs-flbl">LMS Number (Optional)</label>
                         <input type="text" wire:model="er.lms_number" class="gqs-fld" placeholder="Optional tracking number">
                     </div>
                     <div>
-                        <label class="gqs-flbl">Overall Result <span style="color:#C8102E;">*</span></label>
+                        <label class="gqs-flbl">Overall Result <span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(optional - leave blank to record worklist only)</span></label>
                         <div style="display:flex;gap:8px;margin-top:4px;">
-                            <button type="button" wire:click="$set('er.overall','pass')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='pass' ? 'background:#2E7D5B;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Pass</button>
-                            <button type="button" wire:click="$set('er.overall','fail')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='fail' ? 'background:#C8102E;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Fail</button>
+                            <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'pass' ? '' : 'pass')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='pass' ? 'background:#2E7D5B;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Pass</button>
+                            <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'fail' ? '' : 'fail')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='fail' ? 'background:#C8102E;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Fail</button>
                         </div>
                     </div>
                     @if(($er['overall'] ?? '') === 'fail')
                         <div>
                             <label class="gqs-flbl">TrackWise NC Number <span style="color:#C8102E;">*</span></label>
-                            <input type="text" wire:model="er.trackwise_id" class="gqs-fld" placeholder="NC number">
-                            <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Required on a fail (per SOP-AST-28480).</div>
+                            <div style="display:flex;align-items:stretch;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;overflow:hidden;">
+                                <span style="display:flex;align-items:center;padding:0 12px;background:var(--gqs-surface-2,#F1F1F4);font-weight:800;color:var(--gqs-text-dim,#6A6A72);border-right:1px solid var(--gqs-border,#C4C4CC);">NC-</span>
+                                <input type="text" wire:model="er.trackwise_id" class="gqs-fld" style="border:none;border-radius:0;flex:1;" placeholder="type the numbers">
+                            </div>
+                            <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Required on a fail (per SOP-AST-28480). Type only the numbers.</div>
                         </div>
                         <div>
                             <label class="gqs-flbl">Observation / Note (Optional)</label>
@@ -223,7 +230,7 @@
                 </div>
                 <div class="gqs-modal-foot" style="justify-content:flex-end;">
                     <button wire:click="closeEnterResults" class="gqs-btn gqs-btn-ghost">Cancel</button>
-                    <button wire:click="saveEnterResults" class="gqs-btn gqs-btn-primary">Record Results</button>
+                    <button wire:click="saveEnterResults" class="gqs-btn gqs-btn-primary">{{ ($er['overall'] ?? '') === '' ? 'Save Worklist' : 'Record Result' }}</button>
                 </div>
             </div>
         </div>
