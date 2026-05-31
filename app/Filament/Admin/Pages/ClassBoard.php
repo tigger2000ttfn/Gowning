@@ -144,6 +144,9 @@ class ClassBoard extends Page
             $color = \App\Models\WorkflowStatus::colorFor('class', $key, $meta['color']);
             $cards = ($byStatus[$key] ?? collect())->map(fn ($e) => [
                 'id' => $e->id,
+                'personnel_id' => $e->personnel_id,
+                'class_session_id' => $e->class_session_id,
+                'class_id' => $e->classSession?->training_class_id,
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
@@ -249,6 +252,86 @@ class ClassBoard extends Page
         $this->showAdd = false;
         $this->addPersonnelId = null;
         \Filament\Notifications\Notification::make()->success()->title('Enrollment added')->send();
+    }
+
+    // ----- Rebook a No-Show into another session -----
+    public ?int $rebookEnrollmentId = null;
+    public ?int $rebookPersonnelId = null;
+    public ?int $rebookClassId = null;
+    public string $rebookMode = 'next';        // 'next' | 'specific'
+    public ?int $rebookSessionId = null;
+
+    public function openRebook(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        $this->rebookEnrollmentId = $e->id;
+        $this->rebookPersonnelId = $e->personnel_id;
+        $this->rebookClassId = $e->classSession?->training_class_id;
+        $this->rebookMode = 'next';
+        $this->rebookSessionId = null;
+    }
+    public function closeRebook(): void { $this->rebookEnrollmentId = null; $this->rebookSessionId = null; }
+
+    /** Upcoming open sessions, preferring the same class first, for the specific-session picker. */
+    public function rebookSessionOptions(): array
+    {
+        $q = \App\Models\ClassSession::with('trainingClass')
+            ->where('status', 'open')
+            ->whereDate('session_date', '>=', now()->toDateString())
+            ->orderBy('session_date')->get();
+        return $q->mapWithKeys(fn ($s) => [$s->id =>
+            ($s->trainingClass?->name ?? 'Class') . ' · ' . $s->session_date?->gmp()
+            . ($s->training_class_id === $this->rebookClassId ? '' : ' (other class)')
+        ])->all();
+    }
+
+    /** The soonest upcoming open session of the same class (fallback: any class). */
+    protected function nextSessionForRebook(): ?\App\Models\ClassSession
+    {
+        $base = \App\Models\ClassSession::where('status', 'open')
+            ->whereDate('session_date', '>=', now()->toDateString());
+        $sameClass = (clone $base)->where('training_class_id', $this->rebookClassId)
+            ->orderBy('session_date')->first();
+        return $sameClass ?: (clone $base)->orderBy('session_date')->first();
+    }
+
+    public function confirmRebook(): void
+    {
+        $old = ClassEnrollment::find($this->rebookEnrollmentId);
+        if (! $old) { $this->closeRebook(); return; }
+
+        $session = $this->rebookMode === 'specific' && $this->rebookSessionId
+            ? \App\Models\ClassSession::find($this->rebookSessionId)
+            : $this->nextSessionForRebook();
+
+        if (! $session) {
+            \Filament\Notifications\Notification::make()->warning()->title('No Open Session Available')
+                ->body('There is no upcoming open session to rebook into. Schedule one first, or pick a specific session.')->send();
+            return;
+        }
+
+        $person = $old->personnel;
+        // Create (or revive) the enrollment on the target session.
+        $new = ClassEnrollment::firstOrCreate(
+            ['class_session_id' => $session->id, 'personnel_id' => $old->personnel_id],
+            [
+                'name' => $person?->full_name ?? $old->name,
+                'email' => $person?->email ?? $old->email,
+                'employee_id' => $person?->employee_id ?? $old->employee_id,
+                'status' => 'signed_up',
+                'signed_up_at' => now(),
+            ]
+        );
+        if ($new->status !== 'signed_up') {
+            $new->markStatus('signed_up', \Illuminate\Support\Facades\Auth::id());
+        }
+        // Retire the old no-show enrollment so it leaves the board.
+        $old->markStatus('historical', \Illuminate\Support\Facades\Auth::id());
+
+        $this->closeRebook();
+        \Filament\Notifications\Notification::make()->success()->title('Rebooked')
+            ->body(($person?->full_name ?? 'Trainee') . ' signed up for ' . ($session->trainingClass?->name ?? 'the class') . ' on ' . $session->session_date?->gmp() . '.')->send();
     }
 
     public function moveCard(int $id, string $toStatus): void

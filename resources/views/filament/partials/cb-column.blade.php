@@ -10,6 +10,9 @@
                 <div class="kanban-meta">{{ $card['employee_id'] }}@if(!empty($card['department'])) · {{ $card['department'] }}@endif</div>
                 @if($card['class'])<div class="kanban-slot">{{ $card['class'] }}@if($card['date']) · {{ $card['date'] }}@endif</div>@endif
                 <span class="cb-pill" style="background:{{ $card['status_color'] }};">{{ $card['status_label'] }}</span>
+                @if($status === 'no_show' && !empty($card['personnel_id']))
+                    <button type="button" wire:click="openRebook({{ $card['id'] }})" onclick="event.stopPropagation()" class="cb-rebook-btn">Rebook</button>
+                @endif
             </div>
         @endforeach
     </div>

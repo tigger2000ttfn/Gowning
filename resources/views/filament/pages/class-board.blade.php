@@ -198,6 +198,43 @@
             </div>
         </div>
     @endif
+
+    {{-- Rebook a No-Show into another session --}}
+    @if($rebookEnrollmentId)
+        <div class="gqs-modal-overlay" wire:click.self="closeRebook">
+            <div class="gqs-modal" style="width:500px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#1F6FB2,#16517F);padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0;">
+                    <span style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-arrow-path" style="width:26px;height:26px;color:#fff;"/>
+                    </span>
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Rebook Trainee</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <p style="margin:0 0 12px;font-size:13px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">Sign this person up for another class session. The No-Show entry is retired once rebooked.</p>
+                    <label class="gqs-flbl">Rebook To</label>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px;">
+                        <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;">
+                            <input type="radio" wire:model.live="rebookMode" value="next"> Next available session (same class)
+                        </label>
+                        <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;">
+                            <input type="radio" wire:model.live="rebookMode" value="specific"> A specific session
+                        </label>
+                    </div>
+                    @if($rebookMode === 'specific')
+                        <label class="gqs-flbl">Session</label>
+                        <select wire:model="rebookSessionId" class="gqs-fld">
+                            <option value="">Select a session...</option>
+                            @foreach($this->rebookSessionOptions() as $sid => $lbl)<option value="{{ $sid }}">{{ $lbl }}</option>@endforeach
+                        </select>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeRebook" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="confirmRebook" class="gqs-btn gqs-btn-primary">Rebook</button>
+                </div>
+            </div>
+        </div>
+    @endif
     <style>
         .dm-sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#A4123F;margin:16px 0 8px;border-bottom:1px solid var(--gqs-border,#ECECEF);padding-bottom:4px;}
         .dm-sec:first-of-type{margin-top:0;}
@@ -206,6 +243,8 @@
         .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
         .dark .dm-v{color:#fff;}
         .cb-pill{font-size:10.5px;font-weight:700;padding:2px 10px;border-radius:20px;color:#fff;display:inline-block;margin-top:6px;}
+        .cb-rebook-btn{margin-top:8px;display:block;width:100%;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:6px;border:none;background:#1F6FB2;color:#fff;cursor:pointer;}
+        .cb-rebook-btn:hover{background:#16517F;}
     </style>
     <style>
         .sb-fullbleed{width:100%;}
