@@ -106,6 +106,61 @@
         </div>
     </div>
 
+    {{-- Pipeline aging: who has been sitting in a stage too long --}}
+    <div class="gqs-panel">
+        <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clock"/> Run Pipeline Aging (Days In Current Stage)</div>
+        <div class="gqs-panel-body" style="padding:0;">
+            @if($this->pipelineAging->isEmpty())
+                <div class="gqs-empty" style="padding:20px;">Nobody is currently in the run pipeline.</div>
+            @else
+                <table class="gqs-tbl">
+                    <thead><tr><th>Name</th><th>Employee</th><th>Stage</th><th>Type</th><th>Days In Stage</th></tr></thead>
+                    <tbody>
+                        @foreach($this->pipelineAging as $row)
+                            @php $q = $row->qualification; $stale = $row->days >= 14; @endphp
+                            <tr>
+                                <td>{{ $q->personnel?->full_name ?? 'Unknown' }}</td>
+                                <td>{{ $q->personnel?->employee_id ?: '—' }}</td>
+                                <td>{{ \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage?->value, $q->workflow_stage?->label() ?? '—') }}</td>
+                                <td>{{ $q->sessionLabel() }}</td>
+                                <td><span class="gqs-pill {{ $stale ? 'gqs-pill-red' : 'gqs-pill-gray' }}">{{ $row->days }} day{{ $row->days === 1 ? '' : 's' }}</span></td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
+
+    {{-- Full status roster --}}
+    <div class="gqs-panel">
+        <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-table-cells"/> Qualification Status Roster</div>
+        <div class="gqs-panel-body" style="padding:0;">
+            @if($this->statusRoster->isEmpty())
+                <div class="gqs-empty" style="padding:20px;">No active qualification records.</div>
+            @else
+                <table class="gqs-tbl">
+                    <thead><tr><th>Name</th><th>Employee</th><th>Department</th><th>Type</th><th>Stage</th><th>Runs</th><th>Due Date</th><th>Qualified</th></tr></thead>
+                    <tbody>
+                        @foreach($this->statusRoster as $q)
+                            @php $pd = $q->isPastDue(); @endphp
+                            <tr>
+                                <td>{{ $q->personnel?->full_name ?? 'Unknown' }}</td>
+                                <td>{{ $q->personnel?->employee_id ?: '—' }}</td>
+                                <td>{{ $q->personnel?->department ?: '—' }}</td>
+                                <td>{{ $q->sessionLabel() }}</td>
+                                <td>{{ \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage?->value, $q->workflow_stage?->label() ?? '—') }}</td>
+                                <td>{{ (int) $q->runs_completed }}/{{ (int) $q->runs_required }}</td>
+                                <td style="{{ $pd ? 'color:#C8102E;font-weight:700;' : '' }}">{{ $q->due_date?->gmp() ?? '—' }}</td>
+                                <td>{{ $q->qualified_date?->gmp() ?? '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
+        </div>
+    </div>
+
     <div class="gqs-panel">
         <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-down-tray"/> LIMS Handoff Export</div>
         <div class="gqs-panel-body" style="padding:16px;">

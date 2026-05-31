@@ -70,6 +70,36 @@ class Reports extends Page
                 'open' => \App\Models\NonConformance::where('status', 'open')->count()];
     }
 
+    /** Qualification status roster: every current (non-superseded) record with status, stage, due. */
+    public function getStatusRosterProperty()
+    {
+        return Qualification::with('personnel')
+            ->whereNull('superseded_at')->whereNull('archived_at')
+            ->get()
+            ->sortBy(fn ($q) => $q->personnel?->full_name ?? 'zzz')
+            ->values();
+    }
+
+    /** Pipeline aging: how long each in-pipeline record has sat in its current stage. */
+    public function getPipelineAgingProperty()
+    {
+        $inPipeline = ['class_complete','run_scheduled','run_performed','incubating','awaiting_results','results_released','qa_review'];
+        return Qualification::with('personnel')
+            ->whereIn('workflow_stage', $inPipeline)
+            ->whereNull('superseded_at')
+            ->get()
+            ->map(function ($q) {
+                $since = $q->stage_changed_at ?: $q->updated_at;
+                $days = $since ? (int) floor($since->diffInDays(now())) : 0;
+                return (object) [
+                    'qualification' => $q,
+                    'days' => $days,
+                ];
+            })
+            ->sortByDesc('days')
+            ->values();
+    }
+
     /** Multi-sheet XLSX compliance workbook (no composer dependency, via SimpleXlsx). */
     public function exportXlsx(): StreamedResponse
     {
