@@ -1,15 +1,18 @@
 <div>
 @if($detail)
     <div class="gqs-modal-overlay" wire:click.self="close" style="z-index:9999;">
-        <div class="gqs-modal" style="width:680px;max-width:96vw;">
-            <div style="background:linear-gradient(135deg,{{ $detail['stage_color'] }},{{ $detail['stage_color'] }}CC);padding:18px 20px;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-                <div>
-                    <div style="font-weight:800;font-size:19px;color:#fff;">{{ $detail['name'] }}</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,.92);">{{ $detail['employee_id'] }}@if($detail['job_title']) · {{ $detail['job_title'] }}@endif@if($detail['department']) · {{ $detail['department'] }}@endif</div>
+        <div class="gqs-modal qm-modal" style="width:680px;max-width:96vw;">
+            <div class="qm-head" style="background:linear-gradient(135deg,{{ $detail['stage_color'] }},{{ $detail['stage_color'] }}CC);">
+                <div style="flex:1;min-width:0;">
+                    <div class="qm-head-name">
+                        <span style="font-weight:800;font-size:16px;color:#fff;">{{ $detail['name'] }}</span>
+                        <span style="background:rgba(255,255,255,.24);color:#fff;font-weight:700;font-size:11px;padding:3px 10px;border-radius:999px;white-space:nowrap;">{{ $detail['stage_label'] }}</span>
+                    </div>
+                    <div style="font-size:11.5px;color:rgba(255,255,255,.9);margin-top:3px;">{{ $detail['employee_id'] }}@if($detail['job_title']) · {{ $detail['job_title'] }}@endif@if($detail['department']) · {{ $detail['department'] }}@endif</div>
                 </div>
-                <span style="background:rgba(255,255,255,.22);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;border-radius:999px;white-space:nowrap;">{{ $detail['stage_label'] }}</span>
+                <button type="button" wire:click="close" class="qm-x" title="Close" aria-label="Close">&times;</button>
             </div>
-            <div class="gqs-modal-body" style="background:var(--gqs-surface-2,#F4F4F7);">
+            <div class="gqs-modal-body qm-body" style="background:var(--gqs-surface-2,#F4F4F7);">
                 {{-- Pipeline stepper card --}}
                 <div class="qm-card">
                     <div class="qm-card-h">Pipeline</div>
@@ -99,7 +102,7 @@
                     </div>
                 @endif
             </div>
-            <div class="gqs-modal-foot" style="justify-content:space-between;">
+            <div class="gqs-modal-foot qm-foot" style="justify-content:space-between;">
                 <button wire:click="close" class="gqs-btn gqs-btn-ghost">Close</button>
                 <span style="display:flex;gap:8px;">
                     @if($detail['can_signoff'])
@@ -114,19 +117,33 @@
     </div>
 
     <style>
-        .qm-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E8);border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+        /* Dedicated layout for the shared record modal: fixed header + footer, body scrolls internally. */
+        .qm-modal{display:flex;flex-direction:column;overflow:hidden;max-height:90vh;}
+        .qm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 18px;border-radius:16px 16px 0 0;flex-shrink:0;}
+        .qm-head-name{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+        .qm-x{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;}
+        .qm-x:hover{background:rgba(255,255,255,.34);}
+        .qm-body{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;gap:0;}
+        .qm-foot{flex-shrink:0;border-top:1px solid var(--gqs-border,#E2E2E8);}
+        .qm-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E8);border-radius:11px;overflow:hidden;margin-bottom:11px;}
         .qm-card:last-child{margin-bottom:0;}
-        .qm-card-h{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--gqs-text-dim,#8A8A93);margin-bottom:11px;}
-        .qm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+        .qm-card-h{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;background:#26262C;padding:7px 14px;}
+        .qm-card > .qm-grid, .qm-card > .qm-step, .qm-card > table{margin:0;}
+        .qm-card .qm-grid{padding:13px 14px;}
+        .qm-card .qm-step{padding:13px 14px 9px;}
+        .qm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
         @media (max-width:560px){.qm-grid{grid-template-columns:1fr 1fr;}}
+        .qm-body .dm-l{font-size:9.5px;}
+        .qm-body .dm-v{font-size:12.5px;font-weight:600;}
+        .qm-body table.gqs-tbl{font-size:11.5px;}
         .qm-step{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding-bottom:4px;}
-        .qm-step-cell{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:62px;position:relative;}
-        .qm-step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid var(--gqs-border,#E5E5EA);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#9A9AA4);z-index:1;}
+        .qm-step-cell{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:58px;position:relative;}
+        .qm-step-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:2px solid var(--gqs-border,#E5E5EA);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#9A9AA4);z-index:1;}
         .qm-step-cell.done .qm-step-dot{background:#2E7D5B;border-color:#2E7D5B;color:#fff;}
         .qm-step-cell.current .qm-step-dot{background:#1F6FB2;border-color:#1F6FB2;color:#fff;box-shadow:0 0 0 4px rgba(31,111,178,.18);}
-        .qm-step-lbl{font-size:9.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;white-space:nowrap;}
+        .qm-step-lbl{font-size:9px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;white-space:nowrap;}
         .qm-step-cell.current .qm-step-lbl{color:#1F6FB2;font-weight:800;}
-        .qm-step-bar{position:absolute;top:11px;left:50%;width:100%;height:2px;background:var(--gqs-border,#E5E5EA);z-index:0;}
+        .qm-step-bar{position:absolute;top:10px;left:50%;width:100%;height:2px;background:var(--gqs-border,#E5E5EA);z-index:0;}
         .qm-step-cell.done .qm-step-bar{background:#2E7D5B;}
         .qm-step-cell:last-child .qm-step-bar{display:none;}
     </style>

@@ -2,7 +2,7 @@
     @php $stats = $this->stats(); $gaps = $this->gaps(); $totalGaps = $gaps['booked_no_qual']['count'] + $gaps['no_worklist']['count'] + $gaps['no_class']['count']; @endphp
 
     @include('filament.page-hero', ['title' => 'Active Runs', 'icon' => 'heroicon-o-shield-check', 'actions' => '
-        <button type="button" wire:click="setTab(\'roster\')" class="gqs-tab ' . ($tab === 'roster' ? 'active' : '') . '">Roster</button>
+        <button type="button" wire:click="setTab(\'roster\')" class="gqs-tab ' . ($tab === 'roster' ? 'active' : '') . '">Run List</button>
         <button type="button" wire:click="setTab(\'dashboard\')" class="gqs-tab ' . ($tab === 'dashboard' ? 'active' : '') . '">Dashboard</button>
     '])
 
