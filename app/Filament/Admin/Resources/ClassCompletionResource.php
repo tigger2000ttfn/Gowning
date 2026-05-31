@@ -85,48 +85,52 @@ class ClassCompletionResource extends Resource
                         default => ucwords(str_replace(['_', '-'], ' ', (string) $state)),
                     })
                     ->color(fn ($state) => strtolower((string) $state) === 'inferred' ? 'warning' : 'gray'),
-                TextColumn::make('importBatch.filename')->label('Import File')->placeholder('—')->toggleable(),
             ])
             ->recordActions([
-                \Filament\Actions\EditAction::make(),
-                \Filament\Actions\Action::make('undoRebook')
-                    ->label('Undo (Rebook)')
-                    ->icon('heroicon-m-arrow-uturn-left')
-                    ->color('warning')
-                    ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers))
-                    ->requiresConfirmation()
-                    ->modalHeading('Undo Class Completion')
-                    ->modalDescription('This removes the class completion and pushes the person back to "needs class" so they can rebook. Their qualification class-on-file is cleared and the card returns to Class Pending. Use when a class was marked complete in error.')
-                    ->modalSubmitActionLabel('Undo and Require Rebook')
-                    ->action(function (ClassCompletion $record) {
-                        $person = $record->personnel;
-                        // Reverse the qualification: clear class on file, send back to Class Pending.
-                        if ($person) {
-                            $q = \App\Models\Qualification::currentFor($person->id);
-                            if ($q) {
-                                $q->class_on_file = false;
-                                $q->class_on_file_date = null;
-                                if (in_array($q->workflow_stage?->value, ['class_complete', 'run_scheduled'], true)) {
-                                    $q->workflow_stage = \App\Enums\WorkflowStage::ClassPending;
-                                    $q->stage_changed_at = now();
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\EditAction::make()->icon('heroicon-m-pencil-square'),
+                    \Filament\Actions\Action::make('undoRebook')
+                        ->label('Undo (Rebook)')
+                        ->icon('heroicon-m-arrow-uturn-left')
+                        ->color('warning')
+                        ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers))
+                        ->requiresConfirmation()
+                        ->modalHeading('Undo Class Completion')
+                        ->modalDescription('This removes the class completion and pushes the person back to "needs class" so they can rebook. Their qualification class-on-file is cleared and the card returns to Class Pending. Use when a class was marked complete in error.')
+                        ->modalSubmitActionLabel('Undo and Require Rebook')
+                        ->action(function (ClassCompletion $record) {
+                            $person = $record->personnel;
+                            if ($person) {
+                                $q = \App\Models\Qualification::currentFor($person->id);
+                                if ($q) {
+                                    $q->class_on_file = false;
+                                    $q->class_on_file_date = null;
+                                    if (in_array($q->workflow_stage?->value, ['class_complete', 'run_scheduled'], true)) {
+                                        $q->workflow_stage = \App\Enums\WorkflowStage::ClassPending;
+                                        $q->stage_changed_at = now();
+                                    }
+                                    $q->save();
                                 }
-                                $q->save();
+                                $enroll = \App\Models\ClassEnrollment::where('personnel_id', $person->id)
+                                    ->whereIn('status', ['completed', 'pending_qa', 'qcm_reviewed', 'attended'])
+                                    ->latest('id')->first();
+                                if ($enroll) { $enroll->markStatus('cancelled', \Illuminate\Support\Facades\Auth::id()); }
                             }
-                            // Reopen the latest finished class enrollment so they appear as needing a class.
-                            $enroll = \App\Models\ClassEnrollment::where('personnel_id', $person->id)
-                                ->whereIn('status', ['completed', 'pending_qa', 'qcm_reviewed', 'attended'])
-                                ->latest('id')->first();
-                            if ($enroll) { $enroll->markStatus('cancelled', \Illuminate\Support\Facades\Auth::id()); }
-                        }
-                        $record->delete();
-                        \Filament\Notifications\Notification::make()->success()->title('Class Completion Undone')
-                            ->body(($person?->full_name ?? 'Person') . ' must rebook the gowning class.')->send();
-                    }),
-                \Filament\Actions\DeleteAction::make()
-                    ->label('Delete Entry')
-                    ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers))
-                    ->modalHeading('Delete Class Completion')
-                    ->modalDescription('Permanently remove this class completion record. This does NOT change the person\'s qualification status - use Undo (Rebook) for that. Use Delete only to remove a stray/duplicate entry.'),
+                            $record->delete();
+                            \Filament\Notifications\Notification::make()->success()->title('Class Completion Undone')
+                                ->body(($person?->full_name ?? 'Person') . ' must rebook the gowning class.')->send();
+                        }),
+                    \Filament\Actions\DeleteAction::make()
+                        ->label('Delete Entry')
+                        ->icon('heroicon-m-trash')
+                        ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers))
+                        ->modalHeading('Delete Class Completion')
+                        ->modalDescription('Permanently remove this class completion record. This does NOT change the person\'s qualification status - use Undo (Rebook) for that. Use Delete only to remove a stray/duplicate entry.'),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-horizontal')
+                    ->button()
+                    ->color('gray'),
             ])
             ->defaultSort('completion_date', 'desc');
     }

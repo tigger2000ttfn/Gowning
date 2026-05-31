@@ -1,7 +1,10 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Active Bookings', 'icon' => 'heroicon-o-user-group'])
-
     @php $stats = $this->stats(); $gaps = $this->gaps(); $totalGaps = $gaps['past_sessions']['count'] + $gaps['stale_signups']['count']; @endphp
+
+    @include('filament.page-hero', ['title' => 'Active Bookings', 'icon' => 'heroicon-o-user-group', 'actions' => '
+        <button type="button" wire:click="setTab(\'roster\')" class="gqs-tab ' . ($tab === 'roster' ? 'active' : '') . '">Roster</button>
+        <button type="button" wire:click="setTab(\'dashboard\')" class="gqs-tab ' . ($tab === 'dashboard' ? 'active' : '') . '">Dashboard</button>
+    '])
 
     <div class="gqs-stats">
         <div class="gqs-stat charcoal"><div class="n">{{ $stats['total'] }}</div><div class="l">Active Bookings</div><span class="wm"><x-filament::icon icon="heroicon-o-user-group"/></span></div>
@@ -9,12 +12,6 @@
         <div class="gqs-stat gold"><div class="n">{{ $stats['attended'] }}</div><div class="l">Attended</div><span class="wm"><x-filament::icon icon="heroicon-o-check"/></span></div>
         <div class="gqs-stat" style="--g1:#2563EB;--g2:#1E50C0;"><div class="n">{{ $stats['qcm'] }}</div><div class="l">QCM Reviewed</div><span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span></div>
         <div class="gqs-stat purple"><div class="n">{{ $stats['pending_qa'] }}</div><div class="l">Pending QA</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
-    </div>
-
-    <div class="ar-tabs">
-        <button type="button" wire:click="setTab('roster')" class="ar-tab {{ $tab === 'roster' ? 'active' : '' }}">Roster</button>
-        <button type="button" wire:click="setTab('dashboard')" class="ar-tab {{ $tab === 'dashboard' ? 'active' : '' }}">Dashboard</button>
-        @if($totalGaps > 0)<span class="ar-tab-badge" title="{{ $totalGaps }} need attention">{{ $totalGaps }} need attention</span>@endif
     </div>
 
     @if($tab === 'roster')
@@ -94,28 +91,26 @@
         </div>
     @else
         <div class="gqs-panel">
-            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-chart-bar"/> Class Pipeline</div>
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-chart-bar"/> Class Pipeline By Stage</div>
             <div class="gqs-panel-body" style="padding:18px;">
-                @php $funnel = $this->stageFunnel(); $max = max(1, collect($funnel)->max('count')); @endphp
-                <div style="display:flex;flex-direction:column;gap:10px;">
+                @php $funnel = $this->stageFunnel(); $maxF = max(1, collect($funnel)->max('count')); @endphp
+                <div class="ar-funnel">
                     @foreach($funnel as $f)
-                        <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:120px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);text-align:right;flex:0 0 auto;">{{ $f['label'] }}</div>
-                            <div style="flex:1;background:var(--gqs-surface-2,#F1F1F4);border-radius:8px;height:30px;position:relative;overflow:hidden;">
-                                <div style="position:absolute;inset:0 auto 0 0;width:{{ $f['count'] > 0 ? max(6, round($f['count'] / $max * 100)) : 0 }}%;background:{{ $f['color'] }};border-radius:8px;display:flex;align-items:center;padding-left:10px;">
-                                    @if($f['count'] > 0)<span style="color:#fff;font-weight:800;font-size:13px;">{{ $f['count'] }}</span>@endif
-                                </div>
-                                @if($f['count'] === 0)<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gqs-text-dim,#9A9AA4);font-size:12px;">0</span>@endif
+                        <div class="ar-fcell">
+                            <div class="ar-fbar-wrap">
+                                <div class="ar-fbar" style="height:{{ $f['count'] > 0 ? max(8, round($f['count'] / $maxF * 100)) : 3 }}%;background:{{ $f['color'] }};"></div>
                             </div>
+                            <div class="ar-fnum" style="color:{{ $f['count'] > 0 ? $f['color'] : 'var(--gqs-text-dim,#9A9AA4)' }};">{{ $f['count'] }}</div>
+                            <div class="ar-flbl">{{ $f['label'] }}</div>
                         </div>
                     @endforeach
                 </div>
             </div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px;">
-            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-calendar-days"/> Attendance Not Taken</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:{{ $gaps['past_sessions']['count'] > 0 ? '#C8102E' : '#2E7D5B' }};">{{ $gaps['past_sessions']['count'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">past sessions awaiting attendance</div></div></div>
-            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clock"/> Pending QA</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:#6B2C91;">{{ $stats['pending_qa'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">awaiting QA approval</div></div></div>
-            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-wrench-screwdriver"/> Needs Attention</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:{{ $totalGaps > 0 ? '#C8102E' : '#2E7D5B' }};">{{ $totalGaps }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">items need attention</div></div></div>
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-calendar-days"/> Attendance Not Taken</div><div class="gqs-panel-body" style="padding:22px 18px;text-align:center;"><div style="font-size:42px;font-weight:800;color:{{ $gaps['past_sessions']['count'] > 0 ? '#C8102E' : '#2E7D5B' }};line-height:1;">{{ $gaps['past_sessions']['count'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:7px;">past sessions awaiting attendance</div></div></div>
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clock"/> Pending QA</div><div class="gqs-panel-body" style="padding:22px 18px;text-align:center;"><div style="font-size:42px;font-weight:800;color:#6B2C91;line-height:1;">{{ $stats['pending_qa'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:7px;">awaiting QA approval</div></div></div>
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-wrench-screwdriver"/> Needs Attention</div><div class="gqs-panel-body" style="padding:22px 18px;text-align:center;"><div style="font-size:42px;font-weight:800;color:{{ $totalGaps > 0 ? '#C8102E' : '#2E7D5B' }};line-height:1;">{{ $totalGaps }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:7px;">items need attention</div></div></div>
         </div>
     @endif
 
@@ -155,10 +150,6 @@
     @endif
 
     <style>
-        .ar-tabs{display:flex;align-items:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-        .ar-tab{font-size:13px;font-weight:700;padding:8px 18px;border-radius:9px;border:1px solid var(--gqs-border,#E2E2E8);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#6A6A72);cursor:pointer;}
-        .ar-tab.active{background:#1C1C21;color:#fff;border-color:#1C1C21;}
-        .ar-tab-badge{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:999px;background:#FCEEF0;color:#C8102E;border:1px solid #F2B8C0;}
         .ar-fix{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E8);border-top:3px solid var(--fix);border-radius:12px;padding:14px 16px;}
         .ar-fix-h{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:var(--gqs-text,#1A1A1F);}
         .ar-fix-h svg{width:18px;height:18px;color:var(--fix);}
@@ -168,5 +159,11 @@
         .ar-fix-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;padding:7px 11px;border-radius:8px;border:1px solid var(--gqs-border,#E2E2E8);background:var(--gqs-surface-2,#F8F8FA);color:var(--gqs-text,#1A1A1F);cursor:pointer;text-align:left;width:100%;}
         .ar-fix-btn:hover{border-color:var(--fix);}
         .ar-fix-go{color:var(--fix);font-weight:800;white-space:nowrap;}
+        .ar-funnel{display:flex;align-items:flex-end;gap:10px;min-height:190px;}
+        .ar-fcell{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0;}
+        .ar-fbar-wrap{width:100%;height:140px;display:flex;align-items:flex-end;justify-content:center;}
+        .ar-fbar{width:70%;max-width:48px;border-radius:7px 7px 3px 3px;transition:height .3s ease;min-height:3px;}
+        .ar-fnum{font-size:19px;font-weight:800;line-height:1;}
+        .ar-flbl{font-size:10.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;line-height:1.2;}
     </style>
 </x-filament-panels::page>

@@ -370,25 +370,34 @@
     }
     html:not(.dark) .fi-no-notification-body { color: #5A5A62 !important; }
 
-    /* ===== Flash toasts: black + rounded. Position (bottom-right) is set in AppServiceProvider
-       via Notifications::verticalAlignment(End). The container is .fi-no; each toast is
-       .fi-notification. We dark-style every toast regardless of theme. ===== */
+    /* ===== Flash toasts: solid color by type, rounded. Position (bottom-right) is set in
+       AppServiceProvider via Notifications::verticalAlignment(End). The container is .fi-no; each toast
+       is .fi-notification, with a fi-color-{success|danger|warning|info} modifier. ===== */
     .fi-no .fi-notification {
-        background: #1A1A1F !important;
-        border: 1px solid #2E2E36 !important;
+        border: none !important;
         border-radius: 14px !important;
-        box-shadow: 0 12px 34px rgba(0,0,0,.34) !important;
+        box-shadow: 0 12px 34px rgba(0,0,0,.28) !important;
         color: #fff !important;
+        background: #34343D !important;   /* default / info-less */
     }
-    .fi-no .fi-notification .fi-notification-title { color: #fff !important; }
+    .fi-no .fi-notification .fi-notification-title { color: #fff !important; font-weight: 700 !important; }
     .fi-no .fi-notification .fi-notification-body,
-    .fi-no .fi-notification .fi-notification-description { color: #C9C9D2 !important; }
+    .fi-no .fi-notification .fi-notification-description { color: rgba(255,255,255,.9) !important; }
     .fi-no .fi-notification .fi-notification-close-btn,
-    .fi-no .fi-notification .fi-icon-btn { color: #9A9AA4 !important; }
-    /* status icon accents on the dark card */
-    .fi-no .fi-notification.fi-color-success svg { color: #3FBF8F !important; }
-    .fi-no .fi-notification.fi-color-danger svg { color: #FF6B7E !important; }
-    .fi-no .fi-notification.fi-color-warning svg { color: #E8C24A !important; }
+    .fi-no .fi-notification .fi-icon-btn { color: rgba(255,255,255,.75) !important; }
+    .fi-no .fi-notification .fi-icon-btn:hover { color: #fff !important; }
+    /* solid type colors */
+    .fi-no .fi-notification.fi-color-success { background: linear-gradient(135deg,#2E7D5B,#246148) !important; }
+    .fi-no .fi-notification.fi-color-danger  { background: linear-gradient(135deg,#C8102E,#9A0B23) !important; }
+    .fi-no .fi-notification.fi-color-warning { background: linear-gradient(135deg,#C79A2E,#9E7818) !important; }
+    .fi-no .fi-notification.fi-color-info    { background: linear-gradient(135deg,#1F6FB2,#185A92) !important; }
+    /* white icons on the solid card; give the icon a soft circular backdrop */
+    .fi-no .fi-notification .fi-notification-icon,
+    .fi-no .fi-notification svg { color: #fff !important; }
+    .fi-no .fi-notification .fi-notification-icon-ctn {
+        background: rgba(255,255,255,.18) !important;
+        border-radius: 9px !important;
+    }
 
 
     /* Back To Login link on reset page - force Title Case appearance */
