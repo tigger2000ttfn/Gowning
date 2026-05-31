@@ -116,7 +116,7 @@
                         <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>NC Ref</th><th>Synced</th><th>Actions</th></tr></thead>
                         <tbody>
                             @forelse ($this->catalogRows() as $d)
-                                <tr>
+                                <tr wire:click="viewRow({{ $d['id'] }})" style="cursor:pointer;">
                                     <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif</td>
                                     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $d['description'] }}">{{ $d['description'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
@@ -136,9 +136,10 @@
                                     <td>@if($d['qcm_ready'])<span class="gqs-pill gqs-pill-green">Ready</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</td>
                                     <td style="white-space:nowrap;">{{ $d['reference'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['synced'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;">
-                                        <button type="button" wire:click="editRow({{ $d['id'] }})" class="wl-act">Edit</button>
-                                        <button type="button" wire:click="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}">{{ $d['legacy'] ? 'Unlock' : 'Legacy' }}</button>
+                                    <td style="white-space:nowrap;" wire:click.stop>
+                                        <button type="button" wire:click.stop="viewRow({{ $d['id'] }})" class="wl-act">View</button>
+                                        <button type="button" wire:click.stop="editRow({{ $d['id'] }})" class="wl-act">Edit</button>
+                                        <button type="button" wire:click.stop="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}">{{ $d['legacy'] ? 'Unlock' : 'Legacy' }}</button>
                                     </td>
                                 </tr>
                             @empty
@@ -225,6 +226,55 @@
             .bf-n{font-size:22px;font-weight:800;color:#2E7D5B;line-height:1;}
             .bf-l{font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
         </style>
+    @endif
+
+    {{-- Full-row detail (click a row) --}}
+    @php $vr = $this->viewRecord(); @endphp
+    @if($vr)
+        @php $vm = $this->viewMatchedPerson(); @endphp
+        <div class="gqs-modal-overlay" wire:click.self="closeView">
+            <div class="gqs-modal" style="width:820px;max-width:96vw;">
+                <div style="background:linear-gradient(135deg,#2E7D5B,#225F46);padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0;">
+                    <span style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-beaker" style="width:26px;height:26px;color:#fff;"/>
+                    </span>
+                    <div style="min-width:0;">
+                        <div style="font-weight:800;font-size:17px;color:#fff;">{{ $vr['worklist'] }}@if($vr['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:10px;">Legacy</span>@endif</div>
+                        <div style="font-size:12px;color:#D7EFE4;">@if($vr['qcm_ready'])LIMS: Pass - Authorized - Incubation Complete @else Full imported worklist record @endif</div>
+                    </div>
+                    <button wire:click="closeView" style="margin-left:auto;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.8;">&times;</button>
+                </div>
+                <div class="gqs-modal-body" style="max-height:64vh;overflow:auto;">
+                    @foreach($vr['groups'] as $groupName => $fields)
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#2E7D5B;margin-bottom:8px;border-bottom:1px solid var(--gqs-border,#E2E2E8);padding-bottom:4px;">{{ $groupName }}</div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;">
+                                @foreach($fields as $label => $value)
+                                    <div style="display:flex;gap:8px;font-size:12.5px;">
+                                        <span style="color:var(--gqs-text-dim,#6A6A72);min-width:160px;flex-shrink:0;">{{ $label }}</span>
+                                        <span style="font-weight:600;color:var(--gqs-text,#1A1A1F);word-break:break-word;">{{ $value }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button type="button" wire:click="editRow({{ $vr['id'] }})" class="gqs-btn gqs-btn-ghost">Edit</button>
+                        <button type="button" wire:click="toggleLegacy({{ $vr['id'] }})" class="gqs-btn gqs-btn-ghost">{{ $vr['legacy'] ? 'Unlock (allow import)' : 'Mark Legacy' }}</button>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        @if($vm)
+                            <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Matches {{ $vm['name'] }}</span>
+                            <button type="button" wire:click="backfillThisPerson" class="gqs-btn gqs-btn-primary">Backfill This Person</button>
+                        @else
+                            <span style="font-size:12px;color:#C79A2E;">No single person match</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
     {{-- Hand-edit a worklist row (marks it legacy) --}}

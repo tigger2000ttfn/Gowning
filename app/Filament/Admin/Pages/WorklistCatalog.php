@@ -577,6 +577,126 @@ SQL;
 
     public function closeEdit(): void { $this->editId = null; $this->editData = []; }
 
+    // ---- Full-row detail view (click a row) ----
+    public ?int $viewId = null;
+
+    public function viewRow(int $id): void
+    {
+        $this->viewId = $id;
+    }
+    public function closeView(): void { $this->viewId = null; }
+
+    /** Resolve the matched personnel (id + name) for the currently-viewed worklist, if any. */
+    public function viewMatchedPerson(): ?array
+    {
+        if (! $this->viewId) return null;
+        $d = LimsWorklist::find($this->viewId);
+        if (! $d) return null;
+        $login = strtoupper(trim((string) $d->personnel));
+        $person = null;
+        if ($login !== '') {
+            $byLogin = \App\Models\Personnel::whereRaw('UPPER(lims_username) = ?', [$login])->get();
+            if ($byLogin->count() === 1) $person = $byLogin->first();
+        }
+        if (! $person && $login !== '' && strlen($login) >= 2) {
+            $cands = \App\Models\Personnel::whereRaw('UPPER(last_name) = ?', [substr($login, 1)])
+                ->whereRaw('UPPER(LEFT(first_name,1)) = ?', [substr($login, 0, 1)])->get();
+            if ($cands->count() === 1) $person = $cands->first();
+        }
+        return $person ? ['id' => $person->id, 'name' => trim($person->first_name . ' ' . $person->last_name)] : null;
+    }
+
+    /** Open the backfill preview scoped to this worklist's matched person. */
+    public function backfillThisPerson(): void
+    {
+        $match = $this->viewMatchedPerson();
+        if (! $match) {
+            Notification::make()->warning()->title('No Confident Person Match')
+                ->body('This worklist does not map to a single person by login or name. Use the person picker, or fix the row.')->send();
+            return;
+        }
+        $this->backfillPersonId = $match['id'];
+        $this->viewId = null;
+        $this->previewBackfill();
+    }
+
+    /** All fields of one worklist, grouped, for the detail panel. */
+    public function viewRecord(): ?array
+    {
+        if (! $this->viewId) return null;
+        $d = LimsWorklist::find($this->viewId);
+        if (! $d) return null;
+        $dash = fn ($v) => ($v === null || $v === '') ? '—' : $v;
+        return [
+            'id' => $d->id,
+            'worklist' => $d->worklist,
+            'legacy' => (bool) $d->is_legacy,
+            'qcm_ready' => $d->isQcmReady(),
+            'groups' => [
+                'Worklist' => [
+                    'Worklist' => $dash($d->worklist),
+                    'Description' => $dash($d->worklist_description),
+                    'Samples On Worklist' => $dash($d->samples_on_worklist),
+                    'Non-Final Count' => $dash($d->non_final_count),
+                    'All Final' => $d->worklist_all_final === null ? '—' : ($d->worklist_all_final ? 'Yes' : 'No'),
+                ],
+                'Personnel Qual Sample (QC_EM_PERSONNEL_QUAL)' => [
+                    'Sample Number' => $dash($d->sample_number),
+                    'Sample Status' => LimsWorklist::statusLabel($d->sample_status),
+                    'Qualification Type' => $dash($d->qualification_type),
+                    'Personnel (LIMS Login)' => $dash($d->personnel),
+                    'Initial Run #' => $dash($d->initial_run_no),
+                    'Annual Requalification' => $dash($d->annual_requal),
+                    'Additional Requalification' => $dash($d->additional_requal),
+                    'Evaluation' => $dash($d->evaluation),
+                    'EM Area' => $dash($d->em_area),
+                    'CR Grade 1' => $dash($d->cr_grade_1),
+                    'CR Grade 2' => $dash($d->cr_grade_2),
+                    'CR Grade 3' => $dash($d->cr_grade_3),
+                    'Grade A Critical Ops' => $dash($d->grade_a_ops),
+                    'Grade B Critical Ops' => $dash($d->grade_b_ops),
+                    'Qual Date 1' => $dash($d->qual_date_1),
+                    'Qual Date 2' => $dash($d->qual_date_2),
+                    'Qual Date 3' => $dash($d->qual_date_3),
+                    'Run 2 Rescheduled?' => $dash($d->run2_rescheduled),
+                    'Run 3 Rescheduled?' => $dash($d->run3_rescheduled),
+                    'Qual Reference (NC)' => $dash($d->qual_reference),
+                ],
+                'Plates & Controls' => [
+                    'TSA Contact Plate' => $dash($d->tsa_contact_plate),
+                    'TSA Contact Plate 1' => $dash($d->tsa_contact_plate_1),
+                    'TSA Contact Plate 2' => $dash($d->tsa_contact_plate_2),
+                    'TSA Contact Plate 3' => $dash($d->tsa_contact_plate_3),
+                    'TSA Control Sample ID 1' => $dash($d->tsa_control_1),
+                    'TSA Control Sample ID 2' => $dash($d->tsa_control_2),
+                    'TSA Control Sample ID 3' => $dash($d->tsa_control_3),
+                ],
+                'Incubation Sample (QC_INC_META)' => [
+                    'Inc Sample Number' => $dash($d->inc_sample_number),
+                    'Inc Sample Status' => LimsWorklist::statusLabel($d->inc_sample_status),
+                    '30-35C Incubator (Inc 1)' => $dash($d->inc1_incubator),
+                    'Incubation Bin' => $dash($d->inc1_bin),
+                    '1st Incubation Start' => $dash($d->inc1_start),
+                    '1st Incubation End' => $dash($d->inc1_end),
+                    '1st Incubation Due' => $dash($d->inc1_due),
+                    '1st Total Time' => $dash($d->inc1_total),
+                    '20-25C Incubator (Inc 2)' => $dash($d->inc2_incubator),
+                    '2nd Incubation Start' => $dash($d->inc2_start),
+                    '2nd Incubation End' => $dash($d->inc2_end),
+                    '2nd Incubation Due' => $dash($d->inc2_due),
+                    '2nd Total Time' => $dash($d->inc2_total),
+                    '3rd Storage Location' => $dash($d->storage3_location),
+                    '3rd Storage Movement Start' => $dash($d->storage3_start),
+                    'Inc Reference' => $dash($d->inc_reference),
+                ],
+                'Catalog' => [
+                    'Legacy Locked' => $d->is_legacy ? 'Yes' : 'No',
+                    'Last Synced' => $d->catalog_synced_at?->gmpDt() ?: '—',
+                ],
+            ],
+        ];
+    }
+
     public function catalogRows(): array
     {
         $q = LimsWorklist::query()->latest('catalog_synced_at');
