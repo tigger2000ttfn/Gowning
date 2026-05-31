@@ -31,11 +31,12 @@ class ClassBoard extends Page
     protected string $view = 'filament.pages.class-board';
 
     public array $lanes = [
-        'signed_up' => ['label' => 'Signed Up', 'color' => '#1F6FB2'],
-        'attended'  => ['label' => 'Attended (Trainer)',  'color' => '#C79A2E'],
-        'no_show'   => ['label' => 'No-Show',    'color' => '#C8102E'],
-        'pending_qa' => ['label' => 'Pending QA', 'color' => '#6B2C91'],
-        'completed' => ['label' => 'Completed (QA Approved)', 'color' => '#2E7D5B'],
+        'signed_up'    => ['label' => 'Scheduled',    'color' => '#1F6FB2'],
+        'attended'     => ['label' => 'Attended',     'color' => '#C79A2E'],
+        'no_show'      => ['label' => 'No-Show',      'color' => '#C8102E'],
+        'qcm_reviewed' => ['label' => 'QCM Reviewed', 'color' => '#2563EB'],
+        'pending_qa'   => ['label' => 'Pending QA',   'color' => '#6B2C91'],
+        'completed'    => ['label' => 'QA Approved',  'color' => '#2E7D5B'],
     ];
 
     public string $groupBy = '';
@@ -354,21 +355,83 @@ class ClassBoard extends Page
         if (! array_key_exists($toStatus, $this->lanes) && $toStatus !== 'historical') {
             return;
         }
-        // Attendance and completion are GMP-gated: they are recorded by submitting the
-        // attendance sheet (trainer e-signature -> Pending QA) and QA approval (-> Completed),
-        // never by dragging a card. The board reflects those statuses; it does not set them.
-        if (in_array($toStatus, ['attended', 'pending_qa', 'completed'], true)) {
-            \Filament\Notifications\Notification::make()->warning()
-                ->title('Set Through Attendance and QA')
-                ->body('Attendance and completion are recorded by submitting the attendance sheet (with the trainer e-signature) and QA approval, not by dragging a card.')
-                ->send();
+        $e = ClassEnrollment::with('personnel', 'classSession.trainingClass')->find($id);
+        if (! $e) {
             return;
         }
-        $e = ClassEnrollment::with('personnel')->find($id);
-        if (! $e) {
+        $fromStatus = $e->status instanceof \BackedEnum ? $e->status->value : $e->status;
+
+        // QCM REVIEW: dragging an Attended card to QCM Reviewed opens a forced QCM sign-off modal.
+        // The drag does not set the status directly; the sign-off (with e-signature) does.
+        if ($toStatus === 'qcm_reviewed') {
+            if ($fromStatus !== 'attended') {
+                \Filament\Notifications\Notification::make()->warning()->title('Only From Attended')
+                    ->body('A class is QCM reviewed after the trainer has submitted attendance (Attended).')->send();
+                return;
+            }
+            $this->openQcmSign($id);
+            return;
+        }
+
+        // Attendance, Pending QA and completion are GMP-gated: recorded by submitting the attendance
+        // sheet (trainer e-signature -> Attended), the QCM sign-off (-> Pending QA), and QA approval
+        // (-> QA Approved), never by dragging a card.
+        if (in_array($toStatus, ['attended', 'pending_qa', 'completed'], true)) {
+            \Filament\Notifications\Notification::make()->warning()
+                ->title('Set Through Attendance, QCM and QA')
+                ->body('These stages are recorded by submitting the attendance sheet, the QCM sign-off, and QA approval, not by dragging a card.')
+                ->send();
             return;
         }
         // centralized: stamps who/when and advances the qualification consistently
         $e->markStatus($toStatus, \Illuminate\Support\Facades\Auth::id());
+    }
+
+    // ---- QCM sign-off (forced modal when dragging Attended -> QCM Reviewed) ----
+    public ?int $qcmSignEid = null;
+    public string $qcmSignPassword = '';
+    public function openQcmSign(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::find($enrollmentId);
+        if (! $e) return;
+        $this->qcmSignEid = $enrollmentId;
+        $this->qcmSignPassword = '';
+    }
+    public function closeQcmSign(): void { $this->qcmSignEid = null; $this->qcmSignPassword = ''; }
+
+    public function qcmSignName(): ?string
+    {
+        return $this->qcmSignEid ? (ClassEnrollment::with('personnel')->find($this->qcmSignEid)?->personnel?->full_name ?? 'Trainee') : null;
+    }
+
+    public function confirmQcmSign(): void
+    {
+        $e = ClassEnrollment::with('personnel', 'classSession.trainingClass')->find($this->qcmSignEid);
+        if (! $e) { $this->closeQcmSign(); return; }
+        $statusVal = $e->status instanceof \BackedEnum ? $e->status->value : $e->status;
+        if ($statusVal !== 'attended') {
+            \Filament\Notifications\Notification::make()->warning()->title('Not In Attended')->send();
+            $this->closeQcmSign();
+            return;
+        }
+        if ((bool) \App\Models\Setting::get('esig_required', true)
+            && ! \Illuminate\Support\Facades\Hash::check($this->qcmSignPassword, \Illuminate\Support\Facades\Auth::user()->password)) {
+            \Filament\Notifications\Notification::make()->danger()->title('Signature Failed')
+                ->body('Password did not match. The class was not QCM reviewed.')->send();
+            return;
+        }
+        // Record the QCM sign-off e-signature against the enrollment, then advance to Pending QA.
+        \App\Models\ElectronicSignature::create([
+            'signable_type' => ClassEnrollment::class,
+            'signable_id' => $e->id,
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
+            'signer_name' => \Illuminate\Support\Facades\Auth::user()?->name,
+            'meaning' => 'QCM Reviewed - Class Attendance',
+            'signed_at' => now(),
+        ]);
+        $e->markStatus('pending_qa', \Illuminate\Support\Facades\Auth::id());
+        $this->closeQcmSign();
+        \Filament\Notifications\Notification::make()->success()->title('QCM Reviewed')
+            ->body(($e->personnel?->full_name ?? 'Trainee') . ' is now Pending QA.')->send();
     }
 }

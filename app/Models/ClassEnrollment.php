@@ -43,13 +43,13 @@ class ClassEnrollment extends Model
      */
     public function markStatus(string $status, ?int $byUserId = null): void
     {
-        if (! in_array($status, ['signed_up', 'attended', 'pending_qa', 'completed', 'no_show', 'cancelled', 'historical'], true)) {
+        if (! in_array($status, ['signed_up', 'attended', 'qcm_reviewed', 'pending_qa', 'completed', 'no_show', 'cancelled', 'historical'], true)) {
             return;
         }
         $this->status = $status;
         $this->marked_by = $byUserId;
         if ($status === 'attended' && ! $this->attended_at) $this->attended_at = now();
-        if ($status === 'pending_qa' && ! $this->attended_at) $this->attended_at = now();
+        if (in_array($status, ['qcm_reviewed', 'pending_qa'], true) && ! $this->attended_at) $this->attended_at = now();
         if ($status === 'completed') {
             if (! $this->attended_at) $this->attended_at = now();
             $this->completed_at = now();

@@ -289,4 +289,27 @@
         .kanban-ghost{opacity:.4;}
         .dark .kanban-card{background:#1F1F25;} .dark .kanban-name{color:#fff;}
     </style>
+    @if($qcmSignEid)
+        <div class="gqs-modal-overlay" wire:click.self="closeQcmSign">
+            <div class="gqs-modal" style="width:480px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#2563EB,#1E50C0);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:17px;color:#fff;">QCM Review Sign-Off</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $this->qcmSignName() }} - confirm the class attendance is reviewed</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <div style="font-size:13px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">
+                        By signing off, you confirm you have reviewed this trainee's class attendance record. This advances them to <strong>Pending QA</strong> for final QA approval.
+                    </div>
+                    @if((bool) \App\Models\Setting::get('esig_required', true))
+                        <div style="margin-top:14px;"><label class="gqs-flbl">Confirm Your Password</label>
+                            <input type="password" wire:model="qcmSignPassword" class="gqs-fld" wire:keydown.enter="confirmQcmSign"></div>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closeQcmSign" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button wire:click="confirmQcmSign" class="gqs-btn gqs-btn-primary">Sign Off - QCM Reviewed</button>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

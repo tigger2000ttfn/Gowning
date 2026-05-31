@@ -241,14 +241,16 @@ class ClassScheduler extends Page
         foreach ($active as $e) {
             $intent = $e->draft_attendance;
             if ($intent === 'attended') {
-                $e->markStatus('pending_qa', Auth::id());
+                // Lands at Attended: the trainer recorded attendance; the QCM still reviews + signs off
+                // (drag to QCM Reviewed) before it becomes Pending QA.
+                $e->markStatus('attended', Auth::id());
             } elseif ($intent === 'no_show') {
                 $e->markStatus('no_show', Auth::id());
             }
             $e->draft_attendance = null;
             $e->save();
         }
-        $attendedCount = $active->filter(fn ($e) => $e->fresh()->status === 'pending_qa')->count();
+        $attendedCount = $active->filter(fn ($e) => $e->fresh()->status === 'attended')->count();
         // The signer is the trainer of record. If none was set, record the signer; their
         // signed name flows onto FORM-AST-36513 as the trainer.
         if (! $s->assigned_instructor_id) {
