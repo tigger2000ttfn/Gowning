@@ -37,21 +37,19 @@ class AutomationRuleResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Rule')->columns(2)->schema([
+            Section::make('Rule')->icon('heroicon-o-bolt')->columns(2)->schema([
                 TextInput::make('name')->label('Rule Name')->required()->columnSpanFull()
                     ->placeholder('e.g. Alert QA when a run fails'),
                 Toggle::make('is_enabled')->label('Enabled')->default(true)->inline(false),
             ]),
-            Section::make('When this happens (trigger)')->columns(2)->schema([
+            Section::make('When This Happens (Trigger)')->icon('heroicon-o-play')->columns(2)->schema([
                 Select::make('trigger')->label('Trigger Event')
-                    ->options(AutomationTrigger::options())->required()->live()
-                    ->helperText('What event starts this rule.'),
+                    ->options(AutomationTrigger::options())->required()->live(),
                 Select::make('trigger_stage')->label('Only For Stage (optional)')
                     ->options(collect(WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
-                    ->visible(fn ($get) => $get('trigger') === AutomationTrigger::StageChanged->value)
-                    ->helperText('Limit to one workflow stage.'),
+                    ->visible(fn ($get) => $get('trigger') === AutomationTrigger::StageChanged->value),
             ]),
-            Section::make('Do this (action)')->columns(2)->schema([
+            Section::make('Do This (Action)')->icon('heroicon-o-cog-6-tooth')->columns(2)->schema([
                 Select::make('action')->label('Action')
                     ->options(AutomationAction::options())->required()->live(),
                 Select::make('action_config.capability')->label('Notify Which Role')

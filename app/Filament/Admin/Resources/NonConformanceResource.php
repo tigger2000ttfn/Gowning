@@ -43,12 +43,11 @@ class NonConformanceResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Non-Conformance')->columns(2)->schema([
+            Section::make('Non-Conformance')->icon('heroicon-o-exclamation-triangle')->columns(2)->schema([
                 TextInput::make('nc_number')->label('NC Number')
                     ->prefix('NC-')
                     ->formatStateUsing(fn ($state) => $state ? preg_replace('/^NC-/i', '', (string) $state) : $state)
-                    ->dehydrateStateUsing(fn ($state) => $state ? 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', (string) $state), '-') : $state)
-                    ->helperText('Auto-generated on creation. Type only the numbers - NC- is added automatically.'),
+                    ->dehydrateStateUsing(fn ($state) => $state ? 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', (string) $state), '-') : $state),
                 Select::make('personnel_id')->label('Person')
                     ->options(fn () => Personnel::orderBy('last_name')->get()->mapWithKeys(fn ($p) => [$p->id => $p->full_name])->all())
                     ->searchable(),
@@ -56,8 +55,7 @@ class NonConformanceResource extends Resource
                     ->prefix('NC-')
                     ->formatStateUsing(fn ($state) => $state ? preg_replace('/^NC-/i', '', (string) $state) : $state)
                     ->dehydrateStateUsing(fn ($state) => $state ? 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', (string) $state), '-') : $state)
-                    ->placeholder('numbers only')
-                    ->helperText('TrackWise NC reference. Type only the numbers - NC- is added automatically.'),
+                    ->placeholder('numbers only'),
                 Select::make('nc_type')->label('Type')->options([
                     'failed_run' => 'Failed Run',
                     'mold_hit' => 'Mold Hit',
@@ -68,7 +66,7 @@ class NonConformanceResource extends Resource
                     'open' => 'Open', 'investigating' => 'Investigating', 'closed' => 'Closed',
                 ])->default('open')->required(),
             ]),
-            Section::make('Trending Detail (for mold / bacteria)')->columns(3)->schema([
+            Section::make('Trending Detail (For Mold / Bacteria)')->icon('heroicon-o-beaker')->columns(3)->schema([
                 TextInput::make('organism')->label('Organism')->placeholder('e.g. Aspergillus, Staph'),
                 TextInput::make('site')->label('Sampling Site'),
                 TextInput::make('cfu_count')->label('CFU Count')->numeric()->minValue(0)
@@ -78,9 +76,8 @@ class NonConformanceResource extends Resource
                 Select::make('assigned_to')->label('Assigned To')
                     ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all())->searchable(),
             ]),
-            Section::make('Summary')->schema([
-                Textarea::make('summary')->label('Brief Summary')->rows(2)
-                    ->helperText('Short note only, not a transcription of the TrackWise record.')->columnSpanFull(),
+            Section::make('Summary')->icon('heroicon-o-document-text')->schema([
+                Textarea::make('summary')->label('Brief Summary')->rows(2)->columnSpanFull(),
             ]),
             Section::make('Attachments')->icon('heroicon-o-paper-clip')->schema([
                 \Filament\Forms\Components\SpatieMediaLibraryFileUpload::make('evidence')
@@ -88,7 +85,6 @@ class NonConformanceResource extends Resource
                     ->multiple()
                     ->downloadable()
                     ->reorderable()
-                    ->helperText('Plate photos, lab reports, or supporting documents. Stored as part of the GMP record.')
                     ->columnSpanFull(),
             ]),
         ]);
