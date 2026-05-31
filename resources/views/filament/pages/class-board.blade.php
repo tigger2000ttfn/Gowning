@@ -64,17 +64,21 @@
                     if (lane._sortable) return;
                     lane._sortable = Sortable.create(lane, {
                         group: 'classes', animation: 150, ghostClass: 'kanban-ghost',
+                        filter: '[data-no-drag]',
                         onStart: () => { this._dragging = true; },
                         onEnd: (evt) => {
                             this._dragging = false;
                             if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
-                            $wire.moveCard(parseInt(evt.item.getAttribute('data-id')), evt.to.getAttribute('data-lane'));
+                            const id = parseInt(evt.item.getAttribute('data-id'));
+                            if (!id) return; // completion-record cards have no numeric id; not movable
+                            $wire.moveCard(id, evt.to.getAttribute('data-lane'));
                         }
                     });
                 });
                 document.querySelectorAll('.kanban-card').forEach(card => {
                     if (card._clickWired) return;
                     card._clickWired = true;
+                    if (!card.hasAttribute('data-id')) return; // completion cards wire their own click
                     card.addEventListener('click', () => {
                         if (this._dragging) return;
                         $wire.showDetail(parseInt(card.getAttribute('data-id')));

@@ -165,6 +165,39 @@ class ClassBoard extends Page
                 'cards' => $cards,
             ];
         }
+
+        // Manual / inferred class completions are themselves the QA-approved record (a manual entry implies
+        // QA/Completed). Surface any that do NOT already have a matching completed enrollment in the QA
+        // Approved lane so they show as completed alongside enrollment-driven cards.
+        if (isset($out['completed'])) {
+            $shownPersonnel = collect($out['completed']['cards'])->pluck('personnel_id')->filter()->all();
+            $extra = \App\Models\ClassCompletion::with('personnel')
+                ->when(! empty($shownPersonnel), fn ($q) => $q->whereNotIn('personnel_id', $shownPersonnel))
+                ->whereNotNull('personnel_id')
+                ->orderByDesc('completion_date')
+                ->get()
+                ->unique('personnel_id')
+                ->map(fn ($c) => [
+                    'id' => 'cc-' . $c->id,
+                    'personnel_id' => $c->personnel_id,
+                    'class_session_id' => null,
+                    'class_id' => null,
+                    'name' => $c->personnel?->full_name ?? $c->employee_id ?? 'Unknown',
+                    'employee_id' => $c->personnel?->employee_id ?? $c->employee_id,
+                    'department' => $c->personnel?->department,
+                    'class' => $c->class_name,
+                    'date' => $c->completion_date?->gmpDM(),
+                    'instructor' => null,
+                    'session_date' => $c->completion_date?->gmp(),
+                    'session_sort' => $c->completion_date?->format('Y-m-d'),
+                    'status_label' => \App\Models\WorkflowStatus::labelFor('class', 'completed', 'QA Approved'),
+                    'status_color' => \App\Models\WorkflowStatus::colorFor('class', 'completed', '#2E7D5B'),
+                    'is_completion_record' => true,
+                    'source' => $c->source,
+                ])->values()->all();
+            $out['completed']['cards'] = array_merge($out['completed']['cards'], $extra);
+        }
+
         return $out;
     }
 
