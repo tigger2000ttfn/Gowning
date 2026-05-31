@@ -127,7 +127,26 @@ class QualificationRunResource extends Resource
             ->filters([
                 SelectFilter::make('result')->options(['pass' => 'Pass', 'fail' => 'Fail', 'pending' => 'Pending']),
             ])
+            ->recordAction('viewRun')
             ->recordActions([
+                \Filament\Actions\Action::make('viewRun')
+                    ->label('View')
+                    ->icon('heroicon-m-eye')
+                    ->color('gray')
+                    ->modalHeading('Run Completion')
+                    ->modalIcon('heroicon-o-clipboard-document-check')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->extraModalFooterActions(function (\App\Models\QualificationRun $record) {
+                        $u = \Illuminate\Support\Facades\Auth::user();
+                        $canEdit = $u && ($u->hasCapability(\App\Enums\Capability::RecordRuns)
+                            || $u->hasCapability(\App\Enums\Capability::QaReview)
+                            || $u->hasCapability(\App\Enums\Capability::QaApprove));
+                        return $canEdit
+                            ? [\Filament\Actions\EditAction::make('editFromRun')->label('Edit Details')->icon('heroicon-m-pencil-square')->record($record)]
+                            : [];
+                    })
+                    ->modalContent(fn (\App\Models\QualificationRun $record) => view('filament.run-completion-card', ['r' => $record])),
                 \Filament\Actions\DeleteAction::make()
                     ->label('Delete')
                     ->icon('heroicon-m-trash')
