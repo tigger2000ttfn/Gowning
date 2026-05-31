@@ -48,6 +48,47 @@ Artisan::command('gqs:archive-class-completions', function () {
 
 Schedule::command('gqs:archive-class-completions')->dailyAt('06:15');
 
+// Archive sweep (run side): N days after QA approval, set archived_at on QA-Approved qualifications
+// so they move to the Status Board Historical lane. This is a SECONDARY historic flag only - it does
+// NOT change the QA-Approved stage or the qualified status; approval is preserved.
+Artisan::command('gqs:archive-qualifications', function () {
+    $days = (int) \App\Models\Setting::get('qual_history_days', 30);
+    $cutoff = now()->subDays($days);
+    $n = \App\Models\Qualification::query()
+        ->whereNull('archived_at')
+        ->whereNull('superseded_at')
+        ->where('workflow_stage', \App\Enums\WorkflowStage::QaSignoff->value)
+        ->where(function ($q) use ($cutoff) {
+            $q->where('qualified_date', '<=', $cutoff)
+              ->orWhere(function ($q2) use ($cutoff) {
+                  $q2->whereNull('qualified_date')->where('stage_changed_at', '<=', $cutoff);
+              });
+        })
+        ->update(['archived_at' => now()]);
+    $this->info("Archived {$n} QA-Approved qualification(s) to Historical (approval preserved).");
+})->purpose('Flag old QA-Approved qualifications as archived (historic) without changing approval');
+
+Schedule::command('gqs:archive-qualifications')->dailyAt('06:16');
+
+// Recurring catalog backfill: re-link any NC / Veeva records to the latest catalog data nightly,
+// so links/status stay fresh as new weekly exports are imported.
+Artisan::command('gqs:backfill-catalogs', function () {
+    $nc = 0; $vv = 0;
+    if (\Illuminate\Support\Facades\Schema::hasColumn('non_conformances', 'trackwise_id')) {
+        foreach (\App\Models\NonConformance::whereNotNull('trackwise_id')->where('trackwise_id', '!=', '')->get() as $rec) {
+            $doc = \App\Models\NcDocument::findByNumber($rec->trackwise_id);
+            if (! $doc) continue;
+            $changed = false;
+            if (\Illuminate\Support\Facades\Schema::hasColumn('non_conformances', 'trackwise_url') && $doc->url && $rec->trackwise_url !== $doc->url) { $rec->trackwise_url = $doc->url; $changed = true; }
+            if (\Illuminate\Support\Facades\Schema::hasColumn('non_conformances', 'trackwise_status') && $doc->workflow_status && $rec->trackwise_status !== $doc->workflow_status) { $rec->trackwise_status = $doc->workflow_status; $changed = true; }
+            if ($changed) { $rec->save(); $nc++; }
+        }
+    }
+    $this->info("Catalog backfill: {$nc} NC link(s) refreshed.");
+})->purpose('Nightly re-link of NC/Veeva records from the latest catalog');
+
+Schedule::command('gqs:backfill-catalogs')->dailyAt('06:17');
+
 // Flush queued emails once the mail relay (Postfix) is configured.
 // Until then rows sit in queued_emails with sent_at = null.
 Artisan::command('gqs:flush-emails', function () {

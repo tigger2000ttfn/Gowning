@@ -54,6 +54,7 @@ class StatusBoard extends Page
         $out = [];
         $byStage = Qualification::with('personnel')
             ->whereNull('superseded_at')
+            ->whereNull('archived_at')
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
             ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('first_name', 'ilike', '%' . $this->search . '%')
@@ -190,14 +191,15 @@ class StatusBoard extends Page
     public function getArchive(): array
     {
         $signed = Qualification::with('personnel')
-            ->where('workflow_stage', WorkflowStage::Archived->value)
+            ->whereNotNull('archived_at')
+            ->whereNull('superseded_at')
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
             ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('first_name', 'ilike', '%' . $this->search . '%')
                   ->orWhere('last_name', 'ilike', '%' . $this->search . '%')
                   ->orWhere('employee_id', 'ilike', '%' . $this->search . '%')))
             ->when($this->deptFilter !== '', fn ($q) => $q->whereHas('personnel', fn ($p) => $p->where('department', $this->deptFilter)))
-            ->latest('stage_changed_at')->get()
+            ->latest('archived_at')->get()
             ->map(fn ($q) => [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
@@ -206,7 +208,7 @@ class StatusBoard extends Page
             ])->values()->all();
 
         return [
-            'label' => \App\Models\WorkflowStatus::labelFor('run', 'archived', 'Archived'),
+            'label' => \App\Models\WorkflowStatus::labelFor('run', 'archived', 'Historical'),
             'color' => \App\Models\WorkflowStatus::colorFor('run', 'archived', WorkflowStage::Archived->color()),
             'cards' => $signed,
         ];
