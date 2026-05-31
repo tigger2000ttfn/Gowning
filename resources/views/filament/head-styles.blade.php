@@ -142,6 +142,8 @@
     .gqs-panel-head svg { width:17px; height:17px; }
     .gqs-panel-body { padding:6px 0; }
     .gqs-panel-body > .gqs-tbl:first-child { margin-top:-6px; }
+    .dm-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
+    .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
 
     /* Attendance / roster marking rows (shared by Class Scheduler + Run Day Roster) */
     .att-list{display:flex;flex-direction:column;gap:8px;}

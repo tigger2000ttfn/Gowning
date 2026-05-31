@@ -339,7 +339,11 @@
                                          $tintKey = $submitted ? (in_array($row['status'], ['attended','completed','pending_qa']) ? 'attended' : ($row['status'] === 'no_show' ? 'no_show' : ($row['status'] === 'rescheduled' ? 'rescheduled' : null))) : $aIntent; @endphp
                                     <div class="att-row {{ $tintKey === 'attended' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                         <div class="att-who">
-                                            <div class="att-name">{{ $row['name'] }}</div>
+                                            @if($row['personnel_id'])
+                                                <button type="button" wire:click="showPersonDetail({{ $row['personnel_id'] }})" class="att-name" style="background:none;border:none;padding:0;cursor:pointer;text-align:left;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="View details">{{ $row['name'] }}</button>
+                                            @else
+                                                <div class="att-name">{{ $row['name'] }}</div>
+                                            @endif
                                             <div class="att-eid">{{ $row['employee_id'] }}</div>
                                         </div>
                                         @if($submitted)
@@ -535,4 +539,38 @@
         .rd-act{font-size:12px;font-weight:700;padding:5px 12px;border-radius:7px;border:none;cursor:pointer;color:#fff;}
         .rd-act-magenta{background:#A4123F;} .rd-act-magenta:hover{background:#85102F;}
     </style>
+    @if($personDetail)
+        <div class="gqs-modal-overlay" wire:click.self="closePersonDetail">
+            <div class="gqs-modal" style="width:640px;max-width:96vw;">
+                <div style="background:linear-gradient(135deg,#A4123F,#7A0E2F);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:18px;color:#fff;">{{ $personDetail['name'] }}</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $personDetail['employee_id'] }}@if($personDetail['job_title']) · {{ $personDetail['job_title'] }}@endif</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                        <div><div class="dm-l">Department</div><div class="dm-v">{{ $personDetail['department'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Stage</div><div class="dm-v">{{ $personDetail['stage'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Status</div><div class="dm-v">{{ $personDetail['status'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Session Type</div><div class="dm-v">{{ $personDetail['type'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $personDetail['due'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Class Completed</div><div class="dm-v">{{ $personDetail['class_date'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Class On File</div><div class="dm-v">@if($personDetail['class_on_file'])<span class="gqs-pill gqs-pill-green">Yes</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</div></div>
+                    </div>
+                    @if(count($personDetail['enrollments']))
+                        <div class="dm-l" style="margin-top:18px;">Class Enrollments</div>
+                        <table class="gqs-tbl" style="margin-top:6px;">
+                            <thead><tr><th>Class</th><th>Date</th><th>Status</th></tr></thead>
+                            <tbody>@foreach($personDetail['enrollments'] as $e)
+                                <tr><td>{{ $e['class'] }}</td><td>{{ $e['date'] ?: '—' }}</td><td>{{ $e['status'] }}</td></tr>
+                            @endforeach</tbody>
+                        </table>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closePersonDetail" class="gqs-btn gqs-btn-ghost">Close</button>
+                    <a href="{{ $personDetail['view_url'] }}" class="gqs-btn gqs-btn-primary" style="text-decoration:none;">Open Record</a>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-filament-panels::page>

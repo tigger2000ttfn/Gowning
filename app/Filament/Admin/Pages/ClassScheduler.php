@@ -416,6 +416,7 @@ class ClassScheduler extends Page
             ->filter(fn ($e) => $e->personnel_id !== null || trim((string) $e->name) !== '')
             ->map(fn ($e) => [
                 'id' => $e->id,
+                'personnel_id' => $e->personnel_id,
                 'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'status' => $e->status,
@@ -483,6 +484,46 @@ class ClassScheduler extends Page
         $this->rescheduleName = $e->name ?: ($e->personnel?->full_name ?? 'Trainee');
         $this->rescheduleSessionId = null;
         $this->showReschedule = true;
+    }
+
+    // ---- Per-person detail modal (click an enrollee) ----
+    public ?array $personDetail = null;
+    public function closePersonDetail(): void { $this->personDetail = null; }
+
+    public function showPersonDetail(?int $personnelId): void
+    {
+        if (! $personnelId) { $this->personDetail = null; return; }
+        $p = \App\Models\Personnel::find($personnelId);
+        if (! $p) { $this->personDetail = null; return; }
+        $q = \App\Models\Qualification::currentFor($p->id);
+
+        $enrollments = \App\Models\ClassEnrollment::with('classSession.trainingClass')
+            ->where('personnel_id', $p->id)->latest('id')->limit(6)->get()
+            ->map(fn ($e) => [
+                'class' => $e->classSession?->trainingClass?->name ?? 'Class',
+                'date' => $e->classSession?->session_date?->gmp(),
+                'status' => ucwords(str_replace('_', ' ', (string) ($e->status instanceof \BackedEnum ? $e->status->value : $e->status))),
+            ])->all();
+
+        $classCompletion = \App\Models\ClassCompletion::where('personnel_id', $p->id)
+            ->latest('completion_date')->first();
+        $classDate = $q?->class_on_file_date?->gmp() ?? $classCompletion?->completion_date?->gmp();
+
+        $this->personDetail = [
+            'name' => $p->full_name,
+            'employee_id' => $p->employee_id,
+            'department' => $p->department,
+            'job_title' => $p->job_title,
+            'email' => $p->email,
+            'stage' => $q?->workflow_stage?->label(),
+            'status' => $q ? ucwords(str_replace('_', ' ', (string) ($q->status instanceof \BackedEnum ? $q->status->value : $q->status))) : null,
+            'type' => $q ? $q->sessionLabel() : null,
+            'due' => $q?->due_date?->gmp(),
+            'class_on_file' => (bool) ($q?->class_on_file),
+            'class_date' => $classDate,
+            'enrollments' => $enrollments,
+            'view_url' => \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $p->id]),
+        ];
     }
 
     /** Cancel one person's class enrollment (frees their seat). Routed through the confirm modal. */

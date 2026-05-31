@@ -320,6 +320,11 @@ class RunDayRoster extends Page
         $enroll = \App\Models\ClassEnrollment::where('personnel_id', $p->id)
             ->latest('id')->first();
         $classStatus = $enroll ? ucwords(str_replace('_', ' ', (string) ($enroll->status instanceof \BackedEnum ? $enroll->status->value : $enroll->status))) : null;
+        // class completion date: from class_on_file_date, else the latest class completion record.
+        $classCompletion = \App\Models\ClassCompletion::where('personnel_id', $p->id)
+            ->latest('completion_date')->first();
+        $classDate = $q?->class_on_file_date?->gmp()
+            ?? $classCompletion?->completion_date?->gmp();
 
         $this->personDetail = [
             'name' => $p->full_name,
@@ -334,6 +339,7 @@ class RunDayRoster extends Page
             'due' => $q?->due_date?->gmp(),
             'class_on_file' => (bool) ($q?->class_on_file),
             'class_status' => $classStatus,
+            'class_date' => $classDate,
             'recent_runs' => $runs,
             'view_url' => $q
                 ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id])

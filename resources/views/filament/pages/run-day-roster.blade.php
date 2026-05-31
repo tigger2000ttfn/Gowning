@@ -487,6 +487,7 @@
                         <div><div class="dm-l">Runs</div><div class="dm-v">{{ $personDetail['runs'] ?: '—' }}</div></div>
                         <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $personDetail['due'] ?: '—' }}</div></div>
                         <div><div class="dm-l">Class Status</div><div class="dm-v">{{ $personDetail['class_status'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Class Completed</div><div class="dm-v">{{ $personDetail['class_date'] ?: '—' }}</div></div>
                         <div><div class="dm-l">Class On File</div><div class="dm-v">@if($personDetail['class_on_file'])<span class="gqs-pill gqs-pill-green">Yes</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</div></div>
                     </div>
 
