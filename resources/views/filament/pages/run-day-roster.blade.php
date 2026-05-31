@@ -414,6 +414,7 @@
                                                 @endfor
                                             </span>
                                             <span style="font-weight:700;">Run {{ $runNo }} of {{ $required }}</span>
+                                            @if(!empty($limsDetected[$res->id]))<span class="gqs-pill gqs-pill-green" title="LIMS shows {{ $limsDetected[$res->id] }} for this person - pre-filled as Present. Confirm and submit.">LIMS: Run Detected</span>@endif
                                         </div>
                                     </div>
 

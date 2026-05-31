@@ -61,6 +61,46 @@ class LimsWorklist extends Model
         return static::where('worklist', $wl)->first();
     }
 
+    /** Which personnel record does this worklist's PERSONNEL value belong to? (LIMS username, else name.) */
+    public function matchPersonnel(): ?\App\Models\Personnel
+    {
+        $wlPersonnel = strtoupper(trim((string) $this->personnel));
+        if ($wlPersonnel === '') return null;
+
+        // 1) Exact LIMS username match (e.g. RRODRIGUEZ).
+        $p = \App\Models\Personnel::whereRaw('UPPER(lims_username) = ?', [$wlPersonnel])->first();
+        if ($p) return $p;
+
+        // 2) Pattern: first-initial + last name contained in the PERSONNEL token.
+        foreach (\App\Models\Personnel::whereNotNull('last_name')->get() as $cand) {
+            $last = strtoupper(trim((string) $cand->last_name));
+            $first = strtoupper(trim((string) $cand->first_name));
+            if ($last === '') continue;
+            if (str_contains($wlPersonnel, $last) && ($first === '' || str_starts_with($wlPersonnel, $first[0]))) {
+                return $cand;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Worklists in LIMS that name this person (by username or name pattern) and represent a performed run,
+     * optionally on/after a date. Used to reconcile attendance the analyst may have forgotten to mark.
+     */
+    public static function forPersonnel(\App\Models\Personnel $p, ?string $onOrAfter = null)
+    {
+        $login = strtoupper(trim((string) $p->lims_username));
+        $last = strtoupper(trim((string) $p->last_name));
+        return static::query()
+            ->where(function ($q) use ($login, $last) {
+                if ($login !== '') $q->orWhereRaw('UPPER(personnel) = ?', [$login]);
+                if ($last !== '') $q->orWhereRaw('UPPER(personnel) LIKE ?', ['%' . $last . '%']);
+            })
+            ->when($onOrAfter, fn ($q) => $q->where(fn ($w) => $w->whereDate('inc1_start', '>=', $onOrAfter)->orWhereNull('inc1_start')))
+            ->orderByDesc('id')
+            ->get();
+    }
+
     public function isPass(): bool
     {
         return strcasecmp(trim((string) $this->evaluation), 'pass') === 0;

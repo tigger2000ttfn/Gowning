@@ -46,6 +46,8 @@ class RunDayRoster extends Page
     public array $intent = [];
     /** Per-reservation flag: operator did ALL remaining cycle runs in one day (the common case). */
     public array $performAll = [];
+    /** reservation_id => worklist string, when LIMS pre-filled this row (for the "LIMS detected" badge). */
+    public array $limsDetected = [];
 
     public function setIntent(int $reservationId, string $status): void
     {
@@ -408,6 +410,34 @@ class RunDayRoster extends Page
     {
         $this->date = $date;
         $this->tab = 'roster';
+        $this->prefillFromLims($date);
+    }
+
+    /**
+     * Pre-fill the attendance sheet from LIMS: for each still-actionable reservation on this day, if LIMS
+     * shows a worklist naming that person (a run they performed), pre-fill the worklist and suggest the
+     * Present intent so the analyst sees where things actually are - even if they forgot to mark it. The
+     * analyst still submits; nothing is committed here. LIMS is treated as the accurate source.
+     */
+    public function prefillFromLims(string $date): void
+    {
+        $slot = RunSlot::with(['reservations.personnel'])->whereDate('slot_date', $date)->first();
+        if (! $slot || $slot->attendance_submitted_at) return; // don't touch a locked/submitted day
+        foreach ($slot->reservations as $r) {
+            $st = $r->status instanceof \BackedEnum ? $r->status->value : $r->status;
+            if (in_array($st, ['completed', 'no_show', 'rescheduled', 'rejected', 'cancelled'], true)) continue;
+            if (! $r->personnel) continue;
+            // Already has an intent or a worklist typed? Leave the analyst's input alone.
+            if (! empty($this->intent[$r->id]) || ! empty($this->worklists[$r->id]) || ! empty($r->lims_worklist_id)) continue;
+
+            $wl = \App\Models\LimsWorklist::forPersonnel($r->personnel, $date)->first();
+            if ($wl) {
+                $this->worklists[$r->id] = preg_replace('/^EM-/i', '', (string) $wl->worklist);
+                $this->intent[$r->id] = 'present';                 // suggested - analyst still submits
+                $this->limsDetected[$r->id] = (string) $wl->worklist; // badge marker
+                $this->performAll[$r->id] = true;                  // all-runs default
+            }
+        }
     }
 
     /** Human label for a person's current qualification cycle, for the roster (single source of truth on the model). */
