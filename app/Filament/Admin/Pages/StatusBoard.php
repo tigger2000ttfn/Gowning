@@ -455,7 +455,7 @@ class StatusBoard extends Page
             if (! $u?->hasCapability(Capability::QaApprove)) {
                 Notification::make()->danger()->title('Not Your Role')
                     ->body('Only QA approvers can complete a QA sign-off. Ask QA to approve this record.')->send();
-                $this->dispatch('$refresh'); // snap the card back
+                // (no model change = the card snaps back to its lane on re-render)
                 return;
             }
             // QA user: send them to the sign-off wizard rather than auto-stamping qualified here.
@@ -469,13 +469,13 @@ class StatusBoard extends Page
             if (! ($u?->hasCapability(Capability::QaReview) || $u?->hasCapability(Capability::RecordRuns) || $u?->hasCapability(Capability::QaApprove))) {
                 Notification::make()->danger()->title('Not Your Role')
                     ->body('A QC Micro reviewer signs results off to QA. You do not have that role.')->send();
-                $this->dispatch('$refresh');
+                // (no model change = the card snaps back on re-render)
                 return;
             }
             if (! in_array($fromStage, ['results_released', 'awaiting_results'], true)) {
                 Notification::make()->warning()->title('Release Results First')
                     ->body('Results must be entered and released (QCM review) before this goes to QA.')->send();
-                $this->dispatch('$refresh');
+                // (no model change = the card snaps back on re-render)
                 return;
             }
             // Route to Lab Review to capture the QCM sign-off / results, which advances to QA on save.
