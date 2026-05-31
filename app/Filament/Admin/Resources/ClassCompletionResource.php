@@ -61,7 +61,8 @@ class ClassCompletionResource extends Resource
                     ->searchable()->preload(),
                 TextInput::make('class_name')->required(),
                 DatePicker::make('completion_date')->native(false)->displayFormat('d-M-Y')->required(),
-                Select::make('source')->options(['lms' => 'LMS import', 'manual' => 'Manual'])->default('manual')->required(),
+                Select::make('source')->options(['lms' => 'LMS import', 'manual' => 'Manual', 'inferred' => 'Inferred (from backfill)'])->default('manual')->required()
+                    ->helperText('Inferred entries were auto-created from a historic backfill (the requal implies a prior class). Confirm and change to Manual once verified.'),
             ]),
         ]);
     }
@@ -80,8 +81,10 @@ class ClassCompletionResource extends Resource
                         'manual' => 'Manual',
                         'self' => 'Self-Service',
                         'import' => 'Import',
+                        'inferred' => 'Inferred (Confirm)',
                         default => ucwords(str_replace(['_', '-'], ' ', (string) $state)),
-                    }),
+                    })
+                    ->color(fn ($state) => strtolower((string) $state) === 'inferred' ? 'warning' : 'gray'),
                 TextColumn::make('importBatch.filename')->label('Import File')->placeholder('—')->toggleable(),
             ])
             ->recordActions([

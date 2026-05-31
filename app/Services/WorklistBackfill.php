@@ -155,6 +155,23 @@ class WorklistBackfill
                 $qual->workflow_stage = WorkflowStage::ResultsReleased;
             }
             $qual->stage_changed_at = now();
+
+            // Inferred classroom completion: a requal (and any historic qual) implies the gowning class
+            // was taken at some point. We cannot reliably enter years of historic class data, so we record
+            // an INFERRED completion (source=inferred) that QA can edit/confirm on the Class Completions
+            // page, and mark class_on_file so the run pipeline does not flag "missing class". Only when none
+            // already exists.
+            if (! \App\Models\ClassCompletion::where('personnel_id', $person->id)->exists()) {
+                \App\Models\ClassCompletion::create([
+                    'personnel_id' => $person->id,
+                    'employee_id' => $person->employee_id,
+                    'class_name' => 'Gowning Qualification Class (Inferred)',
+                    'completion_date' => $firstDate->toDateString(),
+                    'source' => 'inferred',
+                ]);
+                $qual->class_on_file = true;
+                $qual->class_on_file_date = $firstDate->toDateString();
+            }
             $qual->save();
         }
 

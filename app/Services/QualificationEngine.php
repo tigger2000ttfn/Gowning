@@ -128,30 +128,43 @@ class QualificationEngine
         $startingRequired = $qualification->cycle_started_at ? (int) $qualification->runs_required : null;
         $state = $this->replay($runsQuery->get(), $startingRequired);
 
-        // If the engine derived a qualifying date from runs, use it. Otherwise fall back to a
-        // manually-entered qualified_date (seeded/historic people who have no full run history).
-        $qualifiedDate = $state['qualified_date'] ?? $qualification->qualified_date?->toDateString();
+        // QA OWNERSHIP OF "QUALIFIED": only QA sign-off makes someone Qualified and sets the qualified
+        // date. The run engine computes passes/progress, but completing the required runs does NOT make
+        // the record Qualified on its own - it lands at Results Released awaiting QA. So qualified_date is
+        // the EXISTING stored date (set by QA at sign-off) unless QA has actually signed off this record.
+        $qaSignedOff = $qualification->workflow_stage?->value === 'qa_signoff';
+        $existingQualifiedDate = $qualification->qualified_date?->toDateString();
+
+        // The qualified date is whatever QA recorded (existing). The engine's computed qualifying date is
+        // only adopted when QA has signed off (it should already be stored, but this is belt-and-braces).
+        $qualifiedDate = $qaSignedOff
+            ? ($existingQualifiedDate ?? $state['qualified_date'])
+            : $existingQualifiedDate;
 
         // DUE DATE OWNERSHIP: the displayed due date is the CURRENT cycle due date and is only advanced
-        // when QA signs off (finalizeSignoff sets due = approval date + cycle). The engine must NOT push
-        // due_date to a freshly-calculated future date when a run passes mid-flow - that showed a "next"
-        // due date prematurely on the boards. So we PRESERVE the existing stored due_date here, and only
-        // fall back to a computed one when the record has no due date at all (brand-new/seeded record).
+        // when QA signs off (finalizeSignoff sets due = approval date + cycle). PRESERVE the stored due
+        // date; only fall back to a computed one when the record has none at all (seeded/imported record).
         $existingDue = $qualification->due_date?->toDateString();
         $dueDate = $existingDue;
         if ($dueDate === null) {
-            $dueDate = $state['due_date'] ?? ($qualifiedDate
+            $dueDate = $qualifiedDate
                 ? \Illuminate\Support\Carbon::parse($qualifiedDate)->addMonths($this->cycleMonths())->toDateString()
-                : null);
+                : null;
         }
 
-        // If the person is qualified by manual entry (status says qualified) but the run replay
-        // produced no qualifying date, keep the qualified status rather than downgrading it.
+        // STATUS: the engine's status is honored EXCEPT it cannot manufacture "Qualified" - that is a
+        // QA-gated state. If the engine says Qualified but QA has not signed this record off, the record
+        // is actually still In Progress (its runs are in, awaiting QA approval).
         $status = $state['status'];
-        if ($state['qualified_date'] === null && $qualifiedDate
+        $engineSaysQualified = $status === \App\Enums\QualificationStatus::Qualified;
+        if ($engineSaysQualified && ! $qaSignedOff && $existingQualifiedDate === null) {
+            // Runs complete but never QA-approved: hold at In Progress (it sits at Results Released for QA).
+            $status = \App\Enums\QualificationStatus::InProgress;
+        }
+        // A record QA previously qualified (has a stored qualified_date) keeps its qualified/lapsed status.
+        if (! $engineSaysQualified && $existingQualifiedDate
             && ($qualification->status instanceof \BackedEnum ? $qualification->status->value : $qualification->status) === 'qualified') {
             $status = \App\Enums\QualificationStatus::Qualified;
-            // re-evaluate lapse against the computed due date
             if ($dueDate && \Illuminate\Support\Carbon::parse($dueDate)->isPast()) {
                 $status = \App\Enums\QualificationStatus::Lapsed;
             }
