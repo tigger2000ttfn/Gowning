@@ -25,7 +25,7 @@ class ActiveBookings extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
     protected static ?string $navigationLabel = 'Active Bookings';
-    protected static string|\UnitEnum|null $navigationGroup = 'Sessions';
+    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Active Bookings';
     public function getHeading(): string { return ''; }

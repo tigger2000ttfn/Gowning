@@ -42,10 +42,10 @@ class ClassReservations extends Page
     }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
-    protected static ?string $navigationLabel = 'Session Reservations';
-    protected static string|\UnitEnum|null $navigationGroup = 'Sessions';
+    protected static ?string $navigationLabel = 'Class Reservations';
+    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 3;
-    protected static ?string $title = 'Session Reservations';
+    protected static ?string $title = 'Class Reservations';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.class-reservations';

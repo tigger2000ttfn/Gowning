@@ -23,7 +23,7 @@ class RunNotScheduled extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Not Scheduled';
-    protected static string|\UnitEnum|null $navigationGroup = 'Sessions';
+    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 3;
     protected static ?string $title = 'Run Not Scheduled';
     public function getHeading(): string { return ''; }

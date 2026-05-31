@@ -12,7 +12,7 @@
         $reviewLabel = match ($stageVal) {
             'awaiting_results', 'results_released' => 'Lab Review',
             'qa_review', 'qa_signoff', 'failed' => 'QA Review',
-            'class_pending', 'class_complete' => 'Session Scheduler',
+            'class_pending', 'class_complete' => 'Class Scheduler',
             'run_scheduled', 'run_performed', 'incubating' => 'Run Scheduler',
             default => null,
         };
