@@ -437,6 +437,7 @@ SQL;
                 ];
 
                 $existing = LimsWorklist::where('worklist', $wl)->first();
+                if ($existing && $existing->is_legacy) { $skipped++; continue; } // legacy-locked: never overwrite
                 if ($existing) { $existing->update($payload); $updated++; }
                 else { LimsWorklist::create($payload); $created++; }
             }
@@ -520,6 +521,62 @@ SQL;
 
     public function closeBackfill(): void { $this->showBackfill = false; }
 
+    // ---- Legacy lock + hand-edit a worklist row ----
+    public ?int $editId = null;
+    public array $editData = [];
+
+    /** Fields hand-editable on a legacy row. */
+    protected array $editableFields = [
+        'worklist_description', 'sample_status', 'worklist_all_final', 'qualification_type', 'personnel',
+        'evaluation', 'em_area', 'cr_grade_1', 'cr_grade_2', 'cr_grade_3',
+        'qual_date_1', 'qual_date_2', 'qual_date_3', 'run2_rescheduled', 'run3_rescheduled',
+        'inc_sample_status', 'qual_reference', 'inc_reference',
+    ];
+
+    public function toggleLegacy(int $id): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $wl = LimsWorklist::find($id);
+        if (! $wl) return;
+        $wl->is_legacy = ! $wl->is_legacy;
+        $wl->save();
+        Notification::make()->success()->title($wl->is_legacy ? 'Marked Legacy' : 'Legacy Removed')
+            ->body($wl->is_legacy ? 'Imports will no longer update ' . $wl->worklist . '.' : $wl->worklist . ' will update on import again.')->send();
+    }
+
+    public function editRow(int $id): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $wl = LimsWorklist::find($id);
+        if (! $wl) return;
+        $this->editId = $id;
+        $this->editData = collect($this->editableFields)->mapWithKeys(fn ($f) => [$f => (string) ($wl->{$f} ?? '')])->all();
+        // booleans as yes/no strings for the form
+        $this->editData['worklist_all_final'] = $wl->worklist_all_final ? 'Yes' : 'No';
+    }
+
+    public function saveRow(): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $wl = LimsWorklist::find($this->editId);
+        if (! $wl) { $this->editId = null; return; }
+        $payload = [];
+        foreach ($this->editableFields as $f) {
+            if ($f === 'worklist_all_final') { $payload[$f] = $this->boolFromYesNo($this->editData[$f] ?? null); continue; }
+            $payload[$f] = ($this->editData[$f] ?? '') !== '' ? $this->editData[$f] : null;
+        }
+        // editing implies this row is hand-managed; lock it from future imports.
+        $payload['is_legacy'] = true;
+        $wl->update($payload);
+        $this->editId = null;
+        $this->editData = [];
+        Notification::make()->success()->title('Worklist Updated')->body($wl->worklist . ' saved and marked legacy.')->send();
+        // re-sync any run linked to this worklist so edits flow through
+        app(\App\Services\WorklistSync::class)->syncAll();
+    }
+
+    public function closeEdit(): void { $this->editId = null; $this->editData = []; }
+
     public function catalogRows(): array
     {
         $q = LimsWorklist::query()->latest('catalog_synced_at');
@@ -531,6 +588,8 @@ SQL;
                 ->orWhere('evaluation', 'ilike', $s));
         }
         return $q->limit(60)->get()->map(fn ($d) => [
+            'id' => $d->id,
+            'legacy' => (bool) $d->is_legacy,
             'worklist' => $d->worklist,
             'description' => $d->worklist_description,
             'personnel' => $d->personnel,

@@ -113,11 +113,11 @@
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="gqs-tbl">
-                        <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>NC Ref</th><th>Synced</th></tr></thead>
+                        <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>NC Ref</th><th>Synced</th><th>Actions</th></tr></thead>
                         <tbody>
                             @forelse ($this->catalogRows() as $d)
                                 <tr>
-                                    <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}</td>
+                                    <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif</td>
                                     <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $d['description'] }}">{{ $d['description'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">
@@ -136,9 +136,13 @@
                                     <td>@if($d['qcm_ready'])<span class="gqs-pill gqs-pill-green">Ready</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</td>
                                     <td style="white-space:nowrap;">{{ $d['reference'] ?: '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $d['synced'] ?: '—' }}</td>
+                                    <td style="white-space:nowrap;">
+                                        <button type="button" wire:click="editRow({{ $d['id'] }})" class="wl-act">Edit</button>
+                                        <button type="button" wire:click="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}">{{ $d['legacy'] ? 'Unlock' : 'Legacy' }}</button>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="10" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists in the catalog yet. Load a LIMS export on the Upload tab.</td></tr>
+                                <tr><td colspan="11" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists in the catalog yet. Load a LIMS export on the Upload tab.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -222,4 +226,54 @@
             .bf-l{font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
         </style>
     @endif
+
+    {{-- Hand-edit a worklist row (marks it legacy) --}}
+    @if($editId)
+        <div class="gqs-modal-overlay" wire:click.self="closeEdit">
+            <div class="gqs-modal" style="width:720px;max-width:96vw;">
+                <div style="background:linear-gradient(135deg,#7A3FA4,#5E2F80);padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0;">
+                    <span style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-pencil-square" style="width:26px;height:26px;color:#fff;"/>
+                    </span>
+                    <div>
+                        <div style="font-weight:800;font-size:17px;color:#fff;">Edit Worklist (Legacy)</div>
+                        <div style="font-size:12px;color:#EBDDF5;">Saving locks this row from future imports.</div>
+                    </div>
+                </div>
+                <div class="gqs-modal-body" style="max-height:62vh;overflow:auto;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="grid-column:1 / -1;"><label class="gqs-flbl">Description</label><input type="text" wire:model="editData.worklist_description" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Person (LIMS Login)</label><input type="text" wire:model="editData.personnel" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Qualification Type</label><input type="text" wire:model="editData.qualification_type" class="gqs-fld" placeholder="Initial Gowning Qualification / Annual Requalification"></div>
+                        <div><label class="gqs-flbl">Evaluation</label>
+                            <select wire:model="editData.evaluation" class="gqs-fld"><option value="">—</option><option value="Pass">Pass</option><option value="Fail">Fail</option></select></div>
+                        <div><label class="gqs-flbl">EM Area</label><input type="text" wire:model="editData.em_area" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Sample Status</label>
+                            <select wire:model="editData.sample_status" class="gqs-fld"><option value="">—</option><option value="A">A — Authorized</option><option value="C">C — Complete</option><option value="I">I — Incomplete</option><option value="P">P — Pending</option><option value="X">X — Cancelled</option></select></div>
+                        <div><label class="gqs-flbl">Incubation Status</label>
+                            <select wire:model="editData.inc_sample_status" class="gqs-fld"><option value="">—</option><option value="A">A — Authorized</option><option value="C">C — Complete</option><option value="I">I — Incomplete</option><option value="P">P — Pending</option><option value="X">X — Cancelled</option></select></div>
+                        <div><label class="gqs-flbl">Worklist All Final</label>
+                            <select wire:model="editData.worklist_all_final" class="gqs-fld"><option value="No">No</option><option value="Yes">Yes</option></select></div>
+                        <div><label class="gqs-flbl">CR Grade 1</label><input type="text" wire:model="editData.cr_grade_1" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">CR Grade 2</label><input type="text" wire:model="editData.cr_grade_2" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">CR Grade 3</label><input type="text" wire:model="editData.cr_grade_3" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Qual Date 1</label><input type="text" wire:model="editData.qual_date_1" class="gqs-fld" placeholder="M/D/YYYY"></div>
+                        <div><label class="gqs-flbl">Qual Date 2</label><input type="text" wire:model="editData.qual_date_2" class="gqs-fld" placeholder="M/D/YYYY"></div>
+                        <div><label class="gqs-flbl">Qual Date 3</label><input type="text" wire:model="editData.qual_date_3" class="gqs-fld" placeholder="M/D/YYYY"></div>
+                        <div><label class="gqs-flbl">Run 2 Rescheduled?</label>
+                            <select wire:model="editData.run2_rescheduled" class="gqs-fld"><option value="">—</option><option value="No">No</option><option value="Yes">Yes</option></select></div>
+                        <div><label class="gqs-flbl">Run 3 Rescheduled?</label>
+                            <select wire:model="editData.run3_rescheduled" class="gqs-fld"><option value="">—</option><option value="No">No</option><option value="Yes">Yes</option></select></div>
+                        <div><label class="gqs-flbl">Qual Reference (NC)</label><input type="text" wire:model="editData.qual_reference" class="gqs-fld"></div>
+                        <div><label class="gqs-flbl">Inc Reference</label><input type="text" wire:model="editData.inc_reference" class="gqs-fld"></div>
+                    </div>
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeEdit" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="saveRow" class="gqs-btn gqs-btn-primary">Save &amp; Lock</button>
+                </div>
+            </div>
+        </div>
+    @endif
+    <style>.wl-act{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);cursor:pointer;margin-right:4px;}.wl-act:hover{background:var(--gqs-surface-2,#F3F3F6);}</style>
 </x-filament-panels::page>
