@@ -431,7 +431,9 @@ class RunDayRoster extends Page
             if (! empty($this->intent[$r->id]) || ! empty($this->worklists[$r->id]) || ! empty($r->lims_worklist_id)) continue;
 
             $wl = \App\Models\LimsWorklist::forPersonnel($r->personnel, $date)->first();
-            if ($wl) {
+            // Only suggest Present from an authorized + completed worklist - we can't determine the run
+            // happened (or its dates) before LIMS has authorized and finalized it.
+            if ($wl && $wl->worklist_all_final && $wl->isAuthorized()) {
                 $this->worklists[$r->id] = preg_replace('/^EM-/i', '', (string) $wl->worklist);
                 $this->intent[$r->id] = 'present';                 // suggested - analyst still submits
                 $this->limsDetected[$r->id] = (string) $wl->worklist; // badge marker

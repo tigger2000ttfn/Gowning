@@ -49,31 +49,58 @@ class ReconcileAttendance extends Command
             $wl = LimsWorklist::forPersonnel($r->personnel, $slotDate)->first();
             if (! $wl) { $skipped++; continue; }
 
+            // AUTHORIZED + COMPLETED gate: we never infer/update from a worklist until it is authorized and
+            // all samples are final in LIMS. Before that the run dates / count can't be determined.
+            if (! ($wl->worklist_all_final && $wl->isAuthorized())) {
+                $this->line("Holding (not authorized/final): {$r->personnel->full_name} - worklist {$wl->worklist}");
+                $skipped++; continue;
+            }
+
             // Is this worklist already recorded on a run for the person? Then nothing to do.
             $exists = QualificationRun::where('personnel_id', $r->personnel_id)
                 ->where('lims_worklist_id', $wl->worklist)->exists();
             if ($exists) { $skipped++; continue; }
 
-            $this->line(($force ? 'Recording' : 'Would record') . ": {$r->personnel->full_name} - worklist {$wl->worklist} (run day {$slotDate})");
+            // One worklist covers the whole run session. Infer how many runs and on which dates from the
+            // QUAL DATE 1/2/3 + RUN 2/3 RESCHEDULED columns (same-day unless rescheduled).
+            $required = max(1, (int) ($q->runs_required ?? 1));
+            $dates = $wl->effectiveRunDates();
+            $runDates = array_values(array_filter([
+                $dates['run1']?->toDateString(),
+                $required >= 2 ? ($dates['run2']?->toDateString()) : null,
+                $required >= 3 ? ($dates['run3']?->toDateString()) : null,
+            ]));
+            if (empty($runDates)) $runDates = [$slotDate ?: now()->toDateString()];
+            // Don't double-count runs already recorded for this cycle.
+            $alreadyDone = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
+            $toRecord = max(0, min(count($runDates), $required) - $alreadyDone);
+            if ($toRecord <= 0) { $skipped++; continue; }
+            $reviewNote = $dates['needs_review'] ? ' [needs review: reschedule flag set but date missing]' : '';
+
+            $this->line(($force ? 'Recording' : 'Would record') . " {$toRecord} run(s): {$r->personnel->full_name} - worklist {$wl->worklist} on " . implode(', ', array_slice($runDates, $alreadyDone, $toRecord)) . $reviewNote);
             if ($force) {
-                app(\App\Services\QualificationEngine::class)->recordRun($r->personnel, \App\Enums\RunResult::Pending, [
-                    'run_date' => $slotDate ?: now()->toDateString(),
-                    'lims_worklist_id' => $wl->worklist,
-                ]);
-                $run = QualificationRun::where('personnel_id', $r->personnel_id)->latest('id')->first();
-                if ($run && ! $run->incubation_started_at) {
-                    $run->incubation_started_at = $wl->inc1_start ?: now();
-                    $run->save();
+                $incStart = $wl->inc1_start ?: null;
+                foreach (array_slice($runDates, $alreadyDone, $toRecord) as $rd) {
+                    app(\App\Services\QualificationEngine::class)->recordRun($r->personnel, \App\Enums\RunResult::Pending, [
+                        'run_date' => $rd ?: ($slotDate ?: now()->toDateString()),
+                        'lims_worklist_id' => $wl->worklist,
+                    ]);
+                    $run = QualificationRun::where('personnel_id', $r->personnel_id)->latest('id')->first();
+                    if ($run && ! $run->incubation_started_at) {
+                        $run->incubation_started_at = $incStart ?: ($rd ? \Illuminate\Support\Carbon::parse($rd) : now());
+                        $run->save();
+                    }
                 }
                 $r->update(['status' => 'completed', 'lims_worklist_id' => $wl->worklist]);
-                app(\App\Services\WorklistSync::class)->syncRun($run->fresh());
+                $latestRun = QualificationRun::where('personnel_id', $r->personnel_id)->latest('id')->first();
+                if ($latestRun) app(\App\Services\WorklistSync::class)->syncRun($latestRun->fresh());
                 app(\App\Services\RunCycleAdvancer::class)->advance($q->fresh());
             }
-            $made++;
+            $made += $toRecord;
         }
 
-        $this->info(($force ? 'Reconciled ' : 'Would reconcile ') . "{$made} run(s) from LIMS; {$skipped} skipped.");
-        if (! $force) $this->comment('Dry run. Re-run with --force to apply.');
+        $this->info(($force ? 'Reconciled ' : 'Would reconcile ') . "{$made} run(s) from authorized/final LIMS worklists; {$skipped} skipped.");
+        if (! $force) $this->comment('Dry run. Re-run with --force to apply. QCM still signs off before submission; any mismatches are rectified in LIMS.');
         return self::SUCCESS;
     }
 }
