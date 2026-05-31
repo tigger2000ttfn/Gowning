@@ -199,18 +199,41 @@ class QualificationResource extends Resource
                         default => $record->type?->value === 'initial' ? 'info' : 'success',
                     }),
                 TextColumn::make('status')->badge()->sortable()
-                    ->formatStateUsing(fn ($s) => $s?->label())
-                    ->icon(fn ($s) => match($s?->value) {
-                        'qualified' => 'heroicon-m-shield-check',
-                        'in_progress' => 'heroicon-m-arrow-path',
-                        'pending' => 'heroicon-m-clock',
-                        'lapsed' => 'heroicon-m-exclamation-triangle',
-                        default => null,
+                    ->formatStateUsing(function ($state, $record) {
+                        $s = $record->status;
+                        if ($s instanceof \BackedEnum) return $s->label();
+                        $e = \App\Enums\QualificationStatus::tryFrom((string) $s);
+                        return $e?->label() ?? \Illuminate\Support\Str::title(str_replace('_', ' ', (string) $s));
                     })
-                    ->color(fn ($s) => $s?->color() ?? 'gray'),
+                    ->icon(function ($state, $record) {
+                        $v = $record->status instanceof \BackedEnum ? $record->status->value : (string) $record->status;
+                        return match ($v) {
+                            'qualified' => 'heroicon-m-shield-check',
+                            'in_progress' => 'heroicon-m-arrow-path',
+                            'pending' => 'heroicon-m-clock',
+                            'lapsed' => 'heroicon-m-exclamation-triangle',
+                            default => null,
+                        };
+                    })
+                    ->color(function ($state, $record) {
+                        $s = $record->status;
+                        if ($s instanceof \BackedEnum) return $s->color();
+                        return \App\Enums\QualificationStatus::tryFrom((string) $s)?->color() ?? 'gray';
+                    }),
                 TextColumn::make('workflow_stage')->label('Stage')->badge()->sortable()
-                    ->formatStateUsing(fn ($s) => $s ? \App\Models\WorkflowStatus::labelFor('run', $s->value, $s->label()) : '—')
-                    ->color(fn ($s) => $s ? \Filament\Support\Colors\Color::hex($s->color()) : 'gray'),
+                    ->formatStateUsing(function ($state, $record) {
+                        $s = $record->workflow_stage;
+                        if (! $s) return '—';
+                        $val = $s instanceof \BackedEnum ? $s->value : (string) $s;
+                        $enum = $s instanceof \BackedEnum ? $s : \App\Enums\WorkflowStage::tryFrom($val);
+                        return \App\Models\WorkflowStatus::labelFor('run', $val, $enum?->label() ?? \Illuminate\Support\Str::title(str_replace('_', ' ', $val)));
+                    })
+                    ->color(function ($state, $record) {
+                        $s = $record->workflow_stage;
+                        if (! $s) return 'gray';
+                        $enum = $s instanceof \BackedEnum ? $s : \App\Enums\WorkflowStage::tryFrom((string) $s);
+                        return $enum ? \Filament\Support\Colors\Color::hex($enum->color()) : 'gray';
+                    }),
                 TextColumn::make('runs_completed')->label('Passes')->icon('heroicon-m-check-circle')
                     ->formatStateUsing(fn ($state, $record) => "{$state} / {$record->runs_required}"),
                 TextColumn::make('qualified_date')->date()->placeholder('—')->sortable(),
