@@ -138,6 +138,14 @@ class StatusBoard extends Page
                 'has_booking' => $q->personnel_id
                     ? \App\Models\Reservation::where('personnel_id', $q->personnel_id)->whereIn('status', ['requested', 'approved'])->exists()
                     : false,
+                // Inline card actions: stage-appropriate quick link, the Active Runs record, and (when the
+                // run is at QCM review) the approval form - so common steps are reachable from the card.
+                'quick_url' => $this->quickActionUrl($q),
+                'quick_label' => $this->quickActionShort($q),
+                'view_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
+                'form_url' => $q->workflow_stage?->value === 'results_released'
+                    ? route('print.approval', ['qualification' => $q->id])
+                    : null,
             ];
             })->values()->all();
 
@@ -374,9 +382,12 @@ class StatusBoard extends Page
     {
         $stage = $q->workflow_stage?->value;
         return match ($stage) {
-            // ready to run / scheduled / performing / incubating / results -> Run Scheduler
-            'class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released'
+            // ready to run / scheduled / performing -> Run Scheduler
+            'class_complete', 'run_scheduled', 'run_performed'
                 => \App\Filament\Admin\Pages\RunDayRoster::getUrl(),
+            // incubating / results -> Lab Review (where QC Micro enters/evaluates results)
+            'incubating', 'awaiting_results', 'results_released'
+                => \App\Filament\Admin\Pages\IncubationBoard::getUrl(),
             // QA stages -> QA Sign-off Queue
             'qa_review', 'qa_signoff', 'failed'
                 => \App\Filament\Admin\Pages\QaQueue::getUrl(),
@@ -395,6 +406,20 @@ class StatusBoard extends Page
                 => 'Go To Run Scheduler',
             'qa_review', 'qa_signoff', 'failed' => 'Go To QA Queue',
             'class_pending' => 'Go To Class Scheduler',
+            default => null,
+        };
+    }
+
+    /** Short label for the inline card button. */
+    protected function quickActionShort(Qualification $q): ?string
+    {
+        $stage = $q->workflow_stage?->value;
+        return match ($stage) {
+            'class_complete' => 'Run Scheduler',
+            'run_scheduled', 'run_performed' => 'Run Scheduler',
+            'incubating', 'awaiting_results', 'results_released' => 'Lab Review',
+            'qa_review', 'qa_signoff', 'failed' => 'QA Queue',
+            'class_pending' => 'Class Scheduler',
             default => null,
         };
     }
