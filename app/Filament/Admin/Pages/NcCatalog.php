@@ -38,9 +38,9 @@ class NcCatalog extends Page implements HasForms
 
     public ?array $data = [];
     public array $headers = [];
-    public array $rows = [];
-    public array $hyperlinks = [];
-    public array $preview = [];
+    public array $preview = [];        // first 8 rows only, for display
+    public int $rowCount = 0;
+    public ?string $parsedPath = null; // relative path of the uploaded file, re-read at import
     public bool $parsed = false;
     public bool $imported = false;
     public int $lastCreated = 0;
@@ -111,63 +111,88 @@ class NcCatalog extends Page implements HasForms
 
     public function resetUpload(): void
     {
+        // best-effort delete of any stored file
+        if ($this->parsedPath) {
+            try { Storage::disk('local')->delete($this->parsedPath); } catch (\Throwable $e) {}
+        }
         $this->parsed = false;
         $this->imported = false;
-        $this->rows = [];
         $this->preview = [];
         $this->headers = [];
-        $this->hyperlinks = [];
+        $this->rowCount = 0;
+        $this->parsedPath = null;
         $this->data = [];
         try { $this->form->fill(); } catch (\Throwable $e) { /* ignore */ }
     }
 
+    /**
+     * Read a file into [headers, body rows, per-row hyperlinks]. Shared by parse (preview) and import
+     * (full pass) so we never hold all rows in Livewire state. Detects xlsx/html/csv and sanitizes UTF-8.
+     *
+     * @return array{headers: array<int,string>, rows: array<int,array>, hyperlinks: array<int,array>}|null
+     */
+    protected function readRows(string $full): ?array
+    {
+        $fmt = \App\Support\XlsxReader::detectFormat($full);
+        if ($fmt === 'xlsx' || $fmt === 'html') {
+            $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
+            $rows = $read['rows'];
+            if (count($rows) < 2) return null;
+            $headers = array_map(fn ($h) => \App\Support\XlsxReader::toUtf8(trim((string) $h)), $rows[0]);
+            $body = array_slice($rows, 1);
+            $remapped = [];
+            foreach ($body as $b => $_) {
+                $abs = $b + 1;
+                if (isset($read['hyperlinks'][$abs])) $remapped[$b] = $read['hyperlinks'][$abs];
+            }
+            return ['headers' => $headers, 'rows' => array_values($body), 'hyperlinks' => array_values($remapped)];
+        }
+        // CSV
+        $rows = [];
+        $fh = fopen($full, 'r');
+        if (! $fh) return null;
+        while (($r = fgetcsv($fh)) !== false) {
+            if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
+            $rows[] = array_map(fn ($c) => \App\Support\XlsxReader::toUtf8((string) $c), $r);
+        }
+        fclose($fh);
+        if (count($rows) < 2) return null;
+        $headers = array_map('trim', array_shift($rows));
+        return ['headers' => $headers, 'rows' => array_values($rows), 'hyperlinks' => []];
+    }
+
     public function parse(): void
     {
-        $rows = [];
-        $this->hyperlinks = [];
         $full = $this->resolveUploadFullPath();
         if (! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')
                 ->body('The file upload did not complete. Pick the file again, wait for the progress bar to finish, then Parse.')->send();
             return;
         }
-        $fmt = \App\Support\XlsxReader::detectFormat($full);
 
         try {
-            if ($fmt === 'xlsx' || $fmt === 'html') {
-                $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
-                $rows = $read['rows'];
-                if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The File')->body('No rows were found in the export.')->send(); return; }
-                $rawLinks = $read['hyperlinks'];
-                if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-                $this->headers = array_map('trim', $rows[0]);
-                $body = array_slice($rows, 1);
-                $remapped = [];
-                foreach ($body as $b => $_) {
-                    $abs = $b + 1;
-                    if (isset($rawLinks[$abs])) $remapped[$b] = $rawLinks[$abs];
-                }
-                $this->rows = $body;
-                $this->hyperlinks = $remapped;
-            } else {
-                $fh = fopen($full, 'r');
-                while (($r = fgetcsv($fh)) !== false) {
-                    if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
-                    $rows[] = $r;
-                }
-                fclose($fh);
-                if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-                $this->headers = array_map('trim', array_shift($rows));
-                $this->rows = $rows;
-            }
+            $read = $this->readRows($full);
         } catch (\Throwable $e) {
             Notification::make()->danger()->title('Could Not Parse The File')
                 ->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
             return;
         }
+        if (! $read) {
+            Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send();
+            return;
+        }
+
+        $this->headers = $read['headers'];
+        $this->rowCount = count($read['rows']);
+        // store ONLY the first 8 rows (truncated per cell) for the preview - not all rows
+        $this->preview = array_map(
+            fn ($row) => array_map(fn ($c) => \Illuminate\Support\Str::limit((string) $c, 80), $row),
+            array_slice($read['rows'], 0, 8)
+        );
+        // remember the file so import can re-read it (do NOT delete on parse)
+        $this->parsedPath = $this->uploadedPath();
 
         $this->guessColumns();
-        $this->preview = array_slice($this->rows, 0, 8);
         $this->parsed = true;
         $this->imported = false;
     }
@@ -226,16 +251,32 @@ class NcCatalog extends Page implements HasForms
             Notification::make()->danger()->title('Map The Nonconformance Number Column')->send(); return;
         }
 
+        // Re-read the full file now (rows are NOT kept in Livewire state, to avoid huge payloads).
+        $full = $this->parsedPath ? Storage::disk('local')->path($this->parsedPath) : $this->resolveUploadFullPath();
+        if (! $full || ! is_file($full)) {
+            Notification::make()->danger()->title('Upload Expired')->body('Please re-upload and parse the file, then import.')->send();
+            return;
+        }
+        try {
+            $read = $this->readRows($full);
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Import Failed')->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
+            return;
+        }
+        if (! $read) { Notification::make()->danger()->title('Could Not Read The File')->send(); return; }
+        $rows = $read['rows'];
+        $hyperlinks = $read['hyperlinks'];
+
         $created = 0; $updated = 0;
         try {
-            foreach ($this->rows as $ri => $row) {
+            foreach ($rows as $ri => $row) {
                 $number = $col($row, 'map_number');
                 if (! $number) continue;
                 $url = $col($row, 'map_url');
                 if (! $url) {
                     $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
                     $numCol = (int) $m['map_number'];
-                    $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
+                    $url = $hyperlinks[$ri][$linkCol] ?? $hyperlinks[$ri][$numCol] ?? null;
                 }
                 $recordId = $col($row, 'map_recordid') ?: NcDocument::extractRecordId($url);
                 if (! $url && $recordId) {
@@ -272,15 +313,15 @@ class NcCatalog extends Page implements HasForms
         $this->lastUpdated = $updated;
         $this->imported = true;
         $this->parsed = false;
-        $this->rows = [];
         $this->preview = [];
-        $this->hyperlinks = [];
+        $this->rowCount = 0;
 
-        $path = $this->uploadedPath();
-        if ($path) {
-            try { Storage::disk('local')->delete($path); } catch (\Throwable $e) { /* best-effort */ }
-            $this->data['csv'] = null;
+        // delete the stored file now that import is done
+        foreach (array_filter([$this->parsedPath, $this->uploadedPath()]) as $p) {
+            try { Storage::disk('local')->delete($p); } catch (\Throwable $e) { /* best-effort */ }
         }
+        $this->parsedPath = null;
+        $this->data['csv'] = null;
         $this->headers = [];
 
         $back = $this->backfillLinks();
