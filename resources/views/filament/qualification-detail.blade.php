@@ -51,15 +51,24 @@
 <div class="ar-detail">
 
     <div class="ar-hero">
-        <div style="min-width:0;">
-            <h2>{{ $q->personnel?->full_name ?? 'Qualification' }}</h2>
-            <div class="sub">{{ $q->personnel?->employee_id ?: 'No ID' }}@if($q->personnel?->job_title) · {{ $q->personnel->job_title }}@endif@if($q->personnel?->department) · {{ $q->personnel->department }}@endif</div>
-            <div class="sub" style="margin-top:5px;">{{ $q->sessionLabel() }}@if(($q->cycle_number ?: 1) > 1) · Cycle {{ $q->cycle_number }}@endif@if($q->superseded_at) (superseded){{-- --}}@endif</div>
+        <div style="display:flex;align-items:center;gap:16px;min-width:0;">
+            @php
+                $nm = trim((string) ($q->personnel?->full_name ?? ''));
+                $parts = preg_split('/\s+/', $nm);
+                $initials = strtoupper(substr($parts[0] ?? 'Q', 0, 1) . (count($parts) > 1 ? substr(end($parts), 0, 1) : ''));
+            @endphp
+            <span class="ar-avatar">{{ $initials ?: 'Q' }}</span>
+            <div style="min-width:0;">
+                <h2>{{ $q->personnel?->full_name ?? 'Qualification' }}</h2>
+                <div class="sub">{{ $q->personnel?->employee_id ?: 'No ID' }}@if($q->personnel?->job_title) · {{ $q->personnel->job_title }}@endif@if($q->personnel?->department) · {{ $q->personnel->department }}@endif</div>
+                <div class="sub" style="margin-top:5px;">{{ $q->sessionLabel() }}@if(($q->cycle_number ?: 1) > 1) · Cycle {{ $q->cycle_number }}@endif@if($q->superseded_at) (superseded){{-- --}}@endif</div>
+            </div>
         </div>
         <span class="ar-pill" style="background:{{ $pillBg }};">{{ $pillTxt }}</span>
     </div>
 
     <div class="ar-tiles">
+        @php /* tiles below */ @endphp
         <div class="ar-tile"><div class="l">Stage</div><div class="v sm">{{ $stageLabel }}</div></div>
         <div class="ar-tile"><div class="l">Passes This Cycle</div><div class="v">{{ (int) $q->runs_completed }} / {{ (int) $q->runs_required }}</div></div>
         <div class="ar-tile {{ $pastDue ? 'danger' : '' }}"><div class="l">Due</div><div class="v sm">{{ $q->due_date?->gmp() ?? '—' }}</div></div>
@@ -80,7 +89,7 @@
 
     {{-- Person --}}
     <div class="ar-sec">
-        <h3>Person</h3>
+        <h3><x-filament::icon icon="heroicon-m-user" /> Person</h3>
         <div class="ar-grid">
             <div class="ar-f"><div class="l">Employee ID</div><div class="v">{{ $q->personnel?->employee_id ?: '—' }}</div></div>
             <div class="ar-f"><div class="l">Department</div><div class="v">{{ $q->personnel?->department ?: '—' }}</div></div>
@@ -94,7 +103,7 @@
 
     {{-- Qualification details --}}
     <div class="ar-sec">
-        <h3>Qualification</h3>
+        <h3><x-filament::icon icon="heroicon-m-clipboard-document-check" /> Qualification</h3>
         <div class="ar-grid">
             <div class="ar-f"><div class="l">Status</div><div class="v"><span class="ar-chip" style="background:{{ $pillBg }}1A;color:{{ $pillBg }};">{{ $statusLabel }}</span></div></div>
             <div class="ar-f"><div class="l">Type</div><div class="v">{{ $q->sessionLabel() }}</div></div>
@@ -115,7 +124,7 @@
     {{-- LIMS & incubation --}}
     @if($lrun)
         <div class="ar-sec">
-            <h3>LIMS &amp; Incubation</h3>
+            <h3><x-filament::icon icon="heroicon-m-beaker" /> LIMS &amp; Incubation</h3>
             <div class="ar-grid">
                 <div class="ar-f"><div class="l">Worklist</div><div class="v">{{ $lrun->lims_worklist_id ?: '—' }}</div></div>
                 <div class="ar-f"><div class="l">LIMS Evaluation</div><div class="v">
@@ -137,7 +146,7 @@
     {{-- Run history --}}
     @if($recentRuns->count())
         <div class="ar-sec">
-            <h3>Run History</h3>
+            <h3><x-filament::icon icon="heroicon-m-arrow-path" /> Run History</h3>
             <table class="ar-tbl">
                 <thead><tr><th>Date</th><th>Result</th><th>Worklist</th><th>Inc Status</th><th>Evaluation</th><th>NC</th><th>Veeva</th></tr></thead>
                 <tbody>
@@ -170,7 +179,7 @@
     @endphp
     @if($cycles->count())
         <div class="ar-sec">
-            <h3>Cycle History</h3>
+            <h3><x-filament::icon icon="heroicon-m-clock" /> Cycle History</h3>
             <table class="ar-tbl">
                 <thead><tr><th>Cycle</th><th>Type</th><th>Started</th><th>Qualified</th><th>Due</th><th>Status</th></tr></thead>
                 <tbody>

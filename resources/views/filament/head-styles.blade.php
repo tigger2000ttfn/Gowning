@@ -497,6 +497,7 @@
     .ar-detail{--ar-line:var(--gqs-border,#E5E5EA);}
     .ar-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(135deg,#1C1C21,#34343D);border-radius:14px;padding:18px 22px;color:#fff;flex-wrap:wrap;}
     .ar-hero h2{font-size:22px;font-weight:800;margin:0;line-height:1.1;}
+    .ar-avatar{flex:0 0 52px;width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#fff;background:linear-gradient(135deg,#A4123F,#6E0C2A);box-shadow:0 4px 12px rgba(164,18,63,.35);letter-spacing:.02em;}
     .ar-hero .sub{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:3px;}
     .ar-pill{display:inline-flex;align-items:center;padding:7px 16px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;white-space:nowrap;}
     .ar-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
@@ -515,16 +516,23 @@
     .ar-step .bar{position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--ar-line,#E5E5EA);z-index:0;}
     .ar-step.done .bar{background:#2E7D5B;}
     .ar-step:last-child .bar{display:none;}
-    .ar-sec{margin-top:22px;}
-    .ar-sec h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:#26262C;border-radius:9px;padding:8px 14px;margin:0 0 11px;}
-    .ar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-    .ar-f .l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
-    .ar-f .v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:2px;font-size:13.5px;}
+    .ar-sec{margin-top:18px;background:var(--gqs-surface,#fff);border:1px solid var(--ar-line,#E5E5EA);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+    .ar-sec h3{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#fff;background:#26262C;padding:9px 16px;margin:0;}
+    .ar-sec h3 svg{width:15px;height:15px;opacity:.85;}
+    .ar-sec > .ar-grid{padding:15px 16px;}
+    .ar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;}
+    .ar-f{background:var(--gqs-surface-2,#F7F7F9);border:1px solid var(--ar-line,#ECECEF);border-radius:9px;padding:9px 11px;}
+    .ar-f .l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
+    .ar-f .v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:2px;font-size:13.5px;word-break:break-word;}
     .ar-chip{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:700;}
-    .ar-tbl{width:100%;border-collapse:collapse;margin-top:4px;}
-    .ar-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);padding:7px 10px;border-bottom:1px solid var(--ar-line,#E5E5EA);}
-    .ar-tbl td{padding:8px 10px;border-bottom:1px solid var(--ar-line,#E5E5EA);font-size:13px;color:var(--gqs-text,#1A1A1F);}
-    .dark .ar-tile,.dark .ar-sec h3 ~ *{}
+    .ar-tbl{width:100%;border-collapse:collapse;margin:0;}
+    .ar-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);padding:8px 14px;border-bottom:1px solid var(--ar-line,#E5E5EA);background:var(--gqs-surface-2,#F7F7F9);}
+    .ar-tbl td{padding:9px 14px;border-bottom:1px solid var(--ar-line,#EFEFF2);font-size:13px;color:var(--gqs-text,#1A1A1F);}
+    .ar-tbl tr:last-child td{border-bottom:none;}
+    .dark .ar-sec{background:#1C1C22;border-color:#2A2A32;}
+    .dark .ar-f{background:#23232B;border-color:#33333C;}
+    .dark .ar-tbl th{background:#23232B;}
+    .dark .ar-tile{background:#23232B;border-color:#33333C;}
     .gqs-modal-body .gqs-flbl{margin-bottom:4px;}
     .gqs-modal-foot{display:flex;justify-content:flex-end;gap:9px;padding:16px 22px;border-top:1px solid var(--gqs-border,#ECECEF);}
     .dark .gqs-modal-foot{border-color:#2C2C34;}
