@@ -73,7 +73,7 @@ Schedule::command('gqs:archive-qualifications')->dailyAt('06:16');
 // Recurring catalog backfill: re-link any NC / Veeva records to the latest catalog data nightly,
 // so links/status stay fresh as new weekly exports are imported.
 Artisan::command('gqs:backfill-catalogs', function () {
-    $nc = 0; $vv = 0;
+    $nc = 0; $vv = 0; $runNc = 0;
     if (\Illuminate\Support\Facades\Schema::hasColumn('non_conformances', 'trackwise_id')) {
         foreach (\App\Models\NonConformance::whereNotNull('trackwise_id')->where('trackwise_id', '!=', '')->get() as $rec) {
             $doc = \App\Models\NcDocument::findByNumber($rec->trackwise_id);
@@ -84,7 +84,17 @@ Artisan::command('gqs:backfill-catalogs', function () {
             if ($changed) { $rec->save(); $nc++; }
         }
     }
-    $this->info("Catalog backfill: {$nc} NC link(s) refreshed.");
+    // Veeva links on runs that have a Veeva number but no (or stale) link.
+    foreach (\App\Models\QualificationRun::whereNotNull('veeva_doc_number')->where('veeva_doc_number', '!=', '')->get() as $run) {
+        $url = \App\Models\VeevaDocument::urlForNumber($run->veeva_doc_number);
+        if ($url && $run->veeva_url !== $url) { $run->veeva_url = $url; $run->saveQuietly(); $vv++; }
+    }
+    // NC/TrackWise links on runs (failed runs carry lims_nc_number).
+    foreach (\App\Models\QualificationRun::whereNotNull('lims_nc_number')->where('lims_nc_number', '!=', '')->get() as $run) {
+        $url = \App\Models\NcDocument::urlForNumber($run->lims_nc_number);
+        if ($url && $run->lims_nc_url !== $url) { $run->lims_nc_url = $url; $run->saveQuietly(); $runNc++; }
+    }
+    $this->info("Catalog backfill: {$nc} NC link(s), {$vv} Veeva link(s), {$runNc} run-NC link(s) refreshed.");
 })->purpose('Nightly re-link of NC/Veeva records from the latest catalog');
 
 Schedule::command('gqs:backfill-catalogs')->dailyAt('06:17');

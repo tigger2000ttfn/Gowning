@@ -29,6 +29,20 @@ class NonConformance extends Model implements HasMedia
                 $nc->nc_number = self::nextNumber();
             }
         });
+
+        // Auto-link the TrackWise URL (and status) from the NC catalog whenever the TrackWise number is
+        // set/changed and no explicit URL was provided - so NC records are hyperlinked automatically.
+        static::saving(function (NonConformance $nc) {
+            if (! empty($nc->trackwise_id) && (empty($nc->trackwise_url) || $nc->isDirty('trackwise_id'))) {
+                $doc = \App\Models\NcDocument::findByNumber($nc->trackwise_id);
+                if ($doc) {
+                    if ($doc->url) $nc->trackwise_url = $doc->url;
+                    if (\Illuminate\Support\Facades\Schema::hasColumn('non_conformances', 'trackwise_status') && $doc->workflow_status) {
+                        $nc->trackwise_status = $doc->workflow_status;
+                    }
+                }
+            }
+        });
     }
 
     /** Generate the next NC number, e.g. NC-2026-0007. */
