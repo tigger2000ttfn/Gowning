@@ -228,14 +228,18 @@ class LimsWorklist extends Model
     }
 
     /**
-     * Derive the effective run dates from the date columns + reschedule flags, since analysts may copy
-     * the same date into all three and reschedules are the real signal.
+     * Derive the effective run dates from the date columns + reschedule flags. The DATES are authoritative:
+     * a reschedule flag of "yes" only records that the analyst EXPECTED a separate day. If the person ended
+     * up doing the run the same day after all, the actual Qual Date shows it (same as the prior run, or - on
+     * a finalized worklist - simply never entered as a separate date). That is correct, not an error, and is
+     * not flagged. We only flag needs_review when a reschedule was expected, no date was entered, AND the
+     * worklist is not yet final (so it is genuinely pending/ambiguous rather than resolved as same-day).
      *
      * - Run 1 = Qual Date 1.
-     * - Run 2 = Qual Date 2 if RUN 2 RESCHEDULED and Date 2 present; if rescheduled but blank -> Date 1
-     *   (and flagged needs_review). Otherwise -> Date 1.
-     * - Run 3 = Qual Date 3 if RUN 3 RESCHEDULED and Date 3 present; if rescheduled but blank -> run 2's
-     *   date (and flagged needs_review). Otherwise -> run 2's date.
+     * - Run 2 = Qual Date 2 when present (may equal Run 1 = same day despite the flag); else same day as
+     *   Run 1 (flag=no, or finalized with no separate date); else (reschedule expected, blank, not final)
+     *   Run 1 + needs_review.
+     * - Run 3 = same rule against Run 2.
      *
      * @return array{run1: ?\Illuminate\Support\Carbon, run2: ?\Illuminate\Support\Carbon, run3: ?\Illuminate\Support\Carbon, needs_review: bool}
      */
@@ -246,22 +250,27 @@ class LimsWorklist extends Model
         $d3 = self::parseLimsDate($this->qual_date_3);
         $r2 = $this->yes($this->run2_rescheduled);
         $r3 = $this->yes($this->run3_rescheduled);
+        $final = (bool) $this->worklist_all_final;
         $needsReview = false;
 
         $run1 = $d1;
 
-        if ($r2) {
-            if ($d2) { $run2 = $d2; }
-            else { $run2 = $d1; $needsReview = true; } // rescheduled but missing the date (possibly mid-stream)
+        // Run 2: the date wins. Same-day-despite-a-yes-flag is a legitimate, common case (they planned to
+        // reschedule but did it the same day), so it is NOT flagged.
+        if ($d2) {
+            $run2 = $d2;                        // explicit date (may equal run 1 = same day)
+        } elseif ($r2 && ! $final) {
+            $run2 = $d1; $needsReview = true;   // reschedule expected, no date yet, not final -> pending
         } else {
-            $run2 = $d1; // same day as run 1
+            $run2 = $d1;                        // same day as run 1 (flag=no, or finalized same-day)
         }
 
-        if ($r3) {
-            if ($d3) { $run3 = $d3; }
-            else { $run3 = $run2; $needsReview = true; }
+        if ($d3) {
+            $run3 = $d3;
+        } elseif ($r3 && ! $final) {
+            $run3 = $run2; $needsReview = true;
         } else {
-            $run3 = $run2; // same day as run 2
+            $run3 = $run2;                      // same day as run 2
         }
 
         return ['run1' => $run1, 'run2' => $run2, 'run3' => $run3, 'needs_review' => $needsReview];
