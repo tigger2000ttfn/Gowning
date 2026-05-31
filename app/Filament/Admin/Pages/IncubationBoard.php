@@ -256,12 +256,17 @@ class IncubationBoard extends Page
             }
         }
 
+        // Robustly strip any EM- prefix (even a doubled "EM-EM-") so the typable area never shows it.
+        $stripEm = fn (?string $v) => $v ? ltrim(preg_replace('/^(EM[-\s]*)+/i', '', $v)) : '';
+        // Only prefill the worklist when we are EDITING an already-entered result (a real pass/fail on the
+        // run, or LIMS final/QCM-ready). For fresh entry leave it BLANK so the QCM types it from the plates.
+        $isEditing = in_array($runResult, ['pass', 'fail'], true) || $this->erHasLimsResult;
         $this->er = [
-            'worklist' => $run?->lims_worklist_id ? preg_replace('/^EM-/i', '', (string) $run->lims_worklist_id) : '',
+            'worklist' => $isEditing ? $stripEm((string) $run?->lims_worklist_id) : '',
             'overall' => $this->erHasLimsResult && $this->erLimsResult ? $this->erLimsResult : '',
-            'trackwise_id' => $run?->lims_nc_number ? preg_replace('/^NC-/i', '', (string) $run->lims_nc_number) : '',
+            'trackwise_id' => ($isEditing && $run?->lims_nc_number) ? ltrim(preg_replace('/^(NC[-\s]*)+/i', '', (string) $run->lims_nc_number)) : '',
             'nc_note' => '',
-            'veeva' => $run?->veeva_doc_number ? preg_replace('/^RPT-AST-/i', '', (string) $run->veeva_doc_number) : '',
+            'veeva' => ($isEditing && $run?->veeva_doc_number) ? ltrim(preg_replace('/^(RPT-AST[-\s]*)+/i', '', (string) $run->veeva_doc_number)) : '',
         ];
     }
     public function closeEnterResults(): void { $this->erQid = null; }
