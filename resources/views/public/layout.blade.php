@@ -163,7 +163,19 @@
     </nav>
 
     @if (session('flash'))
-        <div class="flash">{{ session('flash') }}</div>
+        <div x-data="{ open: true }" x-show="open" x-cloak
+             style="position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(10,10,15,.55);padding:20px;"
+             @keydown.escape.window="open=false" @click.self="open=false">
+            <div x-show="open" x-transition
+                 style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:34px 28px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+                <div style="width:64px;height:64px;margin:0 auto 16px;border-radius:50%;background:#E8F5EC;display:flex;align-items:center;justify-content:center;">
+                    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#2E7D5B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                </div>
+                <div style="font-size:16px;font-weight:600;color:#15151A;line-height:1.5;">{{ session('flash') }}</div>
+                <button @click="open=false" type="button"
+                        style="margin-top:22px;background:#A4123F;color:#fff;border:none;padding:12px 30px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;">Done</button>
+            </div>
+        </div>
     @endif
 
     <main>
