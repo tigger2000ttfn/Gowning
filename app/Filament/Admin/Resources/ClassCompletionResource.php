@@ -53,17 +53,29 @@ class ClassCompletionResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Gowning Class Completion')->icon('heroicon-o-check-badge')->columns(2)->schema([
-                TextInput::make('employee_id')->label('Employee ID')->required(),
-                Select::make('personnel_id')->label('Linked Person')
-                    ->relationship('personnel', 'employee_id')
-                    ->getOptionLabelFromRecordUsing(fn ($r) => $r ? trim(($r->employee_id ?? '') . ' · ' . ($r->full_name ?? '')) : '—')
-                    ->searchable()->preload(),
-                TextInput::make('class_name')->required(),
-                DatePicker::make('completion_date')->native(false)->displayFormat('d-M-Y')->required(),
-                Select::make('source')->options(['lms' => 'LMS import', 'manual' => 'Manual', 'inferred' => 'Inferred (from backfill)'])->default('manual')->required()
-                    ->helperText('Inferred entries were auto-created from a historic backfill (the requal implies a prior class). Confirm and change to Manual once verified.'),
-            ]),
+            Section::make('Class Completion Details')->icon('heroicon-o-check-badge')
+                ->description('The official record that this person completed the gowning class.')
+                ->columns(2)->schema([
+                    Select::make('personnel_id')->label('Person')
+                        ->relationship('personnel', 'employee_id')
+                        ->getOptionLabelFromRecordUsing(fn ($r) => $r ? trim(($r->employee_id ?? '') . ' - ' . ($r->full_name ?? '')) : '-')
+                        ->searchable()->preload()
+                        ->helperText('Link to the personnel record so this completion shows on their qualification.')
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            $p = $state ? \App\Models\Personnel::find($state) : null;
+                            if ($p) $set('employee_id', $p->employee_id);
+                        })->live(),
+                    TextInput::make('employee_id')->label('Employee ID')->required()
+                        ->helperText('Auto-fills from the linked person; editable for unmatched records.'),
+                    TextInput::make('class_name')->label('Class Name')->required()
+                        ->placeholder('e.g. Gowning Qualification Class')->columnSpanFull(),
+                    DatePicker::make('completion_date')->label('Completion Date')
+                        ->native(false)->displayFormat('d-M-Y')->required(),
+                    Select::make('source')->label('Source')
+                        ->options(['lms' => 'LMS Import', 'manual' => 'Manual Entry', 'self' => 'Self-Service', 'import' => 'File Import', 'inferred' => 'Inferred (From Backfill)'])
+                        ->default('manual')->required()
+                        ->helperText('Inferred entries were auto-created from a historic backfill. Change to Manual once verified.'),
+                ]),
         ]);
     }
 
@@ -94,6 +106,9 @@ class ClassCompletionResource extends Resource
                     ->modalHeading('')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
+                    ->extraModalFooterActions(fn (ClassCompletion $record) => \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageClasses)
+                        ? [\Filament\Actions\EditAction::make('editFromCert')->label('Edit Details')->icon('heroicon-m-pencil-square')->record($record)]
+                        : [])
                     ->modalContent(fn (ClassCompletion $record) => view('filament.class-completion-certificate', ['c' => $record])),
                 \Filament\Actions\ActionGroup::make([
                     \Filament\Actions\EditAction::make()->label('Edit Details')->icon('heroicon-m-pencil-square')
