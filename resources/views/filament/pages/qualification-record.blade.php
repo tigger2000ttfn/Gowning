@@ -6,7 +6,7 @@
             'awaiting_results', 'results_released' => \App\Filament\Admin\Pages\IncubationBoard::getUrl(['tab' => 'evaluation', 'evaluate' => $q->id]),
             'qa_review', 'qa_signoff', 'failed' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
             'class_pending', 'class_complete' => \App\Filament\Admin\Pages\ClassScheduler::getUrl(),
-            'run_scheduled', 'run_performed', 'incubating' => \App\Filament\Admin\Pages\RunDayRoster::getUrl(),
+            'run_scheduled', 'run_performed', 'incubating' => \App\Filament\Admin\Pages\RunDayRoster::getUrl(['person' => $q->personnel_id]),
             default => null,
         };
         $reviewLabel = match ($stageVal) {

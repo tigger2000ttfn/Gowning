@@ -240,6 +240,34 @@ class RunDayRoster extends Page
     public function mount(): void
     {
         $this->date = now()->toDateString();
+
+        // Deep-link from a record: ?person=<personnelId> opens the attendance roster on that person's
+        // scheduled run day; ?tab + ?date allow direct landings too.
+        $tab = request()->query('tab');
+        $personId = (int) request()->query('person', 0);
+        $date = request()->query('date');
+
+        if ($personId > 0) {
+            $res = \App\Models\Reservation::where('personnel_id', $personId)
+                ->whereIn('status', ['approved', 'requested', 'completed'])
+                ->whereHas('runSlot')
+                ->with('runSlot')
+                ->get()
+                ->sortBy(fn ($r) => $r->runSlot?->slot_date?->toDateString())
+                ->first(fn ($r) => $r->runSlot && $r->runSlot->slot_date);
+            if ($res && $res->runSlot) {
+                $this->viewRoster($res->runSlot->slot_date->toDateString());
+                return;
+            }
+            // No booking found; still land on the roster tab for today.
+            $this->tab = 'roster';
+            return;
+        }
+        if ($date) { $this->date = $date; }
+        if (in_array($tab, ['overview', 'schedule', 'reservations', 'roster'], true)) {
+            $this->tab = $tab;
+            if ($tab === 'roster') { $this->prefillFromLims($this->date); }
+        }
     }
 
     public function slots()

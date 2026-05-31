@@ -4,6 +4,7 @@
         <button type="button" wire:click="$set(\'tab\',\'classes\')" class="gqs-tab ' . ($tab==='classes' ? 'active' : '') . '">Class Templates</button>
         <button type="button" wire:click="$set(\'tab\',\'sessions\')" class="gqs-tab ' . ($tab==='sessions' ? 'active' : '') . '">Classes</button>
         <button type="button" wire:click="$set(\'tab\',\'attendance\')" class="gqs-tab ' . ($tab==='attendance' ? 'active' : '') . '">Attendance</button>
+        <a href="' . \App\Filament\Admin\Pages\ClassBoard::getUrl() . '" class="gqs-btn gqs-btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;margin-left:6px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:15px;height:15px;"><path d="M4.5 2A2.5 2.5 0 0 0 2 4.5v11A2.5 2.5 0 0 0 4.5 18h11a2.5 2.5 0 0 0 2.5-2.5v-11A2.5 2.5 0 0 0 15.5 2h-11ZM6 5.5A.5.5 0 0 1 6.5 5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 6 5.5ZM6.5 8a.5.5 0 0 0 0 1h7a.5.5 0 0 0 0-1h-7Z"/></svg> Class Board</a>
     '])
 
     @if($tab === 'overview')

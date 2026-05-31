@@ -1,18 +1,16 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'My Qualification', 'icon' => 'heroicon-o-identification'])
-
     @php
         $showBook = $this->bookClassAction->isVisible();
         $showRun = $this->requestRunAction->isVisible();
         $showResched = $this->rescheduleAction->isVisible();
+        $heroActions = trim(
+            ($showBook ? $this->bookClassAction->toHtml() : '')
+            . ($showRun ? $this->requestRunAction->toHtml() : '')
+            . ($showResched ? $this->rescheduleAction->toHtml() : '')
+        );
     @endphp
-    @if($showBook || $showRun || $showResched)
-        <div style="margin:-6px 0 16px;display:flex;gap:10px;flex-wrap:wrap;">
-            @if($showBook){{ $this->bookClassAction }}@endif
-            @if($showRun){{ $this->requestRunAction }}@endif
-            @if($showResched){{ $this->rescheduleAction }}@endif
-        </div>
-    @endif
+    @include('filament.page-hero', ['title' => 'My Qualification', 'icon' => 'heroicon-o-identification', 'actions' => $heroActions])
+
     @php $needsClass = $person && ! $person->qualification?->class_on_file; @endphp
     @if($needsClass)
         <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:#FFF6E5;border:1px solid #F0D08A;border-radius:10px;">

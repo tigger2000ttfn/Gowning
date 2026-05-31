@@ -249,9 +249,14 @@ class ClassBoard extends Page
             })(),
             // For approved/completed records, edits route back to the QA review (historic) page.
             'qa_url' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
-            'edit_url' => $e->personnel_id
-                ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
-                : null,
+            // "Edit Record" opens the full (styled) qualification record page for this person's current cycle.
+            'edit_url' => (function () use ($e) {
+                if (! $e->personnel_id) return null;
+                $q = \App\Models\Qualification::currentFor($e->personnel_id);
+                return $q
+                    ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id])
+                    : \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id]);
+            })(),
         ];
     }
 

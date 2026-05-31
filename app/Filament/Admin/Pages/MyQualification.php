@@ -52,6 +52,9 @@ class MyQualification extends Page
             ->icon('heroicon-m-plus-circle')
             ->color('primary')
             ->visible(fn () => $this->canRequestRun())
+            ->modalIcon('heroicon-o-calendar-days')
+            ->modalIconColor('primary')
+            ->modalWidth('lg')
             ->modalHeading('Request A Qualification Run')
             ->modalDescription('Book yourself onto a cleanroom run day. Choose the next available day or pick a specific open day.')
             ->form([
@@ -131,6 +134,9 @@ class MyQualification extends Page
             ->icon('heroicon-m-academic-cap')
             ->color('gray')
             ->visible(fn () => $this->canBookClass())
+            ->modalIcon('heroicon-o-academic-cap')
+            ->modalIconColor('warning')
+            ->modalWidth('lg')
             ->modalHeading('Book A Gowning Class')
             ->modalDescription('Sign up for an upcoming gowning class. The gowning class must be completed before a qualification run.')
             ->form([

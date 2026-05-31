@@ -49,6 +49,9 @@
                                 <div style="margin-top:6px;display:flex;gap:6px;"><button wire:click="saveLink" class="sb-act" style="background:#2E7D5B;">Save</button><button wire:click="cancelLink" class="sb-act" style="background:#6A6A72;">Cancel</button></div>
                             @elseif($detail['worklist'])
                                 <span style="font-weight:700;">{{ $detail['worklist'] }}</span>
+                                @if($this->canClearWorklist())
+                                    <button type="button" wire:click="clearLink" wire:confirm="Clear this LIMS worklist from the qualification and its runs?" class="sb-act" style="background:#6A6A72;margin-left:8px;" title="Administrator: detach this worklist">Clear</button>
+                                @endif
                             @elseif($detail['needs_worklist'])
                                 <button type="button" wire:click="startLink" class="sb-act" style="background:#1F6FB2;">+ Link Worklist</button>
                             @else

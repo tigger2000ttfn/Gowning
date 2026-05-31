@@ -82,10 +82,10 @@ class QualificationModal extends Component
 
         // Where the record is worked next - and whether sign-off can be launched from here.
         $reviewUrl = match ($stageVal) {
-            'awaiting_results', 'results_released' => \App\Filament\Admin\Pages\IncubationBoard::getUrl(),
+            'awaiting_results', 'results_released' => \App\Filament\Admin\Pages\IncubationBoard::getUrl(['tab' => 'evaluation', 'evaluate' => $q->id]),
             'qa_review', 'qa_signoff', 'failed' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
             'class_pending', 'class_complete' => \App\Filament\Admin\Pages\ClassScheduler::getUrl(),
-            'run_scheduled', 'run_performed', 'incubating' => \App\Filament\Admin\Pages\RunDayRoster::getUrl(),
+            'run_scheduled', 'run_performed', 'incubating' => \App\Filament\Admin\Pages\RunDayRoster::getUrl(['person' => $q->personnel_id]),
             default => null,
         };
         $reviewLabel = match ($stageVal) {
@@ -194,6 +194,36 @@ class QualificationModal extends Component
         $this->wlValue = '';
         $this->build();
         \Filament\Notifications\Notification::make()->success()->title('Worklist Linked')->body($wl . ' linked. LIMS data will sync.')->send();
+    }
+
+    /** Whether the current user may clear/remove a linked worklist (a privileged correction). */
+    public function canClearWorklist(): bool
+    {
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u?->hasCapability(\App\Enums\Capability::SystemSettings)
+            || $u?->hasCapability(\App\Enums\Capability::ManageUsers));
+    }
+
+    /** Super-user: detach the LIMS worklist from this cycle's qualification and its runs (for a wrong link). */
+    public function clearLink(): void
+    {
+        if (! $this->canClearWorklist()) {
+            \Filament\Notifications\Notification::make()->danger()->title('Not Authorized')
+                ->body('Only an administrator can clear a linked worklist.')->send();
+            return;
+        }
+        $q = Qualification::find($this->qid);
+        if (! $q) return;
+        $q->lims_worklist_id = null;
+        $q->save();
+        $runsQ = QualificationRun::where('personnel_id', $q->personnel_id);
+        if ($q->cycle_started_at) { $runsQ->whereDate('run_date', '>=', $q->cycle_started_at); }
+        $runsQ->update(['lims_worklist_id' => null]);
+        $this->linking = false;
+        $this->wlValue = '';
+        $this->build();
+        \Filament\Notifications\Notification::make()->success()->title('Worklist Cleared')
+            ->body('The LIMS worklist was detached. Re-link the correct one when ready.')->send();
     }
 
     public function render()
