@@ -102,6 +102,10 @@ class StatusBoard extends Page
                     ? ucfirst($q->status->value) : null,
                 'flag_key' => in_array($q->status?->value, ['qualified', 'lapsed'], true)
                     ? $q->status->value : null,
+                // Whether this person already has an active run reservation (so Book Run can hide).
+                'has_booking' => $q->personnel_id
+                    ? \App\Models\Reservation::where('personnel_id', $q->personnel_id)->whereIn('status', ['requested', 'approved'])->exists()
+                    : false,
             ];
             })->values()->all();
 

@@ -18,10 +18,8 @@
         @if (! $parsed && ! $imported)
             <div class="gqs-panel"
                  x-data="{ uploading: false, hasFile: false }"
-                 x-on:livewire-upload-start="uploading = true; hasFile = false"
-                 x-on:livewire-upload-finish="uploading = false; hasFile = true"
-                 x-on:livewire-upload-error="uploading = false; hasFile = false"
-                 x-on:livewire-upload-cancel="uploading = false; hasFile = false"
+                 x-on:form-processing-started="uploading = true; hasFile = false"
+                 x-on:form-processing-finished="uploading = false; hasFile = true"
                  x-on:change="if ($event.target.type === 'file' && $event.target.files.length > 0) { uploading = true; hasFile = false }">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Upload Weekly NC Export</div>
                 <div class="gqs-panel-body" style="padding:16px;position:relative;">
@@ -37,9 +35,9 @@
                         <span style="font-size:12px;color:#A4123F;font-weight:600;" x-show="uploading" x-cloak>Uploading file, please wait...</span>
                         <span style="font-size:12px;color:#1E7A52;font-weight:600;" x-show="hasFile && !uploading" x-cloak>Upload complete. Ready to parse.</span>
                         <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ $this->catalogCount() }} in catalog</span>
-                        <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary" style="margin-left:auto;"
-                                x-bind:disabled="uploading || !hasFile"
-                                x-bind:style="(uploading || !hasFile) ? 'opacity:.45;cursor:not-allowed;' : ''">
+                        <button type="button" wire:click="parse" wire:loading.attr="disabled" wire:target="parse" class="gqs-btn gqs-btn-primary" style="margin-left:auto;"
+                                x-bind:disabled="uploading"
+                                x-bind:style="uploading ? 'opacity:.5;cursor:wait;' : ''">
                             <span x-show="uploading" x-cloak>Uploading...</span>
                             <span x-show="!uploading">Parse</span>
                         </button>
