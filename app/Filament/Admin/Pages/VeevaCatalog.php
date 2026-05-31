@@ -68,11 +68,24 @@ class VeevaCatalog extends Page implements HasForms
         ]);
     }
 
+    /**
+     * Filament's FileUpload stores its value as an array (keyed by a random id) even for a single
+     * file, so $this->data['csv'] may be ['abc' => 'imports/x.xlsx']. Normalize to one string path.
+     */
+    protected function uploadedPath(): ?string
+    {
+        $v = $this->data['csv'] ?? null;
+        if (is_array($v)) {
+            $v = collect($v)->filter()->first();
+        }
+        return is_string($v) && $v !== '' ? $v : null;
+    }
+
     public function parse(): void
     {
         $rows = [];
         $this->hyperlinks = [];
-        $path = $this->data['csv'] ?? null;
+        $path = $this->uploadedPath();
         $full = $path ? Storage::disk('local')->path($path) : null;
         if (! $path || ! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')->send();
@@ -213,7 +226,7 @@ class VeevaCatalog extends Page implements HasForms
         $this->hyperlinks = [];
 
         // The import is committed to the database; the uploaded file is no longer needed, so delete it.
-        $path = $this->data['csv'] ?? null;
+        $path = $this->uploadedPath();
         if ($path) {
             try { Storage::disk('local')->delete($path); } catch (\Throwable $e) { /* best-effort cleanup */ }
             $this->data['csv'] = null;

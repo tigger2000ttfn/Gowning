@@ -66,11 +66,20 @@ class NcCatalog extends Page implements HasForms
         ]);
     }
 
+    protected function uploadedPath(): ?string
+    {
+        $v = $this->data['csv'] ?? null;
+        if (is_array($v)) {
+            $v = collect($v)->filter()->first();
+        }
+        return is_string($v) && $v !== '' ? $v : null;
+    }
+
     public function parse(): void
     {
         $rows = [];
         $this->hyperlinks = [];
-        $path = $this->data['csv'] ?? null;
+        $path = $this->uploadedPath();
         $full = $path ? Storage::disk('local')->path($path) : null;
         if (! $path || ! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')->send();
@@ -199,7 +208,7 @@ class NcCatalog extends Page implements HasForms
         $this->preview = [];
         $this->hyperlinks = [];
 
-        $path = $this->data['csv'] ?? null;
+        $path = $this->uploadedPath();
         if ($path) {
             try { Storage::disk('local')->delete($path); } catch (\Throwable $e) { /* best-effort */ }
             $this->data['csv'] = null;
