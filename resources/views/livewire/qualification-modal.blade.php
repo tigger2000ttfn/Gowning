@@ -58,6 +58,20 @@
                                 <span style="color:var(--gqs-text-dim,#9A9AA4);">Not linked yet</span>
                             @endif
                         </div></div>
+                        <div style="grid-column:span 1;"><div class="dm-l">Veeva Report</div><div class="dm-v">
+                            @if(!empty($detail['veeva']))
+                                @if(!empty($detail['veeva_url']))
+                                    <a href="{{ $detail['veeva_url'] }}" target="_blank" rel="noopener" style="font-weight:700;color:#A4123F;">{{ $detail['veeva'] }} ↗</a>
+                                @else
+                                    <span style="font-weight:700;">{{ $detail['veeva'] }}</span>
+                                @endif
+                                @if($this->canClearWorklist())
+                                    <button type="button" wire:click="clearVeeva" wire:confirm="Clear the Veeva report number and link from this cycle's runs?" class="sb-act" style="background:#6A6A72;margin-left:8px;" title="Administrator: clear the Veeva number">Clear</button>
+                                @endif
+                            @else
+                                <span style="color:var(--gqs-text-dim,#9A9AA4);">None</span>
+                            @endif
+                        </div></div>
                     </div>
                 </div>
 

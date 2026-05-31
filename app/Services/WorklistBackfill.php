@@ -61,7 +61,7 @@ class WorklistBackfill
                     && substr($wlLogin, 0, 1) === $onlyFirstInit && substr($wlLogin, 1) === $onlyLast;
                 if (! $matchesLogin && ! $matchesName) continue;
             }
-            $type = $this->inferType($wl->qualification_type, $wl->worklist_description, $wl->em_area);
+            $type = $this->typeFor($wl);
 
             if ($type === null) {
                 // routine EM or unclassifiable
@@ -233,6 +233,24 @@ class WorklistBackfill
         if (preg_match('/re-?\s*qual|requal|requalification|annual|anual/', $d)) return 'annual';
         if (preg_match('/initial|gowning\s*qual/', $d)) return 'initial';
         return null;
+    }
+
+    /**
+     * Authoritative type from the worklist's structured LIMS columns. Per the LIMS export, a row carries
+     * exactly one of: INITIAL GOWNING QUALIFICATION RUN # (initial, 3 runs), ANNUAL REQUALIFICATION
+     * (annual, 1 run), or ADDITIONAL REQUALIFICATION (treated as annual, 1 run). We trust these columns
+     * over the free-text type/description so an annual requal is never created as a 3-run initial.
+     */
+    protected function typeFor(LimsWorklist $wl): ?string
+    {
+        $hasInitial = trim((string) $wl->initial_run_no) !== '';
+        $hasAnnual = trim((string) $wl->annual_requal) !== '';
+        $hasAdditional = trim((string) $wl->additional_requal) !== '';
+
+        if ($hasAnnual || $hasAdditional) return 'annual';   // 1 run
+        if ($hasInitial) return 'initial';                   // 3 runs
+        // Fall back to the free-text type/description heuristic only when no structured column is set.
+        return $this->inferType($wl->qualification_type, $wl->worklist_description, $wl->em_area);
     }
 
     protected function parseLimsDate(?string $d): ?Carbon

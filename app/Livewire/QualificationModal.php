@@ -97,6 +97,7 @@ class QualificationModal extends Component
         };
 
         $latestRun = $q->runs()->whereNotNull('lims_worklist_id')->latest('id')->first();
+        $veevaRun = $q->runs()->whereNotNull('veeva_doc_number')->where('veeva_doc_number', '!=', '')->latest('id')->first();
 
         $stepOrder = ['class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review', 'qa_signoff'];
         $stepLabels = ['Class', 'Scheduled', 'Performed', 'Incubating', 'Results', 'QCM Review', 'QA Review', 'QA Approved'];
@@ -150,6 +151,8 @@ class QualificationModal extends Component
             'class_on_file_date' => $q->class_on_file_date?->gmp(),
             'worklist' => $latestRun?->lims_worklist_id ?? $q->lims_worklist_id,
             'needs_worklist' => in_array($stageVal, ['run_performed', 'incubating', 'awaiting_results'], true) && ! ($latestRun?->lims_worklist_id ?? $q->lims_worklist_id),
+            'veeva' => $veevaRun?->veeva_doc_number,
+            'veeva_url' => $veevaRun?->veeva_url,
             'qa_owner' => $q->qaOwner?->name,
             'runs' => $runs,
             'steps' => $steps,
@@ -224,6 +227,24 @@ class QualificationModal extends Component
         $this->build();
         \Filament\Notifications\Notification::make()->success()->title('Worklist Cleared')
             ->body('The LIMS worklist was detached. Re-link the correct one when ready.')->send();
+    }
+
+    /** Super-user: clear the Veeva report number + link from this cycle's runs (for a wrong/typo entry). */
+    public function clearVeeva(): void
+    {
+        if (! $this->canClearWorklist()) {
+            \Filament\Notifications\Notification::make()->danger()->title('Not Authorized')
+                ->body('Only an administrator can clear a Veeva number.')->send();
+            return;
+        }
+        $q = Qualification::find($this->qid);
+        if (! $q) return;
+        $runsQ = QualificationRun::where('personnel_id', $q->personnel_id);
+        if ($q->cycle_started_at) { $runsQ->whereDate('run_date', '>=', $q->cycle_started_at); }
+        $runsQ->update(['veeva_doc_number' => null, 'veeva_url' => null]);
+        $this->build();
+        \Filament\Notifications\Notification::make()->success()->title('Veeva Number Cleared')
+            ->body('The Veeva report number and link were removed from this cycle. Enter the correct one when ready.')->send();
     }
 
     public function render()
