@@ -36,11 +36,16 @@ class AnnouncementResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Announcement')->icon('heroicon-o-megaphone')->schema([
-                TextInput::make('title')->required()->maxLength(120),
-                Textarea::make('body')->label('Message')->required()->rows(4),
-                Toggle::make('is_active')->label('Active (visible to everyone)')->default(true),
-            ]),
+            Section::make('Announcement')->icon('heroicon-o-megaphone')
+                ->description('Shown to everyone in the top bar messages. Keep it short and clear.')
+                ->schema([
+                    TextInput::make('title')->label('Title')->required()->maxLength(120)
+                        ->placeholder('e.g. Run Day Rescheduled This Friday')->columnSpanFull(),
+                    Textarea::make('body')->label('Message')->required()->rows(5)->columnSpanFull()
+                        ->helperText('The full announcement text.'),
+                    Toggle::make('is_active')->label('Active')->default(true)
+                        ->helperText('When on, this announcement is visible to everyone. Turn off to retire it without deleting.'),
+                ]),
         ]);
     }
 
