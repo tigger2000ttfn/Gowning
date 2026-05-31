@@ -473,6 +473,30 @@ SQL;
         Notification::make()->success()->title('Sync Complete')->body("Synced {$n} linked run(s) from the catalog.")->send();
     }
 
+    // ---- Historic backfill: build qualification history from matched catalog worklists ----
+    public bool $showBackfill = false;
+    public array $backfillPreview = [];
+
+    public function previewBackfill(): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $result = app(\App\Services\WorklistBackfill::class)->run(true);
+        $this->backfillPreview = $result;
+        $this->showBackfill = true;
+    }
+
+    public function runBackfill(): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $result = app(\App\Services\WorklistBackfill::class)->run(false);
+        $this->showBackfill = false;
+        $this->backfillPreview = [];
+        Notification::make()->success()->title('Backfill Complete')
+            ->body("Created {$result['created']} run(s) across {$result['quals']} qualification(s). Matched {$result['matched']}, unmatched {$result['unmatched']}, skipped {$result['skipped']}.")->send();
+    }
+
+    public function closeBackfill(): void { $this->showBackfill = false; }
+
     public function catalogRows(): array
     {
         $q = LimsWorklist::query()->latest('catalog_synced_at');

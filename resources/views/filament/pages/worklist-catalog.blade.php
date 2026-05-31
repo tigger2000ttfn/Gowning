@@ -98,6 +98,7 @@
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
                     <input type="text" wire:model.live.debounce.300ms="search" class="gqs-fld" placeholder="Search worklist, person, or description..." style="max-width:420px;">
                     <button type="button" wire:click="runSync" class="gqs-btn gqs-btn-ghost">Sync Linked Runs Now</button>
+                    <button type="button" wire:click="previewBackfill" class="gqs-btn gqs-btn-ghost">Backfill History</button>
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="gqs-tbl">
@@ -150,5 +151,64 @@
                 </div>
             </div>
         </div>
+    @endif
+
+    {{-- Historic backfill preview --}}
+    @if($showBackfill)
+        <div class="gqs-modal-overlay" wire:click.self="closeBackfill">
+            <div class="gqs-modal" style="width:760px;max-width:96vw;">
+                <div style="background:linear-gradient(135deg,#2E7D5B,#225F46);padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0;">
+                    <span style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-clock" style="width:26px;height:26px;color:#fff;"/>
+                    </span>
+                    <div>
+                        <div style="font-weight:800;font-size:17px;color:#fff;">Backfill Historic Qualifications</div>
+                        <div style="font-size:12px;color:#D7EFE4;">Preview of what will be created from the catalog</div>
+                    </div>
+                </div>
+                <div class="gqs-modal-body">
+                    @php $bp = $backfillPreview; @endphp
+                    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;">
+                        <div class="bf-stat"><div class="bf-n">{{ $bp['quals'] ?? 0 }}</div><div class="bf-l">Qualifications</div></div>
+                        <div class="bf-stat"><div class="bf-n">{{ $bp['created'] ?? 0 }}</div><div class="bf-l">Run Records</div></div>
+                        <div class="bf-stat"><div class="bf-n">{{ $bp['matched'] ?? 0 }}</div><div class="bf-l">Matched</div></div>
+                        <div class="bf-stat"><div class="bf-n" style="color:#C79A2E;">{{ $bp['unmatched'] ?? 0 }}</div><div class="bf-l">Unmatched</div></div>
+                        <div class="bf-stat"><div class="bf-n" style="color:#9A9AA4;">{{ $bp['skipped'] ?? 0 }}</div><div class="bf-l">Skipped</div></div>
+                    </div>
+                    <p style="margin:0 0 10px;font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">Passing runs land in Lab Review (Results Released) for QCM review and cover-page creation. They are not submitted to QA. Unmatched rows are left for manual handling. This runs only for personnel already in the system.</p>
+                    <div style="overflow:auto;max-height:300px;border:1px solid var(--gqs-border,#E2E2E8);border-radius:10px;">
+                        <table class="gqs-tbl">
+                            <thead><tr><th>Worklist</th><th>Person</th><th>Type</th><th>Runs</th><th>Eval</th><th>Action</th></tr></thead>
+                            <tbody>
+                                @forelse($bp['rows'] ?? [] as $r)
+                                    <tr>
+                                        <td style="font-weight:700;white-space:nowrap;">{{ $r['worklist'] }}</td>
+                                        <td>{{ $r['person'] ?: '—' }}</td>
+                                        <td>{{ $r['type'] ?? '—' }}</td>
+                                        <td>{{ $r['runs'] ?? '—' }}</td>
+                                        <td>{{ $r['eval'] ?? '—' }}</td>
+                                        <td>@if(($r['status'] ?? '')==='unmatched')<span class="gqs-pill gqs-pill-gold">Unmatched</span>@else<span class="gqs-pill gqs-pill-green">Create</span>@endif</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" style="text-align:center;padding:16px;color:var(--gqs-text-dim,#6A6A72);">Nothing to backfill.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeBackfill" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="runBackfill" wire:loading.attr="disabled" wire:target="runBackfill" class="gqs-btn gqs-btn-primary">
+                        <span wire:loading.remove wire:target="runBackfill">Create {{ $bp['created'] ?? 0 }} Run(s)</span>
+                        <span wire:loading wire:target="runBackfill">Working...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <style>
+            .bf-stat{background:var(--gqs-surface-2,#F3F3F6);border:1px solid var(--gqs-border,#E2E2E8);border-radius:10px;padding:10px 16px;min-width:96px;text-align:center;}
+            .bf-n{font-size:22px;font-weight:800;color:#2E7D5B;line-height:1;}
+            .bf-l{font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
+        </style>
     @endif
 </x-filament-panels::page>
