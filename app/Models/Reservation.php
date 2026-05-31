@@ -30,7 +30,7 @@ class Reservation extends Model
 
     protected $fillable = [
         'run_slot_id', 'personnel_id', 'parent_reservation_id', 'status',
-        'requested_at', 'decided_by', 'decided_at', 'notes', 'lims_worklist_id',
+        'requested_at', 'decided_by', 'decided_at', 'notes', 'lims_worklist_id', 'acknowledged_at',
     ];
 
     protected function casts(): array
@@ -39,6 +39,7 @@ class Reservation extends Model
             'status' => ReservationStatus::class,
             'requested_at' => 'datetime',
             'decided_at' => 'datetime',
+            'acknowledged_at' => 'datetime',
         ];
     }
 

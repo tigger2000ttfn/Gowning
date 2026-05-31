@@ -13,7 +13,7 @@ class ClassEnrollment extends Model
 
     protected $fillable = [
         'class_session_id', 'personnel_id', 'name', 'email',
-        'employee_id', 'status', 'draft_attendance', 'signed_up_at',
+        'employee_id', 'status', 'draft_attendance', 'signed_up_at', 'acknowledged_at',
         'attended_at', 'completed_at', 'marked_by', 'attendance_note',
         'qa_completed_by', 'qa_completed_at',
     ];
@@ -98,7 +98,7 @@ class ClassEnrollment extends Model
 
     protected function casts(): array
     {
-        return ['signed_up_at' => 'datetime', 'attended_at' => 'datetime', 'completed_at' => 'datetime'];
+        return ['signed_up_at' => 'datetime', 'attended_at' => 'datetime', 'completed_at' => 'datetime', 'acknowledged_at' => 'datetime'];
     }
 
     public function classSession(): BelongsTo

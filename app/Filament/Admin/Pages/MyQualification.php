@@ -260,23 +260,88 @@ class MyQualification extends Page
             ->first();
     }
 
+    /** Cancel my own upcoming run booking (self-service). */
+    public function cancelMyRun(int $reservationId): void
+    {
+        $res = Reservation::where('id', $reservationId)
+            ->where('personnel_id', $this->person?->id)
+            ->whereIn('status', ['requested', 'approved'])
+            ->first();
+        if (! $res) { Notification::make()->warning()->title('Booking Not Found')->send(); return; }
+        $res->update(['status' => 'cancelled', 'notes' => trim(($res->notes ? $res->notes . ' · ' : '') . 'Cancelled by operator')]);
+        Notification::make()->success()->title('Run Booking Cancelled')
+            ->body('You can request a new run day whenever you are ready.')->send();
+    }
+
+    /** Cancel my own upcoming class enrollment (self-service). */
+    public function cancelMyClass(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::where('id', $enrollmentId)
+            ->where(fn ($q) => $q->where('personnel_id', $this->person?->id)->orWhere('email', Auth::user()?->email))
+            ->whereIn('status', ['signed_up', 'attended'])
+            ->first();
+        if (! $e) { Notification::make()->warning()->title('Enrollment Not Found')->send(); return; }
+        $e->markStatus('cancelled', Auth::id());
+        Notification::make()->success()->title('Class Cancelled')
+            ->body('You can rebook a class whenever you are ready.')->send();
+    }
+
+    /** Dismiss a cancelled enrollment from my view (soft acknowledge - hides the alert). */
+    public function dismissEnrollment(int $enrollmentId): void
+    {
+        $e = ClassEnrollment::where('id', $enrollmentId)
+            ->where(fn ($q) => $q->where('personnel_id', $this->person?->id)->orWhere('email', Auth::user()?->email))
+            ->first();
+        if (! $e) return;
+        $e->update(['acknowledged_at' => now()]);
+        Notification::make()->success()->title('Dismissed')->body('Removed from your view.')->send();
+    }
+
+    /** Acknowledge a booking that was made/changed for me by an admin or the system. */
+    public function acknowledgeReservation(int $reservationId): void
+    {
+        $res = Reservation::where('id', $reservationId)
+            ->where('personnel_id', $this->person?->id)->first();
+        if (! $res) return;
+        $res->update(['acknowledged_at' => now()]);
+        Notification::make()->success()->title('Acknowledged')
+            ->body('Thanks - this booking is confirmed on your end.')->send();
+    }
+
     public function getViewData(): array
     {
-        $upcoming = ClassEnrollment::query()
+        // Upcoming class enrollments (active + recently cancelled that the operator has not yet dismissed).
+        $enrollments = ClassEnrollment::query()
             ->with('classSession.trainingClass')
             ->where(function ($q) {
                 $q->where('personnel_id', $this->person?->id)
                   ->orWhere('email', Auth::user()?->email);
             })
-            ->whereHas('classSession', fn ($q) => $q->whereDate('session_date', '>=', now()->toDateString()))
-            ->get();
+            ->where(function ($q) {
+                $q->whereHas('classSession', fn ($s) => $s->whereDate('session_date', '>=', now()->subDays(1)->toDateString()))
+                  ->orWhere(fn ($x) => $x->where('status', 'cancelled')->whereNull('acknowledged_at'));
+            })
+            ->get()
+            ->sortBy(fn ($e) => $e->classSession?->session_date?->toDateString() ?? '9999')
+            ->values();
+
+        // Upcoming run bookings (active) + any unacknowledged bookings made for the operator.
+        $bookings = Reservation::query()
+            ->with('runSlot')
+            ->where('personnel_id', $this->person?->id)
+            ->whereIn('status', ['requested', 'approved'])
+            ->whereHas('runSlot', fn ($s) => $s->whereDate('slot_date', '>=', now()->subDays(1)->toDateString()))
+            ->get()
+            ->sortBy(fn ($r) => $r->runSlot?->slot_date?->toDateString() ?? '9999')
+            ->values();
 
         return [
             'person' => $this->person,
             'qualification' => $this->person?->qualification,
             'runs' => $this->person?->runs ?? collect(),
             'classes' => $this->person?->classCompletions ?? collect(),
-            'enrollments' => $upcoming,
+            'enrollments' => $enrollments,
+            'bookings' => $bookings,
         ];
     }
 }
