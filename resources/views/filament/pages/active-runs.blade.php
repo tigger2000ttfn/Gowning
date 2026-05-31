@@ -171,6 +171,27 @@
                         </div></div>
                     </div>
 
+                    {{-- Pipeline stepper --}}
+                    <div class="ar-mstep">
+                        @foreach($rowDetail['steps'] as $s)
+                            <div class="ar-mstep-cell {{ $s['done'] ? 'done' : '' }} {{ $s['current'] ? 'current' : '' }}">
+                                <span class="ar-mstep-bar"></span>
+                                <span class="ar-mstep-dot">@if($s['done'])&check;@endif</span>
+                                <span class="ar-mstep-lbl">{{ $s['label'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    @if($rowDetail['lims'])
+                        <div class="dm-l" style="margin-top:18px;">LIMS &amp; Incubation</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;">
+                            <div><div class="dm-l">Evaluation</div><div class="dm-v">{{ $rowDetail['lims']['evaluation'] ?: '-' }}</div></div>
+                            <div><div class="dm-l">NC / TrackWise</div><div class="dm-v">@if($rowDetail['lims']['nc'])@if($rowDetail['lims']['nc_url'])<a href="{{ $rowDetail['lims']['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $rowDetail['lims']['nc'] }} &nearr;</a>@else {{ $rowDetail['lims']['nc'] }} @endif @else - @endif</div></div>
+                            <div><div class="dm-l">1st Incubation (30-35C)</div><div class="dm-v">{{ $rowDetail['lims']['inc1'] ?: '-' }}</div></div>
+                            <div><div class="dm-l">2nd Incubation (20-25C)</div><div class="dm-v">{{ $rowDetail['lims']['inc2'] ?: '-' }}</div></div>
+                        </div>
+                    @endif
+
                     @if(count($rowDetail['runs']))
                         <div class="dm-l" style="margin-top:18px;">Run History</div>
                         <table class="gqs-tbl" style="margin-top:6px;">
@@ -285,5 +306,15 @@
         .ar-fbar{width:70%;max-width:48px;border-radius:7px 7px 3px 3px;transition:height .3s ease;min-height:3px;}
         .ar-fnum{font-size:19px;font-weight:800;line-height:1;}
         .ar-flbl{font-size:10.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;line-height:1.2;}
+        .ar-mstep{display:flex;align-items:flex-start;gap:0;margin-top:16px;overflow-x:auto;padding-bottom:4px;}
+        .ar-mstep-cell{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:62px;position:relative;}
+        .ar-mstep-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;border:2px solid var(--gqs-border,#E5E5EA);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#9A9AA4);z-index:1;}
+        .ar-mstep-cell.done .ar-mstep-dot{background:#2E7D5B;border-color:#2E7D5B;color:#fff;}
+        .ar-mstep-cell.current .ar-mstep-dot{background:#1F6FB2;border-color:#1F6FB2;color:#fff;box-shadow:0 0 0 4px rgba(31,111,178,.18);}
+        .ar-mstep-lbl{font-size:9.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;white-space:nowrap;}
+        .ar-mstep-cell.current .ar-mstep-lbl{color:#1F6FB2;font-weight:800;}
+        .ar-mstep-bar{position:absolute;top:11px;left:50%;width:100%;height:2px;background:var(--gqs-border,#E5E5EA);z-index:0;}
+        .ar-mstep-cell.done .ar-mstep-bar{background:#2E7D5B;}
+        .ar-mstep-cell:last-child .ar-mstep-bar{display:none;}
     </style>
 </x-filament-panels::page>

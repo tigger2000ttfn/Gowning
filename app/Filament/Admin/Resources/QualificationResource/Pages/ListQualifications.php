@@ -83,6 +83,29 @@ class ListQualifications extends ListRecords
 
         $latestRun = $q->runs()->whereNotNull('lims_worklist_id')->latest('id')->first();
 
+        // Pipeline stepper position.
+        $stepOrder = ['class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review', 'qa_signoff'];
+        $stepLabels = ['Class', 'Scheduled', 'Performed', 'Incubating', 'Results', 'QCM Review', 'QA Review', 'QA Approved'];
+        $curStep = array_search($stageVal, $stepOrder, true);
+        if ($curStep === false) $curStep = -1;
+        $steps = [];
+        foreach ($stepOrder as $i => $sk) {
+            $steps[] = ['label' => $stepLabels[$i], 'done' => $i < $curStep, 'current' => $i === $curStep];
+        }
+
+        // LIMS / incubation summary from the latest linked run.
+        $lims = null;
+        if ($latestRun) {
+            $lims = [
+                'worklist' => $latestRun->lims_worklist_id,
+                'evaluation' => $latestRun->lims_evaluation,
+                'inc1' => trim(($latestRun->lims_inc1_incubator ? $latestRun->lims_inc1_incubator . ': ' : '') . ($latestRun->lims_inc1_start ?: '?') . ($latestRun->lims_inc1_end ? ' to ' . $latestRun->lims_inc1_end : '')),
+                'inc2' => trim(($latestRun->lims_inc2_incubator ? $latestRun->lims_inc2_incubator . ': ' : '') . ($latestRun->lims_inc2_start ?: '?') . ($latestRun->lims_inc2_end ? ' to ' . $latestRun->lims_inc2_end : '')),
+                'nc' => $latestRun->lims_nc_number,
+                'nc_url' => $latestRun->lims_nc_url,
+            ];
+        }
+
         $this->rowDetail = [
             'id' => $q->id,
             'name' => $q->personnel?->full_name ?? 'Unknown',
@@ -105,6 +128,8 @@ class ListQualifications extends ListRecords
             'needs_worklist' => in_array($stageVal, ['run_performed', 'incubating', 'awaiting_results'], true) && ! ($latestRun?->lims_worklist_id ?? $q->lims_worklist_id),
             'qa_owner' => $q->qaOwner?->name,
             'runs' => $runs,
+            'steps' => $steps,
+            'lims' => $lims,
             'review_url' => $reviewUrl,
             'review_label' => $reviewLabel,
             'record_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
