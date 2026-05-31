@@ -95,9 +95,34 @@
                 <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ $this->catalogCount() }} worklists</span>
             </div>
             <div class="gqs-panel-body">
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-                    <input type="text" wire:model.live.debounce.300ms="search" class="gqs-fld" placeholder="Search worklist, person, or description..." style="max-width:340px;">
-                    <button type="button" wire:click="runSync" class="gqs-btn gqs-btn-ghost">Sync Linked Runs Now</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="gqs-fld" placeholder="Search worklist, person, description..." style="flex:1;min-width:200px;max-width:340px;">
+                    <select wire:model.live="filterType" class="gqs-fld" style="max-width:160px;">
+                        <option value="">All Types</option>
+                        <option value="initial">Initial</option>
+                        <option value="annual">Annual Requal</option>
+                        <option value="additional">Additional Requal</option>
+                        <option value="routine">Routine EM</option>
+                    </select>
+                    <select wire:model.live="filterStatus" class="gqs-fld" style="max-width:150px;">
+                        <option value="">All Statuses</option>
+                        <option value="A">Authorized (A)</option>
+                        <option value="P">Pending (P)</option>
+                        <option value="I">Incomplete (I)</option>
+                        <option value="C">Complete (C)</option>
+                        <option value="X">Cancelled (X)</option>
+                    </select>
+                    <select wire:model.live="filterReady" class="gqs-fld" style="max-width:140px;">
+                        <option value="">QCM: Any</option>
+                        <option value="ready">QCM Ready</option>
+                        <option value="not">Not Ready</option>
+                    </select>
+                    <select wire:model.live="filterLegacy" class="gqs-fld" style="max-width:130px;">
+                        <option value="">All Rows</option>
+                        <option value="legacy">Legacy Only</option>
+                        <option value="active">Active Only</option>
+                    </select>
+                    <button type="button" wire:click="runSync" class="gqs-btn gqs-btn-ghost">Sync Linked Runs</button>
                 </div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;border:1px solid var(--gqs-border,#E2E2E8);border-radius:10px;background:var(--gqs-surface-2,#F7F7F9);">
                     <span style="font-size:12px;font-weight:700;color:var(--gqs-text,#1A1A1F);text-transform:uppercase;letter-spacing:.04em;">Historic Backfill</span>
@@ -111,43 +136,46 @@
                         <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Pick a person to backfill individuals.</span>
                     @endif
                 </div>
-                <div style="overflow-x:auto;">
-                    <table class="gqs-tbl">
-                        <thead><tr><th>Worklist</th><th>Description</th><th>Person</th><th>Type</th><th>Eval</th><th>Sample</th><th>Incubation</th><th>QCM Ready</th><th>NC Ref</th><th>Synced</th><th>Actions</th></tr></thead>
-                        <tbody>
-                            @forelse ($this->catalogRows() as $d)
-                                <tr wire:click="viewRow({{ $d['id'] }})" style="cursor:pointer;">
-                                    <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif</td>
-                                    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $d['description'] }}">{{ $d['description'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;">
-                                        @if($d['routine'])<span class="gqs-pill gqs-pill-gray">Routine EM</span>
-                                        @else {{ $d['type'] ?: '—' }}@if($d['type_inferred'])<span class="gqs-pill gqs-pill-gold" style="margin-left:5px;" title="Type inferred from the worklist description">inferred</span>@endif
-                                        @endif
-                                        @if($d['date_review'])<span class="gqs-pill gqs-pill-gold" style="margin-left:5px;" title="A run was marked rescheduled but its date is missing - confirm on the next refresh">date?</span>@endif
-                                    </td>
-                                    <td>
-                                        @if(strcasecmp((string)$d['evaluation'],'pass')===0)<span class="gqs-pill gqs-pill-green">Pass</span>
-                                        @elseif(strcasecmp((string)$d['evaluation'],'fail')===0)<span class="gqs-pill gqs-pill-red">Fail</span>
-                                        @else <span style="color:var(--gqs-text-dim,#9A9AA4);">—</span>@endif
-                                    </td>
-                                    <td>@if($d['sample_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['sample_status'] }}</span>@endif</td>
-                                    <td>@if($d['inc_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['inc_status'] }}</span>@endif</td>
-                                    <td>@if($d['qcm_ready'])<span class="gqs-pill gqs-pill-green">Ready</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</td>
-                                    <td style="white-space:nowrap;">{{ $d['reference'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;">{{ $d['synced'] ?: '—' }}</td>
-                                    <td style="white-space:nowrap;" wire:click.stop>
-                                        <button type="button" wire:click.stop="viewRow({{ $d['id'] }})" class="wl-act">View</button>
-                                        <button type="button" wire:click.stop="editRow({{ $d['id'] }})" class="wl-act">Edit</button>
-                                        <button type="button" wire:click.stop="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}">{{ $d['legacy'] ? 'Unlock' : 'Legacy' }}</button>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="11" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists in the catalog yet. Load a LIMS export on the Upload tab.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+                <table class="gqs-tbl wl-tbl">
+                    <thead><tr>
+                        <th style="width:1%;white-space:nowrap;">Actions</th>
+                        <th>Worklist</th>
+                        <th>Person</th>
+                        <th class="wl-hide-sm">Type</th>
+                        <th>Eval</th>
+                        <th>Sample</th>
+                        <th>Inc</th>
+                        <th>QCM</th>
+                        <th class="wl-hide-sm">NC Ref</th>
+                        <th class="wl-hide-md">Description</th>
+                    </tr></thead>
+                    <tbody>
+                        @forelse ($this->catalogRows() as $d)
+                            <tr wire:click="viewRow({{ $d['id'] }})" style="cursor:pointer;">
+                                <td style="white-space:nowrap;" wire:click.stop>
+                                    <button type="button" wire:click.stop="viewRow({{ $d['id'] }})" class="wl-act" title="View all fields">View</button>
+                                    <button type="button" wire:click.stop="editRow({{ $d['id'] }})" class="wl-act" title="Edit fields">Edit</button>
+                                    <button type="button" wire:click.stop="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}" title="{{ $d['legacy'] ? 'Allow imports again' : 'Lock from imports' }}">{{ $d['legacy'] ? 'Unlock' : 'Lock' }}</button>
+                                </td>
+                                <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif</td>
+                                <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
+                                <td class="wl-hide-sm" style="white-space:nowrap;">@if($d['routine'])<span class="gqs-pill gqs-pill-gray">Routine EM</span>@else {{ $d['type'] ?: '—' }}@endif</td>
+                                <td>
+                                    @if(strcasecmp((string)$d['evaluation'],'pass')===0)<span class="gqs-pill gqs-pill-green">Pass</span>
+                                    @elseif(strcasecmp((string)$d['evaluation'],'fail')===0)<span class="gqs-pill gqs-pill-red">Fail</span>
+                                    @else <span style="color:var(--gqs-text-dim,#9A9AA4);">—</span>@endif
+                                </td>
+                                <td>@if($d['sample_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['sample_status'] }}</span>@endif</td>
+                                <td>@if($d['inc_status']==='Authorized')<span class="gqs-pill gqs-pill-green">A</span>@else<span class="gqs-pill gqs-pill-gold">{{ $d['inc_status'] }}</span>@endif</td>
+                                <td>@if($d['qcm_ready'])<span class="gqs-pill gqs-pill-green">Ready</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</td>
+                                <td class="wl-hide-sm" style="white-space:nowrap;">{{ $d['reference'] ?: '—' }}</td>
+                                <td class="wl-hide-md" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $d['description'] }}">{{ $d['description'] ?: '—' }}</td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="10" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No worklists match. Adjust filters, or load a LIMS export on the Upload tab.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     @else
@@ -294,7 +322,13 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                         <div style="grid-column:1 / -1;"><label class="gqs-flbl">Description</label><input type="text" wire:model="editData.worklist_description" class="gqs-fld"></div>
                         <div><label class="gqs-flbl">Person (LIMS Login)</label><input type="text" wire:model="editData.personnel" class="gqs-fld"></div>
-                        <div><label class="gqs-flbl">Qualification Type</label><input type="text" wire:model="editData.qualification_type" class="gqs-fld" placeholder="Initial Gowning Qualification / Annual Requalification"></div>
+                        <div><label class="gqs-flbl">Qualification Type</label>
+                            <select wire:model="editData.qualification_type" class="gqs-fld">
+                                <option value="">— (none / routine)</option>
+                                <option value="Initial Gowning Qualification">Initial Gowning Qualification</option>
+                                <option value="Annual Requalification">Annual Requalification</option>
+                                <option value="Additional Requalification">Additional Requalification</option>
+                            </select></div>
                         <div><label class="gqs-flbl">Evaluation</label>
                             <select wire:model="editData.evaluation" class="gqs-fld"><option value="">—</option><option value="Pass">Pass</option><option value="Fail">Fail</option></select></div>
                         <div><label class="gqs-flbl">EM Area</label><input type="text" wire:model="editData.em_area" class="gqs-fld"></div>
@@ -325,5 +359,11 @@
             </div>
         </div>
     @endif
-    <style>.wl-act{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);cursor:pointer;margin-right:4px;}.wl-act:hover{background:var(--gqs-surface-2,#F3F3F6);}</style>
+    <style>
+        .wl-act{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);cursor:pointer;margin-right:4px;}
+        .wl-act:hover{background:var(--gqs-surface-2,#F3F3F6);}
+        .wl-tbl{width:100%;table-layout:auto;}
+        @media (max-width:1100px){ .wl-hide-md{display:none;} }
+        @media (max-width:820px){ .wl-hide-sm{display:none;} }
+    </style>
 </x-filament-panels::page>

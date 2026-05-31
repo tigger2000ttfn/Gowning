@@ -48,6 +48,11 @@ class WorklistCatalog extends Page implements HasForms
     public string $search = '';
     public string $tab = 'upload';
     public string $sqlQuery = '';
+    // Catalog filters
+    public string $filterType = '';     // '', initial, annual, additional, routine
+    public string $filterStatus = '';   // '', A, P, I, C, X
+    public string $filterReady = '';    // '', ready, not
+    public string $filterLegacy = '';   // '', legacy, active
     public function setTab(string $t): void { $this->tab = in_array($t, ['upload', 'catalog', 'sql'], true) ? $t : 'upload'; }
 
     public function mount(): void
@@ -553,6 +558,11 @@ SQL;
         $this->editData = collect($this->editableFields)->mapWithKeys(fn ($f) => [$f => (string) ($wl->{$f} ?? '')])->all();
         // booleans as yes/no strings for the form
         $this->editData['worklist_all_final'] = $wl->worklist_all_final ? 'Yes' : 'No';
+        // If type is blank but we can infer it from the description, pre-fill so a save captures it.
+        if (trim((string) $wl->qualification_type) === '' && ! $wl->isRoutineEm()) {
+            $inferred = $wl->effectiveType();
+            if ($inferred) $this->editData['qualification_type'] = $inferred;
+        }
     }
 
     public function saveRow(): void
@@ -707,7 +717,29 @@ SQL;
                 ->orWhere('worklist_description', 'ilike', $s)
                 ->orWhere('evaluation', 'ilike', $s));
         }
-        return $q->limit(60)->get()->map(fn ($d) => [
+        if ($this->filterStatus !== '') $q->whereRaw('UPPER(sample_status) = ?', [strtoupper($this->filterStatus)]);
+        if ($this->filterLegacy === 'legacy') $q->where('is_legacy', true);
+        if ($this->filterLegacy === 'active') $q->where('is_legacy', false);
+
+        $rows = $q->limit(200)->get();
+
+        // Computed filters (type / qcm-ready) applied after load.
+        if ($this->filterType !== '') {
+            $rows = $rows->filter(function ($d) {
+                if ($this->filterType === 'routine') return $d->isRoutineEm();
+                $et = strtolower((string) $d->effectiveType());
+                return match ($this->filterType) {
+                    'initial' => str_contains($et, 'initial'),
+                    'annual' => str_contains($et, 'annual'),
+                    'additional' => str_contains($et, 'additional'),
+                    default => true,
+                };
+            });
+        }
+        if ($this->filterReady === 'ready') $rows = $rows->filter(fn ($d) => $d->isQcmReady());
+        if ($this->filterReady === 'not') $rows = $rows->filter(fn ($d) => ! $d->isQcmReady());
+
+        return $rows->take(80)->map(fn ($d) => [
             'id' => $d->id,
             'legacy' => (bool) $d->is_legacy,
             'worklist' => $d->worklist,
