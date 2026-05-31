@@ -263,6 +263,9 @@ class ClassScheduler extends Page
         // Veeva report number entered by the submitter (analyst). Link auto-fills from the catalog.
         $veeva = trim($this->signVeeva);
         if ($veeva !== '') {
+            // Input collects numbers only; add the RPT-AST- prefix.
+            $veeva = strtoupper($veeva);
+            if (! str_starts_with($veeva, 'RPT-AST-')) { $veeva = 'RPT-AST-' . ltrim(preg_replace('/^RPT-AST[-\s]*/i', '', $veeva), '-'); }
             $s->veeva_doc_number = $veeva;
             $url = \App\Models\VeevaDocument::urlForNumber($veeva);
             if ($url) $s->veeva_url = $url;

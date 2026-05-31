@@ -125,8 +125,9 @@
                                     <td>{{ $r->run_date ? \Illuminate\Support\Carbon::parse($r->run_date)->gmp() : '—' }}</td>
                                     <td><span class="gqs-pill {{ $r->result === 'Pass' ? 'gqs-pill-green' : 'gqs-pill-red' }}">{{ $r->result }}</span></td>
                                     <td>{{ $r->entered_at ? \Illuminate\Support\Carbon::parse($r->entered_at)->gmpDt() : '—' }}</td>
-                                    <td style="text-align:right;">
+                                    <td style="text-align:right;white-space:nowrap;">
                                         @if($this->canEvaluate() && ! $r->locked)
+                                            @if($r->qualification_id ?? null)<button type="button" wire:click="openEnterResults({{ $r->qualification_id }})" class="sb-act" style="background:#1F6FB2;" title="Correct a wrongly entered result">Edit</button>@endif
                                             <button type="button" wire:click="openResultUndo({{ $r->id }})" class="sb-act" style="background:#6A6A72;">Undo</button>
                                         @elseif($r->locked)
                                             <span class="gqs-pill gqs-pill-gray">Signed To QA</span>
@@ -201,10 +202,6 @@
                         </div>
                         <datalist id="er-wl-suggest">@foreach($this->erWorklistSuggestions() as $s)<option value="{{ $s }}"></option>@endforeach</datalist>
                         <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Type only the numbers - EM- is added automatically. You can save the worklist now and enter the result later.</div>
-                    </div>
-                    <div>
-                        <label class="gqs-flbl">LMS Number (Optional)</label>
-                        <input type="text" wire:model="er.lms_number" class="gqs-fld" placeholder="Optional tracking number">
                     </div>
                     <div>
                         <label class="gqs-flbl">Veeva Report Number (Optional)</label>

@@ -210,7 +210,7 @@ class IncubationBoard extends Page
 
     // ---- Custom Enter-Results modal (reliable in a table loop; worklist editable here) ----
     public ?int $erQid = null;
-    public array $er = ['worklist' => '', 'lms_number' => '', 'overall' => '', 'trackwise_id' => '', 'nc_note' => '', 'veeva' => ''];
+    public array $er = ['worklist' => '', 'overall' => '', 'trackwise_id' => '', 'nc_note' => '', 'veeva' => ''];
 
     // Whether LIMS has already returned a result for the linked worklist (so manual pass/fail is optional).
     public bool $erHasLimsResult = false;
@@ -223,24 +223,27 @@ class IncubationBoard extends Page
         $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first() : null;
         $this->erQid = $qid;
 
-        // Self-aware: did LIMS return a result on this worklist? If so we show it and the QCM just signs off;
-        // if not, the QCM enters the pass/fail manually. We look at the synced LIMS fields + the worklist row.
+        // Self-aware: did LIMS return a result on this worklist? Only TRUE when a worklist is actually
+        // attached AND there is a real result - either the run carries a pass/fail (not pending), or the
+        // worklist is final/QCM-ready in LIMS. A pending run with no worklist is NOT a returned result.
         $this->erHasLimsResult = false;
         $this->erLimsResult = null;
         $wl = $run?->lims_worklist_id ? \App\Models\LimsWorklist::findByWorklist($run->lims_worklist_id) : null;
-        if ($run && (($run->result instanceof \BackedEnum ? $run->result->value : $run->result) !== null)) {
-            // The run already carries a result (from a prior LIMS sync / QCM-ready release).
-            $this->erHasLimsResult = true;
-            $this->erLimsResult = ($run->result instanceof \BackedEnum ? $run->result->value : $run->result);
-        } elseif ($wl && ($wl->worklist_all_final || $wl->isQcmReady())) {
-            // LIMS marked the worklist final/QCM-ready: treat as a result present (pass unless an excursion).
-            $this->erHasLimsResult = true;
-            $this->erLimsResult = $wl->isQcmReady() ? 'pass' : null;
+        $runResult = $run ? ($run->result instanceof \BackedEnum ? $run->result->value : $run->result) : null;
+        if ($run && $run->lims_worklist_id) {
+            if (in_array($runResult, ['pass', 'fail'], true)) {
+                // The run already carries a real result (from a prior LIMS sync / QCM-ready release).
+                $this->erHasLimsResult = true;
+                $this->erLimsResult = $runResult;
+            } elseif ($wl && ($wl->worklist_all_final || $wl->isQcmReady())) {
+                // LIMS marked the worklist final/QCM-ready: treat as a result present (pass unless excursion).
+                $this->erHasLimsResult = true;
+                $this->erLimsResult = $wl->isQcmReady() ? 'pass' : null;
+            }
         }
 
         $this->er = [
             'worklist' => $run?->lims_worklist_id ? preg_replace('/^EM-/i', '', (string) $run->lims_worklist_id) : '',
-            'lms_number' => $q?->lms_number ?? '',
             'overall' => $this->erHasLimsResult && $this->erLimsResult ? $this->erLimsResult : '',
             'trackwise_id' => $run?->lims_nc_number ? preg_replace('/^NC-/i', '', (string) $run->lims_nc_number) : '',
             'nc_note' => '',
@@ -290,7 +293,6 @@ class IncubationBoard extends Page
                 app(\App\Services\WorklistSync::class)->syncRun($run);
             }
             $q->lims_worklist_id = $wl;
-            if (($this->er['lms_number'] ?? '') !== '') $q->lms_number = $this->er['lms_number'];
             $q->save();
             $this->erQid = null;
             Notification::make()->success()->title('Worklist Saved')->body($wl . ' linked. Enter the Pass/Fail result when the read is complete.')->send();
@@ -314,7 +316,6 @@ class IncubationBoard extends Page
             if (! str_starts_with($tw, 'NC-')) { $tw = 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', $tw), '-'); }
             $this->er['trackwise_id'] = $tw;
         }
-        if (! empty($this->er['lms_number'])) { $q->lms_number = $this->er['lms_number']; }
         $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
         if ($run) {
             $run->lims_worklist_id = $worklist;
@@ -426,8 +427,6 @@ class IncubationBoard extends Page
             })
             ->schema([
                 TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')->columnSpanFull(),
-                TextInput::make('lms_number')->label('LMS Number (Optional)')->columnSpanFull()
-                    ->helperText('Overall qualification run tracking number in the LMS.'),
                 ToggleButtons::make('overall')->label('Overall Result')->options(['pass' => 'Pass', 'fail' => 'Fail'])->colors(['pass' => 'success', 'fail' => 'danger'])->icons(['pass' => 'heroicon-m-check-circle', 'fail' => 'heroicon-m-x-circle'])->inline()->grouped()->required()->live(),
                 TextInput::make('trackwise_id')->label('TrackWise NC Number')->columnSpanFull()
                     ->helperText('Required on a fail. The TrackWise NC opened for this excursion (per SOP-AST-28480).')
@@ -444,7 +443,6 @@ class IncubationBoard extends Page
                 }
                 $q = Qualification::with('personnel')->find($arguments['id'] ?? null);
                 if (! $q) return;
-                if (! empty($data['lms_number'])) { $q->lms_number = $data['lms_number']; }
                 $overall = $data['overall'] ?? 'pass';
                 $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
                 if ($run) {

@@ -107,7 +107,7 @@ class ClassBoard extends Page
                 'name' => $e->personnel?->full_name ?? $e->employee_id ?? 'Unknown',
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->gmpDM(),
+                'date' => $e->classSession?->session_date?->gmp(),
             ])->values()->all();
         return [
             'label' => \App\Models\WorkflowStatus::labelFor('class', 'historical', 'Historical'),
@@ -152,7 +152,7 @@ class ClassBoard extends Page
                 'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
                 'department' => $e->personnel?->department,
                 'class' => $e->classSession?->trainingClass?->name,
-                'date' => $e->classSession?->session_date?->gmpDM(),
+                'date' => $e->classSession?->session_date?->gmp(),
                 'instructor' => $e->classSession?->instructorUser?->name ?? $e->classSession?->instructor,
                 'session_date' => $e->classSession?->session_date?->gmp(),
                 'session_sort' => $e->classSession?->session_date?->format('Y-m-d'),
@@ -186,7 +186,7 @@ class ClassBoard extends Page
                     'employee_id' => $c->personnel?->employee_id ?? $c->employee_id,
                     'department' => $c->personnel?->department,
                     'class' => $c->class_name,
-                    'date' => $c->completion_date?->gmpDM(),
+                    'date' => $c->completion_date?->gmp(),
                     'instructor' => null,
                     'session_date' => $c->completion_date?->gmp(),
                     'session_sort' => $c->completion_date?->format('Y-m-d'),

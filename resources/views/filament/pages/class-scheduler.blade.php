@@ -505,9 +505,14 @@
                         Trainer Of Record: <strong>{{ $trainerName }}</strong>. Your electronic signature submits this attendance to QA, locks the session, and records your name as the trainer on FORM-AST-36513. If no trainer is set, you are recorded as the trainer.
                     </p>
                     <label class="gqs-flbl">Veeva Report Number</label>
-                    <input type="text" wire:model.live.debounce.400ms="signVeeva" class="gqs-fld" placeholder="RPT-AST-XXXXX">
-                    @if(trim($signVeeva) !== '')
-                        @php $vd = \App\Models\VeevaDocument::findByNumber(trim($signVeeva)); @endphp
+                    <div style="display:flex;align-items:stretch;border:1px solid var(--gqs-border,#C4C4CC);border-radius:9px;overflow:hidden;">
+                        <span style="display:flex;align-items:center;padding:0 12px;background:var(--gqs-surface-2,#F1F1F4);font-weight:800;color:var(--gqs-text-dim,#6A6A72);border-right:1px solid var(--gqs-border,#C4C4CC);">RPT-AST-</span>
+                        <input type="text" wire:model.live.debounce.400ms="signVeeva" class="gqs-fld" style="border:none;border-radius:0;flex:1;" placeholder="type the numbers">
+                    </div>
+                    <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Type only the numbers - RPT-AST- is added automatically. The Veeva link fills once the report is in the catalog.</div>
+                    @php $vvFull = trim($signVeeva) !== '' ? 'RPT-AST-' . ltrim(preg_replace('/^RPT-AST[-\s]*/i', '', trim($signVeeva)), '-') : ''; @endphp
+                    @if($vvFull !== '')
+                        @php $vd = \App\Models\VeevaDocument::findByNumber($vvFull); @endphp
                         @if($vd && strcasecmp(trim($vd->status), 'Approved') === 0)
                             <p style="margin:6px 0 0;font-size:12px;color:#1E7A52;font-weight:600;">Veeva Approved ✓@if($vd->title) · {{ \Illuminate\Support\Str::limit($vd->title, 48) }}@endif</p>
                         @elseif($vd)
