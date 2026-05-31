@@ -58,7 +58,7 @@
                 <div class="sb-lane" data-stage="archived" x-show="open" x-cloak>
                     @forelse($archive['cards'] as $card)
                         <div class="sb-card sb-card-archived" data-id="{{ $card['id'] }}" style="border-left-color:{{ $archive['color'] }};">
-                            <div class="sb-card-body" wire:click="showDetail({{ $card['id'] }})" style="cursor:pointer;">
+                            <div class="sb-card-body" wire:click="$dispatch('open-qual-modal', { id: {{ $card['id'] }} })" style="cursor:pointer;">
                                 <div class="sb-name">{{ $card['name'] }}</div>
                                 <div class="sb-meta">{{ $card['employee_id'] }}</div>
                                 @if($card['due'])<div class="sb-due">Due {{ $card['due'] }}</div>@endif
