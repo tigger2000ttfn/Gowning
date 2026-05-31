@@ -86,9 +86,18 @@ class ClassCompletionResource extends Resource
                     })
                     ->color(fn ($state) => strtolower((string) $state) === 'inferred' ? 'warning' : 'gray'),
             ])
+            ->recordAction('viewCert')
             ->recordActions([
+                \Filament\Actions\ViewAction::make('viewCert')
+                    ->label('View')
+                    ->icon('heroicon-m-eye')
+                    ->modalHeading('')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(fn (ClassCompletion $record) => view('filament.class-completion-certificate', ['c' => $record])),
                 \Filament\Actions\ActionGroup::make([
-                    \Filament\Actions\EditAction::make()->icon('heroicon-m-pencil-square'),
+                    \Filament\Actions\EditAction::make()->label('Edit Details')->icon('heroicon-m-pencil-square')
+                        ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageClasses)),
                     \Filament\Actions\Action::make('undoRebook')
                         ->label('Undo (Rebook)')
                         ->icon('heroicon-m-arrow-uturn-left')
