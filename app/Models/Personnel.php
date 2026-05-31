@@ -51,6 +51,36 @@ class Personnel extends Model
             \App\Models\ClassCompletion::where('personnel_id', $p->id)->delete();
             // reservations, qualifications, qualification_runs cascade on hard delete via FK.
         });
+
+        // When a system user is LINKED to this personnel record, propagate that link everywhere:
+        //  - sync identity (email/name) so the record matches the account,
+        //  - re-link any class signups + run reservations the person made under their own account
+        //    (matched by email) to this personnel record so their history is unified.
+        static::saved(function (Personnel $p) {
+            if (! $p->wasChanged('user_id') || ! $p->user_id) return;
+            $p->propagateUserLink();
+        });
+    }
+
+    /** Propagate a newly linked system user across the person's identity and prior self-service records. */
+    public function propagateUserLink(): void
+    {
+        $user = $this->user;
+        if (! $user) return;
+
+        // 1) Identity sync: adopt the account email when the personnel record has none or differs.
+        if ($user->email && $this->email !== $user->email) {
+            $this->forceFill(['email' => $user->email])->saveQuietly();
+        }
+
+        // 2) Re-link self-service class enrollments made under the user's email but not yet tied to this
+        //    personnel record (or tied to none).
+        if ($user->email) {
+            \App\Models\ClassEnrollment::query()
+                ->where(fn ($q) => $q->whereNull('personnel_id')->orWhere('personnel_id', '!=', $this->id))
+                ->where('email', $user->email)
+                ->update(['personnel_id' => $this->id]);
+        }
     }
 
     public function getFullNameAttribute(): string

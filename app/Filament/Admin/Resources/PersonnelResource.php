@@ -79,6 +79,10 @@ class PersonnelResource extends Resource
                             ->createOptionUsing(fn (array $data) => \App\Models\JobTitle::create($data + ['is_active' => true])->name),
                         TextInput::make('shift'),
                         TextInput::make('supervisor'),
+                        Select::make('user_id')->label('Linked System User')
+                            ->options(fn () => \App\Models\User::orderBy('name')->pluck('name', 'id')->all())
+                            ->searchable()->preload()->placeholder('Not linked')
+                            ->helperText('Link this person to their login account. Their identity and any class signups they made under that account are tied to this record automatically.'),
                         Textarea::make('notes')->rows(2)->columnSpanFull(),
                     ]),
                 Step::make('Onboarding')->icon('heroicon-o-rocket-launch')
