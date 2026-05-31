@@ -20,10 +20,9 @@
             {{-- STEP 1: upload. Parse is disabled until the file upload finishes (Livewire fires
                  livewire-upload-start / livewire-upload-finish on the component root). --}}
             <div class="gqs-panel"
-                 x-data="{ uploading: false, hasFile: false }"
-                 x-on:form-processing-started="uploading = true; hasFile = false"
-                 x-on:form-processing-finished="uploading = false; hasFile = true"
-                 x-on:change="if ($event.target.type === 'file' && $event.target.files.length > 0) { uploading = true; hasFile = false }">
+                 x-data="{ busy: false }"
+                 x-on:form-processing-started="busy = true"
+                 x-on:form-processing-finished="busy = false">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Upload Weekly Export</div>
                 <div class="gqs-panel-body" style="padding:16px;position:relative;">
                     <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 0 18px;">
@@ -35,14 +34,13 @@
                     </div>
                     <form wire:submit.prevent>{{ $this->form }}</form>
                     <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                        <span style="font-size:12px;color:#A4123F;font-weight:600;" x-show="uploading" x-cloak>Uploading file, please wait...</span>
-                        <span style="font-size:12px;color:#1E7A52;font-weight:600;" x-show="hasFile && !uploading" x-cloak>Upload complete. Ready to parse.</span>
+                        <span style="font-size:12px;color:#A4123F;font-weight:600;" x-show="busy" x-cloak>Uploading file, please wait...</span>
                         <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ $this->catalogCount() }} in catalog</span>
                         <button type="button" wire:click="parse" wire:loading.attr="disabled" wire:target="parse" class="gqs-btn gqs-btn-primary" style="margin-left:auto;"
-                                x-bind:disabled="uploading"
-                                x-bind:style="uploading ? 'opacity:.5;cursor:wait;' : ''">
-                            <span x-show="uploading" x-cloak>Uploading...</span>
-                            <span x-show="!uploading">Parse</span>
+                                x-bind:disabled="busy"
+                                x-bind:style="busy ? 'opacity:.5;cursor:wait;' : ''">
+                            <span x-show="busy" x-cloak>Uploading...</span>
+                            <span x-show="!busy">Parse</span>
                         </button>
                     </div>
                 </div>
