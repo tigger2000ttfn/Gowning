@@ -476,21 +476,44 @@ SQL;
     // ---- Historic backfill: build qualification history from matched catalog worklists ----
     public bool $showBackfill = false;
     public array $backfillPreview = [];
+    public ?int $backfillPersonId = null;   // null = bulk; set = per-person
+
+    public function bulkBackfillDone(): bool
+    {
+        return (bool) \App\Models\Setting::get('worklist_backfill_done', false);
+    }
+
+    /** Personnel options for the per-person backfill picker. */
+    public function backfillPersonOptions(): array
+    {
+        return \App\Models\Personnel::orderBy('last_name')->orderBy('first_name')->get()
+            ->mapWithKeys(fn ($p) => [$p->id => trim($p->last_name . ', ' . $p->first_name) . ($p->lims_username ? ' (' . $p->lims_username . ')' : '')])
+            ->all();
+    }
 
     public function previewBackfill(): void
     {
         if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
-        $result = app(\App\Services\WorklistBackfill::class)->run(true);
-        $this->backfillPreview = $result;
+        if ($this->backfillPersonId === null && $this->bulkBackfillDone()) {
+            Notification::make()->warning()->title('Bulk Backfill Already Done')
+                ->body('The one-time bulk backfill has already run. Use per-person backfill for individual additions.')->send();
+            return;
+        }
+        $this->backfillPreview = app(\App\Services\WorklistBackfill::class)->run(true, $this->backfillPersonId);
         $this->showBackfill = true;
     }
 
     public function runBackfill(): void
     {
         if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
-        $result = app(\App\Services\WorklistBackfill::class)->run(false);
+        $result = app(\App\Services\WorklistBackfill::class)->run(false, $this->backfillPersonId);
         $this->showBackfill = false;
         $this->backfillPreview = [];
+        if (! empty($result['blocked'])) {
+            Notification::make()->warning()->title('Bulk Backfill Already Done')
+                ->body('The one-time bulk backfill has already run. Use per-person backfill for individual additions.')->send();
+            return;
+        }
         Notification::make()->success()->title('Backfill Complete')
             ->body("Created {$result['created']} run(s) across {$result['quals']} qualification(s). Matched {$result['matched']}, unmatched {$result['unmatched']}, skipped {$result['skipped']}.")->send();
     }

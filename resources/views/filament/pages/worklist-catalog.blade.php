@@ -96,9 +96,20 @@
             </div>
             <div class="gqs-panel-body">
                 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
-                    <input type="text" wire:model.live.debounce.300ms="search" class="gqs-fld" placeholder="Search worklist, person, or description..." style="max-width:420px;">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="gqs-fld" placeholder="Search worklist, person, or description..." style="max-width:340px;">
                     <button type="button" wire:click="runSync" class="gqs-btn gqs-btn-ghost">Sync Linked Runs Now</button>
-                    <button type="button" wire:click="previewBackfill" class="gqs-btn gqs-btn-ghost">Backfill History</button>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:12px;border:1px solid var(--gqs-border,#E2E2E8);border-radius:10px;background:var(--gqs-surface-2,#F7F7F9);">
+                    <span style="font-size:12px;font-weight:700;color:var(--gqs-text,#1A1A1F);text-transform:uppercase;letter-spacing:.04em;">Historic Backfill</span>
+                    <select wire:model="backfillPersonId" class="gqs-fld" style="max-width:300px;">
+                        <option value="">All personnel (bulk, one-time)</option>
+                        @foreach($this->backfillPersonOptions() as $pid => $lbl)<option value="{{ $pid }}">{{ $lbl }}</option>@endforeach
+                    </select>
+                    <button type="button" wire:click="previewBackfill" class="gqs-btn gqs-btn-primary">Preview Backfill</button>
+                    @if($this->bulkBackfillDone())
+                        <span class="gqs-pill gqs-pill-green" title="The one-time bulk backfill has run">Bulk Done</span>
+                        <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Pick a person to backfill individuals.</span>
+                    @endif
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="gqs-tbl">
@@ -163,7 +174,7 @@
                     </span>
                     <div>
                         <div style="font-weight:800;font-size:17px;color:#fff;">Backfill Historic Qualifications</div>
-                        <div style="font-size:12px;color:#D7EFE4;">Preview of what will be created from the catalog</div>
+                        <div style="font-size:12px;color:#D7EFE4;">@if($backfillPersonId){{ $this->backfillPersonOptions()[$backfillPersonId] ?? 'Selected person' }} only@else All personnel (one-time bulk)@endif</div>
                     </div>
                 </div>
                 <div class="gqs-modal-body">

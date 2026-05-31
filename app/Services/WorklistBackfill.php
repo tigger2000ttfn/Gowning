@@ -26,14 +26,39 @@ class WorklistBackfill
 {
     /**
      * @param bool $preview when true, computes counts + a sample list without writing
-     * @return array{created:int, quals:int, matched:int, unmatched:int, skipped:int, rows:array}
+     * @param int|null $onlyPersonnelId when set, backfill only this person's worklists (per-person mode)
+     * @return array{created:int, quals:int, matched:int, unmatched:int, skipped:int, rows:array, blocked?:bool}
      */
-    public function run(bool $preview = false): array
+    public function run(bool $preview = false, ?int $onlyPersonnelId = null): array
     {
+        // Bulk backfill is a one-time operation. Once it has been committed, block re-running it (a
+        // per-person backfill is always allowed and ignores this guard).
+        if (! $preview && $onlyPersonnelId === null && \App\Models\Setting::get('worklist_backfill_done', false)) {
+            return ['created' => 0, 'quals' => 0, 'matched' => 0, 'unmatched' => 0, 'skipped' => 0, 'rows' => [], 'blocked' => true];
+        }
+
         $created = 0; $quals = 0; $matched = 0; $unmatched = 0; $skipped = 0;
         $rows = [];
 
+        // Resolve the person filter (used to scope which worklists to consider).
+        $onlyLogin = null; $onlyLast = null; $onlyFirstInit = null;
+        if ($onlyPersonnelId) {
+            $p = Personnel::find($onlyPersonnelId);
+            if (! $p) return ['created' => 0, 'quals' => 0, 'matched' => 0, 'unmatched' => 0, 'skipped' => 0, 'rows' => []];
+            $onlyLogin = strtoupper(trim((string) $p->lims_username));
+            $onlyLast = strtoupper(trim((string) $p->last_name));
+            $onlyFirstInit = strtoupper(substr(trim((string) $p->first_name), 0, 1));
+        }
+
         foreach (LimsWorklist::query()->orderBy('worklist')->get() as $wl) {
+            // Per-person scope: skip worklists whose login/name does not match the chosen person.
+            if ($onlyPersonnelId) {
+                $wlLogin = strtoupper(trim((string) $wl->personnel));
+                $matchesLogin = $onlyLogin !== '' && $wlLogin === $onlyLogin;
+                $matchesName = $onlyLast !== '' && strlen($wlLogin) >= 2
+                    && substr($wlLogin, 0, 1) === $onlyFirstInit && substr($wlLogin, 1) === $onlyLast;
+                if (! $matchesLogin && ! $matchesName) continue;
+            }
             $type = $this->inferType($wl->qualification_type, $wl->worklist_description, $wl->em_area);
 
             if ($type === null) {
@@ -125,6 +150,10 @@ class WorklistBackfill
         if (! $preview && $created > 0) {
             // Stamp LIMS state + NC links onto the newly-created runs once.
             app(WorklistSync::class)->syncAll();
+            // Mark the one-time bulk backfill done (only when this was a bulk run).
+            if ($onlyPersonnelId === null) {
+                \App\Models\Setting::put('worklist_backfill_done', true);
+            }
         }
 
         return compact('created', 'quals', 'matched', 'unmatched', 'skipped', 'rows');
