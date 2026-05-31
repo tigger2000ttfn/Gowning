@@ -34,7 +34,11 @@ class ActiveBookings extends Page
 
     protected string $view = 'filament.pages.active-bookings';
 
+    public string $tab = 'roster';
     public string $filterStatus = '';
+    public string $search = '';
+
+    public function setTab(string $t): void { $this->tab = in_array($t, ['roster', 'dashboard'], true) ? $t : 'roster'; }
 
     public function statusOptions(): array
     {
@@ -69,6 +73,13 @@ class ActiveBookings extends Page
 
         if ($this->filterStatus !== '' && in_array($this->filterStatus, ClassEnrollment::ACTIVE_STATUSES, true)) {
             $q->where('status', $this->filterStatus);
+        }
+        if (trim($this->search) !== '') {
+            $term = '%' . trim($this->search) . '%';
+            $q->where(fn ($w) => $w
+                ->where('name', 'ilike', $term)
+                ->orWhere('employee_id', 'ilike', $term)
+                ->orWhereHas('personnel', fn ($p) => $p->where('first_name', 'ilike', $term)->orWhere('last_name', 'ilike', $term)->orWhere('employee_id', 'ilike', $term)));
         }
 
         return $q->get()
@@ -106,6 +117,57 @@ class ActiveBookings extends Page
             'attended' => ($by['attended'] ?? collect())->count(),
             'qcm' => ($by['qcm_reviewed'] ?? collect())->count(),
             'pending_qa' => ($by['pending_qa'] ?? collect())->count(),
+        ];
+    }
+
+    /** Per-stage counts for the dashboard funnel. */
+    public function stageFunnel(): array
+    {
+        $all = ClassEnrollment::query()->whereIn('status', ClassEnrollment::ACTIVE_STATUSES)->get();
+        $by = $all->groupBy(fn ($e) => $e->status instanceof \BackedEnum ? $e->status->value : (string) $e->status);
+        $funnel = [];
+        foreach (['signed_up' => 'Scheduled', 'attended' => 'Attended', 'qcm_reviewed' => 'QCM Reviewed', 'pending_qa' => 'Pending QA'] as $k => $label) {
+            [, $color] = $this->statusMeta($k);
+            $funnel[] = ['key' => $k, 'label' => $label, 'count' => ($by[$k] ?? collect())->count(), 'color' => $color];
+        }
+        return $funnel;
+    }
+
+    /** Data-gap fix-it cards for classroom bookings. */
+    public function gaps(): array
+    {
+        // Sessions whose date has passed but attendance was never submitted (trainer needs to take it).
+        $pastNotTaken = \App\Models\ClassSession::query()
+            ->whereNull('attendance_submitted_at')
+            ->whereDate('session_date', '<', now()->toDateString())
+            ->where('status', '!=', 'cancelled')
+            ->whereHas('enrollments', fn ($e) => $e->where('status', 'signed_up'))
+            ->with('trainingClass')
+            ->get();
+
+        // Trainees still 'signed_up' for a session that has already passed.
+        $staleSignups = ClassEnrollment::query()
+            ->where('status', 'signed_up')
+            ->whereHas('classSession', fn ($s) => $s->whereNull('attendance_submitted_at')->whereDate('session_date', '<', now()->toDateString()))
+            ->with(['personnel', 'classSession.trainingClass'])
+            ->get();
+
+        return [
+            'past_sessions' => [
+                'count' => $pastNotTaken->count(),
+                'items' => $pastNotTaken->take(12)->map(fn ($s) => [
+                    'id' => $s->id,
+                    'label' => ($s->trainingClass?->name ?? 'Class') . ' - ' . ($s->session_date?->gmp() ?? ''),
+                ])->all(),
+            ],
+            'stale_signups' => [
+                'count' => $staleSignups->count(),
+                'people' => $staleSignups->take(12)->map(fn ($e) => [
+                    'id' => $e->personnel_id,
+                    'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
+                    'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
+                ])->all(),
+            ],
         ];
     }
 }
