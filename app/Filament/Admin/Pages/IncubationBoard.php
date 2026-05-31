@@ -158,8 +158,12 @@ class IncubationBoard extends Page
                 TextInput::make('lms_number')->label('LMS Number (Optional)')->columnSpanFull()
                     ->helperText('Overall qualification run tracking number in the LMS.'),
                 ToggleButtons::make('overall')->label('Overall Result')->options(['pass' => 'Pass', 'fail' => 'Fail'])->colors(['pass' => 'success', 'fail' => 'danger'])->icons(['pass' => 'heroicon-m-check-circle', 'fail' => 'heroicon-m-x-circle'])->inline()->grouped()->required()->live(),
-                TextInput::make('nc_note')->label('Non-Conformance Note (Fail)')->columnSpanFull()
-                    ->helperText('On a fail, an NC is opened for QA. Add the observation / TrackWise note here.')
+                TextInput::make('trackwise_id')->label('TrackWise NC Number')->columnSpanFull()
+                    ->helperText('Required on a fail. The TrackWise NC opened for this excursion (per SOP-AST-28480).')
+                    ->visible(fn ($get) => ($get('overall') ?? '') === 'fail')
+                    ->required(fn ($get) => ($get('overall') ?? '') === 'fail'),
+                TextInput::make('nc_note')->label('Observation / Note (Optional)')->columnSpanFull()
+                    ->helperText('Brief observation for the NC (not a transcription).')
                     ->visible(fn ($get) => ($get('overall') ?? '') === 'fail'),
             ])
             ->action(function (array $data, array $arguments) {
@@ -194,7 +198,7 @@ class IncubationBoard extends Page
                 $q->save();
                 // every failed run gets a non-conformance record (TrackWise to be linked)
                 if ($overall === 'fail') {
-                    \App\Models\NonConformance::firstOrCreate(
+                    $nc = \App\Models\NonConformance::firstOrCreate(
                         ['qualification_run_id' => $run?->id, 'nc_type' => 'failed_run'],
                         [
                             'qualification_id' => $q->id,
@@ -202,9 +206,13 @@ class IncubationBoard extends Page
                             'status' => 'open',
                             'observed_date' => now()->toDateString(),
                             'created_by' => Auth::id(),
+                            'trackwise_id' => $data['trackwise_id'] ?? null,
                             'summary' => $data['nc_note'] ?? 'Auto-created from failed qualification run. Link TrackWise NC.',
                         ]
                     );
+                    if (! empty($data['trackwise_id']) && $nc->trackwise_id !== $data['trackwise_id']) {
+                        $nc->update(['trackwise_id' => $data['trackwise_id']]);
+                    }
                     \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
                 }
                 Notification::make()->success()->title($overall === 'fail' ? 'Failed, Sent To QA Determination' : 'Results Released')
