@@ -91,12 +91,15 @@ class LimsWorklist extends Model
     {
         $login = strtoupper(trim((string) $p->lims_username));
         $last = strtoupper(trim((string) $p->last_name));
+        if ($login === '' && $last === '') return collect();
+        // Note: inc1_start is a free-text LIMS datetime string that can be empty (""), so we do NOT filter
+        // it in SQL (casting "" to date errors in Postgres). The authorized/final gate at the call site is
+        // the real safety; the most recent matching worklist (orderByDesc id) is returned.
         return static::query()
             ->where(function ($q) use ($login, $last) {
                 if ($login !== '') $q->orWhereRaw('UPPER(personnel) = ?', [$login]);
                 if ($last !== '') $q->orWhereRaw('UPPER(personnel) LIKE ?', ['%' . $last . '%']);
             })
-            ->when($onOrAfter, fn ($q) => $q->where(fn ($w) => $w->whereDate('inc1_start', '>=', $onOrAfter)->orWhereNull('inc1_start')))
             ->orderByDesc('id')
             ->get();
     }

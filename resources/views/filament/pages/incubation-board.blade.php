@@ -218,7 +218,7 @@
                     @if($erHasLimsResult)
                         <div style="padding:11px 14px;border-radius:10px;background:#EAF6EF;border:1px solid #BBE0CB;font-size:12.5px;color:#1F6B45;display:flex;align-items:flex-start;gap:8px;">
                             <x-filament::icon icon="heroicon-m-check-badge" style="width:18px;height:18px;flex-shrink:0;"/>
-                            <div>LIMS has returned a result for this worklist@if($erLimsResult) (<strong>{{ ucfirst($erLimsResult) }}</strong>)@endif. Confirm or override the Pass/Fail below, then sign off.</div>
+                            <div>LIMS has returned a result for this worklist{{ $erLimsResult ? ' (' . ucfirst($erLimsResult) . ')' : '' }}. Confirm or override the Pass/Fail below, then sign off.</div>
                         </div>
                     @else
                         <div style="padding:11px 14px;border-radius:10px;background:#FFF6E5;border:1px solid #F0D9A8;font-size:12.5px;color:#8A5A00;display:flex;align-items:flex-start;gap:8px;">
@@ -228,7 +228,7 @@
                     @endif
 
                     <div>
-                        <label class="gqs-flbl">Overall Result @if($erHasLimsResult)<span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(confirm LIMS result or override)</span>@else<span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">(manual - leave blank to record worklist only)</span>@endif</label>
+                        <label class="gqs-flbl">Overall Result <span style="font-weight:600;color:var(--gqs-text-dim,#9A9AA4);">{{ $erHasLimsResult ? '(confirm LIMS result or override)' : '(manual - leave blank to record worklist only)' }}</span></label>
                         <div style="display:flex;gap:8px;margin-top:4px;">
                             <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'pass' ? '' : 'pass')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='pass' ? 'background:#2E7D5B;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Pass</button>
                             <button type="button" wire:click="$set('er.overall', @js($er['overall'] ?? '') === 'fail' ? '' : 'fail')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='fail' ? 'background:#C8102E;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Fail</button>
