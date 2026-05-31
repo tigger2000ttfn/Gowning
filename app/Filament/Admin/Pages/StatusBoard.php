@@ -298,42 +298,6 @@ class StatusBoard extends Page
     }
 
     /** Drag a person's card to a new workflow stage. QA sign-off requires QaApprove. */
-    /** Detail payload for the click-to-view modal. */
-    public ?array $detail = null;
-
-    public function showDetail(int $id): void
-    {
-        $q = Qualification::with('personnel', 'qaOwner')->find($id);
-        if (! $q) { $this->detail = null; return; }
-
-        $runs = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
-            ->latest('run_date')->latest('id')->limit(5)->get()
-            ->map(fn ($r) => [
-                'date' => $r->run_date?->gmp(),
-                'result' => ucfirst($r->result?->value ?? (string) $r->result),
-                'worklist' => $r->lims_worklist_id,
-            ])->all();
-
-        $this->detail = [
-            'id' => $q->id,
-            'name' => $q->personnel?->full_name ?? 'Unknown',
-            'employee_id' => $q->personnel?->employee_id,
-            'department' => $q->personnel?->department,
-            'stage' => $q->workflow_stage?->label(),
-            'status' => ucfirst((string) ($q->status?->value ?? $q->status ?? '')),
-            'type' => ucfirst((string) ($q->type?->value ?? $q->type ?? '')),
-            'runs' => app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count() . ' / ' . $q->runs_required,
-            'due' => $q->due_date?->gmp(),
-            'class_on_file' => (bool) $q->class_on_file,
-            'qa_owner' => $q->qaOwner?->name,
-            'recent_runs' => $runs,
-            'quick_url' => $this->quickActionUrl($q),
-            'quick_label' => $this->quickActionLabel($q),
-            'edit_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
-        ];
-    }
-
-    public function closeDetail(): void { $this->detail = null; }
 
     // ----- Book a run for a Class-Complete person (next available, or a specific run day) -----
     public ?int $bookRunQid = null;

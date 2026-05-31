@@ -33,8 +33,9 @@ class ListQualifications extends ListRecords
     /** When arriving via ?view={id} (e.g. a cross-link from Lab Review / QA Review), pop the detail modal. */
     public function mount(): void
     {
+        // A ?view={id} deep-link (used as a fallback by some cross-links) opens the shared record modal.
         $viewId = request()->integer('view');
-        if ($viewId) { $this->openRow($viewId); }
+        if ($viewId) { $this->dispatch('open-qual-modal', id: $viewId); }
     }
 
     public function getTitle(): string { return 'Active Runs'; }

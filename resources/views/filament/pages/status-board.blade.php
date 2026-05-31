@@ -100,7 +100,7 @@
                 },
                 isSelected(id) { return this.selected.includes(id); },
                 clearSel() { this.selected = []; },
-                openCard(id) { if (this._dragging) return; this.$wire.showDetail(id); },
+                openCard(id) { if (this._dragging) return; this.$wire.dispatch('open-qual-modal', { id }); },
                 fitHeight() {
                     const el = this.$root.querySelector('.sb-gpane') || this.$root.querySelector('.sb-wrap');
                     if (el) el.style.height = Math.max(320, window.innerHeight - el.getBoundingClientRect().top - 10) + 'px';
@@ -151,49 +151,6 @@
         }
     </script>
 
-    {{-- Click-to-view detail modal --}}
-    @if($detail)
-        <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="closeDetail">
-            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:460px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-weight:800;font-size:17px;">{{ $detail['name'] }}</div>
-                        <div style="font-size:12px;opacity:.8;">{{ $detail['employee_id'] }}@if($detail['department']) · {{ $detail['department'] }}@endif</div>
-                    </div>
-                    <button wire:click="closeDetail" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.7;">&times;</button>
-                </div>
-                <div style="padding:18px 20px;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;font-size:13px;">
-                        <div><div class="dm-l">Stage</div><div class="dm-v">{{ $detail['stage'] }}</div></div>
-                        <div><div class="dm-l">Status</div><div class="dm-v">{{ $detail['status'] }}</div></div>
-                        <div><div class="dm-l">Type</div><div class="dm-v">{{ $detail['type'] }}</div></div>
-                        <div><div class="dm-l">Runs</div><div class="dm-v">{{ $detail['runs'] }}</div></div>
-                        <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $detail['due'] ?? '—' }}</div></div>
-                        <div><div class="dm-l">Class On File</div><div class="dm-v">{{ $detail['class_on_file'] ? 'Yes' : 'No' }}</div></div>
-                        <div><div class="dm-l">QA Owner</div><div class="dm-v">{{ $detail['qa_owner'] ?? 'Unassigned' }}</div></div>
-                    </div>
-
-                    @if(count($detail['recent_runs']))
-                        <div class="dm-l" style="margin-top:18px;">Recent Runs</div>
-                        <table class="gqs-tbl" style="margin-top:6px;">
-                            <thead><tr><th>Date</th><th>Result</th><th>Worklist</th></tr></thead>
-                            <tbody>@foreach($detail['recent_runs'] as $r)
-                                <tr><td>{{ $r['date'] }}</td><td>{{ $r['result'] }}</td><td>{{ $r['worklist'] ?? '—' }}</td></tr>
-                            @endforeach</tbody>
-                        </table>
-                    @endif
-
-                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px;">
-                        <button wire:click="closeDetail" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Close</button>
-                        @if(!empty($detail['quick_url']))
-                            <a href="{{ $detail['quick_url'] }}" style="padding:9px 18px;border-radius:8px;background:#1C1C21;color:#fff;font-weight:700;text-decoration:none;">{{ $detail['quick_label'] }}</a>
-                        @endif
-                        <a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Edit Record</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 
     {{-- Book a run for a Class-Complete person --}}
     @if($bookRunQid)

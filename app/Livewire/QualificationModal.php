@@ -23,8 +23,7 @@ class QualificationModal extends Component
     public bool $linking = false;
     public string $wlValue = '';
 
-    protected $listeners = ['open-qual-modal' => 'open'];
-
+    #[\Livewire\Attributes\On('open-qual-modal')]
     public function open(int $id): void
     {
         $this->qid = $id;
