@@ -60,40 +60,52 @@ class NcCatalog extends Page implements HasForms
             FileUpload::make('csv')
                 ->label('TrackWise NC Export File')
                 ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
+                ->disk('local')
                 ->storeFiles(true)
                 ->directory('imports')
                 ->helperText('Excel (.xlsx) or CSV with a header row.'),
         ]);
     }
 
-    protected function uploadedPath(): ?string
+    protected function resolveUploadFullPath(): ?string
     {
         $candidates = [];
         $candidates[] = $this->data['csv'] ?? null;
-        try {
-            $state = $this->form->getState();
-            $candidates[] = $state['csv'] ?? null;
-        } catch (\Throwable $e) {
-            // ignore
-        }
+        try { $candidates[] = ($this->form->getState())['csv'] ?? null; } catch (\Throwable $e) {}
+
         foreach ($candidates as $v) {
-            $v = $this->flattenUpload($v);
-            if ($v !== null) return $v;
+            if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $rp = $v->getRealPath();
+                if ($rp && is_file($rp)) return $rp;
+            }
+            if (is_array($v)) {
+                $v = collect($v)->flatten()->first(function ($item) {
+                    return $item instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile
+                        || (is_string($item) && $item !== '');
+                });
+                if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                    $rp = $v->getRealPath();
+                    if ($rp && is_file($rp)) return $rp;
+                }
+            }
+            if (is_string($v) && $v !== '') {
+                foreach (['local', 'public'] as $disk) {
+                    try {
+                        if (Storage::disk($disk)->exists($v)) {
+                            return Storage::disk($disk)->path($v);
+                        }
+                    } catch (\Throwable $e) {}
+                }
+                if (is_file($v)) return $v;
+            }
         }
         return null;
     }
 
-    protected function flattenUpload($v): ?string
+    protected function uploadedPath(): ?string
     {
-        if (is_array($v)) {
-            $v = collect($v)->flatten()->filter()->first();
-        }
-        if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-            return $v->store('imports', 'local') ?: null;
-        }
-        if (is_object($v) && method_exists($v, 'store')) {
-            return $v->store('imports', 'local') ?: null;
-        }
+        $v = $this->data['csv'] ?? null;
+        if (is_array($v)) $v = collect($v)->flatten()->filter()->first();
         return is_string($v) && $v !== '' ? $v : null;
     }
 
@@ -101,12 +113,10 @@ class NcCatalog extends Page implements HasForms
     {
         $rows = [];
         $this->hyperlinks = [];
-        $path = $this->uploadedPath();
-        $full = $path ? Storage::disk('local')->path($path) : null;
-        if (! $path || ! $full || ! is_file($full)) {
-            $seen = $path ? ('path resolved but file missing: ' . $path) : 'no file value found';
+        $full = $this->resolveUploadFullPath();
+        if (! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')
-                ->body('Could not read the upload (' . $seen . '). Pick the file again, wait for the upload to finish, then Parse.')->send();
+                ->body('The file upload did not complete. Pick the file again, wait for the progress bar to finish, then Parse.')->send();
             return;
         }
         $isXlsx = false;

@@ -62,6 +62,7 @@ class VeevaCatalog extends Page implements HasForms
             FileUpload::make('csv')
                 ->label('Veeva Export File')
                 ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'])
+                ->disk('local')
                 ->storeFiles(true)
                 ->directory('imports')
                 ->helperText('Excel (.xlsx) or CSV with a header row.'),
@@ -73,41 +74,53 @@ class VeevaCatalog extends Page implements HasForms
      * file, so $this->data['csv'] may be ['abc' => 'imports/x.xlsx']. Normalize to one string path.
      */
     /**
-     * Resolve the uploaded file to a single string path on the 'local' disk. Filament's FileUpload
-     * value can be a string, an array keyed by a random id, or a TemporaryUploadedFile, and may live
-     * only in the live form state until read - so we check both $this->data and the form state, and
-     * normalize every shape. Returns null if nothing usable is present.
+     * Resolve the uploaded file to an absolute filesystem path. The FileUpload value can be a string
+     * path, an array keyed by a random id, or (mid-request) a TemporaryUploadedFile. We pin the
+     * upload to the 'local' disk, but resolve defensively across local/public so a disk-config
+     * difference cannot strand the file. Returns the absolute path, or null.
      */
-    protected function uploadedPath(): ?string
+    protected function resolveUploadFullPath(): ?string
     {
         $candidates = [];
         $candidates[] = $this->data['csv'] ?? null;
-        try {
-            $state = $this->form->getState();
-            $candidates[] = $state['csv'] ?? null;
-        } catch (\Throwable $e) {
-            // ignore - validation may run on getState; fall back to raw data
-        }
+        try { $candidates[] = ($this->form->getState())['csv'] ?? null; } catch (\Throwable $e) {}
 
         foreach ($candidates as $v) {
-            $v = $this->flattenUpload($v);
-            if ($v !== null) return $v;
+            // TemporaryUploadedFile: read straight from its real temp path.
+            if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                $rp = $v->getRealPath();
+                if ($rp && is_file($rp)) return $rp;
+            }
+            if (is_array($v)) {
+                $v = collect($v)->flatten()->first(function ($item) {
+                    return $item instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile
+                        || (is_string($item) && $item !== '');
+                });
+                if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+                    $rp = $v->getRealPath();
+                    if ($rp && is_file($rp)) return $rp;
+                }
+            }
+            if (is_string($v) && $v !== '') {
+                foreach (['local', 'public'] as $disk) {
+                    try {
+                        if (Storage::disk($disk)->exists($v)) {
+                            return Storage::disk($disk)->path($v);
+                        }
+                    } catch (\Throwable $e) {}
+                }
+                // Last resort: maybe it's already an absolute path.
+                if (is_file($v)) return $v;
+            }
         }
         return null;
     }
 
-    protected function flattenUpload($v): ?string
+    /** The stored relative path (for cleanup), best-effort. */
+    protected function uploadedPath(): ?string
     {
-        if (is_array($v)) {
-            $v = collect($v)->flatten()->filter()->first();
-        }
-        if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
-            // Persist the temp upload to the imports dir and return that path.
-            return $v->store('imports', 'local') ?: null;
-        }
-        if (is_object($v) && method_exists($v, 'store')) {
-            return $v->store('imports', 'local') ?: null;
-        }
+        $v = $this->data['csv'] ?? null;
+        if (is_array($v)) $v = collect($v)->flatten()->filter()->first();
         return is_string($v) && $v !== '' ? $v : null;
     }
 
@@ -115,12 +128,10 @@ class VeevaCatalog extends Page implements HasForms
     {
         $rows = [];
         $this->hyperlinks = [];
-        $path = $this->uploadedPath();
-        $full = $path ? Storage::disk('local')->path($path) : null;
-        if (! $path || ! $full || ! is_file($full)) {
-            $seen = $path ? ('path resolved but file missing: ' . $path) : 'no file value found';
+        $full = $this->resolveUploadFullPath();
+        if (! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')
-                ->body('Could not read the upload (' . $seen . '). Pick the file again, wait for the upload to finish, then Parse.')->send();
+                ->body('The file upload did not complete. Pick the file again, wait for the progress bar to finish, then Parse.')->send();
             return;
         }
         // Detect xlsx by content signature (PK zip header), not extension - Filament's stored
