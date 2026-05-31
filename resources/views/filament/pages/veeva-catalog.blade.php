@@ -58,7 +58,7 @@
                         <table class="gqs-tbl">
                             <thead><tr>@foreach ($headers as $h)<th>{{ $h }}</th>@endforeach</tr></thead>
                             <tbody>@foreach ($preview as $row)
-                                <tr>@foreach ($row as $cell)<td>{{ $cell }}</td>@endforeach</tr>
+                                <tr>@foreach ($row as $cell)<td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $cell }}">{{ \Illuminate\Support\Str::limit((string) $cell, 60) }}</td>@endforeach</tr>
                             @endforeach</tbody>
                         </table>
                     </div>
