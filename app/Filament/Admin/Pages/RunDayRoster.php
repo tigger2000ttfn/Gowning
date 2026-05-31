@@ -470,6 +470,7 @@ class RunDayRoster extends Page
                     'cleanroom' => $r->runSlot?->cleanroom,
                     'time' => $r->runSlot?->start_time ? \Illuminate\Support\Carbon::parse($r->runSlot->start_time)->format('H:i') : null,
                     'status' => $r->status instanceof \BackedEnum ? $r->status->value : $r->status,
+                    'follow_up' => str_starts_with((string) $r->notes, 'Follow-up'),
                 ])->values()->all(),
             ])->values()->all();
     }
@@ -859,8 +860,35 @@ class RunDayRoster extends Page
         $required = max(1, (int) ($q->runs_required ?? 1));
         $performed = $q ? app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q->fresh())->count() : 1;
         $days = (int) \App\Models\Setting::get('incubation_days', 8);
+
+        // If runs remain (operator did NOT do all of them today), create a follow-up booking for the
+        // leftover run(s) on the next available run day so it shows as its own card to be attended. The
+        // analyst can then Move it to a specific date / a special one-person session from that booking.
+        $remaining = max(0, $required - $performed);
+        if ($remaining > 0) {
+            $alreadyBooked = Reservation::where('personnel_id', $res->personnel_id)
+                ->whereIn('status', ['requested', 'approved'])->whereHas('runSlot', fn ($s) => $s->whereDate('slot_date', '>', now()->toDateString()))
+                ->exists();
+            if (! $alreadyBooked) {
+                $scheduler = app(\App\Services\AutoScheduler::class);
+                $nextSlot = method_exists($scheduler, 'nextOpenSlot') ? $scheduler->nextOpenSlot() : RunSlot::where('status', '!=', 'cancelled')
+                    ->whereDate('slot_date', '>', now()->toDateString())
+                    ->orderBy('slot_date')->get()
+                    ->first(fn ($s) => $s->reservations()->whereIn('status', ['requested', 'approved', 'completed'])->count() < (int) ($s->capacity ?? 1));
+                if ($nextSlot) {
+                    Reservation::create([
+                        'run_slot_id' => $nextSlot->id,
+                        'personnel_id' => $res->personnel_id,
+                        'status' => 'approved',
+                        'requested_at' => now(),
+                        'notes' => 'Follow-up for remaining run(s) (parent reservation #' . $res->id . ').',
+                    ]);
+                }
+            }
+        }
+
         $msg = $performed < $required
-            ? "Run {$performed} of {$required} performed, incubating. " . ($required - $performed) . ' more run(s) needed.'
+            ? "Run {$performed} of {$required} performed, incubating. " . $remaining . ' more run(s) needed' . ($remaining > 0 ? ' (a follow-up booking was created - Move it to a specific or special day if needed).' : '.')
             : "Final run performed, all {$required} run(s) incubating. Plates ready in {$days} days.";
         Notification::make()->success()->title('Run performed, incubation started')
             ->body(($res->personnel->full_name ?? 'Operator') . ': ' . $msg)->send();

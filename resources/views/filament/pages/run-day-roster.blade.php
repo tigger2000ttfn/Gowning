@@ -241,7 +241,7 @@
                                 @endphp
                                 <tr>
                                     <td style="font-weight:600;">{{ $r['employee_id'] }}</td>
-                                    <td>{{ $r['name'] }}</td>
+                                    <td>{{ $r['name'] }}@if(!empty($r['follow_up'])) <span class="gqs-pill gqs-pill-gold" title="Follow-up booking for this person's remaining run(s)">Follow-up</span>@endif</td>
                                     <td>{{ $r['cleanroom'] ?: '—' }}</td>
                                     <td>{{ $r['time'] ?? '—' }}</td>
                                     <td><span class="gqs-pill {{ $rsPill }}">{{ $rsLabel }}</span></td>
