@@ -133,31 +133,37 @@ class NcCatalog extends Page implements HasForms
         }
         $fmt = \App\Support\XlsxReader::detectFormat($full);
 
-        if ($fmt === 'xlsx' || $fmt === 'html') {
-            $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
-            $rows = $read['rows'];
-            if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The File')->body('No rows were found in the export.')->send(); return; }
-            $rawLinks = $read['hyperlinks'];
-            if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-            $this->headers = array_map('trim', $rows[0]);
-            $body = array_slice($rows, 1);
-            $remapped = [];
-            foreach ($body as $b => $_) {
-                $abs = $b + 1;
-                if (isset($rawLinks[$abs])) $remapped[$b] = $rawLinks[$abs];
+        try {
+            if ($fmt === 'xlsx' || $fmt === 'html') {
+                $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
+                $rows = $read['rows'];
+                if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The File')->body('No rows were found in the export.')->send(); return; }
+                $rawLinks = $read['hyperlinks'];
+                if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
+                $this->headers = array_map('trim', $rows[0]);
+                $body = array_slice($rows, 1);
+                $remapped = [];
+                foreach ($body as $b => $_) {
+                    $abs = $b + 1;
+                    if (isset($rawLinks[$abs])) $remapped[$b] = $rawLinks[$abs];
+                }
+                $this->rows = $body;
+                $this->hyperlinks = $remapped;
+            } else {
+                $fh = fopen($full, 'r');
+                while (($r = fgetcsv($fh)) !== false) {
+                    if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
+                    $rows[] = $r;
+                }
+                fclose($fh);
+                if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
+                $this->headers = array_map('trim', array_shift($rows));
+                $this->rows = $rows;
             }
-            $this->rows = $body;
-            $this->hyperlinks = $remapped;
-        } else {
-            $fh = fopen($full, 'r');
-            while (($r = fgetcsv($fh)) !== false) {
-                if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
-                $rows[] = $r;
-            }
-            fclose($fh);
-            if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-            $this->headers = array_map('trim', array_shift($rows));
-            $this->rows = $rows;
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Could Not Parse The File')
+                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
+            return;
         }
 
         $this->guessColumns();

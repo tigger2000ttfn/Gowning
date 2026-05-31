@@ -196,19 +196,32 @@ class XlsxReader
         $html = @file_get_contents($path);
         if ($html === false || $html === '') return $out;
 
-        // Pull each <tr>...</tr>, then each <td>/<th> within it.
-        if (! preg_match_all('#<tr\b[^>]*>(.*?)</tr>#is', $html, $trMatches)) {
-            return $out;
-        }
+        // Raise PCRE limits; large exports (thousands of rows) can otherwise hit backtrack limits.
+        @ini_set('pcre.backtrack_limit', '20000000');
+        @ini_set('pcre.recursion_limit', '20000000');
+
+        // Split into <tr> chunks by boundary rather than one giant lazy regex (safer on big files).
+        $trChunks = preg_split('#</tr\s*>#is', $html);
+        if ($trChunks === false) return $out;
+
         $r = 0;
-        foreach ($trMatches[1] as $trInner) {
-            if (! preg_match_all('#<t[dh]\b[^>]*>(.*?)</t[dh]>#is', $trInner, $cellMatches)) {
-                continue;
-            }
+        foreach ($trChunks as $chunk) {
+            // keep only the part from the first <tr...> onward
+            $pos = stripos($chunk, '<tr');
+            if ($pos === false) continue;
+            $chunk = substr($chunk, $pos);
+
+            // split into cells on closing td/th tags
+            $cellChunks = preg_split('#</t[dh]\s*>#is', $chunk);
+            if ($cellChunks === false) continue;
+
             $cells = [];
             $links = [];
             $c = 0;
-            foreach ($cellMatches[1] as $cellHtml) {
+            foreach ($cellChunks as $cellChunk) {
+                // must contain an opening td/th to be a real cell
+                if (! preg_match('#<t[dh]\b[^>]*>(.*)$#is', $cellChunk, $cm)) continue;
+                $cellHtml = $cm[1];
                 if (preg_match('#<a\b[^>]*href=["\']([^"\']+)["\']#i', $cellHtml, $hm)) {
                     $links[$c] = html_entity_decode($hm[1], ENT_QUOTES | ENT_HTML5);
                 }
@@ -216,11 +229,11 @@ class XlsxReader
                 $text = strip_tags($text);
                 $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5);
                 $text = str_replace(["\t", "\r", "\n"], ' ', $text);
-                $text = trim(preg_replace('/\s+/', ' ', $text));
+                $text = trim(preg_replace('/\s+/', ' ', (string) $text));
                 $cells[$c] = $text;
                 $c++;
             }
-            // skip fully empty rows
+            if (empty($cells)) continue;
             if (count(array_filter($cells, fn ($v) => $v !== '')) === 0) continue;
             $out['rows'][$r] = $cells;
             if ($links) $out['hyperlinks'][$r] = $links;
