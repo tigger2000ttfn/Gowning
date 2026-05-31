@@ -38,6 +38,15 @@
                         @else
                             <span class="gqs-pill gqs-pill-gold">Awaiting Veeva Upload</span>
                         @endif
+                        @if($session['veeva_doc_number'])
+                            @if($session['veeva_approved'])
+                                <span class="gqs-pill gqs-pill-green" title="Veeva shows this report as Approved">Veeva Approved ✓</span>
+                            @elseif($session['veeva_in_catalog'])
+                                <span class="gqs-pill gqs-pill-gold" title="Veeva does not show this report as Approved yet">Not Approved In Veeva</span>
+                            @else
+                                <span class="gqs-pill gqs-pill-gray" title="Report not found in the Veeva catalog yet">Not In Catalog</span>
+                            @endif
+                        @endif
                         @if($canApprove)
                             <button type="button" wire:click="openClassSignoff({{ $session['id'] }})" class="gqs-btn" style="background:#2E7D5B;color:#fff;">Sign Off Session</button>
                         @endif
@@ -350,10 +359,28 @@
                     @else
                         <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">{{ $cd['count'] }} trainee(s) pending: {{ $cd['names'] ?: '—' }}</div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <div><label class="gqs-flbl">Veeva Report Number</label><input type="text" wire:model="clsVeeva" class="gqs-fld"></div>
+                            <div><label class="gqs-flbl">Veeva Report Number</label><input type="text" wire:model.live.debounce.400ms="clsVeeva" class="gqs-fld"></div>
                             <div><label class="gqs-flbl">LMS Number (Optional)</label><input type="text" wire:model="clsLms" class="gqs-fld"></div>
                             <div style="grid-column:1 / -1;"><label class="gqs-flbl">Veeva Link (Optional)</label><input type="url" wire:model="clsVeevaUrl" class="gqs-fld"></div>
                         </div>
+                        @if(!empty($cd['veeva_number']))
+                            @if($cd['veeva_approved'])
+                                <div style="padding:10px 12px;background:#DDF3E9;border:1px solid #A9D9C2;border-radius:8px;font-size:12.5px;color:#1E7A52;display:flex;align-items:center;gap:8px;">
+                                    <x-filament::icon icon="heroicon-m-check-badge" style="width:18px;height:18px;"/>
+                                    <span>Veeva: <strong>{{ $cd['veeva_number'] }}</strong> is <strong>Approved</strong>@if($cd['veeva_title']) · {{ \Illuminate\Support\Str::limit($cd['veeva_title'], 60) }}@endif@if($cd['veeva_url']) · <a href="{{ $cd['veeva_url'] }}" target="_blank" rel="noopener" style="color:#1E7A52;font-weight:700;text-decoration:underline;">Open ↗</a>@endif</span>
+                                </div>
+                            @elseif($cd['veeva_in_catalog'])
+                                <div style="padding:10px 12px;background:#FBF3DC;border:1px solid #E6D08A;border-radius:8px;font-size:12.5px;color:#8A6D0B;display:flex;align-items:center;gap:8px;">
+                                    <x-filament::icon icon="heroicon-m-exclamation-triangle" style="width:18px;height:18px;"/>
+                                    <span>Veeva shows <strong>{{ $cd['veeva_number'] }}</strong> as <strong>{{ $cd['veeva_status'] ?: 'not Approved' }}</strong>, not Approved. You can still sign, but confirm the report is final in Veeva first.</span>
+                                </div>
+                            @else
+                                <div style="padding:10px 12px;background:#FBF3DC;border:1px solid #E6D08A;border-radius:8px;font-size:12.5px;color:#8A6D0B;display:flex;align-items:center;gap:8px;">
+                                    <x-filament::icon icon="heroicon-m-question-mark-circle" style="width:18px;height:18px;"/>
+                                    <span><strong>{{ $cd['veeva_number'] }}</strong> is not in the Veeva catalog yet, so its approval status cannot be confirmed. You can still sign; the link will fill once the catalog includes it.</span>
+                                </div>
+                            @endif
+                        @endif
                         <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Approve the classroom training as complete for these trainees. Your signature is recorded.</div>
                         @if($cd['signer_is_trainee'])
                             <div style="padding:10px 12px;background:#FBE9EC;border:1px solid #E9B8C2;border-radius:8px;font-size:12.5px;color:#8A1029;">Two-person rule: you are a trainee on this session and cannot sign it off.</div>

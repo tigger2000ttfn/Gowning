@@ -67,4 +67,11 @@ class VeevaDocument extends Model
         $doc = static::findByNumber($number);
         return $doc?->url ?: null;
     }
+
+    /** Is this number present in the catalog and marked Approved in Veeva? */
+    public static function isApproved(?string $number): bool
+    {
+        $doc = static::findByNumber($number);
+        return $doc && strcasecmp(trim((string) $doc->status), 'Approved') === 0;
+    }
 }

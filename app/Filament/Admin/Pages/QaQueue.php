@@ -149,6 +149,8 @@ class QaQueue extends Page
                 // uploaded by QCM). Prefer the Veeva link; fall back to the doc number for reference.
                 'veeva_url' => $s->veeva_url,
                 'veeva_doc_number' => $s->veeva_doc_number,
+                'veeva_approved' => $s->veeva_doc_number ? \App\Models\VeevaDocument::isApproved($s->veeva_doc_number) : null,
+                'veeva_in_catalog' => $s->veeva_doc_number ? (bool) \App\Models\VeevaDocument::findByNumber($s->veeva_doc_number) : false,
                 'rows' => $s->enrollments->where('status', 'pending_qa')->map(fn ($e) => [
                     'id' => $e->id,
                     'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
@@ -210,12 +212,25 @@ class QaQueue extends Page
         $u = Auth::user();
         $myPid = $u ? (\App\Models\Personnel::where('user_id', $u->id)->orWhere('email', $u->email)->value('id')) : null;
         $signerIsTrainee = $myPid && $s->enrollments->whereNotIn('status', ['cancelled'])->contains('personnel_id', $myPid);
+
+        // Veeva catalog cross-check: does the entered report number exist in the catalog, and is it
+        // marked Approved in Veeva? A non-Approved (or not-yet-catalogued) doc is a warning, not a
+        // block, so QA can still sign. This is the double-check that the report is final in Veeva.
+        $veevaNum = trim((string) ($this->clsVeeva ?: $s->veeva_doc_number));
+        $catalog = $veevaNum !== '' ? \App\Models\VeevaDocument::findByNumber($veevaNum) : null;
+
         return [
             'title' => ($s->session_uid ? $s->session_uid . ' · ' : '') . ($s->trainingClass?->name ?? 'Class'),
             'count' => $pending->count(),
             'names' => $pending->map(fn ($e) => $e->personnel?->full_name ?? $e->name)->implode(', '),
             'signer_is_trainee' => (bool) $signerIsTrainee,
             'esig' => (bool) Setting::get('esig_required', true),
+            'veeva_number' => $veevaNum,
+            'veeva_in_catalog' => (bool) $catalog,
+            'veeva_status' => $catalog?->status,
+            'veeva_url' => $catalog?->url,
+            'veeva_title' => $catalog?->title,
+            'veeva_approved' => $catalog && strcasecmp(trim((string) $catalog->status), 'Approved') === 0,
         ];
     }
 
