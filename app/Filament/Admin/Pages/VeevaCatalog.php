@@ -40,9 +40,9 @@ class VeevaCatalog extends Page implements HasForms
 
     public ?array $data = [];
     public array $headers = [];
-    public array $rows = [];
-    public array $hyperlinks = [];   // [rowIndexInRows][colIndex] => url (from xlsx embedded links)
-    public array $preview = [];
+    public array $preview = [];        // first 8 rows only, for display
+    public int $rowCount = 0;
+    public ?string $parsedPath = null; // relative path of the uploaded file, re-read at import
     public bool $parsed = false;
     public bool $imported = false;
     public int $lastCreated = 0;
@@ -126,70 +126,79 @@ class VeevaCatalog extends Page implements HasForms
 
     public function resetUpload(): void
     {
+        if ($this->parsedPath) {
+            try { Storage::disk('local')->delete($this->parsedPath); } catch (\Throwable $e) {}
+        }
         $this->parsed = false;
         $this->imported = false;
-        $this->rows = [];
         $this->preview = [];
         $this->headers = [];
-        $this->hyperlinks = [];
+        $this->rowCount = 0;
+        $this->parsedPath = null;
         $this->data = [];
         try { $this->form->fill(); } catch (\Throwable $e) { /* ignore */ }
     }
 
+    /**
+     * Read a file into [headers, body rows, per-row hyperlinks]. Shared by parse (preview) and import,
+     * so all rows are never held in Livewire state. Detects xlsx/html/csv and sanitizes UTF-8.
+     *
+     * @return array{headers: array<int,string>, rows: array<int,array>, hyperlinks: array<int,array>}|null
+     */
+    protected function readRows(string $full): ?array
+    {
+        $fmt = \App\Support\XlsxReader::detectFormat($full);
+        if ($fmt === 'xlsx' || $fmt === 'html') {
+            $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
+            $rows = $read['rows'];
+            if (count($rows) < 2) return null;
+            $headers = array_map(fn ($h) => \App\Support\XlsxReader::toUtf8(trim((string) $h)), $rows[0]);
+            $body = array_slice($rows, 1);
+            $remapped = [];
+            foreach ($body as $b => $_) {
+                $abs = $b + 1;
+                if (isset($read['hyperlinks'][$abs])) $remapped[$b] = $read['hyperlinks'][$abs];
+            }
+            return ['headers' => $headers, 'rows' => array_values($body), 'hyperlinks' => array_values($remapped)];
+        }
+        $rows = [];
+        $fh = fopen($full, 'r');
+        if (! $fh) return null;
+        while (($r = fgetcsv($fh)) !== false) {
+            if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
+            $rows[] = array_map(fn ($c) => \App\Support\XlsxReader::toUtf8((string) $c), $r);
+        }
+        fclose($fh);
+        if (count($rows) < 2) return null;
+        $headers = array_map('trim', array_shift($rows));
+        return ['headers' => $headers, 'rows' => array_values($rows), 'hyperlinks' => []];
+    }
+
     public function parse(): void
     {
-        $rows = [];
-        $this->hyperlinks = [];
         $full = $this->resolveUploadFullPath();
         if (! $full || ! is_file($full)) {
             Notification::make()->danger()->title('Upload A File First')
                 ->body('The file upload did not complete. Pick the file again, wait for the progress bar to finish, then Parse.')->send();
             return;
         }
-        // Detect xlsx by content signature (PK zip header), not extension - Filament's stored
-        // filename may not keep .xlsx, which previously caused xlsx to be read as CSV and fail.
-        $fmt = \App\Support\XlsxReader::detectFormat($full);
-
-        if ($fmt === 'xlsx' || $fmt === 'html') {
-            $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
-            $rows = $read['rows'];
-            if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The File')->body('No rows were found in the export.')->send(); return; }
-            // Re-index hyperlinks from absolute row index to the row's position after the header is shifted.
-            // We shift by one (header row) below; capture raw here and remap after array_shift.
-            $rawLinks = $read['hyperlinks'];
-            if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-            // Drop empty rows but keep a mapping so hyperlinks line up.
-            $this->headers = array_map('trim', $rows[0]);
-            $body = array_slice($rows, 1);
-            // Remap hyperlinks: rawLinks is keyed by absolute row index; body row b corresponds to abs index b+1.
-            $remapped = [];
-            foreach ($body as $b => $_) {
-                $abs = $b + 1;
-                if (isset($rawLinks[$abs])) $remapped[$b] = $rawLinks[$abs];
-            }
-            $this->rows = $body;
-            $this->hyperlinks = $remapped;
-            $this->guessColumns();
-            $this->preview = array_slice($this->rows, 0, 8);
-            $this->parsed = true;
-            $this->imported = false;
+        try {
+            $read = $this->readRows($full);
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Could Not Parse The File')
+                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
             return;
-        } else {
-            $fh = fopen($full, 'r');
-            while (($r = fgetcsv($fh)) !== false) {
-                if (count(array_filter($r, fn ($c) => trim((string) $c) !== '')) === 0) continue;
-                $rows[] = $r;
-            }
-            fclose($fh);
         }
+        if (! $read) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
 
-        if (count($rows) < 2) { Notification::make()->danger()->title('Need A Header Row And At Least One Row')->send(); return; }
-
-        $this->headers = array_map('trim', array_shift($rows));
-        $this->rows = $rows;
+        $this->headers = $read['headers'];
+        $this->rowCount = count($read['rows']);
+        $this->preview = array_map(
+            fn ($row) => array_map(fn ($c) => \Illuminate\Support\Str::limit((string) $c, 80), $row),
+            array_slice($read['rows'], 0, 8)
+        );
+        $this->parsedPath = $this->uploadedPath();
         $this->guessColumns();
-
-        $this->preview = array_slice($this->rows, 0, 8);
         $this->parsed = true;
         $this->imported = false;
     }
@@ -235,56 +244,72 @@ class VeevaCatalog extends Page implements HasForms
             Notification::make()->danger()->title('Map The Document Number Column')->send(); return;
         }
 
-        $created = 0; $updated = 0;
-        foreach ($this->rows as $ri => $row) {
-            $number = $col($row, 'map_number');
-            if (! $number) continue;
-            $url = $col($row, 'map_url');
-            // If no link column value, use a hyperlink embedded in the link cell or the number cell
-            // (Veeva often hyperlinks the document number itself; CSV loses this, xlsx keeps it).
-            if (! $url) {
-                $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
-                $numCol = (int) $m['map_number'];
-                $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
-            }
-            // Capture the numeric Vault document id and, if we still have no URL, build one from it
-            // using the documented doc_info scheme (the most reliable path for these exports).
-            $vaultId = $col($row, 'map_vaultid');
-            if (! $url && $vaultId) {
-                $url = VeevaDocument::urlFromVaultId($vaultId);
-            }
-            $docId = VeevaDocument::extractDocId($url);
+        // Re-read the full file now (rows are NOT kept in Livewire state).
+        $full = $this->parsedPath ? Storage::disk('local')->path($this->parsedPath) : $this->resolveUploadFullPath();
+        if (! $full || ! is_file($full)) {
+            Notification::make()->danger()->title('Upload Expired')->body('Please re-upload and parse the file, then import.')->send();
+            return;
+        }
+        try {
+            $read = $this->readRows($full);
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Import Failed')->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
+            return;
+        }
+        if (! $read) { Notification::make()->danger()->title('Could Not Read The File')->send(); return; }
+        $rows = $read['rows'];
+        $hyperlinks = $read['hyperlinks'];
 
-            $existing = VeevaDocument::where('doc_number', $number)->first();
-            $payload = [
-                'doc_number' => $number,
-                'doc_id' => $docId ?: ($existing->doc_id ?? null),
-                'vault_id' => $vaultId ?: ($existing->vault_id ?? null),
-                'url' => $url ?: ($existing->url ?? null),
-                'title' => $col($row, 'map_title') ?: ($existing->title ?? null),
-                'type' => $col($row, 'map_type') ?: ($existing->type ?? null),
-                'status' => $col($row, 'map_status') ?: ($existing->status ?? null),
-                'version' => $col($row, 'map_version') ?: ($existing->version ?? null),
-                'catalog_synced_at' => now(),
-            ];
-            if ($existing) { $existing->update($payload); $updated++; }
-            else { VeevaDocument::create($payload); $created++; }
+        $created = 0; $updated = 0;
+        try {
+            foreach ($rows as $ri => $row) {
+                $number = $col($row, 'map_number');
+                if (! $number) continue;
+                $url = $col($row, 'map_url');
+                if (! $url) {
+                    $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
+                    $numCol = (int) $m['map_number'];
+                    $url = $hyperlinks[$ri][$linkCol] ?? $hyperlinks[$ri][$numCol] ?? null;
+                }
+                $vaultId = $col($row, 'map_vaultid');
+                if (! $url && $vaultId) {
+                    $url = VeevaDocument::urlFromVaultId($vaultId);
+                }
+                $docId = VeevaDocument::extractDocId($url);
+
+                $existing = VeevaDocument::where('doc_number', $number)->first();
+                $payload = [
+                    'doc_number' => $number,
+                    'doc_id' => $docId ?: ($existing->doc_id ?? null),
+                    'vault_id' => $vaultId ?: ($existing->vault_id ?? null),
+                    'url' => $url ?: ($existing->url ?? null),
+                    'title' => $col($row, 'map_title') ?: ($existing->title ?? null),
+                    'type' => $col($row, 'map_type') ?: ($existing->type ?? null),
+                    'status' => $col($row, 'map_status') ?: ($existing->status ?? null),
+                    'version' => $col($row, 'map_version') ?: ($existing->version ?? null),
+                    'catalog_synced_at' => now(),
+                ];
+                if ($existing) { $existing->update($payload); $updated++; }
+                else { VeevaDocument::create($payload); $created++; }
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Import Failed')
+                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
+            return;
         }
 
         $this->lastCreated = $created;
         $this->lastUpdated = $updated;
         $this->imported = true;
         $this->parsed = false;
-        $this->rows = [];
         $this->preview = [];
-        $this->hyperlinks = [];
+        $this->rowCount = 0;
 
-        // The import is committed to the database; the uploaded file is no longer needed, so delete it.
-        $path = $this->uploadedPath();
-        if ($path) {
-            try { Storage::disk('local')->delete($path); } catch (\Throwable $e) { /* best-effort cleanup */ }
-            $this->data['csv'] = null;
+        foreach (array_filter([$this->parsedPath, $this->uploadedPath()]) as $p) {
+            try { Storage::disk('local')->delete($p); } catch (\Throwable $e) { /* best-effort */ }
         }
+        $this->parsedPath = null;
+        $this->data['csv'] = null;
         $this->headers = [];
 
         // After loading the catalog, backfill any reports that have a number but no link yet.

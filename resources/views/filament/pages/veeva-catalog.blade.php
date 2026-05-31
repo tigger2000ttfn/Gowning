@@ -53,7 +53,7 @@
             <div class="gqs-panel" style="position:relative;">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-table-cells"/> Review &amp; Import</div>
                 <div class="gqs-panel-body" style="padding:0;">
-                    <p style="margin:0;padding:12px 16px 6px;color:var(--gqs-text-dim,#6A6A72);font-size:13px;">Detected {{ count($rows) }} rows. Showing the first {{ count($preview) }}.</p>
+                    <p style="margin:0;padding:12px 16px 6px;color:var(--gqs-text-dim,#6A6A72);font-size:13px;">Detected {{ $rowCount }} rows. Showing the first {{ count($preview) }}.</p>
                     <div style="overflow-x:auto;">
                         <table class="gqs-tbl">
                             <thead><tr>@foreach ($headers as $h)<th>{{ $h }}</th>@endforeach</tr></thead>
@@ -65,7 +65,7 @@
                     <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button type="button" wire:click="resetUpload" class="gqs-btn gqs-btn-ghost">Cancel</button>
                         <button type="button" wire:click="import" wire:loading.attr="disabled" wire:target="import" class="gqs-btn gqs-btn-primary" style="margin-left:auto;">
-                            <span wire:loading.remove wire:target="import">Import {{ count($rows) }} Rows</span>
+                            <span wire:loading.remove wire:target="import">Import {{ $rowCount }} Rows</span>
                             <span wire:loading wire:target="import">Importing...</span>
                         </button>
                     </div>
@@ -74,7 +74,7 @@
                 <div wire:loading.flex wire:target="import" class="gqs-import-overlay">
                     <div class="gqs-import-card">
                         <div class="gqs-spinner"></div>
-                        <div style="font-weight:700;color:#fff;margin-top:12px;">Importing {{ count($rows) }} rows...</div>
+                        <div style="font-weight:700;color:#fff;margin-top:12px;">Importing {{ $rowCount }} rows...</div>
                         <div style="font-size:12px;color:#C9C9D2;margin-top:4px;">Building links and updating the catalog</div>
                     </div>
                 </div>
