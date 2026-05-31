@@ -64,7 +64,10 @@ class QualificationRunResource extends Resource
                     TextInput::make('lims_worklist_id')->label('LIMS Worklist ID')
                         ->placeholder('Worklist / batch reference from LIMS'),
                     TextInput::make('veeva_doc_number')->label('Veeva Document Number')
-                        ->placeholder('Veeva report / doc number'),
+                        ->prefix('RPT-AST-')
+                        ->formatStateUsing(fn ($state) => $state ? preg_replace('/^RPT-AST-/i', '', (string) $state) : $state)
+                        ->dehydrateStateUsing(fn ($state) => $state ? 'RPT-AST-' . ltrim(preg_replace('/^RPT-AST[-\s]*/i', '', (string) $state), '-') : $state)
+                        ->placeholder('numbers only'),
                     TextInput::make('veeva_url')->label('Veeva Link')->url()
                         ->placeholder('https://...')->helperText('Direct link for QA to review in Veeva.'),
                     Textarea::make('notes')->columnSpanFull(),

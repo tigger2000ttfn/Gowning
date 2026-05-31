@@ -45,13 +45,19 @@ class NonConformanceResource extends Resource
         return $schema->components([
             Section::make('Non-Conformance')->columns(2)->schema([
                 TextInput::make('nc_number')->label('NC Number')
-                    ->helperText('Auto-generated on creation. Editable if you need to align it with TrackWise.'),
+                    ->prefix('NC-')
+                    ->formatStateUsing(fn ($state) => $state ? preg_replace('/^NC-/i', '', (string) $state) : $state)
+                    ->dehydrateStateUsing(fn ($state) => $state ? 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', (string) $state), '-') : $state)
+                    ->helperText('Auto-generated on creation. Type only the numbers - NC- is added automatically.'),
                 Select::make('personnel_id')->label('Person')
                     ->options(fn () => Personnel::orderBy('last_name')->get()->mapWithKeys(fn ($p) => [$p->id => $p->full_name])->all())
                     ->searchable(),
                 TextInput::make('trackwise_id')->label('TrackWise ID')
-                    ->placeholder('TrackWise NC reference')
-                    ->helperText('Link/reference only, the record lives in TrackWise.'),
+                    ->prefix('NC-')
+                    ->formatStateUsing(fn ($state) => $state ? preg_replace('/^NC-/i', '', (string) $state) : $state)
+                    ->dehydrateStateUsing(fn ($state) => $state ? 'NC-' . ltrim(preg_replace('/^NC[-\s]*/i', '', (string) $state), '-') : $state)
+                    ->placeholder('numbers only')
+                    ->helperText('TrackWise NC reference. Type only the numbers - NC- is added automatically.'),
                 Select::make('nc_type')->label('Type')->options([
                     'failed_run' => 'Failed Run',
                     'mold_hit' => 'Mold Hit',
