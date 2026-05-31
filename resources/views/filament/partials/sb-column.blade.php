@@ -38,6 +38,9 @@
                     @endif
                     @if($card['due'] ?? false)<div class="sb-line"><span class="sb-line-l">Next due</span> {{ $card['due'] }}</div>@endif
                 </div>
+                @if($stage['key'] === 'class_complete' && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
+                    <button type="button" wire:click="openBookRun({{ $card['id'] }})" @click.stop class="sb-book-run">Book Run</button>
+                @endif
             </div>
         @endforeach
     </div>

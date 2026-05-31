@@ -266,6 +266,75 @@ class StatusBoard extends Page
 
     public function closeDetail(): void { $this->detail = null; }
 
+    // ----- Book a run for a Class-Complete person (next available, or a specific run day) -----
+    public ?int $bookRunQid = null;
+    public string $bookRunMode = 'next';   // 'next' | 'specific'
+    public ?int $bookRunSlotId = null;
+
+    public function openBookRun(int $qid): void
+    {
+        if (! Auth::user()?->hasCapability(Capability::ManageScheduling)) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $this->bookRunQid = $qid;
+        $this->bookRunMode = 'next';
+        $this->bookRunSlotId = null;
+    }
+    public function closeBookRun(): void { $this->bookRunQid = null; $this->bookRunSlotId = null; }
+
+    /** Upcoming open run slots with seats left, for the specific-day picker. */
+    public function bookRunSlotOptions(): array
+    {
+        $scheduler = app(\App\Services\AutoScheduler::class);
+        return \App\Models\RunSlot::where('status', 'open')
+            ->whereDate('slot_date', '>=', now()->toDateString())
+            ->orderBy('slot_date')->orderBy('start_time')->get()
+            ->filter(fn ($s) => $scheduler->seatsLeft($s) > 0)
+            ->mapWithKeys(fn ($s) => [$s->id => $s->slot_date->gmp() . ' · ' . ($s->cleanroom ?: 'Run Day')
+                . ' (' . $scheduler->seatsLeft($s) . ' seats)'])->all();
+    }
+
+    public function confirmBookRun(): void
+    {
+        if (! Auth::user()?->hasCapability(Capability::ManageScheduling)) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $q = Qualification::find($this->bookRunQid);
+        if (! $q) { $this->closeBookRun(); return; }
+        $scheduler = app(\App\Services\AutoScheduler::class);
+
+        // already actively booked?
+        $active = \App\Models\Reservation::where('personnel_id', $q->personnel_id)
+            ->whereIn('status', ['requested', 'approved'])->exists();
+        if ($active) {
+            Notification::make()->warning()->title('Already Booked')->body('This person already has an active run booking.')->send();
+            $this->closeBookRun();
+            return;
+        }
+
+        if ($this->bookRunMode === 'specific' && $this->bookRunSlotId) {
+            $slot = \App\Models\RunSlot::find($this->bookRunSlotId);
+            if (! $slot || $scheduler->seatsLeft($slot) < 1) {
+                Notification::make()->danger()->title('Run Day Full')->body('That run day has no seats left. Pick another.')->send();
+                return;
+            }
+            \App\Models\Reservation::create([
+                'run_slot_id' => $slot->id, 'personnel_id' => $q->personnel_id,
+                'status' => 'approved', 'requested_at' => now(), 'decided_at' => now(),
+                'notes' => 'Booked from Status Board',
+            ]);
+            \App\Services\AutoScheduler::markScheduled($q);
+            Notification::make()->success()->title('Run Booked')
+                ->body(($q->personnel?->full_name ?? 'Trainee') . ' booked for ' . $slot->slot_date->gmp() . ($slot->cleanroom ? ' in ' . $slot->cleanroom : '') . '.')->send();
+        } else {
+            $res = $scheduler->bookNext($q);
+            if (! $res) {
+                Notification::make()->warning()->title('No Open Run Day')->body('No upcoming run day with open seats. Schedule one, or pick a specific day.')->send();
+                return;
+            }
+            $slot = $res->runSlot;
+            Notification::make()->success()->title('Run Booked')
+                ->body(($q->personnel?->full_name ?? 'Trainee') . ' booked for ' . ($slot?->slot_date?->gmp() ?? 'the next available run day') . '.')->send();
+        }
+        $this->closeBookRun();
+    }
+
     /** Where to go to make the next entry for this person, based on their stage. */
     protected function quickActionUrl(Qualification $q): ?string
     {

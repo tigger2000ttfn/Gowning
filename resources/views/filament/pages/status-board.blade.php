@@ -194,9 +194,48 @@
             </div>
         </div>
     @endif
+
+    {{-- Book a run for a Class-Complete person --}}
+    @if($bookRunQid)
+        <div class="gqs-modal-overlay" wire:click.self="closeBookRun">
+            <div class="gqs-modal" style="width:500px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#2E7D5B,#225F46);padding:16px 20px;display:flex;align-items:center;gap:12px;border-radius:14px 14px 0 0;">
+                    <span style="width:46px;height:46px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-calendar-days" style="width:26px;height:26px;color:#fff;"/>
+                    </span>
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Book A Run</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <p style="margin:0 0 12px;font-size:13px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">Schedule this person for a qualification run. They move to Run Scheduled once booked.</p>
+                    <label class="gqs-flbl">Book To</label>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px;">
+                        <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;">
+                            <input type="radio" wire:model.live="bookRunMode" value="next"> Next available run day
+                        </label>
+                        <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;">
+                            <input type="radio" wire:model.live="bookRunMode" value="specific"> A specific run day
+                        </label>
+                    </div>
+                    @if($bookRunMode === 'specific')
+                        <label class="gqs-flbl">Run Day</label>
+                        <select wire:model="bookRunSlotId" class="gqs-fld">
+                            <option value="">Select a run day...</option>
+                            @foreach($this->bookRunSlotOptions() as $sid => $lbl)<option value="{{ $sid }}">{{ $lbl }}</option>@endforeach
+                        </select>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeBookRun" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="confirmBookRun" class="gqs-btn gqs-btn-primary">Book Run</button>
+                </div>
+            </div>
+        </div>
+    @endif
     <style>
         .dm-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
         .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
+        .sb-book-run{margin:8px 10px 10px;display:block;width:calc(100% - 20px);font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:7px;border:none;background:#2E7D5B;color:#fff;cursor:pointer;}
+        .sb-book-run:hover{background:#246148;}
     </style>
     <style>
         .sb-fullbleed{width:100%;}
