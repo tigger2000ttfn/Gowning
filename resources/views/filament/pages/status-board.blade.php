@@ -288,6 +288,8 @@
         .sb-pill-lapsed{background:#C8102E;color:#fff;}
         .sb-tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:#EFEFF2;color:#444;}
         .dark .sb-tag{background:#2C2C34;color:#C9C9D2;}
+        .sb-tag-red{background:#FCEEF0;color:#C8102E;}
+        .dark .sb-tag-red{background:#3A1B22;color:#FF8A9B;}
         .sb-line{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:5px;}
         .sb-line-l{font-weight:700;text-transform:uppercase;letter-spacing:.03em;font-size:9.5px;opacity:.8;margin-right:4px;}
         /* lane header is the grab handle for reordering columns */

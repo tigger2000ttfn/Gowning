@@ -55,10 +55,13 @@ class FixBakerBackfill extends Command
             $this->line("  Current: status={$this->val($q->status)} stage={$this->val($q->workflow_stage)} qualified_date=" . ($q->qualified_date?->toDateString() ?? 'null') . " runs_completed={$q->runs_completed} -> recomputed passes={$passCount}");
 
             // The corrected state: NOT qualified (QA never signed off). In Progress, Results Released,
-            // qualified_date cleared (QA sets it), pass count corrected.
+            // qualified_date cleared (QA sets it), pass count corrected, and the wrongly-computed due_date
+            // cleared - the backfill set due = backfilled-run + 1yr (e.g. 28-JAN-2027), implying he was
+            // qualified through then. He is not. QA sign-off will set the real next due (approval + cycle).
             $changes = [
                 'status' => QualificationStatus::InProgress,
                 'qualified_date' => null,
+                'due_date' => null,
                 'runs_completed' => $passCount,
             ];
             // Only move stage to Results Released if it is currently sitting at/after qualified by mistake,
@@ -67,7 +70,7 @@ class FixBakerBackfill extends Command
                 $changes['workflow_stage'] = WorkflowStage::ResultsReleased;
             }
 
-            $this->line('  ' . ($force ? 'Applying' : 'Would apply') . ': status=In Progress, qualified_date=null, runs_completed=' . $passCount
+            $this->line('  ' . ($force ? 'Applying' : 'Would apply') . ': status=In Progress, qualified_date=null, due_date=null, runs_completed=' . $passCount
                 . (isset($changes['workflow_stage']) ? ', stage=Results Released' : ''));
 
             // Inferred classroom completion (editable by QA). Only add if none exists.

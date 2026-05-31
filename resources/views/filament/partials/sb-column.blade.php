@@ -22,6 +22,12 @@
                         @endif
                         @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
                     </div>
+                    @if(!empty($card['stage_label']))
+                        <div class="sb-line"><span class="sb-line-l">Stage</span> {{ $card['stage_label'] }}</div>
+                    @endif
+                    @if(!empty($card['flag']))
+                        <div class="sb-line"><span class="sb-line-l">Status</span> {{ $card['flag'] }}</div>
+                    @endif
                     @if(!empty($card['nc']))
                         <div class="sb-line"><span class="sb-line-l">NC</span> @if(!empty($card['nc_url']))<a href="{{ $card['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $card['nc'] }} ↗</a>@else {{ $card['nc'] }} @endif@if(!empty($card['nc_status'])) · {{ $card['nc_status'] }}@endif</div>
                     @endif
@@ -34,9 +40,14 @@
                         </div>
                     @endif
                     @if(!empty($card['last_run_date']))
-                        <div class="sb-line"><span class="sb-line-l">Last run</span> {{ $card['last_run_date'] }}@if($card['last_run_worklist']) · {{ $card['last_run_worklist'] }}@endif</div>
+                        <div class="sb-line"><span class="sb-line-l">Last run</span> {{ $card['last_run_date'] }}</div>
                     @endif
-                    @if($card['due'] ?? false)<div class="sb-line"><span class="sb-line-l">Due</span> {{ $card['due'] }}</div>@endif
+                    @if(!empty($card['last_run_worklist']))
+                        <div class="sb-line"><span class="sb-line-l">Worklist</span> {{ $card['last_run_worklist'] }}</div>
+                    @endif
+                    @if($card['due'] ?? false)
+                        <div class="sb-line"><span class="sb-line-l">{{ $card['due_label'] ?? 'Due' }}</span> {{ $card['due'] }}@if(!empty($card['due_tag'])) <span class="sb-tag {{ $card['due_tag'] === 'Lapsed' ? 'sb-tag-red' : '' }}">{{ $card['due_tag'] }}</span>@endif</div>
+                    @endif
                 </div>
                 @if($stage['key'] === 'class_complete' && empty($card['has_booking']) && auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling))
                     <button type="button" wire:click="openBookRun({{ $card['id'] }})" @click.stop class="sb-book-run">Book Run</button>

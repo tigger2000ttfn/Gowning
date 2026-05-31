@@ -94,7 +94,7 @@ class StatusBoard extends Page
                 'runs_done' => (int) $passes,
                 'runs_req' => (int) $q->runs_required,
                 'due' => $q->due_date?->gmp(),
-                'last_run_date' => $lastRun?->run_date?->gmpDM(),
+                'last_run_date' => $lastRun?->run_date?->gmp(),
                 'last_run_worklist' => $lastRun?->lims_worklist_id,
                 // Status pill reflects the card's TRUE state. QA sign-off is what makes someone qualified,
                 // so "Qualified" shows when: the card is at QA Approved (qa_signoff), OR the person is in
@@ -138,6 +138,24 @@ class StatusBoard extends Page
                 'has_booking' => $q->personnel_id
                     ? \App\Models\Reservation::where('personnel_id', $q->personnel_id)->whereIn('status', ['requested', 'approved'])->exists()
                     : false,
+                // Explicit stage label for the card body (the column header also shows it, but the card
+                // listing it on its own line keeps each card self-describing).
+                'stage_label' => $q->workflow_stage
+                    ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label())
+                    : null,
+                // Due-date nuance: an INITIAL qualification's due date is the deadline to finish initial
+                // qualification; a seasoned (already-qualified) person's due date is their requal deadline
+                // (miss it and cleanroom access lapses). Label + tag make which-one unambiguous.
+                'due_label' => (function () use ($q) {
+                    $type = $q->type instanceof \BackedEnum ? $q->type->value : $q->type;
+                    return $type === 'annual' ? 'Requal Due' : 'Initial Due';
+                })(),
+                'due_tag' => (function () use ($q) {
+                    $status = $q->status instanceof \BackedEnum ? $q->status->value : $q->status;
+                    $type = $q->type instanceof \BackedEnum ? $q->type->value : $q->type;
+                    if ($status === 'lapsed' || $q->isPastDue()) return 'Lapsed';
+                    return $type === 'annual' ? 'Requal' : 'Initial';
+                })(),
                 // Card review link: ONLY for stages PAST incubating (awaiting results onward), routing to
                 // the review screen where the work happens. Earlier-stage cards have no button - click the
                 // card for detail. Awaiting Results / Results Released -> Lab Review; QA stages -> QA Review.
