@@ -249,6 +249,50 @@ class RunDayRoster extends Page
     public ?int $detailSlotId = null;
     public array $editSlot = [];
 
+    // Person detail card (mirrors the Status Board / Class Kanban card), keyed on personnel.
+    public ?array $personDetail = null;
+    public function closePersonDetail(): void { $this->personDetail = null; }
+
+    public function showPersonDetail(?int $personnelId): void
+    {
+        if (! $personnelId) { $this->personDetail = null; return; }
+        $p = \App\Models\Personnel::find($personnelId);
+        if (! $p) { $this->personDetail = null; return; }
+        $q = \App\Models\Qualification::currentFor($p->id);
+
+        $runs = \App\Models\QualificationRun::where('personnel_id', $p->id)
+            ->latest('run_date')->latest('id')->limit(5)->get()
+            ->map(fn ($r) => [
+                'date' => $r->run_date?->gmp(),
+                'result' => ucfirst($r->result instanceof \BackedEnum ? $r->result->value : (string) $r->result),
+                'worklist' => $r->lims_worklist_id,
+            ])->all();
+
+        // class taken / QA approved signal from the latest classroom enrollment
+        $enroll = \App\Models\ClassEnrollment::where('personnel_id', $p->id)
+            ->latest('id')->first();
+        $classStatus = $enroll ? ucwords(str_replace('_', ' ', (string) ($enroll->status instanceof \BackedEnum ? $enroll->status->value : $enroll->status))) : null;
+
+        $this->personDetail = [
+            'name' => $p->full_name,
+            'employee_id' => $p->employee_id,
+            'department' => $p->department,
+            'job_title' => $p->job_title,
+            'email' => $p->email,
+            'stage' => $q?->workflow_stage ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label()) : null,
+            'status' => $q ? ucwords(str_replace('_', ' ', (string) ($q->status instanceof \BackedEnum ? $q->status->value : $q->status))) : null,
+            'type' => $q ? $q->sessionLabel() : null,
+            'runs' => $q ? ((int) $q->runs_completed . ' / ' . (int) $q->runs_required) : null,
+            'due' => $q?->due_date?->gmp(),
+            'class_on_file' => (bool) ($q?->class_on_file),
+            'class_status' => $classStatus,
+            'recent_runs' => $runs,
+            'view_url' => $q
+                ? \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id])
+                : \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $p->id]),
+        ];
+    }
+
     public function openRunDayDetail(int $slotId): void
     {
         $slot = RunSlot::find($slotId);
@@ -354,6 +398,7 @@ class RunDayRoster extends Page
                 'date' => $day,
                 'rows' => $group->map(fn ($r) => [
                     'id' => $r->id,
+                    'personnel_id' => $r->personnel_id,
                     'name' => $r->personnel?->full_name ?? 'Unknown',
                     'employee_id' => $r->personnel?->employee_id,
                     'cleanroom' => $r->runSlot?->cleanroom,

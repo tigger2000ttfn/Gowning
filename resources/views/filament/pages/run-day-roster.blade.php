@@ -233,6 +233,7 @@
                                     <td>{{ $r['time'] ?? '—' }}</td>
                                     <td><span class="gqs-pill {{ $rsPill }}">{{ $rsLabel }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
+                                        <button wire:click="showPersonDetail({{ $r['personnel_id'] }})" class="rd-act" style="background:#1C1C21;">Details</button>
                                         @if($r['status'] === 'requested')
                                             <button wire:click="approveReservation({{ $r['id'] }})" class="rd-act rd-act-green">Approve</button>
                                         @endif
@@ -459,7 +460,52 @@
     </div>{{-- end roster tab wrapper --}}
     @endif
 
+    {{-- Person detail card (mirrors the Status Board / Class Kanban card) --}}
+    @if($personDetail)
+        <div class="gqs-modal-overlay" wire:click.self="closePersonDetail">
+            <div class="gqs-modal" style="width:560px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#C79A2E,#9E7714);padding:18px 22px;display:flex;align-items:center;gap:14px;border-radius:14px 14px 0 0;">
+                    <span style="width:52px;height:52px;border-radius:14px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <x-filament::icon icon="heroicon-o-user-circle" style="width:30px;height:30px;color:#fff;"/>
+                    </span>
+                    <div style="min-width:0;">
+                        <div style="font-weight:800;font-size:18px;color:#fff;">{{ $personDetail['name'] }}</div>
+                        <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $personDetail['employee_id'] }}@if($personDetail['job_title']) · {{ $personDetail['job_title'] }}@endif</div>
+                    </div>
+                </div>
+                <div class="gqs-modal-body">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                        <div><div class="dm-l">Department</div><div class="dm-v">{{ $personDetail['department'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Stage</div><div class="dm-v">{{ $personDetail['stage'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Status</div><div class="dm-v">{{ $personDetail['status'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Session Type</div><div class="dm-v">{{ $personDetail['type'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Runs</div><div class="dm-v">{{ $personDetail['runs'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Due Date</div><div class="dm-v">{{ $personDetail['due'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Class Status</div><div class="dm-v">{{ $personDetail['class_status'] ?: '—' }}</div></div>
+                        <div><div class="dm-l">Class On File</div><div class="dm-v">@if($personDetail['class_on_file'])<span class="gqs-pill gqs-pill-green">Yes</span>@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</div></div>
+                    </div>
+
+                    @if(count($personDetail['recent_runs']))
+                        <div class="dm-l" style="margin-top:18px;">Recent Runs</div>
+                        <table class="gqs-tbl" style="margin-top:6px;">
+                            <thead><tr><th>Date</th><th>Result</th><th>Worklist</th></tr></thead>
+                            <tbody>@foreach($personDetail['recent_runs'] as $r)
+                                <tr><td>{{ $r['date'] ?: '—' }}</td><td><span class="gqs-pill {{ $r['result'] === 'Pass' ? 'gqs-pill-green' : ($r['result'] === 'Fail' ? 'gqs-pill-red' : 'gqs-pill-gray') }}">{{ $r['result'] }}</span></td><td>{{ $r['worklist'] ?: '—' }}</td></tr>
+                            @endforeach</tbody>
+                        </table>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closePersonDetail" class="gqs-btn gqs-btn-ghost">Close</button>
+                    <a href="{{ $personDetail['view_url'] }}" class="gqs-btn gqs-btn-primary" style="text-decoration:none;">Open Record</a>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <style>
+        .dm-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
+        .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
         .rs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
         .rs-stat{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--gqs-border,#E2E2E6);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
         .dark .rs-stat{background:#1A1A20;border-color:#2A2A32;}
