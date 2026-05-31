@@ -17,8 +17,8 @@
                     <div class="sb-name">{{ $card['name'] }}</div>
                     <div class="sb-meta">{{ $card['employee_id'] }}@if(!empty($card['department'])) · {{ $card['department'] }}@endif</div>
                     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">
-                        @if(!empty($card['status']))
-                            <span class="sb-pill sb-pill-{{ $card['status_key'] }}">{{ $card['status'] }}</span>
+                        @if(!empty($card['flag']))
+                            <span class="sb-pill sb-pill-{{ $card['flag_key'] }}">{{ $card['flag'] }}</span>
                         @endif
                         @if(!empty($card['type']))<span class="sb-tag">{{ $card['type'] }}</span>@endif
                     </div>

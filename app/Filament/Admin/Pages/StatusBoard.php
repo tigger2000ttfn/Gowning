@@ -95,8 +95,12 @@ class StatusBoard extends Page
                 'due' => $q->due_date?->gmp(),
                 'last_run_date' => $lastRun?->run_date?->gmpDM(),
                 'last_run_worklist' => $lastRun?->lims_worklist_id,
-                'status' => ucfirst(str_replace('_', ' ', ($q->status?->value ?? (string) $q->status ?? ''))),
-                'status_key' => $q->status?->value ?? (string) $q->status,
+                // The pill shows a Qualified/Lapsed flag only (the column header already conveys the
+                // stage), so the card stays consistent the moment it moves between stage columns.
+                'flag' => in_array($q->status?->value, ['qualified', 'lapsed'], true)
+                    ? ucfirst($q->status->value) : null,
+                'flag_key' => in_array($q->status?->value, ['qualified', 'lapsed'], true)
+                    ? $q->status->value : null,
             ];
             })->values()->all();
 
