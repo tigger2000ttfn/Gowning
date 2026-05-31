@@ -9,7 +9,7 @@
     @include('filament.page-hero', ['title' => 'Lab Review', 'icon' => 'heroicon-o-beaker', 'actions' => '
         <button type="button" wire:click="setTab(\'incubating\')" class="gqs-tab ' . ($tab === 'incubating' ? 'active' : '') . '">Incubating (' . $incubating->count() . ')</button>
         <button type="button" wire:click="setTab(\'evaluation\')" class="gqs-tab ' . ($tab === 'evaluation' ? 'active' : '') . '">Result Evaluation (' . $evaluation->count() . ')</button>
-        <button type="button" wire:click="setTab(\'history\')" class="gqs-tab ' . ($tab === 'history' ? 'active' : '') . '">History</button>
+        <button type="button" wire:click="setTab(\'history\')" class="gqs-tab ' . ($tab === 'history' ? 'active' : '') . '">Historical</button>
     '])
 
     <div class="gqs-stats">
@@ -75,14 +75,18 @@
                                     <td>{{ $r->performed ? \Illuminate\Support\Carbon::parse($r->performed)->gmp() : '—' }}</td>
                                     <td style="white-space:nowrap;">{{ $r->progress }}</td>
                                     <td style="text-align:right;white-space:nowrap;">
+                                        <div style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;">
                                         @if(! $canEval)
                                             <span class="gqs-pill gqs-pill-purple">Awaiting QCM</span>
                                         @elseif($r->step === 'signoff')
-                                            <a href="{{ $r->form_url }}" target="_blank" class="sb-act" style="background:#1C1C21;color:#fff;text-decoration:none;">Approval Form</a>
+                                            <a href="{{ $r->form_url }}" target="_blank" rel="noopener" class="lab-icon-btn" title="Open Approval Form (FORM-AST-36749)" aria-label="Approval Form">
+                                                <x-filament::icon icon="heroicon-m-document-arrow-down"/>
+                                            </a>
                                             {{ ($this->qcmSignOffAction)(['id' => $r->id]) }}
                                         @else
                                             {{ ($this->enterResultsAction)(['id' => $r->id]) }}
                                         @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

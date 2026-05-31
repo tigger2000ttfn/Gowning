@@ -141,6 +141,7 @@
     .gqs-panel-head { display:flex; align-items:center; gap:9px; padding:13px 16px; font-weight:700; font-size:14px; color:#fff; background:linear-gradient(135deg,#A4123F,#850F33); }
     .gqs-panel-head svg { width:17px; height:17px; }
     .gqs-panel-body { padding:6px 0; }
+    .gqs-panel-body > .gqs-tbl:first-child { margin-top:-6px; }
 
     /* Attendance / roster marking rows (shared by Class Scheduler + Run Day Roster) */
     .att-list{display:flex;flex-direction:column;gap:8px;}
@@ -466,6 +467,9 @@
     .dark .gqs-btn-ghost{color:#ECECF0;border-color:#3A3A44;}
     /* small inline action buttons used across boards/rosters */
     .sb-act{font-size:12px;font-weight:700;padding:5px 13px;border-radius:7px;border:none;cursor:pointer;margin-left:6px;color:#fff;background:#6A6A72;}
+    .lab-icon-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:#1C1C21;color:#fff;cursor:pointer;text-decoration:none;flex:0 0 auto;}
+    .lab-icon-btn:hover{background:#000;}
+    .lab-icon-btn svg{width:17px;height:17px;}
     .sb-act-green{background:#2E7D5B;} .sb-act-green:hover{background:#246148;}
     .sb-act-red{background:#C8102E;} .sb-act-red:hover{background:#9A0C23;}
     .sb-act-magenta{background:#A4123F;} .sb-act-magenta:hover{background:#85102F;}

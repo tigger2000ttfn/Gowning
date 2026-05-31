@@ -210,6 +210,8 @@ class IncubationBoard extends Page
             ->label('Enter Results')
             ->icon('heroicon-m-clipboard-document-check')
             ->color('success')
+            ->size(\Filament\Support\Enums\Size::Small)
+            ->button()
             ->modalHeading('Enter LIMS Results')
             ->modalWidth('md')
             ->fillForm(function (array $arguments) {
@@ -301,6 +303,8 @@ class IncubationBoard extends Page
             ->label('QCM Sign-off (Veeva)')
             ->icon('heroicon-m-document-check')
             ->color('primary')
+            ->size(\Filament\Support\Enums\Size::Small)
+            ->button()
             ->modalHeading('QCM Sign-off, Enter Veeva Report Number')
             ->modalWidth('md')
             ->modalSubmitActionLabel('Sign & Send To QA')

@@ -311,8 +311,10 @@ class QaQueue extends Page
 
     public function getQueue()
     {
+        // Only after QCM has signed off their result evaluation (which moves the stage to QA Review).
+        // ResultsReleased means results are in but the QCM has not yet signed off, so it stays on Lab Review.
         return Qualification::with('personnel', 'qaOwner')
-            ->whereIn('workflow_stage', [WorkflowStage::QaReview->value, WorkflowStage::ResultsReleased->value])
+            ->where('workflow_stage', WorkflowStage::QaReview->value)
             ->whereNull('superseded_at')
             ->orderBy('stage_changed_at')
             ->get();
