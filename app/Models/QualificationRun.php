@@ -96,6 +96,11 @@ class QualificationRun extends Model implements HasMedia
         return $this->belongsTo(User::class, 'recorded_by');
     }
 
+    public function qaSignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'qa_signed_by');
+    }
+
     public function qcmSignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'qcm_signed_by');

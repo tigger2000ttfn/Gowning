@@ -68,9 +68,6 @@ class QualificationRunResource extends Resource
                     TextInput::make('veeva_url')->label('Veeva Link')->url()
                         ->placeholder('https://...')->helperText('Direct link for QA to review in Veeva.'),
                     Textarea::make('notes')->columnSpanFull(),
-                    \Filament\Forms\Components\Toggle::make('is_seed')
-                        ->label('Historical Seed Entry')
-                        ->helperText('On = a back-entered historical run for first-time setup (not a live cleanroom run). Counts toward qualification but is flagged as seeded.'),
                 ]),
             Section::make('Electronic Signature (21 CFR Part 11)')->icon('heroicon-o-finger-print')
                 ->description('Recording a run is an electronic signature: it attributes this result to you.')
@@ -93,6 +90,11 @@ class QualificationRunResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query
+                // Run COMPLETIONS = runs whose qualification has been QA-approved (signed off). A run with no
+                // QA approval is still in flight and belongs on the boards, not here.
+                ->whereHas('qualification', fn ($q) => $q->where('workflow_stage', \App\Enums\WorkflowStage::QaSignoff->value))
+                ->with(['personnel', 'qaSignedBy', 'qualification']))
             ->columns([
                 TextColumn::make('personnel.employee_id')->label('Employee ID')->searchable()->sortable(),
                 TextColumn::make('personnel.full_name')->label('Name')->searchable(['personnel.first_name', 'personnel.last_name']),
@@ -107,23 +109,31 @@ class QualificationRunResource extends Resource
                         RunResult::Fail => 'danger',
                         default => 'warning',
                     }),
+                // TrackWise / NC number - shown for failed runs (excursions open an NC in TrackWise).
+                TextColumn::make('lims_nc_number')->label('TrackWise NC')
+                    ->placeholder('-')
+                    ->badge()->color('danger')
+                    ->url(fn ($record) => $record->lims_nc_url)->openUrlInNewTab()
+                    ->visible(fn () => true)
+                    ->toggleable(),
                 TextColumn::make('cycle_type')->label('Cycle')->formatStateUsing(fn ($s) => $s?->label())->toggleable(),
-                TextColumn::make('qa_determination')->label('QA Determination')
-                    ->formatStateUsing(fn ($s) => $s ? \Illuminate\Support\Str::title(str_replace('_', ' ', $s)) : null)
-                    ->badge()->color('info')->placeholder('-')->toggleable(),
-                \Filament\Tables\Columns\IconColumn::make('is_complete')->label('Complete')->boolean()->toggleable(),
-                TextColumn::make('parent_run_id')->label('Follows Run')
-                    ->formatStateUsing(fn ($state) => $state ? '#' . $state : null)
-                    ->placeholder('-')->toggleable(isToggledHiddenByDefault: true)
-                    ->tooltip('This run was opened from a prior failed run (QA requalification).'),
-                \Filament\Tables\Columns\IconColumn::make('is_seed')->label('Seed')->boolean()
-                    ->trueIcon('heroicon-m-archive-box')->falseIcon('heroicon-m-beaker')
-                    ->trueColor('warning')->falseColor('gray')->toggleable(),
-                TextColumn::make('recordedBy.name')->label('Recorded By')->toggleable(),
-                TextColumn::make('signed_at')->dateTime()->label('Signed')->toggleable(isToggledHiddenByDefault: true),
+                // The QA approver who signed this qualification off (the official record owner).
+                TextColumn::make('qaSignedBy.name')->label('QA Approved By')->placeholder('-')->toggleable(),
+                TextColumn::make('qa_signed_at')->dateTime()->label('QA Approved')->placeholder('-')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('result')->options(['pass' => 'Pass', 'fail' => 'Fail', 'pending' => 'Pending']),
+            ])
+            ->recordActions([
+                \Filament\Actions\DeleteAction::make()
+                    ->label('Delete')
+                    ->icon('heroicon-m-trash')
+                    ->iconButton()
+                    ->visible(fn () => (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers))
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Run Record')
+                    ->modalDescription('Permanently delete this run record. This cannot be undone. Super-user only.')
+                    ->after(fn ($record) => $record?->qualification ? app(\App\Services\QualificationEngine::class)->recompute($record->qualification->fresh()) : null),
             ])
             ->defaultSort('run_date', 'desc');
     }
