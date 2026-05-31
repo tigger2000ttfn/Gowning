@@ -114,7 +114,7 @@ class AutomationEngine
 
         match ($action) {
             AutomationAction::NotifyCapability => self::notifyCapability($cfg, $title, $body),
-            AutomationAction::NotifyPerson     => app(Notifier::class)->toPersonnel($person, $title, $body),
+            AutomationAction::NotifyPerson     => app(Notifier::class)->toPersonnel($person, $title, $body, \App\Enums\NotificationEvent::tryFrom((string) $rule->trigger)),
             AutomationAction::PostAnnouncement => Announcement::create([
                 'title' => $title, 'body' => $body, 'author_name' => 'Automation', 'is_active' => true,
             ]),
