@@ -81,6 +81,35 @@ class LimsWorklist extends Model
         return strtoupper(trim((string) $this->inc_sample_status)) === self::STATUS_AUTHORIZED;
     }
 
+    /** Parse a LIMS datetime string (M/D/Y H:i and variants) defensively. */
+    public function parseLimsDateTime(?string $v): ?\Illuminate\Support\Carbon
+    {
+        $v = trim((string) $v);
+        if ($v === '') return null;
+        foreach (['m/d/Y H:i', 'm/d/Y G:i', 'n/j/Y H:i', 'n/j/Y G:i', 'm/d/Y', 'Y-m-d H:i', 'Y-m-d'] as $fmt) {
+            try { $c = \Illuminate\Support\Carbon::createFromFormat($fmt, $v); if ($c) return $c; } catch (\Throwable $e) {}
+        }
+        try { return \Illuminate\Support\Carbon::parse($v); } catch (\Throwable $e) { return null; }
+    }
+
+    /** Plates are in incubation once the first incubation has a start timestamp. */
+    public function incubationStarted(): bool
+    {
+        return $this->parseLimsDateTime($this->inc1_start) !== null;
+    }
+
+    /** Incubation is complete (ready to read) once the SECOND incubation has an end timestamp. */
+    public function incubationComplete(): bool
+    {
+        return $this->parseLimsDateTime($this->inc2_end) !== null;
+    }
+
+    /** When incubation is due to finish (2nd due, else 2nd end). */
+    public function incubationDue(): ?\Illuminate\Support\Carbon
+    {
+        return $this->parseLimsDateTime($this->inc2_due) ?? $this->parseLimsDateTime($this->inc2_end);
+    }
+
     /**
      * The authoritative QCM-result-ready gate: worklist all final, the EM personnel-qual sample
      * authorized, the incubation sample authorized, and a Pass evaluation. (Does NOT auto-send to QA;

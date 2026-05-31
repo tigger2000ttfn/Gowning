@@ -83,6 +83,13 @@ class WorklistSync
             'lims_qcm_ready' => $wl->isQcmReady(),
             'lims_nc_number' => $ncNumber,
             'lims_nc_url' => $ncUrl,
+            'lims_inc1_incubator' => $wl->inc1_incubator ?: null,
+            'lims_inc1_start' => $wl->inc1_start ?: null,
+            'lims_inc1_end' => $wl->inc1_end ?: null,
+            'lims_inc2_incubator' => $wl->inc2_incubator ?: null,
+            'lims_inc2_start' => $wl->inc2_start ?: null,
+            'lims_inc2_end' => $wl->inc2_end ?: null,
+            'lims_inc_due' => ($wl->inc2_due ?: $wl->inc1_due) ?: null,
             'lims_synced_at' => now(),
         ];
         foreach ($newState as $k => $v) {
@@ -95,8 +102,18 @@ class WorklistSync
         // Stage advancement - only ever forward, and never into QA automatically.
         $stage = $q->workflow_stage;
 
-        // Incubation complete -> Awaiting Results (only from Incubating).
-        if ($wl->incubationAuthorized() && $stage === WorkflowStage::Incubating) {
+        // Incubation STARTED (1st incubation has a start timestamp) -> Incubating.
+        if ($wl->incubationStarted()
+            && in_array($stage, [WorkflowStage::RunScheduled, WorkflowStage::RunPerformed], true)) {
+            $q->workflow_stage = WorkflowStage::Incubating;
+            $q->stage_changed_at = now();
+            $q->save();
+            $changed = true;
+            $stage = $q->workflow_stage;
+        }
+
+        // Incubation COMPLETE (2nd incubation has an end timestamp) -> Awaiting Results (ready to read).
+        if ($wl->incubationComplete() && $stage === WorkflowStage::Incubating) {
             $q->workflow_stage = WorkflowStage::AwaitingResults;
             $q->stage_changed_at = now();
             $q->save();

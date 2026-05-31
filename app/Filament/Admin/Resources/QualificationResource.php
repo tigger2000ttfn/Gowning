@@ -121,6 +121,45 @@ class QualificationResource extends Resource
                     ->color('primary'),
             ]),
 
+            Section::make('LIMS & Incubation')->columns(3)
+                ->description('Live LIMS data on the active run (synced nightly).')
+                ->schema([
+                    TextEntry::make('lims_worklist')->label('Worklist')
+                        ->state(fn ($record) => optional($record->runs()->whereNotNull('lims_worklist_id')->latest('id')->first())->lims_worklist_id
+                            ?? $record->lims_worklist_id ?? '—'),
+                    TextEntry::make('lims_eval')->label('LIMS Evaluation')->badge()
+                        ->state(fn ($record) => ($r = $record->runs()->whereNotNull('lims_evaluation')->latest('id')->first()) ? ($r->lims_evaluation ?: '—') : '—')
+                        ->color(fn ($state) => match (strtolower((string) $state)) { 'pass' => 'success', 'fail' => 'danger', default => 'gray' }),
+                    TextEntry::make('lims_inc_status')->label('Incubation Status')->badge()
+                        ->state(fn ($record) => ($r = $record->runs()->whereNotNull('lims_inc_status')->latest('id')->first()) ? \App\Models\LimsWorklist::statusLabel($r->lims_inc_status) : '—'),
+                    TextEntry::make('inc1')->label('1st Incubation (30-35C)')
+                        ->state(function ($record) {
+                            $r = $record->runs()->whereNotNull('lims_inc1_start')->latest('id')->first();
+                            if (! $r) return '—';
+                            return trim(($r->lims_inc1_incubator ? $r->lims_inc1_incubator . ': ' : '') . ($r->lims_inc1_start ?: '?') . ($r->lims_inc1_end ? ' -> ' . $r->lims_inc1_end : ''));
+                        }),
+                    TextEntry::make('inc2')->label('2nd Incubation (20-25C)')
+                        ->state(function ($record) {
+                            $r = $record->runs()->whereNotNull('lims_inc2_start')->latest('id')->first();
+                            if (! $r) return '—';
+                            return trim(($r->lims_inc2_incubator ? $r->lims_inc2_incubator . ': ' : '') . ($r->lims_inc2_start ?: '?') . ($r->lims_inc2_end ? ' -> ' . $r->lims_inc2_end : ''));
+                        }),
+                    TextEntry::make('inc_due')->label('Incubation')->badge()
+                        ->state(function ($record) {
+                            $r = $record->runs()->whereNotNull('lims_worklist_id')->latest('id')->first();
+                            if (! $r) return '—';
+                            if ($r->lims_inc2_end) return 'Complete';
+                            $due = $r->lims_inc_due;
+                            if (! $due) return $r->lims_inc1_start ? 'Incubating' : '—';
+                            try {
+                                $d = \Illuminate\Support\Carbon::parse($due);
+                                $days = (int) ceil(now()->floatDiffInDays($d, false));
+                                return $days >= 0 ? $days . 'd left' : abs($days) . 'd overdue';
+                            } catch (\Throwable $e) { return 'Incubating'; }
+                        })
+                        ->color(fn ($state) => str_contains((string) $state, 'overdue') ? 'danger' : (str_contains((string) $state, 'Complete') ? 'success' : 'warning')),
+                ]),
+
             Section::make('Run History')->schema([
                 RepeatableEntry::make('runHistory')
                     ->label('')
