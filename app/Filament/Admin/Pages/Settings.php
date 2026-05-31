@@ -49,6 +49,7 @@ class Settings extends Page implements HasForms
             'annual_runs_required'  => (int) Setting::get('annual_runs_required', 1),
             'cycle_months'          => (int) Setting::get('cycle_months', 12),
             'grace_days'            => (int) Setting::get('grace_days', 0),
+            'requal_window_days'    => (int) Setting::get('requal_window_days', 30),
             'class_required'        => (bool) Setting::get('class_required', true),
             'class_repeats_annually'=> (bool) Setting::get('class_repeats_annually', false),
             'self_register_open'    => (bool) Setting::get('self_register_open', true),
@@ -106,6 +107,9 @@ class Settings extends Page implements HasForms
                     TextInput::make('grace_days')->label('Lapse Window (Days Relative To Due Date)')
                         ->numeric()->required()
                         ->helperText('When a qualified person lapses into requalification, relative to their due date. 0 = lapses the day after the due date. Positive = grace period (e.g. 7 = one week after). Negative = lapses early (e.g. -1 = the day before the due date). Adjust to match policy.'),
+                    TextInput::make('requal_window_days')->label('Requalification Kick-Off (Days Before Due)')
+                        ->numeric()->minValue(0)->required()
+                        ->helperText('How many days before the due date a qualified person is automatically started on their requalification. They stay Qualified (cleanroom access intact) until the due date; this just opens their requal run early so they can complete it in time. Default 30.'),
                 ]),
                 Section::make('Class & Access')->icon('heroicon-o-lock-closed')->columns(2)->schema([
                     Toggle::make('class_required')->label('Gowning Class Required Before Initial Runs'),

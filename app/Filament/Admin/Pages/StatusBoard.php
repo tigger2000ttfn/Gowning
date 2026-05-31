@@ -96,27 +96,41 @@ class StatusBoard extends Page
                 'due' => $q->due_date?->gmp(),
                 'last_run_date' => $lastRun?->run_date?->gmpDM(),
                 'last_run_worklist' => $lastRun?->lims_worklist_id,
-                // Status pill reflects the card's true state as it moves through the lanes. "Qualified"
-                // is shown ONLY once QA has signed off (stage = QA Approved); before that a passing run
-                // does not make them qualified yet. Lapsed always shows. Otherwise show the in-progress
-                // status so the pill tracks the lane.
+                // Status pill reflects the card's TRUE state. QA sign-off is what makes someone qualified,
+                // so "Qualified" shows when: the card is at QA Approved (qa_signoff), OR the person is in
+                // the steady qualified state (status qualified + qualified_date) and NOT currently mid-run
+                // pipeline. A person in their requal window who has NOT yet started runs still shows
+                // Qualified (valid until due); once they enter the run pipeline the lane + pips show
+                // progress and the pill tracks the work. Past due always = Lapsed Qual.
                 'flag' => (function () use ($q) {
                     $stage = $q->workflow_stage?->value;
                     $status = $q->status?->value ?? $q->status;
-                    if ($status === 'lapsed') return 'Lapsed';
-                    if ($stage === 'qa_signoff') return 'Qualified';      // QA Approved = truly qualified
+                    $inPipeline = in_array($stage, [
+                        'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review',
+                    ], true);
+                    if ($status === 'lapsed') return 'Lapsed Qual';
                     if ($stage === 'failed') return 'Failed';
-                    if ($status === 'in_progress') return 'In Progress';
+                    if ($stage === 'qa_signoff') return 'Qualified';
+                    if ($status === 'qualified' && $q->qualified_date && ! $inPipeline) {
+                        return $q->isPastDue() ? 'Lapsed Qual' : 'Qualified';
+                    }
+                    if ($status === 'in_progress' || $inPipeline) return 'In Progress';
                     if ($status === 'pending') return 'Pending';
                     return null;
                 })(),
                 'flag_key' => (function () use ($q) {
                     $stage = $q->workflow_stage?->value;
                     $status = $q->status?->value ?? $q->status;
+                    $inPipeline = in_array($stage, [
+                        'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review',
+                    ], true);
                     if ($status === 'lapsed') return 'lapsed';
-                    if ($stage === 'qa_signoff') return 'qualified';
                     if ($stage === 'failed') return 'lapsed';
-                    if ($status === 'in_progress') return 'in_progress';
+                    if ($stage === 'qa_signoff') return 'qualified';
+                    if ($status === 'qualified' && $q->qualified_date && ! $inPipeline) {
+                        return $q->isPastDue() ? 'lapsed' : 'qualified';
+                    }
+                    if ($status === 'in_progress' || $inPipeline) return 'in_progress';
                     if ($status === 'pending') return 'pending';
                     return null;
                 })(),
