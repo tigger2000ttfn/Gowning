@@ -49,38 +49,6 @@
 @endphp
 
 <div class="ar-detail">
-    <style>
-        .ar-detail{--ar-line:var(--gqs-border,#E5E5EA);}
-        .ar-hero{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(135deg,#1C1C21,#34343D);border-radius:14px;padding:18px 22px;color:#fff;flex-wrap:wrap;}
-        .ar-hero h2{font-size:22px;font-weight:800;margin:0;line-height:1.1;}
-        .ar-hero .sub{font-size:12.5px;color:rgba(255,255,255,.8);margin-top:3px;}
-        .ar-pill{display:inline-flex;align-items:center;padding:7px 16px;border-radius:999px;font-weight:800;font-size:13px;color:#fff;white-space:nowrap;}
-        .ar-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px;}
-        .ar-tile{background:var(--gqs-surface,#fff);border:1px solid var(--ar-line);border-radius:11px;padding:13px 15px;}
-        .ar-tile .l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
-        .ar-tile .v{font-size:17px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-top:3px;line-height:1.2;}
-        .ar-tile .v.sm{font-size:14px;}
-        .ar-tile.danger{border-color:#F2B8C0;background:#FCEEF0;} .ar-tile.danger .v{color:#C8102E;}
-        .ar-stepper{display:flex;align-items:center;gap:0;margin-top:18px;overflow-x:auto;padding-bottom:4px;}
-        .ar-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:74px;position:relative;}
-        .ar-step .dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2px solid var(--ar-line);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#9A9AA4);z-index:1;}
-        .ar-step.done .dot{background:#2E7D5B;border-color:#2E7D5B;color:#fff;}
-        .ar-step.current .dot{background:#1F6FB2;border-color:#1F6FB2;color:#fff;box-shadow:0 0 0 4px rgba(31,111,178,.18);}
-        .ar-step .lbl{font-size:10.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);text-align:center;white-space:nowrap;}
-        .ar-step.current .lbl{color:#1F6FB2;font-weight:800;}
-        .ar-step .bar{position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--ar-line);z-index:0;}
-        .ar-step.done .bar{background:#2E7D5B;}
-        .ar-step:last-child .bar{display:none;}
-        .ar-sec{margin-top:22px;}
-        .ar-sec h3{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--gqs-text-dim,#6A6A72);margin:0 0 9px;}
-        .ar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
-        .ar-f .l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
-        .ar-f .v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:2px;font-size:13.5px;}
-        .ar-chip{display:inline-block;padding:2px 9px;border-radius:6px;font-size:12px;font-weight:700;}
-        .ar-tbl{width:100%;border-collapse:collapse;margin-top:4px;}
-        .ar-tbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);padding:7px 10px;border-bottom:1px solid var(--ar-line);}
-        .ar-tbl td{padding:8px 10px;border-bottom:1px solid var(--ar-line);font-size:13px;color:var(--gqs-text,#1A1A1F);}
-    </style>
 
     <div class="ar-hero">
         <div style="min-width:0;">

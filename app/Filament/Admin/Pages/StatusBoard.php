@@ -478,8 +478,8 @@ class StatusBoard extends Page
                 // (no model change = the card snaps back on re-render)
                 return;
             }
-            // Route to Lab Review to capture the QCM sign-off / results, which advances to QA on save.
-            $this->redirect(\App\Filament\Admin\Pages\IncubationBoard::getUrl());
+            // Route to Lab Review's Result Evaluation, opening this record's results modal to capture the QCM sign-off.
+            $this->redirect(\App\Filament\Admin\Pages\IncubationBoard::getUrl(['tab' => 'evaluation', 'evaluate' => $q->id]));
             return;
         }
 

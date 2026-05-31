@@ -123,7 +123,7 @@
         .qm-head-name{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
         .qm-x{flex-shrink:0;width:30px;height:30px;border-radius:8px;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s;}
         .qm-x:hover{background:rgba(255,255,255,.34);}
-        .qm-body{flex:1;min-height:0;overflow-y:auto;padding:16px 18px;gap:0;}
+        .qm-body{flex:1;min-height:0;overflow-y:auto;display:block;padding:16px 18px;}
         .qm-foot{flex-shrink:0;border-top:1px solid var(--gqs-border,#E2E2E8);}
         .qm-card{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E8);border-radius:11px;overflow:hidden;margin-bottom:11px;}
         .qm-card:last-child{margin-bottom:0;}

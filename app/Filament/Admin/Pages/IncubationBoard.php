@@ -111,6 +111,20 @@ class IncubationBoard extends Page
         // opportunistic time-based advance whenever the page is viewed; use the same
         // multi-run-aware advancer as the daily cron so page-load and cron agree.
         app(\App\Services\RunCycleAdvancer::class)->sweep();
+
+        // Deep-link: ?tab=evaluation lands on Result Evaluation; ?evaluate=<qualId> also opens that
+        // record's results modal so a drag/link from the board lands on the right record, not Incubating.
+        $tab = request()->query('tab');
+        if (in_array($tab, ['incubating', 'evaluation', 'history'], true)) {
+            $this->tab = $tab;
+        }
+        $evalId = (int) request()->query('evaluate', 0);
+        if ($evalId > 0) {
+            $this->tab = 'evaluation';
+            if ($this->canEvaluate()) {
+                $this->openEnterResults($evalId);
+            }
+        }
     }
 
     public function incubationDays(): int { return (int) Setting::get('incubation_days', 8); }
