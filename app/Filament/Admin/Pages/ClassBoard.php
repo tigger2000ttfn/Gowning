@@ -201,6 +201,20 @@ class ClassBoard extends Page
             'qual_runs' => $q ? ((int) $q->runs_completed . ' / ' . (int) $q->runs_required) : null,
             'qual_due' => $q?->due_date?->gmp(),
             'class_on_file' => (bool) ($q?->class_on_file),
+            // Edit affordances. Editing already-approved/completed info requires QA-or-higher; otherwise
+            // class management is enough. Read-only Details for everyone else.
+            'is_approved' => in_array($statusVal, ['completed', 'pending_qa'], true),
+            'can_edit' => (function () use ($statusVal) {
+                $u = \Illuminate\Support\Facades\Auth::user();
+                if (! $u) return false;
+                $isApproved = in_array($statusVal, ['completed', 'pending_qa'], true);
+                if ($isApproved) {
+                    return $u->hasCapability(\App\Enums\Capability::QaApprove) || $u->hasCapability(\App\Enums\Capability::QaReview);
+                }
+                return $u->hasCapability(\App\Enums\Capability::ManageClasses) || $u->hasCapability(\App\Enums\Capability::ManageAttendance);
+            })(),
+            // For approved/completed records, edits route back to the QA review (historic) page.
+            'qa_url' => \App\Filament\Admin\Pages\QaQueue::getUrl(),
             'edit_url' => $e->personnel_id
                 ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $e->personnel_id])
                 : null,

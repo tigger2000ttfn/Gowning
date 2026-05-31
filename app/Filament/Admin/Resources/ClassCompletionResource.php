@@ -30,6 +30,19 @@ class ClassCompletionResource extends Resource
         $u = \Illuminate\Support\Facades\Auth::user();
         return (bool) ($u && $u->hasCapability(\App\Enums\Capability::ManageScheduling));
     }
+
+    /** Editing a recorded class completion (already-approved info) requires QA-or-higher. */
+    public static function canEdit(\Illuminate\Database\Eloquent\Model $record): bool
+    {
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && ($u->hasCapability(\App\Enums\Capability::QaApprove) || $u->hasCapability(\App\Enums\Capability::QaReview)));
+    }
+
+    public static function canCreate(): bool
+    {
+        $u = \Illuminate\Support\Facades\Auth::user();
+        return (bool) ($u && ($u->hasCapability(\App\Enums\Capability::QaApprove) || $u->hasCapability(\App\Enums\Capability::QaReview)));
+    }
     protected static ?string $model = ClassCompletion::class;
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';

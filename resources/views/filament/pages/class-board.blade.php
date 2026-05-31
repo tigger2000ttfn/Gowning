@@ -147,16 +147,27 @@
 
     @if($detail)
         <div style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);" wire:click.self="closeDetail">
-            <div style="background:var(--gqs-surface,#fff);border-radius:14px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-                <div style="background:#1C1C21;color:#fff;padding:16px 20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div>
-                        <div style="font-weight:800;font-size:18px;">{{ $detail['name'] }}</div>
-                        <div style="font-size:12px;opacity:.85;">{{ $detail['employee_id'] }}@if($detail['job_title']) · {{ $detail['job_title'] }}@endif</div>
-                        <span class="cb-pill" style="background:{{ $detail['status_color'] }};margin-top:8px;display:inline-block;">{{ $detail['status'] }}</span>
+            <div style="background:var(--gqs-surface,#fff);border-radius:16px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);border:2px solid #C79A2E;">
+                <div style="background:linear-gradient(135deg,#C79A2E,#9E7714);color:#fff;padding:18px 22px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                    <div style="display:flex;align-items:center;gap:13px;min-width:0;">
+                        <span style="width:50px;height:50px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <x-filament::icon icon="heroicon-o-academic-cap" style="width:28px;height:28px;color:#fff;"/>
+                        </span>
+                        <div style="min-width:0;">
+                            <div style="font-weight:800;font-size:18px;">{{ $detail['name'] }}</div>
+                            <div style="font-size:12px;opacity:.9;">{{ $detail['employee_id'] }}@if($detail['job_title']) · {{ $detail['job_title'] }}@endif</div>
+                            <span class="cb-pill" style="background:rgba(0,0,0,.22);margin-top:7px;display:inline-block;">{{ $detail['status'] }}</span>
+                        </div>
                     </div>
-                    <button wire:click="closeDetail" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.7;">&times;</button>
+                    <button wire:click="closeDetail" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;line-height:1;opacity:.8;">&times;</button>
                 </div>
-                <div style="padding:18px 20px;">
+                <div style="padding:18px 22px;">
+                    @unless($detail['can_edit'])
+                        <div style="display:flex;align-items:center;gap:8px;background:#FBF6E9;border:1px solid #E7D6A6;color:#7A5E12;border-radius:9px;padding:8px 12px;font-size:12.5px;margin-bottom:16px;">
+                            <x-filament::icon icon="heroicon-m-lock-closed" style="width:15px;height:15px;"/> Read-only. You do not have permission to edit this record.
+                        </div>
+                    @endunless
+
                     <div class="dm-sec">Person</div>
                     <div class="dm-grid">
                         <div><div class="dm-l">Department</div><div class="dm-v">{{ $detail['department'] ?: '—' }}</div></div>
@@ -192,7 +203,13 @@
 
                     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:22px;">
                         <button wire:click="closeDetail" style="padding:9px 16px;border-radius:8px;border:1px solid var(--gqs-border,#C4C4CC);background:transparent;color:var(--gqs-text,#1A1A1F);font-weight:600;cursor:pointer;">Close</button>
-                        @if($detail['edit_url'])<a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Open Record</a>@endif
+                        @if($detail['can_edit'])
+                            @if($detail['is_approved'])
+                                <a href="{{ $detail['qa_url'] }}" style="padding:9px 18px;border-radius:8px;background:#6B2C91;color:#fff;font-weight:700;text-decoration:none;">Edit In QA Review</a>
+                            @elseif($detail['edit_url'])
+                                <a href="{{ $detail['edit_url'] }}" style="padding:9px 18px;border-radius:8px;background:#A4123F;color:#fff;font-weight:700;text-decoration:none;">Edit Record</a>
+                            @endif
+                        @endif
                     </div>
                 </div>
             </div>
