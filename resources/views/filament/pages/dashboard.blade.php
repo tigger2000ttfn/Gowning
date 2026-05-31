@@ -111,6 +111,16 @@
     .qtile-ic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:0 0 36px;}
     .qtile-ic svg{width:19px;height:19px;color:#fff;}
     .qtile-label{font-weight:700;font-size:13px;color:var(--gqs-text,#1A1A1F);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    /* Shooting stars across the dashboard hero (sprinkled by JS, behind the content) */
+    .dash-hero .dash-shoot-star{position:absolute;z-index:0;height:2px;border-radius:2px;opacity:0;pointer-events:none;
+        background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform-origin:center;
+        filter:drop-shadow(0 0 6px rgba(255,255,255,.65));}
+    .dash-hero .dash-shoot-star::after{content:'';position:absolute;right:0;top:-1.5px;width:5px;height:5px;border-radius:50%;
+        background:#fff;box-shadow:0 0 9px 2px rgba(255,255,255,.9);}
+    @keyframes dashShoot{0%{opacity:0;transform:translate(0,0) rotate(var(--ang,22deg));}
+        12%{opacity:1;}100%{opacity:0;transform:translate(var(--dx,320px),var(--dy,130px)) rotate(var(--ang,22deg));}}
+    @media(prefers-reduced-motion:reduce){.dash-hero .dash-shoot-star{display:none;}}
 </style>
 
 <div class="dash-hero">
@@ -277,4 +287,40 @@
 @endif
 
 </div>
+<script>
+(function(){
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    function init(){
+        var hero = document.querySelector('.dash-hero');
+        if (!hero || hero.dataset.shoot) return;   // guard against double-init on SPA navigation
+        hero.dataset.shoot = '1';
+        var colors = ['#ffffff','#ffffff','#ffffff','#E8C24A','#B98CE0'];
+        function spawn(){
+            if (!document.body.contains(hero)) return;   // stop if navigated away
+            var r = hero.getBoundingClientRect();
+            if (r.width < 60 || r.height < 30){ schedule(); return; }
+            var s = document.createElement('span');
+            s.className = 'dash-shoot-star';
+            var ang = 14 + Math.random()*26, rad = ang*Math.PI/180;
+            var dist = 200 + Math.random()*300, len = 80 + Math.random()*110, dur = 700 + Math.random()*750;
+            var col = colors[Math.floor(Math.random()*colors.length)];
+            s.style.left = (Math.random()*r.width*0.65) + 'px';
+            s.style.top = (Math.random()*r.height*0.5) + 'px';
+            s.style.width = len + 'px';
+            s.style.background = 'linear-gradient(90deg,rgba(255,255,255,0),' + col + ')';
+            s.style.setProperty('--ang', ang + 'deg');
+            s.style.setProperty('--dx', (Math.cos(rad)*dist) + 'px');
+            s.style.setProperty('--dy', (Math.sin(rad)*dist) + 'px');
+            s.style.animation = 'dashShoot ' + dur + 'ms ease-out forwards';
+            hero.appendChild(s);
+            setTimeout(function(){ s.remove(); }, dur + 120);
+            schedule();
+        }
+        function schedule(){ setTimeout(spawn, 2500 + Math.random()*5000); }
+        schedule();
+    }
+    init();
+    document.addEventListener('livewire:navigated', init);
+})();
+</script>
 </x-filament-panels::page>
