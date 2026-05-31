@@ -578,11 +578,14 @@ SQL;
         // editing implies this row is hand-managed; lock it from future imports.
         $payload['is_legacy'] = true;
         $wl->update($payload);
+        $savedId = $wl->id;
         $this->editId = null;
         $this->editData = [];
-        Notification::make()->success()->title('Worklist Updated')->body($wl->worklist . ' saved and marked legacy.')->send();
         // re-sync any run linked to this worklist so edits flow through
         app(\App\Services\WorklistSync::class)->syncAll();
+        // reopen the refreshed detail so the changes are visible right away
+        $this->viewId = $savedId;
+        Notification::make()->success()->title('Worklist Updated')->body($wl->worklist . ' saved and marked legacy.')->send();
     }
 
     public function closeEdit(): void { $this->editId = null; $this->editData = []; }
@@ -709,7 +712,7 @@ SQL;
 
     public function catalogRows(): array
     {
-        $q = LimsWorklist::query()->latest('catalog_synced_at');
+        $q = LimsWorklist::query()->orderByDesc('updated_at')->orderByDesc('catalog_synced_at');
         if (trim($this->search) !== '') {
             $s = '%' . trim($this->search) . '%';
             $q->where(fn ($w) => $w->where('worklist', 'ilike', $s)
