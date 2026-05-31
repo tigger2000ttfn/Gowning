@@ -118,7 +118,7 @@ class ClassReservations extends Page
     public function runConfirm(): void
     {
         $m = $this->confirm['method'] ?? null;
-        $allowed = ['reschedule', 'cancelBooking'];
+        $allowed = ['reschedule', 'cancelBooking', 'deleteEnrollment'];
         if ($m && in_array($m, $allowed, true)) {
             $this->{$m}($this->confirm['arg']);
         }
@@ -196,5 +196,25 @@ class ClassReservations extends Page
         }
         $e->markStatus('cancelled', \Illuminate\Support\Facades\Auth::id());
         Notification::make()->success()->title('Booking Cancelled')->send();
+    }
+
+    public function isSuperUser(): bool
+    {
+        return (bool) \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers);
+    }
+
+    /**
+     * HARD delete a single enrollment record (super-user only). For fixing stuck/duplicate enrollments -
+     * e.g. a record left as "QA approved" by an earlier duplicate mistake - that the normal cancel/lock
+     * flow cannot remove. Removes only this enrollment row; it does not touch the qualification or class.
+     */
+    public function deleteEnrollment(int $enrollmentId): void
+    {
+        if (! $this->isSuperUser()) { Notification::make()->danger()->title('Not Authorized')->body('Super user required.')->send(); return; }
+        $e = ClassEnrollment::find($enrollmentId);
+        if (! $e) { Notification::make()->warning()->title('Already Gone')->send(); return; }
+        $name = $e->personnel?->full_name ?? $e->name ?? 'Enrollment';
+        $e->delete();
+        Notification::make()->success()->title('Enrollment Deleted')->body($name . '\'s enrollment record was permanently removed.')->send();
     }
 }

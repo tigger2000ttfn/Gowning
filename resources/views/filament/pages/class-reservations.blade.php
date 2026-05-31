@@ -45,8 +45,11 @@
                                             <button wire:click="openMove({{ $row['id'] }})" class="sb-act sb-act-magenta">Move</button>
                                             <button wire:click="askConfirm('reschedule', {{ $row['id'] }}, 'Reschedule Booking', 'Move {{ addslashes($row['name']) }} to the next available session with an open seat?', 'Reschedule')" class="sb-act" style="background:#C79A2E;">Reschedule</button>
                                             <button wire:click="askConfirm('cancelBooking', {{ $row['id'] }}, 'Cancel Booking', 'Cancel this class booking for {{ addslashes($row['name']) }}?', 'Cancel Booking', true)" class="sb-act sb-act-red">Cancel</button>
-                                        @else
+                                        @elseif(! $this->isSuperUser())
                                             <span style="font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Locked</span>
+                                        @endif
+                                        @if($this->isSuperUser())
+                                            <button wire:click="askConfirm('deleteEnrollment', {{ $row['id'] }}, 'Delete Enrollment', 'Permanently delete {{ addslashes($row['name']) }}\'s enrollment record? Use this to fix stuck or duplicate entries. This cannot be undone.', 'Delete Record', true)" class="sb-act" style="background:#1C1C21;" title="Super user: hard delete this enrollment record">&times; Delete</button>
                                         @endif
                                     </td>
                                 </tr>
