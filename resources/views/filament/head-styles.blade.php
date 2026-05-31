@@ -151,6 +151,14 @@
     /* Attendance / roster marking rows (shared by Class Scheduler + Run Day Roster) */
     .att-list{display:flex;flex-direction:column;gap:8px;}
     .att-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:11px 14px;border:1px solid var(--gqs-border,#E6E6EA);border-radius:10px;background:var(--gqs-surface,#fff);}
+    .att-multi{border-left:4px solid #6B2C91;}
+    .att-multi-tag{display:inline-block;margin-left:8px;font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#6B2C91;background:#6B2C911A;border:1px solid #6B2C9133;border-radius:999px;padding:1px 9px;vertical-align:middle;}
+    .att-multi-runs{display:inline-flex;align-items:center;gap:10px;margin-left:8px;padding:5px 11px;border-radius:9px;background:#6B2C910F;border:1px solid #6B2C9126;flex-wrap:wrap;}
+    .att-multi-runs.att-dim{opacity:.45;}
+    .att-allruns{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:#5A2480;cursor:pointer;}
+    .att-willrec{font-size:11.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);}
+    .dark .att-multi-tag{color:#D9B8EE;background:#6B2C9133;border-color:#6B2C9155;}
+    .dark .att-allruns{color:#D9B8EE;}
     .dark .att-row{background:#23232B;border-color:#34343E;}
     .att-who{flex:1;min-width:200px;}
     .att-name{font-weight:700;font-size:13.5px;color:var(--gqs-text,#1A1A1F);}

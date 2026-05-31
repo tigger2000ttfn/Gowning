@@ -401,9 +401,11 @@
                                     $intent = $this->intent[$res->id] ?? null;
                                     $tintKey = $intent ?? ($st === 'completed' ? 'present' : ($st === 'no_show' ? 'no_show' : ($st === 'rescheduled' ? 'rescheduled' : null)));
                                 @endphp
-                                <div class="att-row {{ $tintKey === 'present' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
+                                <div class="att-row {{ $required > 1 ? 'att-multi' : '' }} {{ $tintKey === 'present' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                     <div class="att-who">
-                                        <div class="att-name">{{ $i + 1 }}. {{ $res->personnel?->full_name }}</div>
+                                        <div class="att-name">{{ $i + 1 }}. {{ $res->personnel?->full_name }}
+                                            @if($required > 1)<span class="att-multi-tag" title="This is a {{ $required }}-run qualification session - all {{ $required }} runs share one LIMS worklist">{{ $required }}-Run Session</span>@endif
+                                        </div>
                                         <div class="att-eid">
                                             <span>{{ $res->personnel?->employee_id }}</span>
                                             <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}@if($ctx['tag']) · {{ $ctx['tag'] }}@endif</span>
@@ -413,7 +415,7 @@
                                                     <span class="run-pip {{ $k <= $performed ? 'done' : ($k == $runNo ? 'cur' : '') }}"></span>
                                                 @endfor
                                             </span>
-                                            <span style="font-weight:700;">Run {{ $runNo }} of {{ $required }}</span>
+                                            <span style="font-weight:700;">{{ $performed }} of {{ $required }} done@if($required - $performed > 0) · {{ $required - $performed }} left@endif</span>
                                             @if(!empty($limsDetected[$res->id]))<span class="gqs-pill gqs-pill-green" title="LIMS shows {{ $limsDetected[$res->id] }} for this person - pre-filled as Present. Confirm and submit.">LIMS: Run Detected</span>@endif
                                         </div>
                                     </div>
@@ -437,12 +439,17 @@
                                             <button type="button" wire:click="setIntent({{ $res->id }}, 'rescheduled')"
                                                     class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
                                             @if($required > 1)
-                                                <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--gqs-text,#1A1A1F);margin-left:8px;{{ $intent === 'present' ? '' : 'opacity:.45;' }}"
-                                                       title="On by default - the operator performed all remaining runs in this visit. Uncheck to record just one run today and keep the rest scheduled.">
-                                                    <input type="checkbox" wire:model="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
-                                                    Did All {{ $required }} Runs (default)
-                                                </label>
-                                                <div class="att-hint" style="flex-basis:100%;margin-left:8px;font-size:11.5px;">Default records all {{ $required }} runs from this visit. Uncheck to record just one run; the other {{ $required - 1 }} stay scheduled for their own days (use Reschedule on those rows to move them to another day or a special session).</div>
+                                                @php $willRecord = !empty($performAll[$res->id]) ? max(1, $required - $performed) : 1; @endphp
+                                                <div class="att-multi-runs {{ $intent === 'present' ? '' : 'att-dim' }}">
+                                                    <label class="att-allruns">
+                                                        <input type="checkbox" wire:model.live="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
+                                                        Did All {{ $required }} Runs Today
+                                                    </label>
+                                                    @if($intent === 'present')
+                                                        <span class="att-willrec">Will record <strong>{{ $willRecord }}</strong> run{{ $willRecord > 1 ? 's' : '' }} from this visit@if($willRecord < ($required - $performed)) · {{ ($required - $performed) - $willRecord }} stay scheduled@endif</span>
+                                                    @endif
+                                                </div>
+                                                <div class="att-hint" style="flex-basis:100%;margin-left:2px;font-size:11.5px;">All {{ $required }} runs share one LIMS worklist. Leave checked if they did them all in this visit; uncheck to record just one and keep the rest scheduled (Reschedule those rows to move them to another day or a special session).</div>
                                             @endif
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>
