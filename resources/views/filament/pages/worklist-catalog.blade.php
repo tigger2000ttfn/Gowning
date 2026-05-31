@@ -117,10 +117,11 @@
                         <option value="ready">QCM Ready</option>
                         <option value="not">Not Ready</option>
                     </select>
-                    <select wire:model.live="filterLegacy" class="gqs-fld" style="max-width:130px;">
+                    <select wire:model.live="filterLegacy" class="gqs-fld" style="max-width:150px;">
                         <option value="">All Rows</option>
                         <option value="legacy">Legacy Only</option>
                         <option value="active">Active Only</option>
+                        <option value="nonreportable">Non-Reportable</option>
                     </select>
                     <button type="button" wire:click="runSync" class="gqs-btn gqs-btn-ghost">Sync Linked Runs</button>
                 </div>
@@ -157,7 +158,7 @@
                                     <button type="button" wire:click.stop="editRow({{ $d['id'] }})" class="wl-act" title="Edit fields">Edit</button>
                                     <button type="button" wire:click.stop="toggleLegacy({{ $d['id'] }})" class="wl-act" style="{{ $d['legacy'] ? 'color:#7A3FA4;' : '' }}" title="{{ $d['legacy'] ? 'Allow imports again' : 'Lock from imports' }}">{{ $d['legacy'] ? 'Unlock' : 'Lock' }}</button>
                                 </td>
-                                <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif</td>
+                                <td style="font-weight:700;white-space:nowrap;">{{ $d['worklist'] }}@if($d['legacy']) <span class="gqs-pill gqs-pill-purple" style="font-size:9px;">Legacy</span>@endif@if($d['non_reportable']) <span class="gqs-pill gqs-pill-red" style="font-size:9px;">Non-Reportable</span>@endif</td>
                                 <td style="white-space:nowrap;">{{ $d['personnel'] ?: '—' }}</td>
                                 <td class="wl-hide-sm" style="white-space:nowrap;">@if($d['routine'])<span class="gqs-pill gqs-pill-gray">Routine EM</span>@else {{ $d['type'] ?: '—' }}@endif</td>
                                 <td>
@@ -291,9 +292,12 @@
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button type="button" wire:click="editRow({{ $vr['id'] }})" class="gqs-btn gqs-btn-ghost">Edit</button>
                         <button type="button" wire:click="toggleLegacy({{ $vr['id'] }})" class="gqs-btn gqs-btn-ghost">{{ $vr['legacy'] ? 'Unlock (allow import)' : 'Mark Legacy' }}</button>
+                        <button type="button" wire:click="toggleNonReportable({{ $vr['id'] }})" class="gqs-btn gqs-btn-ghost" style="{{ $vr['non_reportable'] ?? false ? 'color:#A4123F;border-color:#A4123F;' : '' }}">{{ ($vr['non_reportable'] ?? false) ? 'Clear Non-Reportable' : 'Mark Non-Reportable' }}</button>
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        @if($vm)
+                        @if($vr['non_reportable'] ?? false)
+                            <span style="font-size:12px;color:#A4123F;font-weight:600;">Non-reportable - won't link to anyone</span>
+                        @elseif($vm)
                             <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Matches {{ $vm['name'] }}</span>
                             <button type="button" wire:click="backfillThisPerson" class="gqs-btn gqs-btn-primary">Backfill This Person</button>
                         @else

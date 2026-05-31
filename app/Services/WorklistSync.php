@@ -63,6 +63,7 @@ class WorklistSync
     {
         $wl = LimsWorklist::findByWorklist($run->lims_worklist_id);
         if (! $wl) return false;
+        if ($wl->non_reportable) return false; // duplicate/abandoned worklist: never drives a run
 
         $q = $run->qualification ?: Qualification::currentFor($run->personnel_id);
 

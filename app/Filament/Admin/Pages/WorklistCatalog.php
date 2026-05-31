@@ -549,6 +549,25 @@ SQL;
             ->body($wl->is_legacy ? 'Imports will no longer update ' . $wl->worklist . '.' : $wl->worklist . ' will update on import again.')->send();
     }
 
+    public function toggleNonReportable(int $id): void
+    {
+        if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $wl = LimsWorklist::find($id);
+        if (! $wl) return;
+        $wl->non_reportable = ! $wl->non_reportable;
+        $wl->save();
+        if ($wl->non_reportable) {
+            // unlink any run that points at this worklist so it stops driving anything
+            \App\Models\QualificationRun::where('lims_worklist_id', $wl->worklist)
+                ->update(['lims_worklist_id' => null, 'lims_qcm_ready' => false]);
+            Notification::make()->warning()->title('Marked Non-Reportable')
+                ->body($wl->worklist . ' will not link to anyone or drive any workflow (duplicate/abandoned).')->send();
+        } else {
+            Notification::make()->success()->title('Non-Reportable Removed')
+                ->body($wl->worklist . ' can be linked and processed again.')->send();
+        }
+    }
+
     public function editRow(int $id): void
     {
         if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
@@ -605,6 +624,7 @@ SQL;
         if (! $this->viewId) return null;
         $d = LimsWorklist::find($this->viewId);
         if (! $d) return null;
+        if ($d->non_reportable) return null; // never match a non-reportable worklist
         $login = strtoupper(trim((string) $d->personnel));
         $person = null;
         if ($login !== '') {
@@ -644,6 +664,7 @@ SQL;
             'id' => $d->id,
             'worklist' => $d->worklist,
             'legacy' => (bool) $d->is_legacy,
+            'non_reportable' => (bool) $d->non_reportable,
             'qcm_ready' => $d->isQcmReady(),
             'groups' => [
                 'Worklist' => [
@@ -704,6 +725,7 @@ SQL;
                 ],
                 'Catalog' => [
                     'Legacy Locked' => $d->is_legacy ? 'Yes' : 'No',
+                    'Non-Reportable' => $d->non_reportable ? 'Yes (duplicate/abandoned)' : 'No',
                     'Last Synced' => $d->catalog_synced_at?->gmpDt() ?: '—',
                 ],
             ],
@@ -723,6 +745,7 @@ SQL;
         if ($this->filterStatus !== '') $q->whereRaw('UPPER(sample_status) = ?', [strtoupper($this->filterStatus)]);
         if ($this->filterLegacy === 'legacy') $q->where('is_legacy', true);
         if ($this->filterLegacy === 'active') $q->where('is_legacy', false);
+        if ($this->filterLegacy === 'nonreportable') $q->where('non_reportable', true);
 
         $rows = $q->limit(200)->get();
 
@@ -745,6 +768,7 @@ SQL;
         return $rows->take(80)->map(fn ($d) => [
             'id' => $d->id,
             'legacy' => (bool) $d->is_legacy,
+            'non_reportable' => (bool) $d->non_reportable,
             'worklist' => $d->worklist,
             'description' => $d->worklist_description,
             'personnel' => $d->personnel,

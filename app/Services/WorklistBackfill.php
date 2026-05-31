@@ -51,6 +51,8 @@ class WorklistBackfill
         }
 
         foreach (LimsWorklist::query()->orderBy('worklist')->get() as $wl) {
+            // Non-reportable (duplicate/abandoned): never link to a person, never create anything.
+            if ($wl->non_reportable) { $skipped++; continue; }
             // Per-person scope: skip worklists whose login/name does not match the chosen person.
             if ($onlyPersonnelId) {
                 $wlLogin = strtoupper(trim((string) $wl->personnel));

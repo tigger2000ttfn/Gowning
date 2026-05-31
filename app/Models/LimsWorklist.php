@@ -10,7 +10,7 @@ class LimsWorklist extends Model
     use Auditable;
 
     protected $fillable = [
-        'worklist', 'is_legacy', 'worklist_description', 'sample_number', 'sample_status',
+        'worklist', 'is_legacy', 'non_reportable', 'non_reportable_reason', 'worklist_description', 'sample_number', 'sample_status',
         'samples_on_worklist', 'non_final_count', 'worklist_all_final',
         'qualification_type', 'personnel', 'initial_run_no', 'annual_requal', 'additional_requal',
         'evaluation', 'em_area', 'cr_grade_1', 'cr_grade_2', 'cr_grade_3', 'grade_a_ops', 'grade_b_ops',
@@ -28,6 +28,7 @@ class LimsWorklist extends Model
         return [
             'worklist_all_final' => 'boolean',
             'is_legacy' => 'boolean',
+            'non_reportable' => 'boolean',
             'samples_on_worklist' => 'integer',
             'non_final_count' => 'integer',
             'catalog_synced_at' => 'datetime',
