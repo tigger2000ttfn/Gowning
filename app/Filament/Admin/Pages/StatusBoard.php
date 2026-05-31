@@ -79,8 +79,10 @@ class StatusBoard extends Page
                     $passes = $cycleRuns->filter(fn ($r) => (($r->result->value ?? $r->result) === 'pass'))->count();
                 }
                 // Last run for display: prefer a cycle run, else the person's most recent run overall.
-                $lastRun = $cycleRuns->last()
-                    ?? \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+                // "Last run" = the person's most recent run by date (not cycle-filtered), since the user
+                // reads this as "when did they last run a plate", regardless of incubation/cycle state.
+                $lastRun = \App\Models\QualificationRun::where('personnel_id', $q->personnel_id)
+                    ->orderByDesc('run_date')->orderByDesc('id')->first();
                 return [
                 'id' => $q->id,
                 'name' => $q->personnel?->full_name ?? 'Unknown',
@@ -437,33 +439,51 @@ class StatusBoard extends Page
 
         // Read-only viewers (ViewQualifications only) cannot move cards.
         $u = Auth::user();
-        if (! ($u?->hasCapability(Capability::ManageScheduling) || $u?->hasCapability(Capability::QaApprove))) {
+        if (! ($u?->hasCapability(Capability::ManageScheduling) || $u?->hasCapability(Capability::QaApprove) || $u?->hasCapability(Capability::RecordRuns))) {
             Notification::make()->danger()->title('Read-only Access')
                 ->body('You can view the board but not move cards.')->send();
             return;
         }
 
-        // QA sign-off gate
-        if ($stage === WorkflowStage::QaSignoff && ! $u?->hasCapability(Capability::QaApprove)) {
-            Notification::make()->danger()->title('Not authorized')
-                ->body('Only QA approvers can sign off a qualification.')->send();
+        $fromStage = $q->workflow_stage?->value;
+
+        // QA SIGN-OFF is never a plain drag - it is the formal QA approval wizard (the QA approval date
+        // drives qualified_date + next due). Dragging a card to QA Approved opens that wizard instead of
+        // silently qualifying. Non-QA roles are blocked outright.
+        if ($stage === WorkflowStage::QaSignoff) {
+            if (! $u?->hasCapability(Capability::QaApprove)) {
+                Notification::make()->danger()->title('Not Your Role')
+                    ->body('Only QA approvers can complete a QA sign-off. Ask QA to approve this record.')->send();
+                $this->dispatch('$refresh'); // snap the card back
+                return;
+            }
+            // QA user: send them to the sign-off wizard rather than auto-stamping qualified here.
+            $this->redirect(\App\Filament\Admin\Pages\QaQueue::getUrl(['signoff' => $q->id]));
+            return;
+        }
+
+        // Moving INTO QA Review is the QCM hand-off and requires a QCM sign-off. It can only come from a
+        // released result, and it pops the QCM results/sign-off screen so the e-signature is captured.
+        if ($stage === WorkflowStage::QaReview && $fromStage !== 'qa_review') {
+            if (! ($u?->hasCapability(Capability::QaReview) || $u?->hasCapability(Capability::RecordRuns) || $u?->hasCapability(Capability::QaApprove))) {
+                Notification::make()->danger()->title('Not Your Role')
+                    ->body('A QC Micro reviewer signs results off to QA. You do not have that role.')->send();
+                $this->dispatch('$refresh');
+                return;
+            }
+            if (! in_array($fromStage, ['results_released', 'awaiting_results'], true)) {
+                Notification::make()->warning()->title('Release Results First')
+                    ->body('Results must be entered and released (QCM review) before this goes to QA.')->send();
+                $this->dispatch('$refresh');
+                return;
+            }
+            // Route to Lab Review to capture the QCM sign-off / results, which advances to QA on save.
+            $this->redirect(\App\Filament\Admin\Pages\IncubationBoard::getUrl());
             return;
         }
 
         $q->workflow_stage = $stage;
         $q->stage_changed_at = now();
-
-        // QA sign-off = Qualified + stamp the run
-        if ($stage === WorkflowStage::QaSignoff) {
-            $q->status = 'qualified';
-            if (! $q->qualified_date) {
-                $q->qualified_date = now();
-            }
-            if (! $q->due_date) {
-                $q->due_date = now()->addMonths((int) \App\Models\Setting::get('cycle_months', 12));
-            }
-            $q->archived_at = null; // back in an active completed state, not archived
-        }
 
         // Archived = fully done and filed. Stamp archived_at and mark the latest run completed,
         // so run history reflects a completed cycle (and a future automation can sweep these).
