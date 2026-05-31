@@ -70,6 +70,17 @@
     .fi-simple-main .fi-btn-color-primary:hover,
     .fi-simple-main button[type=submit]:hover{background-color:#850F33 !important;}
     .fi-simple-main form{padding-bottom:18px;}
+
+    /* Shooting stars across the login cosmos (sprinkled by JS, behind the card) */
+    .gqs-shoot{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden;}
+    .gqs-shoot .shooting-star{position:absolute;height:2px;border-radius:2px;opacity:0;pointer-events:none;
+        background:linear-gradient(90deg,rgba(255,255,255,0),#fff);transform-origin:center;
+        filter:drop-shadow(0 0 6px rgba(255,255,255,.65));}
+    .gqs-shoot .shooting-star::after{content:'';position:absolute;right:0;top:-1.5px;width:5px;height:5px;border-radius:50%;
+        background:#fff;box-shadow:0 0 9px 2px rgba(255,255,255,.9);}
+    @keyframes gqsShoot{0%{opacity:0;transform:translate(0,0) rotate(var(--ang,22deg));}
+        12%{opacity:1;}100%{opacity:0;transform:translate(var(--dx,360px),var(--dy,150px)) rotate(var(--ang,22deg));}}
+    @media(prefers-reduced-motion:reduce){.gqs-shoot{display:none;}}
 </style>
 <div class="gqs-backdrop"></div>
 <div class="gqs-neb"></div>
@@ -85,4 +96,35 @@
     </span>
     <span class="rhs"><a href="{{ url('/') }}">&larr; Back To Site</a></span>
 </div>
+<div class="gqs-shoot"></div>
+<script>
+(function(){
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var layer = document.querySelector('.gqs-shoot');
+    if (!layer) return;
+    var colors = ['#ffffff','#ffffff','#ffffff','#E8C24A','#B98CE0'];
+    function spawn(){
+        var w = window.innerWidth, h = window.innerHeight;
+        var s = document.createElement('span');
+        s.className = 'shooting-star';
+        var ang = 14 + Math.random()*26, rad = ang*Math.PI/180;
+        var dist = 240 + Math.random()*340, len = 90 + Math.random()*120;
+        var dur = 700 + Math.random()*800;
+        var col = colors[Math.floor(Math.random()*colors.length)];
+        s.style.left = (Math.random()*w*0.7) + 'px';
+        s.style.top = (Math.random()*h*0.5) + 'px';
+        s.style.width = len + 'px';
+        s.style.background = 'linear-gradient(90deg,rgba(255,255,255,0),' + col + ')';
+        s.style.setProperty('--ang', ang + 'deg');
+        s.style.setProperty('--dx', (Math.cos(rad)*dist) + 'px');
+        s.style.setProperty('--dy', (Math.sin(rad)*dist) + 'px');
+        s.style.animation = 'gqsShoot ' + dur + 'ms ease-out forwards';
+        layer.appendChild(s);
+        setTimeout(function(){ s.remove(); }, dur + 120);
+        schedule();
+    }
+    function schedule(){ setTimeout(spawn, 2200 + Math.random()*5000); }
+    schedule();
+})();
+</script>
 @endif
