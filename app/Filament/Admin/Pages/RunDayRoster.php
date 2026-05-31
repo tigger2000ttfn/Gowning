@@ -59,6 +59,42 @@ class RunDayRoster extends Page
     }
 
     /** Force an EM- prefix and trim; empty stays empty. */
+    /**
+     * Catalog worklists for the autocomplete datalist: the worklist id, the person it names, and
+     * whether it is already linked to another run/qualification. Free-text entry is still allowed;
+     * this only suggests.
+     */
+    public function worklistSuggestions(): array
+    {
+        return \App\Models\LimsWorklist::query()
+            ->where('non_reportable', false)
+            ->orderByDesc('catalog_synced_at')->limit(300)->get()
+            ->map(function ($w) {
+                $linked = \App\Models\Qualification::where('lims_worklist_id', $w->worklist)
+                    ->orWhereHas('runs', fn ($q) => $q->where('lims_worklist_id', $w->worklist))->exists();
+                $who = trim((string) $w->personnel);
+                return [
+                    'worklist' => $w->worklist,
+                    'label' => $w->worklist . ($who ? '  -  ' . $who : '') . ($linked ? '  (already linked)' : ''),
+                ];
+            })->all();
+    }
+
+    /** Does this worklist's LIMS person match the reservation's person? Returns null if unknown. */
+    protected function worklistPersonMatches(string $worklist, int $personnelId): ?bool
+    {
+        $wl = \App\Models\LimsWorklist::findByWorklist($worklist);
+        if (! $wl) return null;
+        $login = strtoupper(trim((string) $wl->personnel));
+        if ($login === '') return null;
+        $person = \App\Models\Personnel::find($personnelId);
+        if (! $person) return null;
+        if (strtoupper(trim((string) $person->lims_username)) === $login) return true;
+        // name fallback: first-initial + last name (e.g. RRODRIGUEZ)
+        $expected = strtoupper(substr(trim((string) $person->first_name), 0, 1) . trim((string) $person->last_name));
+        return $expected === $login;
+    }
+
     public function normalizeWorklist(?string $v): string
     {
         $v = trim((string) $v);
@@ -83,6 +119,18 @@ class RunDayRoster extends Page
         $wl = $this->normalizeWorklist($this->worklists[$reservationId] ?? '');
         $res->update(['lims_worklist_id' => $wl]);
         $this->worklists[$reservationId] = preg_replace('/^EM-/i', '', $wl);
+
+        // Warn (do not block) if the worklist's LIMS person does not match this reservation's person.
+        if ($wl !== '') {
+            $match = $this->worklistPersonMatches($wl, $res->personnel_id);
+            if ($match === false) {
+                $cat = \App\Models\LimsWorklist::findByWorklist($wl);
+                Notification::make()->warning()->title('Worklist Person Mismatch')
+                    ->body($wl . ' is for ' . ($cat?->personnel ?: 'another person') . ' in LIMS, not '
+                        . (\App\Models\Personnel::find($res->personnel_id)?->full_name ?? 'this person') . '. Linked anyway. Confirm this is correct.')
+                    ->persistent()->send();
+            }
+        }
 
         // store on the qualification (the per-person cycle worklist) and stamp all cycle runs
         $q = \App\Models\Qualification::currentFor($res->personnel_id);

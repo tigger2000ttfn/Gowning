@@ -1,4 +1,9 @@
 <x-filament-panels::page>
+    <datalist id="wl-suggest">
+        @foreach($this->worklistSuggestions() as $s)
+            <option value="{{ preg_replace('/^EM-/i', '', $s['worklist']) }}">{{ $s['label'] }}</option>
+        @endforeach
+    </datalist>
     @include('filament.page-hero', ['title' => 'Run Scheduler', 'icon' => 'heroicon-o-calendar-days', 'actions' => '
         <button type="button" wire:click="$set(\'tab\',\'overview\')" class="gqs-tab ' . ($tab==='overview' ? 'active' : '') . '">Overview</button>
         <button type="button" wire:click="$set(\'tab\',\'reservations\')" class="gqs-tab ' . ($tab==='reservations' ? 'active' : '') . '">Reservations</button>
@@ -409,7 +414,7 @@
                                     @elseif($actionable)
                                         <div class="att-wl-wrap">
                                             <span class="att-wl-px">EM-</span>
-                                            <input type="text" class="att-wl" placeholder="worklist #"
+                                            <input type="text" class="att-wl" placeholder="worklist #" list="wl-suggest"
                                                    wire:model="worklists.{{ $res->id }}" wire:change="saveWorklist({{ $res->id }})">
                                         </div>
                                     @endif
