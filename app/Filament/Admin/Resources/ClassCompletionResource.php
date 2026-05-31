@@ -61,7 +61,14 @@ class ClassCompletionResource extends Resource
                 TextColumn::make('personnel.full_name')->label('Name')->placeholder('Unmatched')->searchable(['personnel.first_name', 'personnel.last_name']),
                 TextColumn::make('class_name')->icon('heroicon-m-academic-cap')->label('Class')->searchable(),
                 TextColumn::make('completion_date')->icon('heroicon-m-check-badge')->date()->sortable(),
-                TextColumn::make('source')->badge(),
+                TextColumn::make('source')->label('Source')->badge()
+                    ->formatStateUsing(fn ($state) => match (strtolower((string) $state)) {
+                        'lms' => 'LMS',
+                        'manual' => 'Manual',
+                        'self' => 'Self-Service',
+                        'import' => 'Import',
+                        default => ucwords(str_replace(['_', '-'], ' ', (string) $state)),
+                    }),
                 TextColumn::make('importBatch.filename')->label('Import File')->placeholder('—')->toggleable(),
             ])
             ->recordActions([

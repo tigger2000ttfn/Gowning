@@ -222,6 +222,11 @@ class VeevaCatalog extends Page implements HasForms
     public function import(): void
     {
         if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        if (! \Illuminate\Support\Facades\Schema::hasTable('veeva_documents')) {
+            Notification::make()->danger()->title('Veeva Catalog Table Missing')
+                ->body('The veeva_documents table does not exist yet. Run: php artisan migrate --force, then try again.')->send();
+            return;
+        }
         $m = $this->data;
         $col = fn ($row, $key) => (isset($m[$key]) && $m[$key] !== '' && isset($row[(int) $m[$key]]))
             ? trim((string) $row[(int) $m[$key]]) : null;

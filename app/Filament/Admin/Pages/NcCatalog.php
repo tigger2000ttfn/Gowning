@@ -198,6 +198,11 @@ class NcCatalog extends Page implements HasForms
     public function import(): void
     {
         if (! static::canAccessNavigation()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        if (! \Illuminate\Support\Facades\Schema::hasTable('nc_documents')) {
+            Notification::make()->danger()->title('NC Catalog Table Missing')
+                ->body('The nc_documents table does not exist yet. Run: php artisan migrate --force, then try again.')->send();
+            return;
+        }
         $m = $this->data;
         $col = fn ($row, $key) => (isset($m[$key]) && $m[$key] !== '' && isset($row[(int) $m[$key]]))
             ? trim((string) $row[(int) $m[$key]]) : null;
@@ -207,37 +212,43 @@ class NcCatalog extends Page implements HasForms
         }
 
         $created = 0; $updated = 0;
-        foreach ($this->rows as $ri => $row) {
-            $number = $col($row, 'map_number');
-            if (! $number) continue;
-            $url = $col($row, 'map_url');
-            if (! $url) {
-                $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
-                $numCol = (int) $m['map_number'];
-                $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
-            }
-            $recordId = $col($row, 'map_recordid') ?: NcDocument::extractRecordId($url);
-            if (! $url && $recordId) {
-                $url = NcDocument::urlFromRecordId($recordId);
-            }
+        try {
+            foreach ($this->rows as $ri => $row) {
+                $number = $col($row, 'map_number');
+                if (! $number) continue;
+                $url = $col($row, 'map_url');
+                if (! $url) {
+                    $linkCol = isset($m['map_url']) && $m['map_url'] !== '' ? (int) $m['map_url'] : null;
+                    $numCol = (int) $m['map_number'];
+                    $url = $this->hyperlinks[$ri][$linkCol] ?? $this->hyperlinks[$ri][$numCol] ?? null;
+                }
+                $recordId = $col($row, 'map_recordid') ?: NcDocument::extractRecordId($url);
+                if (! $url && $recordId) {
+                    $url = NcDocument::urlFromRecordId($recordId);
+                }
 
-            $existing = NcDocument::where('nc_number', $number)->first();
-            $payload = [
-                'nc_number' => $number,
-                'record_id' => $recordId ?: ($existing->record_id ?? null),
-                'url' => $url ?: ($existing->url ?? null),
-                'workflow_status' => $col($row, 'map_status') ?: ($existing->workflow_status ?? null),
-                'created_date' => $this->parseDate($col($row, 'map_created')) ?: ($existing->created_date ?? null),
-                'date_closed' => $this->parseDate($col($row, 'map_closed')) ?: ($existing->date_closed ?? null),
-                'qa_approver' => $col($row, 'map_approver') ?: ($existing->qa_approver ?? null),
-                'department' => $col($row, 'map_dept') ?: ($existing->department ?? null),
-                'reference_numbers' => $col($row, 'map_refs') ?: ($existing->reference_numbers ?? null),
-                'site' => $col($row, 'map_site') ?: ($existing->site ?? null),
-                'sub_group' => $col($row, 'map_subgroup') ?: ($existing->sub_group ?? null),
-                'catalog_synced_at' => now(),
-            ];
-            if ($existing) { $existing->update($payload); $updated++; }
-            else { NcDocument::create($payload); $created++; }
+                $existing = NcDocument::where('nc_number', $number)->first();
+                $payload = [
+                    'nc_number' => $number,
+                    'record_id' => $recordId ?: ($existing->record_id ?? null),
+                    'url' => $url ?: ($existing->url ?? null),
+                    'workflow_status' => $col($row, 'map_status') ?: ($existing->workflow_status ?? null),
+                    'created_date' => $this->parseDate($col($row, 'map_created')) ?: ($existing?->created_date?->toDateString() ?? null),
+                    'date_closed' => $this->parseDate($col($row, 'map_closed')) ?: ($existing?->date_closed?->toDateString() ?? null),
+                    'qa_approver' => $col($row, 'map_approver') ?: ($existing->qa_approver ?? null),
+                    'department' => $col($row, 'map_dept') ?: ($existing->department ?? null),
+                    'reference_numbers' => $col($row, 'map_refs') ?: ($existing->reference_numbers ?? null),
+                    'site' => $col($row, 'map_site') ?: ($existing->site ?? null),
+                    'sub_group' => $col($row, 'map_subgroup') ?: ($existing->sub_group ?? null),
+                    'catalog_synced_at' => now(),
+                ];
+                if ($existing) { $existing->update($payload); $updated++; }
+                else { NcDocument::create($payload); $created++; }
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->danger()->title('Import Failed')
+                ->body(\Illuminate\Support\Str::limit($e->getMessage(), 180))->send();
+            return;
         }
 
         $this->lastCreated = $created;
