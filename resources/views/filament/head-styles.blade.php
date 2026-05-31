@@ -204,6 +204,14 @@
     .gqs-pill-green { background:#DDF3E9; color:#1E7A52; }
     .gqs-pill-purple { background:#EFE6F5; color:#6B2C91; }
     .gqs-pill-gray { background:#ECECEF; color:#5A5A62; }
+
+    /* Import processing overlay + spinner */
+    .gqs-import-overlay{position:absolute;inset:0;background:rgba(20,20,26,.62);backdrop-filter:blur(2px);
+        display:none;align-items:center;justify-content:center;z-index:20;border-radius:14px;}
+    .gqs-import-card{display:flex;flex-direction:column;align-items:center;text-align:center;padding:26px 30px;}
+    .gqs-spinner{width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.25);
+        border-top-color:#fff;animation:gqs-spin .8s linear infinite;}
+    @keyframes gqs-spin{to{transform:rotate(360deg);}}
     .gqs-empty { padding:22px 16px; text-align:center; color:var(--gqs-text-dim,#9A9AA4); font-size:13.5px; }
     html.dark .gqs-tbl td { color:#E4E4E8; }
 

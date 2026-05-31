@@ -17,10 +17,16 @@
         </div>
 
         @if (! $parsed && ! $imported)
-            {{-- STEP 1: upload --}}
-            <div class="gqs-panel">
+            {{-- STEP 1: upload. Parse is disabled until the file upload finishes (Livewire fires
+                 livewire-upload-start / livewire-upload-finish on the component root). --}}
+            <div class="gqs-panel"
+                 x-data="{ uploading: false, done: false }"
+                 x-on:livewire-upload-start="uploading = true; done = false"
+                 x-on:livewire-upload-finish="uploading = false; done = true"
+                 x-on:livewire-upload-error="uploading = false; done = false"
+                 x-on:livewire-upload-cancel="uploading = false; done = false">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Upload Weekly Export</div>
-                <div class="gqs-panel-body" style="padding:16px;">
+                <div class="gqs-panel-body" style="padding:16px;position:relative;">
                     <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 0 18px;">
                         <span style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#6E0C2A);box-shadow:0 10px 28px rgba(164,18,63,.32);margin-bottom:14px;">
                             <x-filament::icon icon="heroicon-o-document-arrow-up" style="width:38px;height:38px;color:#fff;"/>
@@ -29,17 +35,24 @@
                         <p style="margin:6px 0 0;font-size:13px;color:var(--gqs-text-dim,#6A6A72);max-width:440px;">Upload the weekly export (.xlsx). Columns are detected automatically and report links are built for you.</p>
                     </div>
                     <form wire:submit.prevent>{{ $this->form }}</form>
-                    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>
-                        <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-left:auto;">{{ $this->catalogCount() }} in catalog</span>
+                    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);" x-show="uploading">Uploading file...</span>
+                        <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ $this->catalogCount() }} in catalog</span>
+                        <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary" style="margin-left:auto;"
+                                x-bind:disabled="uploading"
+                                x-bind:style="uploading ? 'opacity:.5;cursor:not-allowed;' : ''">
+                            <span x-show="uploading">Uploading...</span>
+                            <span x-show="!uploading">Parse</span>
+                        </button>
                     </div>
                 </div>
             </div>
         @endif
 
         @if ($parsed)
-            {{-- STEP 2: review + import (no column mapping shown - auto-detected) --}}
-            <div class="gqs-panel">
+            {{-- STEP 2: review + import. Import is on the right; a processing overlay covers the panel
+                 while the import runs (wire:loading targeting import). --}}
+            <div class="gqs-panel" style="position:relative;">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-table-cells"/> Review &amp; Import</div>
                 <div class="gqs-panel-body" style="padding:0;">
                     <p style="margin:0;padding:12px 16px 6px;color:var(--gqs-text-dim,#6A6A72);font-size:13px;">Detected {{ count($rows) }} rows. Showing the first {{ count($preview) }}.</p>
@@ -51,9 +64,20 @@
                             @endforeach</tbody>
                         </table>
                     </div>
-                    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;">
-                        <button type="button" wire:click="import" class="gqs-btn gqs-btn-primary">Import {{ count($rows) }} Rows</button>
+                    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button type="button" wire:click="resetUpload" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button type="button" wire:click="import" wire:loading.attr="disabled" wire:target="import" class="gqs-btn gqs-btn-primary" style="margin-left:auto;">
+                            <span wire:loading.remove wire:target="import">Import {{ count($rows) }} Rows</span>
+                            <span wire:loading wire:target="import">Importing...</span>
+                        </button>
+                    </div>
+                </div>
+                {{-- processing overlay --}}
+                <div wire:loading.flex wire:target="import" class="gqs-import-overlay">
+                    <div class="gqs-import-card">
+                        <div class="gqs-spinner"></div>
+                        <div style="font-weight:700;color:#fff;margin-top:12px;">Importing {{ count($rows) }} rows...</div>
+                        <div style="font-size:12px;color:#C9C9D2;margin-top:4px;">Building links and updating the catalog</div>
                     </div>
                 </div>
             </div>
