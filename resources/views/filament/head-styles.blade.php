@@ -338,6 +338,36 @@
     }
     html:not(.dark) .fi-no-notification-body { color: #5A5A62 !important; }
 
+    /* ===== Flash toasts: black, rounded, bottom-right (both themes) =====
+       The fixed toast stack is .fi-notifications; individual toasts are .fi-no-notification
+       inside it. We pin the stack bottom-right and give each toast a dark rounded look. */
+    .fi-notifications {
+        top: auto !important;
+        bottom: 1.25rem !important;
+        right: 1.25rem !important;
+        left: auto !important;
+        align-items: flex-end !important;
+    }
+    .fi-notifications .fi-no-notification {
+        background: #1A1A1F !important;
+        border: 1px solid #2E2E36 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 12px 34px rgba(0,0,0,.34) !important;
+        color: #fff !important;
+    }
+    .fi-notifications .fi-no-notification * { color: #fff !important; }
+    .fi-notifications .fi-no-notification .fi-no-notification-body,
+    .fi-notifications .fi-no-notification .fi-no-notification-description { color: #C9C9D2 !important; }
+    /* keep the status icon colors readable on black */
+    .fi-notifications .fi-no-notification .fi-icon { color: inherit !important; }
+    .fi-notifications .fi-no-notification.fi-color-success .fi-no-notification-icon,
+    .fi-notifications .fi-no-notification.fi-color-success .fi-icon { color: #3FBF8F !important; }
+    .fi-notifications .fi-no-notification.fi-color-danger .fi-no-notification-icon,
+    .fi-notifications .fi-no-notification.fi-color-danger .fi-icon { color: #FF6B7E !important; }
+    .fi-notifications .fi-no-notification.fi-color-warning .fi-no-notification-icon,
+    .fi-notifications .fi-no-notification.fi-color-warning .fi-icon { color: #E8C24A !important; }
+    .fi-notifications .fi-no-notification .fi-icon-btn { color: #9A9AA4 !important; }
+
 
     /* Back To Login link on reset page - force Title Case appearance */
     .fi-simple-main a[href*="login"] { text-transform: capitalize; }

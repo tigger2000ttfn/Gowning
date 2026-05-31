@@ -32,7 +32,7 @@ enum WorkflowStage: string
             self::AwaitingResults => 'Awaiting Results',
             self::ResultsReleased => 'Results Released',
             self::QaReview        => 'QA Review',
-            self::QaSignoff       => 'QA Sign-off (Complete)',
+            self::QaSignoff       => 'QA Approved',
             self::Archived        => 'Archived',
             self::Failed          => 'Failed, QA Determination',
         };
