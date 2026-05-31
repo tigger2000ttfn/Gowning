@@ -39,6 +39,22 @@
     .fi-sidebar-group-label { font-size: 10.5px !important; letter-spacing: .04em; }
     .fi-sidebar-item-icon, .fi-sidebar-item-icon svg { width: 18px !important; height: 18px !important; }
 
+    /* ===== COMPACT SIDEBAR: less vertical space so more links fit without scrolling ===== */
+    /* tighter gaps between groups */
+    .fi-sidebar-nav { gap: 0.25rem !important; padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
+    .fi-sidebar-nav-groups { gap: 0.3rem !important; }
+    .fi-sidebar-group { margin: 0 !important; }
+    .fi-sidebar-group > ul, .fi-sidebar-group-items { gap: 0.05rem !important; }
+    /* tighter group header */
+    .fi-sidebar-group-label, .fi-sidebar-group-button { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; margin-top: 0.15rem !important; }
+    /* tighter individual items */
+    .fi-sidebar-item > a, .fi-sidebar-item > button, .fi-sidebar-item-button {
+        padding-top: 0.34rem !important; padding-bottom: 0.34rem !important; min-height: 0 !important;
+    }
+    .fi-sidebar-item { margin: 0 !important; }
+    /* the small divider/empty space between groups */
+    .fi-sidebar-nav > li + li { margin-top: 0.1rem !important; }
+
     /* ===== SOLID MAGENTA BUTTONS (no pink shades) - use the sidebar magenta #A4123F ===== */
     .fi-btn.fi-color-primary,
     .fi-btn-color-primary,

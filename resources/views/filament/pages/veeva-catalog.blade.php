@@ -7,14 +7,17 @@
     '])
 
     @if ($tab === 'upload')
-        <div style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-bottom:14px;">Upload the weekly Veeva export, then map the columns and import. Report links are built automatically.</div>
-
-        <form wire:submit.prevent>{{ $this->form }}</form>
-
-        <div style="margin:14px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>
-            <button type="button" wire:click="runBackfill" class="gqs-btn gqs-btn-ghost">Backfill Links Now</button>
-            <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);">{{ $this->catalogCount() }} documents in catalog. Backfill links existing reports from the catalog.</span>
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Load Weekly Export</div>
+            <div class="gqs-panel-body" style="padding:16px;">
+                <p style="margin:0 0 14px;font-size:13px;color:var(--gqs-text-dim,#6A6A72);">Upload the weekly Veeva export, map the columns, and import. Report links are built automatically.</p>
+                <form wire:submit.prevent>{{ $this->form }}</form>
+                <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>
+                    <button type="button" wire:click="runBackfill" class="gqs-btn gqs-btn-ghost">Backfill Links Now</button>
+                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-left:auto;">{{ $this->catalogCount() }} in catalog</span>
+                </div>
+            </div>
         </div>
 
         @if ($parsed)
