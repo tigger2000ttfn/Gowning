@@ -206,12 +206,142 @@ class IncubationBoard extends Page
     }
 
     /** QCM enters LIMS results (worklist + overall pass/fail + optional NC note), routes to QA. */
+
+    // ---- Custom Enter-Results modal (reliable in a table loop; worklist editable here) ----
+    public ?int $erQid = null;
+    public array $er = ['worklist' => '', 'lms_number' => '', 'overall' => '', 'trackwise_id' => '', 'nc_note' => ''];
+
+    public function openEnterResults(int $qid): void
+    {
+        if (! $this->canEvaluate()) { Notification::make()->danger()->title('Not Authorized')->body('QC Micro role required to enter results.')->send(); return; }
+        $q = Qualification::find($qid);
+        $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first() : null;
+        $this->erQid = $qid;
+        $this->er = [
+            'worklist' => $run?->lims_worklist_id ?? '',
+            'lms_number' => $q?->lms_number ?? '',
+            'overall' => '',
+            'trackwise_id' => '',
+            'nc_note' => '',
+        ];
+    }
+    public function closeEnterResults(): void { $this->erQid = null; }
+
+    public function erPersonName(): ?string
+    {
+        return $this->erQid ? (Qualification::with('personnel')->find($this->erQid)?->personnel?->full_name ?? 'Operator') : null;
+    }
+
+    public function saveEnterResults(): void
+    {
+        if (! $this->canEvaluate()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $q = Qualification::with('personnel')->find($this->erQid);
+        if (! $q) { $this->erQid = null; return; }
+        $overall = $this->er['overall'] ?? '';
+        if (! in_array($overall, ['pass', 'fail'], true)) {
+            Notification::make()->danger()->title('Select A Result')->body('Choose Pass or Fail.')->send();
+            return;
+        }
+        $worklist = trim((string) ($this->er['worklist'] ?? ''));
+        if ($worklist === '') {
+            Notification::make()->danger()->title('Worklist Required')->body('Enter the LIMS worklist before recording results.')->send();
+            return;
+        }
+        if ($overall === 'fail' && trim((string) ($this->er['trackwise_id'] ?? '')) === '') {
+            Notification::make()->danger()->title('TrackWise NC Required')->body('A fail requires the TrackWise NC number (per SOP-AST-28480).')->send();
+            return;
+        }
+        if (! empty($this->er['lms_number'])) { $q->lms_number = $this->er['lms_number']; }
+        $run = QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first();
+        if ($run) {
+            $run->lims_worklist_id = $worklist;
+            $run->results_entered_at = now();
+            $run->results_released_at = now();
+            $run->recorded_by = $run->recorded_by ?: Auth::id();
+            $run->result = $overall === 'fail' ? \App\Enums\RunResult::Fail : \App\Enums\RunResult::Pass;
+            $run->save();
+        }
+        app(\App\Services\QualificationEngine::class)->recompute($q->fresh());
+        $q = $q->fresh();
+        \App\Services\AutomationEngine::fire(
+            $overall === 'fail' ? \App\Enums\AutomationTrigger::RunFailed : \App\Enums\AutomationTrigger::RunPassed,
+            ['personnel' => $q->personnel, 'qualification' => $q]
+        );
+        $q->workflow_stage = $overall === 'fail' ? WorkflowStage::Failed : WorkflowStage::ResultsReleased;
+        $q->stage_changed_at = now();
+        $q->save();
+        if ($overall === 'fail') {
+            $nc = \App\Models\NonConformance::firstOrCreate(
+                ['qualification_run_id' => $run?->id, 'nc_type' => 'failed_run'],
+                [
+                    'qualification_id' => $q->id,
+                    'personnel_id' => $q->personnel_id,
+                    'status' => 'open',
+                    'observed_date' => now()->toDateString(),
+                    'created_by' => Auth::id(),
+                    'trackwise_id' => $this->er['trackwise_id'] ?? null,
+                    'summary' => $this->er['nc_note'] ?? 'Auto-created from failed qualification run. Link TrackWise NC.',
+                ]
+            );
+            if (! empty($this->er['trackwise_id']) && $nc->trackwise_id !== $this->er['trackwise_id']) {
+                $nc->trackwise_id = $this->er['trackwise_id'];
+            }
+            if (! empty($nc->trackwise_id) && ($doc = \App\Models\NcDocument::findByNumber($nc->trackwise_id))) {
+                $nc->trackwise_url = $doc->url ?: $nc->trackwise_url;
+                $nc->trackwise_status = $doc->workflow_status ?: $nc->trackwise_status;
+            }
+            $nc->save();
+            \App\Services\AutomationEngine::fire(\App\Enums\AutomationTrigger::NcOpened, ['personnel' => $q->personnel]);
+        }
+        $this->erQid = null;
+        Notification::make()->success()->title($overall === 'fail' ? 'Failed, Sent To QA Determination' : 'Results Released')
+            ->body(($q->personnel?->full_name ?? 'Operator') . ': ' . ucfirst($overall) . ($overall === 'fail'
+                ? ', NC opened and sent to QA determination.'
+                : '. Download the approval form, wet-sign, upload to Veeva, then enter the Veeva number to send to QA.'))->send();
+    }
+
+    // ---- Add-Worklist-only modal (incubating dashboard / anywhere a run lacks a worklist) ----
+    public ?int $awQid = null;
+    public string $awWorklist = '';
+    public function openAddWorklist(int $qid): void
+    {
+        if (! $this->canEvaluate()) { Notification::make()->danger()->title('Not Authorized')->body('QC Micro role required.')->send(); return; }
+        $q = Qualification::find($qid);
+        $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first() : null;
+        $this->awQid = $qid;
+        $this->awWorklist = $run?->lims_worklist_id ?? '';
+    }
+    public function closeAddWorklist(): void { $this->awQid = null; $this->awWorklist = ''; }
+    public function awPersonName(): ?string
+    {
+        return $this->awQid ? (Qualification::with('personnel')->find($this->awQid)?->personnel?->full_name ?? 'Operator') : null;
+    }
+    public function saveAddWorklist(): void
+    {
+        if (! $this->canEvaluate()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $q = Qualification::find($this->awQid);
+        if (! $q) { $this->awQid = null; return; }
+        $wl = strtoupper(trim($this->awWorklist));
+        if ($wl === '') { Notification::make()->danger()->title('Worklist Required')->send(); return; }
+        if (! str_starts_with($wl, 'EM-')) { $wl = 'EM-' . ltrim(preg_replace('/^EM[-\s]*/i', '', $wl), '-'); }
+        // stamp the qualification + every run in the current cycle, like the run scheduler does.
+        $q->lims_worklist_id = $wl;
+        $q->save();
+        $runsQ = QualificationRun::where('personnel_id', $q->personnel_id);
+        if ($q->cycle_started_at) { $runsQ->whereDate('run_date', '>=', $q->cycle_started_at); }
+        $runsQ->update(['lims_worklist_id' => $wl]);
+        // pull LIMS state immediately if the worklist is in the catalog.
+        $latest = QualificationRun::where('personnel_id', $q->personnel_id)->latest('id')->first();
+        if ($latest) { app(\App\Services\WorklistSync::class)->syncRun($latest); }
+        $this->awQid = null; $this->awWorklist = '';
+        Notification::make()->success()->title('Worklist Linked')->body($wl . ' linked. LIMS data will sync.')->send();
+    }
+
     public function enterResultsAction(): Action
     {
         return Action::make('enterResultsInc')
             ->label('Enter Results')
-            ->icon('heroicon-m-clipboard-document-check')
-            ->color('success')
+            ->icon('heroicon-m-clipboard-document-check')            ->color('success')
             ->size(\Filament\Support\Enums\Size::Small)
             ->button()
             ->modalHeading('Enter LIMS Results')

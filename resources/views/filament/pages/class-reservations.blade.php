@@ -34,10 +34,11 @@
                                     <td>{{ $row['name'] }}</td>
                                     <td><span class="gqs-pill {{ [
                                         'signed_up' => 'gqs-pill-purple', 'attended' => 'gqs-pill-gold',
-                                        'pending_qa' => 'gqs-pill-purple', 'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
-                                    ][$row['status']] ?? 'gqs-pill-purple' }}">{{ [
-                                        'signed_up' => 'Scheduled', 'attended' => 'Attended', 'pending_qa' => 'Pending QA',
-                                        'completed' => 'Completed', 'no_show' => 'No-Show',
+                                        'qcm_reviewed' => 'gqs-pill-purple', 'pending_qa' => 'gqs-pill-purple',
+                                        'completed' => 'gqs-pill-green', 'no_show' => 'gqs-pill-red',
+                                    ][$row['status']] ?? 'gqs-pill-gray' }}">{{ [
+                                        'signed_up' => 'Scheduled', 'attended' => 'Attended', 'qcm_reviewed' => 'QCM Reviewed',
+                                        'pending_qa' => 'Pending QA', 'completed' => 'QA Approved', 'no_show' => 'No-Show',
                                     ][$row['status']] ?? ucwords(str_replace('_',' ',$row['status'])) }}</span></td>
                                     <td style="text-align:right;white-space:nowrap;">
                                         @if(! $group['submitted'] && in_array($row['status'], ['signed_up']))

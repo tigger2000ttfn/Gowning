@@ -294,9 +294,7 @@ class StatusBoard extends Page
             'recent_runs' => $runs,
             'quick_url' => $this->quickActionUrl($q),
             'quick_label' => $this->quickActionLabel($q),
-            'edit_url' => $q->personnel_id
-                ? \App\Filament\Admin\Resources\PersonnelResource::getUrl('edit', ['record' => $q->personnel_id])
-                : \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
+            'edit_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $q->id]),
         ];
     }
 

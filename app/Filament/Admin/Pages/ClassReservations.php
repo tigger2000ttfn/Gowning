@@ -74,7 +74,7 @@ class ClassReservations extends Page
                         'id' => $e->id,
                         'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
                         'employee_id' => $e->personnel?->employee_id ?? $e->employee_id,
-                        'status' => $e->status,
+                        'status' => $e->status instanceof \BackedEnum ? $e->status->value : (string) $e->status,
                     ])->values()->all(),
             ])
             // operators only see sessions they're actually in

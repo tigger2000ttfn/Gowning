@@ -35,7 +35,12 @@
                                 <tr>
                                     <td style="font-weight:600;">{{ $r->employee_id }}</td>
                                     <td>{{ $r->name }}</td>
-                                    <td>{{ $r->worklist ?: '—' }}</td>
+                                    <td>
+                                        @if($r->worklist){{ $r->worklist }}
+                                        @elseif($this->canEvaluate())
+                                            <button type="button" wire:click="openAddWorklist({{ $r->id }})" class="sb-act" style="background:#1F6FB2;" title="No worklist linked">+ Add Worklist</button>
+                                        @else<span style="color:#C8102E;font-weight:600;">Missing</span>@endif
+                                    </td>
                                     <td>{{ $r->started ? \Illuminate\Support\Carbon::parse($r->started)->gmp() : '—' }}</td>
                                     <td>{{ $r->ready ? \Illuminate\Support\Carbon::parse($r->ready)->gmp() : '—' }}</td>
                                     <td>
@@ -84,7 +89,11 @@
                                             </a>
                                             {{ ($this->qcmSignOffAction)(['id' => $r->id]) }}
                                         @else
-                                            {{ ($this->enterResultsAction)(['id' => $r->id]) }}
+                                            @if(! $r->worklist)
+                                                <button type="button" wire:click="openEnterResults({{ $r->id }})" class="sb-act" style="background:#1F6FB2;" title="No worklist linked - add it and enter results">+ Worklist &amp; Results</button>
+                                            @else
+                                                <button type="button" wire:click="openEnterResults({{ $r->id }})" class="sb-act sb-act-green">Enter Results</button>
+                                            @endif
                                         @endif
                                         </div>
                                     </td>
@@ -151,6 +160,70 @@
                 <div class="gqs-modal-foot" style="justify-content:space-between;">
                     <button type="button" wire:click="closeResultUndo" class="gqs-btn gqs-btn-ghost">Cancel</button>
                     <button type="button" wire:click="finalizeResultUndo" class="gqs-btn" style="background:#6A6A72;color:#fff;">Revert For Re-entry</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($awQid)
+        <div class="gqs-modal-overlay" wire:click.self="closeAddWorklist">
+            <div class="gqs-modal" style="width:420px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#1F6FB2,#185A92);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Link LIMS Worklist</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $this->awPersonName() }}</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <label class="gqs-flbl">LIMS Worklist <span style="color:#C8102E;">*</span></label>
+                    <input type="text" wire:model="awWorklist" class="gqs-fld" placeholder="EM-..." wire:keydown.enter="saveAddWorklist">
+                    <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:6px;">Links the run to its LIMS worklist so incubation status, evaluation, and NC data sync automatically.</div>
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closeAddWorklist" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button wire:click="saveAddWorklist" class="gqs-btn gqs-btn-primary">Link Worklist</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($erQid)
+        <div class="gqs-modal-overlay" wire:click.self="closeEnterResults">
+            <div class="gqs-modal" style="width:480px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#1F6FB2,#185A92);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Enter LIMS Results</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $this->erPersonName() }}</div>
+                </div>
+                <div class="gqs-modal-body" style="display:flex;flex-direction:column;gap:13px;">
+                    <div>
+                        <label class="gqs-flbl">LIMS Worklist <span style="color:#C8102E;">*</span></label>
+                        <input type="text" wire:model="er.worklist" class="gqs-fld" placeholder="EM-...">
+                        <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Required. Links this run to its LIMS worklist so results and incubation sync.</div>
+                    </div>
+                    <div>
+                        <label class="gqs-flbl">LMS Number (Optional)</label>
+                        <input type="text" wire:model="er.lms_number" class="gqs-fld" placeholder="Optional tracking number">
+                    </div>
+                    <div>
+                        <label class="gqs-flbl">Overall Result <span style="color:#C8102E;">*</span></label>
+                        <div style="display:flex;gap:8px;margin-top:4px;">
+                            <button type="button" wire:click="$set('er.overall','pass')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='pass' ? 'background:#2E7D5B;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Pass</button>
+                            <button type="button" wire:click="$set('er.overall','fail')" class="gqs-btn" style="flex:1;{{ ($er['overall'] ?? '')==='fail' ? 'background:#C8102E;color:#fff;' : 'background:#EAEAEF;color:#1A1A1F;' }}">Fail</button>
+                        </div>
+                    </div>
+                    @if(($er['overall'] ?? '') === 'fail')
+                        <div>
+                            <label class="gqs-flbl">TrackWise NC Number <span style="color:#C8102E;">*</span></label>
+                            <input type="text" wire:model="er.trackwise_id" class="gqs-fld" placeholder="NC number">
+                            <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Required on a fail (per SOP-AST-28480).</div>
+                        </div>
+                        <div>
+                            <label class="gqs-flbl">Observation / Note (Optional)</label>
+                            <input type="text" wire:model="er.nc_note" class="gqs-fld" placeholder="Brief observation for the NC">
+                        </div>
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closeEnterResults" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button wire:click="saveEnterResults" class="gqs-btn gqs-btn-primary">Record Results</button>
                 </div>
             </div>
         </div>
