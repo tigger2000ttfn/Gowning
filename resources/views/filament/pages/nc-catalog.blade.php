@@ -19,7 +19,13 @@
             <div class="gqs-panel">
                 <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Upload Weekly NC Export</div>
                 <div class="gqs-panel-body" style="padding:16px;">
-                    <p style="margin:0 0 14px;font-size:13px;color:var(--gqs-text-dim,#6A6A72);">Upload the TrackWise NC export (.xlsx). Columns are detected automatically and NC links are built for you.</p>
+                    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:10px 0 18px;">
+                        <span style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#6E0C2A);box-shadow:0 10px 28px rgba(164,18,63,.32);margin-bottom:14px;">
+                            <x-filament::icon icon="heroicon-o-document-arrow-up" style="width:38px;height:38px;color:#fff;"/>
+                        </span>
+                        <div style="font-size:16px;font-weight:800;color:var(--gqs-text,#1A1A1F);">Drop Your TrackWise NC Export Here</div>
+                        <p style="margin:6px 0 0;font-size:13px;color:var(--gqs-text-dim,#6A6A72);max-width:440px;">Upload the weekly NC export (.xlsx). Columns are detected automatically and NC links are built for you.</p>
+                    </div>
                     <form wire:submit.prevent>{{ $this->form }}</form>
                     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
                         <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>

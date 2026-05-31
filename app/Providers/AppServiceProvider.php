@@ -33,6 +33,11 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Flash toasts at the BOTTOM-RIGHT (Filament default is top-right). Alignment is already
+        // Right; set vertical alignment to End so toasts stack up from the bottom.
+        \Filament\Notifications\Livewire\Notifications::verticalAlignment(\Filament\Support\Enums\VerticalAlignment::End);
+        \Filament\Notifications\Livewire\Notifications::alignment(\Filament\Support\Enums\Alignment::Right);
+
         foreach (self::AUDITED as $model) {
             $model::observe(AuditObserver::class);
         }
