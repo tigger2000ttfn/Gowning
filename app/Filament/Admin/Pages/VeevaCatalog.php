@@ -72,11 +72,41 @@ class VeevaCatalog extends Page implements HasForms
      * Filament's FileUpload stores its value as an array (keyed by a random id) even for a single
      * file, so $this->data['csv'] may be ['abc' => 'imports/x.xlsx']. Normalize to one string path.
      */
+    /**
+     * Resolve the uploaded file to a single string path on the 'local' disk. Filament's FileUpload
+     * value can be a string, an array keyed by a random id, or a TemporaryUploadedFile, and may live
+     * only in the live form state until read - so we check both $this->data and the form state, and
+     * normalize every shape. Returns null if nothing usable is present.
+     */
     protected function uploadedPath(): ?string
     {
-        $v = $this->data['csv'] ?? null;
+        $candidates = [];
+        $candidates[] = $this->data['csv'] ?? null;
+        try {
+            $state = $this->form->getState();
+            $candidates[] = $state['csv'] ?? null;
+        } catch (\Throwable $e) {
+            // ignore - validation may run on getState; fall back to raw data
+        }
+
+        foreach ($candidates as $v) {
+            $v = $this->flattenUpload($v);
+            if ($v !== null) return $v;
+        }
+        return null;
+    }
+
+    protected function flattenUpload($v): ?string
+    {
         if (is_array($v)) {
-            $v = collect($v)->filter()->first();
+            $v = collect($v)->flatten()->filter()->first();
+        }
+        if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            // Persist the temp upload to the imports dir and return that path.
+            return $v->store('imports', 'local') ?: null;
+        }
+        if (is_object($v) && method_exists($v, 'store')) {
+            return $v->store('imports', 'local') ?: null;
         }
         return is_string($v) && $v !== '' ? $v : null;
     }
@@ -88,7 +118,9 @@ class VeevaCatalog extends Page implements HasForms
         $path = $this->uploadedPath();
         $full = $path ? Storage::disk('local')->path($path) : null;
         if (! $path || ! $full || ! is_file($full)) {
-            Notification::make()->danger()->title('Upload A File First')->send();
+            $seen = $path ? ('path resolved but file missing: ' . $path) : 'no file value found';
+            Notification::make()->danger()->title('Upload A File First')
+                ->body('Could not read the upload (' . $seen . '). Pick the file again, wait for the upload to finish, then Parse.')->send();
             return;
         }
         // Detect xlsx by content signature (PK zip header), not extension - Filament's stored

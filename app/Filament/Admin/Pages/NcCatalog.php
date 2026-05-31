@@ -68,9 +68,31 @@ class NcCatalog extends Page implements HasForms
 
     protected function uploadedPath(): ?string
     {
-        $v = $this->data['csv'] ?? null;
+        $candidates = [];
+        $candidates[] = $this->data['csv'] ?? null;
+        try {
+            $state = $this->form->getState();
+            $candidates[] = $state['csv'] ?? null;
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        foreach ($candidates as $v) {
+            $v = $this->flattenUpload($v);
+            if ($v !== null) return $v;
+        }
+        return null;
+    }
+
+    protected function flattenUpload($v): ?string
+    {
         if (is_array($v)) {
-            $v = collect($v)->filter()->first();
+            $v = collect($v)->flatten()->filter()->first();
+        }
+        if ($v instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) {
+            return $v->store('imports', 'local') ?: null;
+        }
+        if (is_object($v) && method_exists($v, 'store')) {
+            return $v->store('imports', 'local') ?: null;
         }
         return is_string($v) && $v !== '' ? $v : null;
     }
@@ -82,7 +104,9 @@ class NcCatalog extends Page implements HasForms
         $path = $this->uploadedPath();
         $full = $path ? Storage::disk('local')->path($path) : null;
         if (! $path || ! $full || ! is_file($full)) {
-            Notification::make()->danger()->title('Upload A File First')->send();
+            $seen = $path ? ('path resolved but file missing: ' . $path) : 'no file value found';
+            Notification::make()->danger()->title('Upload A File First')
+                ->body('Could not read the upload (' . $seen . '). Pick the file again, wait for the upload to finish, then Parse.')->send();
             return;
         }
         $isXlsx = false;
