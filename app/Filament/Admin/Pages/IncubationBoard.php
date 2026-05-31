@@ -269,6 +269,10 @@ class IncubationBoard extends Page
                 if ($run) {
                     $run->veeva_doc_number = $data['veeva_doc_number'] ?? null;
                     $run->veeva_url = $data['veeva_url'] ?? null;
+                    // Auto-fill the link from the Veeva catalog when a number was entered without a link.
+                    if ($run->veeva_doc_number && ! $run->veeva_url) {
+                        $run->veeva_url = \App\Models\VeevaDocument::urlForNumber($run->veeva_doc_number);
+                    }
                     $run->qcm_signed_at = now();
                     $run->qcm_signed_by = Auth::id();
                     $run->save();

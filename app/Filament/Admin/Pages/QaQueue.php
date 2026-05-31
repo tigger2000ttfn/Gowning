@@ -233,9 +233,13 @@ class QaQueue extends Page
             Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
             return;
         }
+        $clsUrl = $this->clsVeevaUrl ?: null;
+        if ($this->clsVeeva && ! $clsUrl) {
+            $clsUrl = \App\Models\VeevaDocument::urlForNumber($this->clsVeeva);
+        }
         $s->update([
             'veeva_doc_number' => $this->clsVeeva ?: null,
-            'veeva_url' => $this->clsVeevaUrl ?: null,
+            'veeva_url' => $clsUrl,
             'lms_number' => $this->clsLms ?: null,
             'qa_signed_at' => now(), 'qa_signed_by' => Auth::id(),
         ]);
