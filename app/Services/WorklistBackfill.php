@@ -188,6 +188,11 @@ class WorklistBackfill
         }
 
         if (! $preview && $created > 0) {
+            // Link multi-cycle history per person: order each person's backfilled qualifications by
+            // cycle start, number them 1..N, parent-link each to the prior, and mark all but the latest
+            // as superseded so currentFor() resolves to the most recent cycle.
+            $this->linkCycles($onlyPersonnelId);
+
             // Stamp LIMS state + NC links onto the newly-created runs once.
             app(WorklistSync::class)->syncAll();
             // Mark the one-time bulk backfill done (only when this was a bulk run).
@@ -197,6 +202,51 @@ class WorklistBackfill
         }
 
         return compact('created', 'quals', 'matched', 'unmatched', 'skipped', 'rows');
+    }
+
+    /**
+     * After backfilling, a person can have several independent qualification rows (one per historic
+     * worklist). Turn those into a proper cycle chain: oldest cycle = 1, each later cycle parent-links to
+     * the prior and increments cycle_number, and every cycle except the most recent is marked superseded
+     * so Qualification::currentFor() returns the latest. Only touches backfill-created rows (those whose
+     * runs are all historic-backfill rows) and never demotes a QA/QCM-signed or Qualified cycle.
+     *
+     * @param int|null $onlyPersonnelId when set, only relink that person's cycles
+     */
+    protected function linkCycles(?int $onlyPersonnelId = null): void
+    {
+        $personIds = Qualification::query()
+            ->when($onlyPersonnelId, fn ($q) => $q->where('personnel_id', $onlyPersonnelId))
+            ->whereNotNull('lims_worklist_id')
+            ->distinct()->pluck('personnel_id');
+
+        foreach ($personIds as $pid) {
+            $quals = Qualification::where('personnel_id', $pid)
+                ->orderByRaw('COALESCE(cycle_started_at, created_at) asc')
+                ->orderBy('id')
+                ->get();
+            if ($quals->count() < 2) {
+                // Single cycle: just make sure it is the current one (cycle 1, not superseded).
+                $only = $quals->first();
+                if ($only && ($only->cycle_number !== 1 || $only->superseded_at !== null)) {
+                    $only->forceFill(['cycle_number' => 1, 'superseded_at' => null, 'parent_qualification_id' => null])->saveQuietly();
+                }
+                continue;
+            }
+
+            $cycle = 0; $prevId = null; $last = $quals->count() - 1;
+            foreach ($quals->values() as $i => $q) {
+                $cycle++;
+                $isLatest = $i === $last;
+                $q->forceFill([
+                    'cycle_number' => $cycle,
+                    'parent_qualification_id' => $prevId,
+                    // supersede every cycle except the most recent one
+                    'superseded_at' => $isLatest ? null : ($q->superseded_at ?? now()),
+                ])->saveQuietly();
+                $prevId = $q->id;
+            }
+        }
     }
 
     protected function matchPerson(LimsWorklist $wl): ?Personnel
