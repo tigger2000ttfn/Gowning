@@ -38,7 +38,82 @@ class QaQueue extends Page
 
     /** runs | classroom */
     public string $tab = 'runs';
-    public function setTab(string $t): void { $this->tab = in_array($t, ['runs', 'classroom'], true) ? $t : 'runs'; }
+    public function setTab(string $t): void { $this->tab = in_array($t, ['runs', 'classroom', 'historical'], true) ? $t : 'runs'; }
+
+    // Run undo (revert a QA-approved run for correction): requires a reason, reverts the stage, logs.
+    public ?int $undoQid = null;
+    public string $undoReason = '';
+    public string $undoComment = '';
+    public string $undoPassword = '';
+    public function openRunUndo(int $qid): void { $this->undoQid = $qid; $this->undoReason = ''; $this->undoComment = ''; $this->undoPassword = ''; }
+    public function closeRunUndo(): void { $this->undoQid = null; }
+
+    /** Reasons for undoing/reverting a QA approval. */
+    public function undoReasons(): array
+    {
+        return [
+            'data_error' => 'Data Entry Error',
+            'wrong_record' => 'Wrong Record Approved',
+            'veeva_correction' => 'Veeva Report Correction',
+            'result_revised' => 'Result Revised',
+            'other' => 'Other (See Comment)',
+        ];
+    }
+
+    /** Recently QA-approved runs (history), most recent first. */
+    public function recentlyApprovedRuns(): array
+    {
+        return Qualification::with('personnel')
+            ->where('workflow_stage', WorkflowStage::QaSignoff->value)
+            ->whereNull('superseded_at')
+            ->latest('stage_changed_at')->limit(25)->get()
+            ->map(fn ($q) => [
+                'id' => $q->id,
+                'name' => $q->personnel?->full_name ?? 'Unknown',
+                'employee_id' => $q->personnel?->employee_id,
+                'type' => $q->sessionLabel(),
+                'approved_at' => $q->stage_changed_at?->gmpDt(),
+                'qualified_date' => $q->qualified_date?->gmp(),
+                'archived' => (bool) $q->archived_at,
+            ])->all();
+    }
+
+    /** Revert a QA-approved run back to QA Review for correction (reason required, logged). */
+    public function finalizeRunUndo(): void
+    {
+        $q = Qualification::with('personnel')->find($this->undoQid);
+        if (! $q) return;
+        if (! $this->canApprove()) { Notification::make()->danger()->title('Not Authorized')->body('QA Approver role required.')->send(); return; }
+        $reason = trim($this->undoReason);
+        $comment = trim($this->undoComment);
+        if ($reason === '' || $comment === '') {
+            Notification::make()->warning()->title('Reason And Comment Required')->body('Provide a reason and comment to revert this approval.')->send();
+            return;
+        }
+        if ((bool) Setting::get('esig_required', true) && ! Hash::check($this->undoPassword, Auth::user()->password)) {
+            Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
+            return;
+        }
+        ElectronicSignature::create([
+            'signable_type' => Qualification::class, 'signable_id' => $q->id,
+            'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'QA Approval Reverted',
+            'statement' => 'Reverted QA approval to QA Review for correction. Reason: ' . $reason . '. Comment: ' . $comment,
+            'signed_at' => now(),
+        ]);
+        $q->comments()->create([
+            'user_id' => Auth::id(), 'author_name' => Auth::user()?->name,
+            'body' => 'QA approval reverted to QA Review. Reason: ' . $reason . '. ' . $comment,
+        ]);
+        // Revert stage to QA Review; drop the qualified stamp + archived flag so it is active again.
+        $q->workflow_stage = WorkflowStage::QaReview;
+        $q->stage_changed_at = now();
+        $q->status = \App\Enums\QualificationStatus::InProgress;
+        $q->qualified_date = null;
+        $q->archived_at = null;
+        $q->save();
+        $this->undoQid = null;
+        Notification::make()->success()->title('Approval Reverted')->body(($q->personnel?->full_name ?? 'Run') . ' returned to QA Review for correction.')->send();
+    }
 
     // ---------------- Classroom approval (the Classroom tab) ----------------
 
@@ -109,6 +184,8 @@ class QaQueue extends Page
     public string $clsVeevaUrl = '';
     public string $clsLms = '';
     public string $clsPassword = '';
+    public string $clsReason = '';
+    public string $clsComment = '';
 
     public function openClassSignoff(int $sessionId): void
     {
@@ -120,7 +197,7 @@ class QaQueue extends Page
     }
     public function openClassReopen(int $sessionId): void
     {
-        $this->clsSid = $sessionId; $this->clsMode = 'reopen'; $this->clsPassword = '';
+        $this->clsSid = $sessionId; $this->clsMode = 'reopen'; $this->clsPassword = ''; $this->clsReason = ''; $this->clsComment = '';
     }
     public function closeClassSignoff(): void { $this->clsSid = null; }
 
@@ -179,6 +256,12 @@ class QaQueue extends Page
         $s = \App\Models\ClassSession::find($this->clsSid);
         if (! $s) return;
         if (! $this->canApprove()) { Notification::make()->danger()->title('Not Authorized')->send(); return; }
+        $reason = trim($this->clsReason);
+        $comment = trim($this->clsComment);
+        if ($reason === '' || $comment === '') {
+            Notification::make()->warning()->title('Reason And Comment Required')->body('Provide a reason and comment to reopen this sign-off.')->send();
+            return;
+        }
         if ((bool) Setting::get('esig_required', true) && ! Hash::check($this->clsPassword, Auth::user()->password)) {
             Notification::make()->danger()->title('Signature Failed')->body('Password did not match.')->send();
             return;
@@ -191,7 +274,7 @@ class QaQueue extends Page
         ElectronicSignature::create([
             'signable_type' => \App\Models\ClassSession::class, 'signable_id' => $s->id,
             'user_id' => Auth::id(), 'signer_name' => Auth::user()->name, 'meaning' => 'Classroom Sign-off Reopened',
-            'statement' => 'Reopened classroom sign-off for correction; ' . $n . ' trainee(s) returned to QA review.', 'signed_at' => now(),
+            'statement' => 'Reopened classroom sign-off for correction; ' . $n . ' trainee(s) returned to QA review. Reason: ' . $reason . '. Comment: ' . $comment, 'signed_at' => now(),
         ]);
         $this->clsSid = null;
         Notification::make()->success()->title('Reopened')->body($n . ' trainee(s) returned to QA review.')->send();

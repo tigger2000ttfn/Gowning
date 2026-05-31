@@ -4,6 +4,7 @@
     @include('filament.page-hero', ['title' => 'QA Review', 'icon' => 'heroicon-o-clipboard-document-check', 'actions' => '
         <button type="button" wire:click="setTab(\'runs\')" class="gqs-tab ' . ($tab === 'runs' ? 'active' : '') . '">Run Sign-off</button>
         <button type="button" wire:click="setTab(\'classroom\')" class="gqs-tab ' . ($tab === 'classroom' ? 'active' : '') . '">Classroom Sign-off</button>
+        <button type="button" wire:click="setTab(\'historical\')" class="gqs-tab ' . ($tab === 'historical' ? 'active' : '') . '">Historical</button>
     '])
 
     @if($tab === 'classroom')
@@ -90,7 +91,7 @@
                 </div>
             @endif
         @endif
-    @else
+    @elseif($tab === 'runs')
     {{-- ===================== RUN SIGN-OFF TAB ===================== --}}
     @php $queue = $this->getQueue(); $failed = $this->getFailed();
         $unassigned = $queue->filter(fn ($q) => ! $q->qa_owner_id)->count();
@@ -168,6 +169,72 @@
         </div>
     </div>
     @endif
+    @else
+    {{-- ===================== HISTORICAL TAB ===================== --}}
+    @php $histRuns = $this->recentlyApprovedRuns(); $histClasses = $this->recentlySignedClassrooms(); @endphp
+    @unless($canApprove)
+        <div class="gqs-panel"><div class="gqs-empty" style="padding:14px;color:#8A6D0B;">You can view sign-off history, but only a QA Approver can undo an approval.</div></div>
+    @endunless
+
+    <div class="gqs-panel" style="margin-bottom:16px;">
+        <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-shield-check"/> QA Approved Runs
+            <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($histRuns) }} recent</span>
+        </div>
+        <div class="gqs-panel-body">
+            <table class="gqs-tbl">
+                <thead><tr><th>Name</th><th>Employee ID</th><th>Session Type</th><th>Approved</th><th>Historic</th><th style="text-align:right;">Action</th></tr></thead>
+                <tbody>
+                    @forelse($histRuns as $r)
+                        <tr>
+                            <td>{{ $r['name'] }}</td>
+                            <td>{{ $r['employee_id'] ?: '—' }}</td>
+                            <td>{{ $r['type'] }}</td>
+                            <td>{{ $r['approved_at'] }}</td>
+                            <td>@if($r['archived'])<span class="gqs-pill gqs-pill-gray">Historical</span>@else<span class="gqs-pill gqs-pill-green">Active</span>@endif</td>
+                            <td style="text-align:right;">
+                                @if($canApprove)
+                                    <button type="button" wire:click="openRunUndo({{ $r['id'] }})" class="sb-act" style="background:#6A6A72;">Undo Approval</button>
+                                @else
+                                    <span class="gqs-pill gqs-pill-green">Approved</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No QA-approved runs yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="gqs-panel">
+        <div class="gqs-panel-head" style="background:linear-gradient(135deg,#2E7D5B,#225F46);"><x-filament::icon icon="heroicon-m-academic-cap"/> Signed-off Classroom Sessions
+            <span style="margin-left:auto;font-size:12px;font-weight:600;opacity:.9;">{{ count($histClasses) }} recent</span>
+        </div>
+        <div class="gqs-panel-body">
+            <table class="gqs-tbl">
+                <thead><tr><th>Session</th><th>Veeva</th><th>Signed</th><th style="text-align:right;">Action</th></tr></thead>
+                <tbody>
+                    @forelse($histClasses as $sc)
+                        <tr>
+                            <td>{{ $sc['title'] }}</td>
+                            <td>{{ $sc['veeva'] ?: '—' }}</td>
+                            <td>{{ $sc['signed_at'] }}</td>
+                            <td style="text-align:right;">
+                                @if($canApprove)
+                                    <button type="button" wire:click="openClassReopen({{ $sc['id'] }})" class="sb-act" style="background:#6A6A72;">Reopen / Undo</button>
+                                @else
+                                    <span class="gqs-pill gqs-pill-green">Signed</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" style="text-align:center;padding:18px;color:var(--gqs-text-dim,#6A6A72);">No signed-off classroom sessions yet.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
     @endif
 
     <style>
@@ -271,7 +338,14 @@
                 <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-academic-cap"/></span>{{ $clsMode === 'reopen' ? 'Reopen Classroom Sign-off' : 'Classroom Sign-off' }} · {{ $cd['title'] }}</div>
                 <div class="gqs-modal-body">
                     @if($clsMode === 'reopen')
-                        <div style="font-size:13px;line-height:1.5;">Reopening returns the completed trainees on this session to QA review for correction. This is a recorded, electronically-signed action.</div>
+                        <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">Reopening returns the completed trainees on this session to QA review for correction. A reason and comment are required and recorded.</div>
+                        <div><label class="gqs-flbl">Reason <span style="color:#C8102E;">*</span></label>
+                            <select wire:model="clsReason" class="gqs-fld">
+                                <option value="">Select a reason...</option>
+                                @foreach($this->undoReasons() as $val => $lbl)<option value="{{ $val }}">{{ $lbl }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div><label class="gqs-flbl">Comment <span style="color:#C8102E;">*</span></label><input type="text" wire:model="clsComment" class="gqs-fld" placeholder="What needs correcting?"></div>
                         @if($cd['esig'])<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="clsPassword" class="gqs-fld"></div>@endif
                     @else
                         <div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);">{{ $cd['count'] }} trainee(s) pending: {{ $cd['names'] ?: '—' }}</div>
@@ -294,6 +368,30 @@
                     @else
                         <button type="button" wire:click="finalizeClassSignoff" class="gqs-btn" style="background:#2E7D5B;color:#fff;" @disabled($cd['signer_is_trainee'])>Sign Off Session</button>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Run undo (revert a QA approval) --}}
+    @if($undoQid)
+        <div class="gqs-modal-overlay" wire:click.self="closeRunUndo">
+            <div class="gqs-modal" style="width:480px;">
+                <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-arrow-uturn-left"/></span>Undo QA Approval</div>
+                <div class="gqs-modal-body">
+                    <div style="font-size:13.5px;line-height:1.5;color:var(--gqs-text,#1A1A1F);">This returns the run to QA Review for correction. A reason and comment are required and recorded to history.</div>
+                    <div><label class="gqs-flbl">Reason <span style="color:#C8102E;">*</span></label>
+                        <select wire:model="undoReason" class="gqs-fld">
+                            <option value="">Select a reason...</option>
+                            @foreach($this->undoReasons() as $val => $lbl)<option value="{{ $val }}">{{ $lbl }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div><label class="gqs-flbl">Comment <span style="color:#C8102E;">*</span></label><input type="text" wire:model="undoComment" class="gqs-fld" placeholder="What needs correcting?"></div>
+                    @if((bool) \App\Models\Setting::get('esig_required', true))<div><label class="gqs-flbl">Confirm Your Password</label><input type="password" wire:model="undoPassword" class="gqs-fld"></div>@endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:space-between;">
+                    <button type="button" wire:click="closeRunUndo" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button type="button" wire:click="finalizeRunUndo" class="gqs-btn" style="background:#6A6A72;color:#fff;">Revert To QA Review</button>
                 </div>
             </div>
         </div>

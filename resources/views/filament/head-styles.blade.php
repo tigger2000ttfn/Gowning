@@ -187,6 +187,7 @@
     .gqs-pill-gold { background:#FBF3DC; color:#8A6D0B; }
     .gqs-pill-green { background:#DDF3E9; color:#1E7A52; }
     .gqs-pill-purple { background:#EFE6F5; color:#6B2C91; }
+    .gqs-pill-gray { background:#ECECEF; color:#5A5A62; }
     .gqs-empty { padding:22px 16px; text-align:center; color:var(--gqs-text-dim,#9A9AA4); font-size:13.5px; }
     html.dark .gqs-tbl td { color:#E4E4E8; }
 
