@@ -7,7 +7,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListClassCompletions extends ListRecords
 {
     use GqsListHero;
-    public ?string $gqsTitle = 'Class Completions';
+    public ?string $gqsTitle = 'Session Completions';
     public ?string $gqsSubtitle = 'Recorded gowning class completions on file.';
     public ?string $gqsIcon = 'heroicon-o-clipboard-document-check';
     protected static string $resource = ClassCompletionResource::class;

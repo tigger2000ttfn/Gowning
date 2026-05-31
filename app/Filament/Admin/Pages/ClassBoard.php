@@ -22,10 +22,10 @@ class ClassBoard extends Page
     public static function canViewAny(): bool { return static::allowed(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
-    protected static ?string $navigationLabel = 'Class Board';
-    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
+    protected static ?string $navigationLabel = 'Session Board';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sessions';
     protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Class Board';
+    protected static ?string $title = 'Session Board';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.class-board';

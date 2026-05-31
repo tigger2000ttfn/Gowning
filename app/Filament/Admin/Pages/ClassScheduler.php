@@ -23,10 +23,10 @@ class ClassScheduler extends Page
     public static function canViewAny(): bool { return static::allowed(); }
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
-    protected static ?string $navigationLabel = 'Class Scheduler';
-    protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
+    protected static ?string $navigationLabel = 'Session Scheduler';
+    protected static string|\UnitEnum|null $navigationGroup = 'Sessions';
     protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Class Scheduler';
+    protected static ?string $title = 'Session Scheduler';
     public function getHeading(): string { return ''; }
 
     protected string $view = 'filament.pages.class-scheduler';
