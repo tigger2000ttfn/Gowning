@@ -175,6 +175,7 @@ class PrintController extends Controller
             'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
             'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),
             'generated' => now()->setTimezone('America/New_York'),
+            'generatedBy' => \Illuminate\Support\Facades\Auth::user()?->name ?? 'System',
         ];
 
         if (request()->boolean('pdf', true)) {
@@ -275,6 +276,7 @@ class PrintController extends Controller
             'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
             'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),
             'generated' => now()->setTimezone('America/New_York'),
+            'generatedBy' => \Illuminate\Support\Facades\Auth::user()?->name ?? 'System',
         ];
 
         if ($request->boolean('pdf', true)) {

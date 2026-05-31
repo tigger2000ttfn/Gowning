@@ -26,9 +26,4 @@
             </tbody></table>
         @endif
     </div>
-
-    <table class="sign-tbl"><tr>
-        <td style="width:50%;"><div class="sign-line"></div><div class="sign-lbl">Prepared By, Signature / Date</div></td>
-        <td style="width:50%;"><div class="sign-line"></div><div class="sign-lbl">QA Reviewed By, Signature / Date</div></td>
-    </tr></table>
 @endsection

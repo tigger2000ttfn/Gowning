@@ -1,10 +1,8 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Reports', 'icon' => 'heroicon-o-chart-bar'])
-
-    {!! '<div class="gqs-tabs">
+    @include('filament.page-hero', ['title' => 'Reports', 'icon' => 'heroicon-o-chart-bar', 'actions' => '
         <button type="button" wire:click="setTab(\'metrics\')" class="gqs-tab ' . ($tab === 'metrics' ? 'active' : '') . '">Metrics Dashboard</button>
         <button type="button" wire:click="setTab(\'reports\')" class="gqs-tab ' . ($tab === 'reports' ? 'active' : '') . '">Reports</button>
-    </div>' !!}
+    '])
 
     @if($tab === 'metrics')
     @php $pf = $this->passFail; @endphp

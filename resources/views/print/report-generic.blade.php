@@ -17,9 +17,4 @@
             <div class="empty" style="text-align:right;border:none;color:#6A6A72;margin-top:6px;">{{ count($rows) }} record(s)</div>
         @endif
     </div>
-
-    <table class="sign-tbl"><tr>
-        <td style="width:50%;"><div class="sign-line"></div><div class="sign-lbl">Prepared By, Signature / Date</div></td>
-        <td style="width:50%;"><div class="sign-line"></div><div class="sign-lbl">Reviewed By, Signature / Date</div></td>
-    </tr></table>
 @endsection

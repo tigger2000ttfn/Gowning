@@ -24,7 +24,7 @@ class ClassBoard extends Page
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
     protected static ?string $navigationLabel = 'Class Board';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
     protected static ?string $title = 'Class Board';
     public function getHeading(): string { return ''; }
 
