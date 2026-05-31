@@ -1,14 +1,15 @@
 <?php
 namespace App\Filament\Admin\Resources\QualificationResource\Pages;
+
 use App\Enums\Capability;
 use App\Enums\QualificationStatus;
 use App\Enums\QualificationType;
 use App\Enums\WorkflowStage;
-use App\Filament\Admin\Concerns\GqsListHero;
 use App\Filament\Admin\Resources\QualificationResource;
 use App\Models\ClassCompletion;
 use App\Models\Personnel;
 use App\Models\Qualification;
+use App\Models\QualificationRun;
 use App\Models\Setting;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
@@ -17,20 +18,223 @@ use Illuminate\Support\Facades\Auth;
 
 class ListQualifications extends ListRecords
 {
-    use GqsListHero;
-    public ?string $gqsTitle = 'Active Runs';
-    public ?string $gqsSubtitle = 'Current qualification status for active people: due, in progress, lapsed, or mid-pipeline. Completed run history lives under Run Completions.';
-    public ?string $gqsIcon = 'heroicon-o-shield-check';
     protected static string $resource = QualificationResource::class;
+
+    /** Render our custom command-center view instead of the default Filament table page. */
+    public function getView(): string { return 'filament.pages.active-runs'; }
+    public function getHeader(): ?\Illuminate\Contracts\View\View { return view('filament.empty-header'); }
+    public function getHeading(): string { return ''; }
+    public function getSubheading(): ?string { return null; }
+
+    public string $tab = 'roster';                 // roster | dashboard
+    public string $filterStage = '';               // '' | stage value
+    public string $search = '';
+
+    public function getTitle(): string { return 'Active Runs'; }
+
+    public function setTab(string $t): void { $this->tab = in_array($t, ['roster', 'dashboard'], true) ? $t : 'roster'; }
+    public function isSuperUser(): bool { return (bool) Auth::user()?->hasCapability(Capability::ManageUsers); }
+
+    // ===================== ROSTER DATA =====================
+
+    protected function activeQuery()
+    {
+        return Qualification::query()
+            ->with('personnel')
+            ->where('workflow_stage', '!=', WorkflowStage::Archived->value)
+            ->whereNull('superseded_at');
+    }
+
+    public function stageOptions(): array
+    {
+        $opts = ['' => 'All Stages'];
+        foreach (WorkflowStage::cases() as $c) {
+            if (in_array($c->value, ['archived'], true)) continue;
+            $opts[$c->value] = \App\Models\WorkflowStatus::labelFor('run', $c->value, $c->label());
+        }
+        return $opts;
+    }
+
+    public function rows(): array
+    {
+        $q = $this->activeQuery();
+        if ($this->filterStage !== '') $q->where('workflow_stage', $this->filterStage);
+        if (trim($this->search) !== '') {
+            $term = '%' . trim($this->search) . '%';
+            $q->whereHas('personnel', fn ($p) => $p
+                ->where('first_name', 'ilike', $term)->orWhere('last_name', 'ilike', $term)
+                ->orWhere('employee_id', 'ilike', $term));
+        }
+
+        return $q->get()
+            ->sortBy(fn ($qual) => sprintf('%02d-%020d', $this->stageSort($qual->workflow_stage?->value), $qual->due_date?->timestamp ?? PHP_INT_MAX))
+            ->map(function ($qual) {
+                $stageEnum = $qual->workflow_stage;
+                $stageVal = $stageEnum?->value;
+                $stageLabel = $stageEnum ? \App\Models\WorkflowStatus::labelFor('run', $stageVal, $stageEnum->label()) : '-';
+                [$pillTxt, $pillColor] = $this->statusPill($qual);
+                $latestRun = $qual->runs()->whereNotNull('lims_worklist_id')->latest('id')->first();
+                $worklist = $latestRun?->lims_worklist_id ?? $qual->lims_worklist_id;
+                $needsWorklist = in_array($stageVal, ['run_performed', 'incubating', 'awaiting_results'], true) && ! $worklist;
+                return [
+                    'id' => $qual->id,
+                    'personnel_id' => $qual->personnel_id,
+                    'name' => $qual->personnel?->full_name ?? 'Unknown',
+                    'employee_id' => $qual->personnel?->employee_id,
+                    'department' => $qual->personnel?->department,
+                    'type' => $qual->sessionLabel(),
+                    'stage' => $stageVal,
+                    'stage_label' => $stageLabel,
+                    'stage_color' => $stageEnum ? $stageEnum->color() : '#6B6B73',
+                    'status_pill' => $pillTxt,
+                    'status_color' => $pillColor,
+                    'passes' => (int) $qual->runs_completed,
+                    'required' => (int) $qual->runs_required,
+                    'due' => $qual->due_date?->gmp(),
+                    'past_due' => $qual->isPastDue(),
+                    'worklist' => $worklist,
+                    'needs_worklist' => $needsWorklist,
+                ];
+            })->values()->all();
+    }
+
+    protected function stageSort(?string $stage): int
+    {
+        $order = ['class_pending', 'class_complete', 'run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review', 'qa_signoff', 'failed'];
+        $i = array_search($stage, $order, true);
+        return $i === false ? 99 : $i;
+    }
+
+    /** The display status pill (mirrors the board logic). Returns [label, hexColor]. */
+    protected function statusPill(Qualification $qual): array
+    {
+        $stage = $qual->workflow_stage?->value;
+        $status = $qual->status instanceof \BackedEnum ? $qual->status->value : $qual->status;
+        $inPipeline = in_array($stage, ['run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review'], true);
+        if ($status === 'lapsed') return ['Lapsed Qual', '#C8102E'];
+        if ($stage === 'failed') return ['Failed', '#C8102E'];
+        if ($stage === 'qa_signoff') return ['Qualified', '#2E7D5B'];
+        if ($status === 'qualified' && $qual->qualified_date && ! $inPipeline) {
+            return $qual->isPastDue() ? ['Lapsed Qual', '#C8102E'] : ['Qualified', '#2E7D5B'];
+        }
+        if ($inPipeline || $status === 'in_progress') return ['In Progress', '#C79A2E'];
+        if ($status === 'pending') return ['Pending', '#6B6B73'];
+        return [ucwords(str_replace('_', ' ', (string) $status)), '#6B6B73'];
+    }
+
+    // ===================== DASHBOARD STATS =====================
+
+    public function stats(): array
+    {
+        $all = $this->activeQuery()->get();
+        $byStage = $all->groupBy(fn ($q) => $q->workflow_stage?->value);
+        $pipeline = ['run_scheduled', 'run_performed', 'incubating', 'awaiting_results', 'results_released', 'qa_review'];
+        $dueSoonWindow = (int) Setting::get('requal_window_days', 30);
+
+        $inPipeline = $all->filter(fn ($q) => in_array($q->workflow_stage?->value, $pipeline, true))->count();
+        $pastDue = $all->filter(fn ($q) => $q->isPastDue())->count();
+        $dueSoon = $all->filter(function ($q) use ($dueSoonWindow) {
+            if (! $q->due_date || $q->isPastDue()) return false;
+            return now()->diffInDays($q->due_date, false) <= $dueSoonWindow;
+        })->count();
+        $awaitingClass = $all->filter(fn ($q) => in_array($q->workflow_stage?->value, ['class_pending', 'class_complete'], true))->count();
+        $inQa = ($byStage['qa_review'] ?? collect())->count();
+
+        return [
+            'total' => $all->count(),
+            'in_pipeline' => $inPipeline,
+            'awaiting_class' => $awaitingClass,
+            'in_qa' => $inQa,
+            'due_soon' => $dueSoon,
+            'past_due' => $pastDue,
+        ];
+    }
+
+    /** Per-stage counts for the dashboard funnel. */
+    public function stageFunnel(): array
+    {
+        $all = $this->activeQuery()->get();
+        $byStage = $all->groupBy(fn ($q) => $q->workflow_stage?->value);
+        $funnel = [];
+        foreach (['class_pending' => 'Class Pending', 'class_complete' => 'Class Complete', 'run_scheduled' => 'Run Scheduled', 'run_performed' => 'Run Performed', 'incubating' => 'Incubating', 'awaiting_results' => 'Awaiting Results', 'results_released' => 'QCM Review', 'qa_review' => 'QA Review', 'qa_signoff' => 'QA Approved'] as $k => $label) {
+            $funnel[] = ['key' => $k, 'label' => $label, 'count' => ($byStage[$k] ?? collect())->count(), 'color' => WorkflowStage::tryFrom($k)?->color() ?? '#6B6B73'];
+        }
+        return $funnel;
+    }
+
+    // ===================== DATA-GAP FIX-IT CARDS =====================
+
+    public function gaps(): array
+    {
+        $gaps = [];
+
+        $bookedNoQual = \App\Models\Reservation::query()
+            ->whereIn('status', ['requested', 'approved'])
+            ->whereHas('personnel', fn ($p) => $p->whereDoesntHave('qualification'))
+            ->with('personnel')->get()->pluck('personnel')->filter()->unique('id');
+        $gaps['booked_no_qual'] = [
+            'count' => $bookedNoQual->count(),
+            'people' => $bookedNoQual->take(12)->map(fn ($p) => ['id' => $p->id, 'name' => $p->full_name, 'employee_id' => $p->employee_id])->all(),
+        ];
+
+        $noWorklist = $this->activeQuery()
+            ->whereDoesntHave('runs', fn ($r) => $r->whereNotNull('lims_worklist_id'))
+            ->whereNull('lims_worklist_id')
+            ->whereIn('workflow_stage', [WorkflowStage::RunPerformed->value, WorkflowStage::Incubating->value, WorkflowStage::AwaitingResults->value])
+            ->get();
+        $gaps['no_worklist'] = [
+            'count' => $noWorklist->count(),
+            'people' => $noWorklist->take(12)->map(fn ($q) => ['id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown', 'employee_id' => $q->personnel?->employee_id])->all(),
+        ];
+
+        $noClass = $this->activeQuery()
+            ->where('class_on_file', false)
+            ->whereIn('workflow_stage', [WorkflowStage::RunScheduled->value, WorkflowStage::RunPerformed->value, WorkflowStage::Incubating->value, WorkflowStage::AwaitingResults->value])
+            ->get();
+        $gaps['no_class'] = [
+            'count' => $noClass->count(),
+            'people' => $noClass->take(12)->map(fn ($q) => ['id' => $q->id, 'name' => $q->personnel?->full_name ?? 'Unknown', 'employee_id' => $q->personnel?->employee_id])->all(),
+        ];
+
+        return $gaps;
+    }
+
+    // ---- Link-worklist modal (fix the gap right here) ----
+    public ?int $wlQid = null;
+    public string $wlValue = '';
+    public function openLinkWorklist(int $qid): void
+    {
+        $q = Qualification::find($qid);
+        $run = $q ? QualificationRun::where('personnel_id', $q->personnel_id)->latest('run_date')->latest('id')->first() : null;
+        $this->wlQid = $qid;
+        $this->wlValue = $run?->lims_worklist_id ?? '';
+    }
+    public function closeLinkWorklist(): void { $this->wlQid = null; $this->wlValue = ''; }
+    public function wlPersonName(): ?string
+    {
+        return $this->wlQid ? (Qualification::with('personnel')->find($this->wlQid)?->personnel?->full_name ?? 'Operator') : null;
+    }
+    public function saveLinkWorklist(): void
+    {
+        $q = Qualification::find($this->wlQid);
+        if (! $q) { $this->wlQid = null; return; }
+        $wl = strtoupper(trim($this->wlValue));
+        if ($wl === '') { Notification::make()->danger()->title('Worklist Required')->send(); return; }
+        if (! str_starts_with($wl, 'EM-')) { $wl = 'EM-' . ltrim(preg_replace('/^EM[-\s]*/i', '', $wl), '-'); }
+        $q->lims_worklist_id = $wl;
+        $q->save();
+        $runsQ = QualificationRun::where('personnel_id', $q->personnel_id);
+        if ($q->cycle_started_at) { $runsQ->whereDate('run_date', '>=', $q->cycle_started_at); }
+        $runsQ->update(['lims_worklist_id' => $wl]);
+        $latest = QualificationRun::where('personnel_id', $q->personnel_id)->latest('id')->first();
+        if ($latest) { app(\App\Services\WorklistSync::class)->syncRun($latest); }
+        $this->wlQid = null; $this->wlValue = '';
+        Notification::make()->success()->title('Worklist Linked')->body($wl . ' linked. LIMS data will sync.')->send();
+    }
 
     // ---- In-place onboarding (super user) for a booked person with no qualification ----
     public ?int $onboardPersonId = null;
     public array $onboard = ['type' => 'initial', 'due_date' => null, 'class_done' => false, 'class_date' => null];
-
-    public function isSuperUser(): bool
-    {
-        return (bool) Auth::user()?->hasCapability(Capability::ManageUsers);
-    }
 
     public function openOnboard(int $personnelId): void
     {
@@ -39,7 +243,6 @@ class ListQualifications extends ListRecords
         $this->onboard = ['type' => 'initial', 'due_date' => null, 'class_done' => false, 'class_date' => null];
     }
     public function closeOnboard(): void { $this->onboardPersonId = null; }
-
     public function onboardPersonName(): ?string
     {
         return $this->onboardPersonId ? Personnel::find($this->onboardPersonId)?->full_name : null;
@@ -87,75 +290,6 @@ class ListQualifications extends ListRecords
         }
         app(\App\Services\QualificationSeeder::class)->reconcile($qual);
         $this->onboardPersonId = null;
-        Notification::make()->success()->title('Qualification Created')
-            ->body($p->full_name . ' is now in the workflow.')->send();
-    }
-
-    /**
-     * Data-gap alerts so analysts can fill missing pieces on people who are real/active but whose
-     * historical data is not fully entered yet. Shown as stat boxes above the table.
-     */
-    public function gqsAlerts(): array
-    {
-        $alerts = [];
-
-        // 1) People with an active run reservation but NO qualification record at all. They are booked
-        //    but invisible to the pipeline until a qualification exists - their historical/onboarding
-        //    data needs entering.
-        $bookedNoQual = \App\Models\Reservation::query()
-            ->whereIn('status', ['requested', 'approved'])
-            ->whereHas('personnel', fn ($p) => $p->whereDoesntHave('qualification'))
-            ->with('personnel')->get()
-            ->pluck('personnel')->filter()->unique('id');
-        if ($bookedNoQual->count()) {
-            $alerts[] = [
-                'count' => $bookedNoQual->count(),
-                'label' => 'Booked, No Qualification Record',
-                'hint' => 'Has a run reservation but no qualification. Set up their qualification to enter the workflow.',
-                'names' => $bookedNoQual->take(5)->map(fn ($p) => $p->full_name)->implode(', '),
-                'people' => $bookedNoQual->take(8)->map(fn ($p) => ['id' => $p->id, 'name' => $p->full_name])->all(),
-                'action' => $this->isSuperUser() ? 'openOnboard' : null,
-                'accent' => '#C8102E', 'icon' => 'heroicon-o-exclamation-triangle',
-            ];
-        }
-
-        // 2) Active qualifications in/near the run pipeline with NO classroom training on file. The class
-        //    is a prerequisite; flag so it can be recorded.
-        $noClass = \App\Models\Qualification::query()
-            ->whereNull('superseded_at')
-            ->where('class_on_file', false)
-            ->whereIn('workflow_stage', [
-                \App\Enums\WorkflowStage::RunScheduled->value, \App\Enums\WorkflowStage::RunPerformed->value,
-                \App\Enums\WorkflowStage::Incubating->value, \App\Enums\WorkflowStage::AwaitingResults->value,
-            ])->with('personnel')->get();
-        if ($noClass->count()) {
-            $alerts[] = [
-                'count' => $noClass->count(),
-                'label' => 'Missing Classroom Training',
-                'hint' => 'In the run pipeline without gowning class on file. Record their class.',
-                'names' => $noClass->take(5)->map(fn ($q) => $q->personnel?->full_name)->filter()->implode(', '),
-                'accent' => '#C79A2E', 'icon' => 'heroicon-o-academic-cap',
-            ];
-        }
-
-        // 3) Runs performed / in pipeline with no LIMS worklist linked yet (so nothing auto-flows).
-        $noWorklist = \App\Models\Qualification::query()
-            ->whereNull('superseded_at')
-            ->whereNull('lims_worklist_id')
-            ->whereIn('workflow_stage', [
-                \App\Enums\WorkflowStage::RunPerformed->value, \App\Enums\WorkflowStage::Incubating->value,
-                \App\Enums\WorkflowStage::AwaitingResults->value,
-            ])->with('personnel')->get();
-        if ($noWorklist->count()) {
-            $alerts[] = [
-                'count' => $noWorklist->count(),
-                'label' => 'No LIMS Worklist Linked',
-                'hint' => 'Run is performed but has no worklist, so LIMS data cannot sync. Link it on the Run Scheduler.',
-                'names' => $noWorklist->take(5)->map(fn ($q) => $q->personnel?->full_name)->filter()->implode(', '),
-                'accent' => '#1F6FB2', 'icon' => 'heroicon-o-beaker',
-            ];
-        }
-
-        return $alerts;
+        Notification::make()->success()->title('Qualification Created')->body($p->full_name . ' is now in the workflow.')->send();
     }
 }

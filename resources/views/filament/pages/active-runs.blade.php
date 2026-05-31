@@ -1,0 +1,230 @@
+<x-filament-panels::page>
+    @include('filament.page-hero', ['title' => 'Active Runs', 'icon' => 'heroicon-o-shield-check'])
+
+    @php $stats = $this->stats(); $gaps = $this->gaps(); $totalGaps = $gaps['booked_no_qual']['count'] + $gaps['no_worklist']['count'] + $gaps['no_class']['count']; @endphp
+
+    {{-- Stat cards --}}
+    <div class="gqs-stats">
+        <div class="gqs-stat charcoal"><div class="n">{{ $stats['total'] }}</div><div class="l">Active Records</div><span class="wm"><x-filament::icon icon="heroicon-o-shield-check"/></span></div>
+        <div class="gqs-stat gold"><div class="n">{{ $stats['in_pipeline'] }}</div><div class="l">In Run Pipeline</div><span class="wm"><x-filament::icon icon="heroicon-o-arrow-path"/></span></div>
+        <div class="gqs-stat" style="--g1:#1F6FB2;--g2:#185A92;"><div class="n">{{ $stats['awaiting_class'] }}</div><div class="l">Awaiting / Done Class</div><span class="wm"><x-filament::icon icon="heroicon-o-academic-cap"/></span></div>
+        <div class="gqs-stat purple"><div class="n">{{ $stats['in_qa'] }}</div><div class="l">In QA Review</div><span class="wm"><x-filament::icon icon="heroicon-o-clipboard-document-check"/></span></div>
+        <div class="gqs-stat gold"><div class="n">{{ $stats['due_soon'] }}</div><div class="l">Due Soon</div><span class="wm"><x-filament::icon icon="heroicon-o-clock"/></span></div>
+        <div class="gqs-stat red"><div class="n">{{ $stats['past_due'] }}</div><div class="l">Past Due</div><span class="wm"><x-filament::icon icon="heroicon-o-exclamation-triangle"/></span></div>
+    </div>
+
+    {{-- Tabs --}}
+    <div class="ar-tabs">
+        <button type="button" wire:click="setTab('roster')" class="ar-tab {{ $tab === 'roster' ? 'active' : '' }}">Roster</button>
+        <button type="button" wire:click="setTab('dashboard')" class="ar-tab {{ $tab === 'dashboard' ? 'active' : '' }}">Dashboard</button>
+        @if($totalGaps > 0)<span class="ar-tab-badge" title="{{ $totalGaps }} records need attention">{{ $totalGaps }} need attention</span>@endif
+    </div>
+
+    @if($tab === 'roster')
+        {{-- Fix-it cards: only when there is something to fix --}}
+        @if($totalGaps > 0)
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px;">
+                @if($gaps['no_worklist']['count'] > 0)
+                    <div class="ar-fix" style="--fix:#1F6FB2;">
+                        <div class="ar-fix-h"><x-filament::icon icon="heroicon-m-beaker"/> <span class="ar-fix-n">{{ $gaps['no_worklist']['count'] }}</span> No LIMS Worklist</div>
+                        <div class="ar-fix-sub">Performed runs with no worklist linked, so LIMS cannot sync. Link it here.</div>
+                        <div class="ar-fix-list">
+                            @foreach($gaps['no_worklist']['people'] as $person)
+                                <button type="button" wire:click="openLinkWorklist({{ $person['id'] }})" class="ar-fix-btn">
+                                    <span>{{ $person['name'] }} <span style="opacity:.6;">{{ $person['employee_id'] }}</span></span>
+                                    <span class="ar-fix-go">Link &rarr;</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+                @if($gaps['booked_no_qual']['count'] > 0)
+                    <div class="ar-fix" style="--fix:#C8102E;">
+                        <div class="ar-fix-h"><x-filament::icon icon="heroicon-m-exclamation-triangle"/> <span class="ar-fix-n">{{ $gaps['booked_no_qual']['count'] }}</span> Booked, No Record</div>
+                        <div class="ar-fix-sub">Has a run reservation but no qualification record. {{ $this->isSuperUser() ? 'Set up their qualification.' : 'A super user must set up their qualification.' }}</div>
+                        <div class="ar-fix-list">
+                            @foreach($gaps['booked_no_qual']['people'] as $person)
+                                @if($this->isSuperUser())
+                                    <button type="button" wire:click="openOnboard({{ $person['id'] }})" class="ar-fix-btn">
+                                        <span>{{ $person['name'] }} <span style="opacity:.6;">{{ $person['employee_id'] }}</span></span>
+                                        <span class="ar-fix-go">Set Up &rarr;</span>
+                                    </button>
+                                @else
+                                    <div class="ar-fix-btn" style="cursor:default;">{{ $person['name'] }}</div>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+                @if($gaps['no_class']['count'] > 0)
+                    <div class="ar-fix" style="--fix:#C79A2E;">
+                        <div class="ar-fix-h"><x-filament::icon icon="heroicon-m-academic-cap"/> <span class="ar-fix-n">{{ $gaps['no_class']['count'] }}</span> Missing Class</div>
+                        <div class="ar-fix-sub">In the run pipeline without gowning class on file. Record their class on the Class Scheduler.</div>
+                        <div class="ar-fix-list">
+                            @foreach($gaps['no_class']['people'] as $person)
+                                <a href="{{ \App\Filament\Admin\Pages\ClassScheduler::getUrl() }}" class="ar-fix-btn" style="text-decoration:none;">
+                                    <span>{{ $person['name'] }} <span style="opacity:.6;">{{ $person['employee_id'] }}</span></span>
+                                    <span class="ar-fix-go">Class &rarr;</span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
+        {{-- Roster table --}}
+        <div class="gqs-panel">
+            <div class="gqs-panel-head" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <x-filament::icon icon="heroicon-m-users"/> Active Qualification Records
+                <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search name or ID" class="gqs-fld" style="width:auto;min-width:170px;padding:5px 10px;">
+                    <select wire:model.live="filterStage" class="gqs-fld" style="width:auto;min-width:150px;padding:5px 10px;">
+                        @foreach($this->stageOptions() as $val => $label)<option value="{{ $val }}">{{ $label }}</option>@endforeach
+                    </select>
+                </span>
+            </div>
+            <div class="gqs-panel-body">
+                @php $rows = $this->rows(); @endphp
+                @if(empty($rows))
+                    <div class="gqs-empty">No active records match. Completed records move to Run Completions.</div>
+                @else
+                    <table class="gqs-tbl">
+                        <thead><tr><th>Employee</th><th>Name</th><th>Department</th><th>Type</th><th>Stage</th><th>Status</th><th>Runs</th><th>Due</th><th>Worklist</th></tr></thead>
+                        <tbody>
+                            @foreach($rows as $row)
+                                <tr wire:key="ar-{{ $row['id'] }}-{{ $row['stage'] }}" style="cursor:pointer;" onclick="window.location='{{ \App\Filament\Admin\Resources\QualificationResource::getUrl('view', ['record' => $row['id']]) }}'">
+                                    <td style="font-weight:600;">{{ $row['employee_id'] ?: '-' }}</td>
+                                    <td>{{ $row['name'] }}</td>
+                                    <td>{{ $row['department'] ?: '-' }}</td>
+                                    <td>{{ $row['type'] }}</td>
+                                    <td><span class="gqs-pill" style="background:{{ $row['stage_color'] }}1A;color:{{ $row['stage_color'] }};font-weight:700;">{{ $row['stage_label'] }}</span></td>
+                                    <td><span class="gqs-pill" style="background:{{ $row['status_color'] }}1A;color:{{ $row['status_color'] }};font-weight:700;">{{ $row['status_pill'] }}</span></td>
+                                    <td style="white-space:nowrap;">
+                                        <span style="display:inline-flex;gap:3px;align-items:center;">
+                                            @for($i = 0; $i < $row['required']; $i++)
+                                                <span style="width:9px;height:9px;border-radius:50%;background:{{ $i < $row['passes'] ? '#2E7D5B' : 'var(--gqs-border,#D5D5DC)' }};"></span>
+                                            @endfor
+                                            <span style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-left:3px;">{{ $row['passes'] }}/{{ $row['required'] }}</span>
+                                        </span>
+                                    </td>
+                                    <td style="white-space:nowrap;{{ $row['past_due'] ? 'color:#C8102E;font-weight:700;' : '' }}">{{ $row['due'] ?: '-' }}</td>
+                                    <td style="white-space:nowrap;" onclick="event.stopPropagation();">
+                                        @if($row['worklist']){{ $row['worklist'] }}
+                                        @elseif($row['needs_worklist'])
+                                            <button type="button" wire:click="openLinkWorklist({{ $row['id'] }})" class="sb-act" style="background:#1F6FB2;">+ Worklist</button>
+                                        @else <span style="color:var(--gqs-text-dim,#9A9AA4);">-</span>@endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    @else
+        {{-- Dashboard tab: pipeline funnel --}}
+        <div class="gqs-panel">
+            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-chart-bar"/> Pipeline Funnel</div>
+            <div class="gqs-panel-body" style="padding:18px;">
+                @php $funnel = $this->stageFunnel(); $max = max(1, collect($funnel)->max('count')); @endphp
+                <div style="display:flex;flex-direction:column;gap:10px;">
+                    @foreach($funnel as $f)
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:130px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);text-align:right;flex:0 0 auto;">{{ $f['label'] }}</div>
+                            <div style="flex:1;background:var(--gqs-surface-2,#F1F1F4);border-radius:8px;height:30px;position:relative;overflow:hidden;">
+                                <div style="position:absolute;inset:0 auto 0 0;width:{{ $f['count'] > 0 ? max(6, round($f['count'] / $max * 100)) : 0 }}%;background:{{ $f['color'] }};border-radius:8px;display:flex;align-items:center;padding-left:10px;">
+                                    @if($f['count'] > 0)<span style="color:#fff;font-weight:800;font-size:13px;">{{ $f['count'] }}</span>@endif
+                                </div>
+                                @if($f['count'] === 0)<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gqs-text-dim,#9A9AA4);font-size:12px;">0</span>@endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px;">
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-clock"/> Due Soon</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:#C79A2E;">{{ $stats['due_soon'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">within the requal window</div></div></div>
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-exclamation-triangle"/> Past Due</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:#C8102E;">{{ $stats['past_due'] }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">lapsed or lapsing</div></div></div>
+            <div class="gqs-panel"><div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-wrench-screwdriver"/> Data Gaps</div><div class="gqs-panel-body" style="padding:18px;text-align:center;"><div style="font-size:38px;font-weight:800;color:{{ $totalGaps > 0 ? '#C8102E' : '#2E7D5B' }};">{{ $totalGaps }}</div><div style="font-size:12.5px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">records need attention</div></div></div>
+        </div>
+    @endif
+
+    {{-- Link Worklist modal --}}
+    @if($wlQid)
+        <div class="gqs-modal-overlay" wire:click.self="closeLinkWorklist">
+            <div class="gqs-modal" style="width:430px;max-width:94vw;">
+                <div style="background:linear-gradient(135deg,#1F6FB2,#185A92);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Link LIMS Worklist</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,.9);">{{ $this->wlPersonName() }}</div>
+                </div>
+                <div class="gqs-modal-body">
+                    <label class="gqs-flbl">LIMS Worklist <span style="color:#C8102E;">*</span></label>
+                    <input type="text" wire:model="wlValue" class="gqs-fld" placeholder="EM-..." wire:keydown.enter="saveLinkWorklist">
+                    <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:6px;">Links the run to its LIMS worklist so incubation status, evaluation, and NC data sync automatically.</div>
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closeLinkWorklist" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button wire:click="saveLinkWorklist" class="gqs-btn gqs-btn-primary">Link Worklist</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Onboarding modal --}}
+    @if($onboardPersonId)
+        <div class="gqs-modal-overlay" wire:click.self="closeOnboard">
+            <div class="gqs-modal" style="width:560px;max-width:96vw;">
+                <div style="background:linear-gradient(135deg,#2E7D5B,#225F46);padding:16px 20px;border-radius:14px 14px 0 0;">
+                    <div style="font-weight:800;font-size:17px;color:#fff;">Set Up Qualification</div>
+                    <div style="font-size:12px;color:#D7EFE4;">{{ $this->onboardPersonName() }} - kick them into the workflow</div>
+                </div>
+                <div class="gqs-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+                    <div>
+                        <label class="gqs-flbl">Qualification Type</label>
+                        <select wire:model.live="onboard.type" class="gqs-fld">
+                            <option value="initial">Initial Gowning Qualification (3 runs)</option>
+                            <option value="annual">Requalification Transfer (already qualified)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="gqs-flbl">{{ ($onboard['type'] ?? 'initial') === 'annual' ? 'Next Requalification Due Date' : 'Initial Qualification Must Be Completed By' }}</label>
+                        <input type="date" wire:model="onboard.due_date" class="gqs-fld">
+                    </div>
+                    @if(($onboard['type'] ?? 'initial') === 'annual')
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" wire:model.live="onboard.class_done"> Already took the gowning class
+                        </label>
+                        @if($onboard['class_done'] ?? false)
+                            <div>
+                                <label class="gqs-flbl">Class Completion Date</label>
+                                <input type="date" wire:model="onboard.class_date" class="gqs-fld">
+                                <div style="font-size:11px;color:var(--gqs-text-dim,#6A6A72);margin-top:4px;">Recorded to their class completion history; they skip the class step.</div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+                <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                    <button wire:click="closeOnboard" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    <button wire:click="saveOnboard" class="gqs-btn gqs-btn-primary">Create Qualification</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <style>
+        .ar-tabs{display:flex;align-items:center;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+        .ar-tab{font-size:13px;font-weight:700;padding:8px 18px;border-radius:9px;border:1px solid var(--gqs-border,#E2E2E8);background:var(--gqs-surface,#fff);color:var(--gqs-text-dim,#6A6A72);cursor:pointer;}
+        .ar-tab.active{background:#1C1C21;color:#fff;border-color:#1C1C21;}
+        .ar-tab-badge{font-size:11.5px;font-weight:700;padding:6px 12px;border-radius:999px;background:#FCEEF0;color:#C8102E;border:1px solid #F2B8C0;}
+        .ar-fix{background:var(--gqs-surface,#fff);border:1px solid var(--gqs-border,#E2E2E8);border-top:3px solid var(--fix);border-radius:12px;padding:14px 16px;}
+        .ar-fix-h{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:800;color:var(--gqs-text,#1A1A1F);}
+        .ar-fix-h svg{width:18px;height:18px;color:var(--fix);}
+        .ar-fix-n{color:var(--fix);font-size:18px;}
+        .ar-fix-sub{font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);margin:5px 0 10px;line-height:1.4;}
+        .ar-fix-list{display:flex;flex-direction:column;gap:5px;max-height:230px;overflow-y:auto;}
+        .ar-fix-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;padding:7px 11px;border-radius:8px;border:1px solid var(--gqs-border,#E2E2E8);background:var(--gqs-surface-2,#F8F8FA);color:var(--gqs-text,#1A1A1F);cursor:pointer;text-align:left;width:100%;}
+        .ar-fix-btn:hover{border-color:var(--fix);}
+        .ar-fix-go{color:var(--fix);font-weight:800;white-space:nowrap;}
+    </style>
+</x-filament-panels::page>
