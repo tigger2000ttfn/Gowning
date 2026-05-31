@@ -29,6 +29,29 @@ class Reports extends Page
 
     protected string $view = 'filament.pages.reports';
 
+    public string $tab = 'metrics';   // metrics | reports
+    public function setTab(string $t): void { $this->tab = in_array($t, ['metrics', 'reports'], true) ? $t : 'metrics'; }
+
+    /** Prebuilt reports the user can run to PDF, grouped by audience. */
+    public function reportCatalog(): array
+    {
+        return [
+            'General' => [
+                ['key' => 'compliance', 'name' => 'Compliance Summary', 'desc' => 'Overdue and upcoming requalifications with pass/fail totals.', 'icon' => 'heroicon-m-shield-check'],
+                ['key' => 'roster', 'name' => 'Qualification Status Roster', 'desc' => 'Every active person with type, stage, runs, due and qualified dates.', 'icon' => 'heroicon-m-table-cells'],
+            ],
+            'QA' => [
+                ['key' => 'qa-signoffs', 'name' => 'QA Sign-Off Log', 'desc' => 'Every QA approval: who QA-approved, when, the qualified date and next due.', 'icon' => 'heroicon-m-check-badge'],
+                ['key' => 'qa-pending', 'name' => 'QA Review Queue', 'desc' => 'Records awaiting QA review or sign-off, with how long they have waited.', 'icon' => 'heroicon-m-inbox-arrow-down'],
+                ['key' => 'qa-failures', 'name' => 'Failures & Nonconformances', 'desc' => 'Failed runs and the NCs opened, for QA trending.', 'icon' => 'heroicon-m-exclamation-triangle'],
+            ],
+            'QCM' => [
+                ['key' => 'qcm-results', 'name' => 'QCM Results Log', 'desc' => 'Every result entered: worklist, pass/fail, evaluator and date.', 'icon' => 'heroicon-m-beaker'],
+                ['key' => 'qcm-incubation', 'name' => 'Incubation Status', 'desc' => 'Runs in incubation with start dates and due-out, for the micro lab.', 'icon' => 'heroicon-m-clock'],
+            ],
+        ];
+    }
+
     public function getOverdueProperty()
     {
         return Qualification::with('personnel')

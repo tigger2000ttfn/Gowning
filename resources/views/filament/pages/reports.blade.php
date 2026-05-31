@@ -1,13 +1,12 @@
 <x-filament-panels::page>
     @include('filament.page-hero', ['title' => 'Reports', 'icon' => 'heroicon-o-chart-bar'])
 
-    <div style="margin-bottom:16px;">
-        <a href="{{ route('print.report') }}" target="_blank"
-           style="display:inline-flex;align-items:center;gap:7px;padding:10px 16px;background:#A4123F;color:#fff;border-radius:9px;font-weight:700;font-size:13px;text-decoration:none;">
-            <x-filament::icon icon="heroicon-m-printer" style="width:16px;height:16px;"/> Print Compliance Report (PDF)
-        </a>
-    </div>
+    {!! '<div class="gqs-tabs">
+        <button type="button" wire:click="setTab(\'metrics\')" class="gqs-tab ' . ($tab === 'metrics' ? 'active' : '') . '">Metrics Dashboard</button>
+        <button type="button" wire:click="setTab(\'reports\')" class="gqs-tab ' . ($tab === 'reports' ? 'active' : '') . '">Reports</button>
+    </div>' !!}
 
+    @if($tab === 'metrics')
     @php $pf = $this->passFail; @endphp
     <div class="gqs-stats">
         <div class="gqs-stat red">
@@ -37,7 +36,7 @@
                 <table class="gqs-tbl">
                     <thead><tr><th>Employee</th><th>Name</th><th>Due</th></tr></thead>
                     <tbody>@foreach ($this->overdue as $q)
-                        <tr><td>{{ $q->personnel?->employee_id }}</td><td>{{ $q->personnel?->full_name }}</td>
+                        <tr><td>{{ $q->personnel?->employee_id }}</td><td><button type="button" wire:click="$dispatch('open-qual-modal', { id: {{ $q->id }} })" style="background:none;border:none;padding:0;cursor:pointer;color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record">{{ $q->personnel?->full_name }}</button></td>
                             <td><span class="gqs-pill gqs-pill-red">{{ $q->due_date?->gmp() }}</span></td></tr>
                     @endforeach</tbody>
                 </table>
@@ -54,7 +53,7 @@
                 <table class="gqs-tbl">
                     <thead><tr><th>Employee</th><th>Name</th><th>Due</th></tr></thead>
                     <tbody>@foreach ($this->upcoming as $q)
-                        <tr><td>{{ $q->personnel?->employee_id }}</td><td>{{ $q->personnel?->full_name }}</td>
+                        <tr><td>{{ $q->personnel?->employee_id }}</td><td><button type="button" wire:click="$dispatch('open-qual-modal', { id: {{ $q->id }} })" style="background:none;border:none;padding:0;cursor:pointer;color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record">{{ $q->personnel?->full_name }}</button></td>
                             <td><span class="gqs-pill gqs-pill-purple">{{ $q->due_date?->gmp() }}</span></td></tr>
                     @endforeach</tbody>
                 </table>
@@ -119,7 +118,7 @@
                         @foreach($this->pipelineAging as $row)
                             @php $q = $row->qualification; $stale = $row->days >= 14; @endphp
                             <tr>
-                                <td>{{ $q->personnel?->full_name ?? 'Unknown' }}</td>
+                                <td><button type="button" wire:click="$dispatch('open-qual-modal', { id: {{ $q->id }} })" style="background:none;border:none;padding:0;cursor:pointer;color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record">{{ $q->personnel?->full_name ?? 'Unknown' }}</button></td>
                                 <td>{{ $q->personnel?->employee_id ?: '—' }}</td>
                                 <td>{{ \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage?->value, $q->workflow_stage?->label() ?? '—') }}</td>
                                 <td>{{ $q->sessionLabel() }}</td>
@@ -145,7 +144,7 @@
                         @foreach($this->statusRoster as $q)
                             @php $pd = $q->isPastDue(); @endphp
                             <tr>
-                                <td>{{ $q->personnel?->full_name ?? 'Unknown' }}</td>
+                                <td><button type="button" wire:click="$dispatch('open-qual-modal', { id: {{ $q->id }} })" style="background:none;border:none;padding:0;cursor:pointer;color:var(--gqs-text,#1A1A1F);font-weight:600;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;" title="Open record">{{ $q->personnel?->full_name ?? 'Unknown' }}</button></td>
                                 <td>{{ $q->personnel?->employee_id ?: '—' }}</td>
                                 <td>{{ $q->personnel?->department ?: '—' }}</td>
                                 <td>{{ $q->sessionLabel() }}</td>
@@ -171,4 +170,36 @@
             </div>
         </div>
     </div>
+    @endif
+
+    @if($tab === 'reports')
+        <p style="margin:0 0 16px;color:var(--gqs-text-dim,#5A5A62);font-size:13.5px;">Run a prebuilt report to PDF. Each opens in a new tab ready to print or save.</p>
+        @foreach($this->reportCatalog() as $group => $items)
+            <div class="gqs-panel">
+                <div class="gqs-panel-head">
+                    @if($group === 'QA')<x-filament::icon icon="heroicon-m-shield-check"/>@elseif($group === 'QCM')<x-filament::icon icon="heroicon-m-beaker"/>@else<x-filament::icon icon="heroicon-m-document-text"/>@endif
+                    {{ $group }} Reports
+                </div>
+                <div class="gqs-panel-body" style="padding:14px;">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+                        @foreach($items as $r)
+                            <a href="{{ $r['key'] === 'compliance' ? route('print.report') : route('print.report.key', $r['key']) }}" target="_blank" rel="noopener"
+                               style="display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--gqs-border,#E2E2E8);border-radius:11px;background:var(--gqs-surface,#fff);text-decoration:none;transition:border-color .12s,box-shadow .12s;"
+                               onmouseover="this.style.borderColor='#A4123F';this.style.boxShadow='0 3px 12px rgba(164,18,63,.12)';"
+                               onmouseout="this.style.borderColor='';this.style.boxShadow='';">
+                                <span style="flex:0 0 38px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#A4123F,#7A0E2F);color:#fff;">
+                                    <x-filament::icon :icon="$r['icon']" style="width:19px;height:19px;"/>
+                                </span>
+                                <span style="min-width:0;">
+                                    <span style="display:block;font-weight:700;font-size:14px;color:var(--gqs-text,#1A1A1F);">{{ $r['name'] }}</span>
+                                    <span style="display:block;font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-top:3px;line-height:1.4;">{{ $r['desc'] }}</span>
+                                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:#A4123F;margin-top:7px;"><x-filament::icon icon="heroicon-m-printer" style="width:13px;height:13px;"/> Run PDF</span>
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    @endif
 </x-filament-panels::page>

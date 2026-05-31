@@ -184,4 +184,104 @@ class PrintController extends Controller
         }
         return view('print.report', $data);
     }
+
+    /** Prebuilt reports (QA / QCM / general), rendered to a generic tabular PDF. */
+    public function reportByKey(\Illuminate\Http\Request $request, string $key)
+    {
+        $this->guard();
+        $adv = app(\App\Services\RunCycleAdvancer::class);
+        $stageLabel = fn ($q) => $q->workflow_stage instanceof \BackedEnum
+            ? \App\Models\WorkflowStatus::labelFor('run', $q->workflow_stage->value, $q->workflow_stage->label())
+            : (string) $q->workflow_stage;
+
+        $title = 'Report';
+        $columns = [];
+        $rows = [];
+
+        switch ($key) {
+            case 'roster':
+                $title = 'Qualification Status Roster';
+                $columns = ['Name', 'Employee', 'Department', 'Type', 'Stage', 'Runs', 'Due Date', 'Qualified'];
+                foreach (Qualification::with('personnel')->whereNull('superseded_at')->whereNull('archived_at')->get()
+                    ->sortBy(fn ($q) => $q->personnel?->full_name ?? 'zzz') as $q) {
+                    $rows[] = [$q->personnel?->full_name ?? 'Unknown', $q->personnel?->employee_id ?: '-', $q->personnel?->department ?: '-',
+                        $q->sessionLabel(), $stageLabel($q), ((int) $q->runs_completed) . '/' . ((int) $q->runs_required),
+                        $q->due_date?->gmp() ?? '-', $q->qualified_date?->gmp() ?? '-'];
+                }
+                break;
+
+            case 'qa-signoffs':
+                $title = 'QA Sign-Off Log';
+                $columns = ['Name', 'Employee', 'Type', 'QA Owner', 'Qualified Date', 'Next Due'];
+                foreach (Qualification::with(['personnel', 'qaOwner'])->whereNotNull('qualified_date')
+                    ->orderByDesc('qualified_date')->get() as $q) {
+                    $rows[] = [$q->personnel?->full_name ?? 'Unknown', $q->personnel?->employee_id ?: '-', $q->sessionLabel(),
+                        $q->qaOwner?->name ?? '-', $q->qualified_date?->gmp() ?? '-', $q->due_date?->gmp() ?? '-'];
+                }
+                break;
+
+            case 'qa-pending':
+                $title = 'QA Review Queue';
+                $columns = ['Name', 'Employee', 'Type', 'Stage', 'In Stage Since', 'Days Waiting'];
+                foreach (Qualification::with('personnel')->whereIn('workflow_stage', ['qa_review', 'qa_signoff'])
+                    ->whereNull('superseded_at')->get() as $q) {
+                    $since = $q->stage_changed_at ?: $q->updated_at;
+                    $rows[] = [$q->personnel?->full_name ?? 'Unknown', $q->personnel?->employee_id ?: '-', $q->sessionLabel(),
+                        $stageLabel($q), $since?->gmp() ?? '-', $since ? (int) floor($since->diffInDays(now())) : 0];
+                }
+                break;
+
+            case 'qa-failures':
+                $title = 'Failures & Nonconformances';
+                $columns = ['Name', 'Employee', 'Run Date', 'Result', 'Worklist', 'NC / TrackWise'];
+                foreach (QualificationRun::with('personnel')->where('result', 'fail')->orderByDesc('run_date')->get() as $r) {
+                    $rows[] = [$r->personnel?->full_name ?? 'Unknown', $r->personnel?->employee_id ?: '-',
+                        $r->run_date?->gmp() ?? '-', 'Fail', $r->lims_worklist_id ?: '-', $r->lims_nc_number ?: '-'];
+                }
+                break;
+
+            case 'qcm-results':
+                $title = 'QCM Results Log';
+                $columns = ['Name', 'Employee', 'Run Date', 'Result', 'Worklist', 'Evaluation', 'Veeva'];
+                foreach (QualificationRun::with('personnel')->whereIn('result', ['pass', 'fail'])
+                    ->orderByDesc('run_date')->orderByDesc('id')->limit(500)->get() as $r) {
+                    $res = $r->result instanceof \BackedEnum ? $r->result->value : $r->result;
+                    $rows[] = [$r->personnel?->full_name ?? 'Unknown', $r->personnel?->employee_id ?: '-',
+                        $r->run_date?->gmp() ?? '-', ucfirst((string) $res), $r->lims_worklist_id ?: '-',
+                        $r->lims_evaluation ?: '-', $r->veeva_doc_number ?: '-'];
+                }
+                break;
+
+            case 'qcm-incubation':
+                $title = 'Incubation Status';
+                $columns = ['Name', 'Employee', 'Worklist', 'Run Date', 'Inc Started', 'Status'];
+                foreach (QualificationRun::with('personnel')->whereNotNull('incubation_started_at')
+                    ->whereNull('results_entered_at')->orderBy('incubation_started_at')->get() as $r) {
+                    $status = $r->lims_inc2_end ? 'Complete' : ($r->lims_inc1_start ? 'Incubating' : 'Incubating');
+                    $rows[] = [$r->personnel?->full_name ?? 'Unknown', $r->personnel?->employee_id ?: '-',
+                        $r->lims_worklist_id ?: '-', $r->run_date?->gmp() ?? '-',
+                        $r->incubation_started_at?->gmp() ?? '-', $status];
+                }
+                break;
+
+            default:
+                abort(404);
+        }
+
+        $data = [
+            'title' => $title,
+            'columns' => $columns,
+            'rows' => $rows,
+            'org' => \App\Models\Setting::get('org_name', 'MATC, Astellas'),
+            'site' => \App\Models\Setting::get('site_name', 'Manufacturing Technology Center'),
+            'generated' => now()->setTimezone('America/New_York'),
+        ];
+
+        if ($request->boolean('pdf', true)) {
+            return \Barryvdh\DomPDF\Facade\Pdf::loadView('print.report-generic', $data)
+                ->setPaper('letter', 'landscape')
+                ->stream(str_replace(' ', '-', strtolower($title)) . '-' . now()->toDateString() . '.pdf');
+        }
+        return view('print.report-generic', $data);
+    }
 }
