@@ -148,6 +148,17 @@ class WorklistSync
         // the run shows the authorized-fail state and Lab Review/QA can route it to the NC path.
         // (lims_evaluation/status already recorded above make this visible.)
 
+        // Self-heal: keep runs_completed in step with the recorded passes in this cycle (fixes historic
+        // backfills whose count was stale).
+        $passCount = $q->runs()->where('result', \App\Enums\RunResult::Pass->value)
+            ->when($q->cycle_started_at, fn ($query) => $query->whereDate('run_date', '>=', $q->cycle_started_at))
+            ->count();
+        if ((int) $q->runs_completed !== $passCount) {
+            $q->runs_completed = $passCount;
+            $q->save();
+            $changed = true;
+        }
+
         return $changed;
     }
 

@@ -128,6 +128,10 @@ class WorklistBackfill
                     'result' => $result,
                     'cycle_type' => $cycleType,
                     'lims_worklist_id' => $wl->worklist,
+                    // Historic backfill = the run was performed and its plates incubated; we mark the
+                    // attendance/performance + incubation as complete (the only outstanding step is the
+                    // QCM result sign-off). incubation_started_at makes it a fully-formed performed run.
+                    'incubation_started_at' => $date->toDateString(),
                     'results_entered_at' => $isPass || $isFail ? now() : null,
                     'results_released_at' => $isPass ? now() : null,
                     'notes' => 'Historic backfill from LIMS worklist ' . $wl->worklist,
@@ -139,6 +143,11 @@ class WorklistBackfill
             // Recompute counts/status, then place at the right stage WITHOUT submitting to QA.
             app(QualificationEngine::class)->recompute($qual->fresh());
             $qual = $qual->fresh();
+            // Make sure the pass count reflects the recorded passes (a backfilled Pass counts immediately).
+            $passCount = $qual->runs()->where('result', RunResult::Pass->value)->count();
+            if ((int) $qual->runs_completed !== $passCount) {
+                $qual->runs_completed = $passCount;
+            }
             if ($isFail) {
                 $qual->workflow_stage = WorkflowStage::Failed;
             } else {
