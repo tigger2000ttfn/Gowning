@@ -234,7 +234,7 @@
     <style>
         .dm-l{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--gqs-text-dim,#9A9AA4);}
         .dm-v{font-weight:600;color:var(--gqs-text,#1A1A1F);margin-top:1px;}
-        .sb-book-run{margin:8px 10px 10px;display:block;width:calc(100% - 20px);font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:7px;border:none;background:#2E7D5B;color:#fff;cursor:pointer;}
+        .sb-book-run{margin-top:9px;display:block;width:100%;font-size:11.5px;font-weight:700;padding:7px 11px;border-radius:7px;border:none;background:#2E7D5B;color:#fff;cursor:pointer;}
         .sb-book-run:hover{background:#246148;}
     </style>
     <style>
@@ -272,13 +272,13 @@
         .dark .sb-card{background:#2C2C36;border-color:#44444F;box-shadow:0 1px 3px rgba(0,0,0,.4);}
         .dark .sb-name{color:#fff;}
 
-        /* card layout with checkbox + clickable body */
-        .sb-card{display:flex;align-items:flex-start;gap:8px;cursor:default;}
-        .sb-check{flex:0 0 auto;opacity:0;transition:opacity .12s;padding-top:1px;cursor:pointer;}
+        /* card layout: vertical so the action button sits at the bottom; checkbox overlays top-right */
+        .sb-card{display:flex;flex-direction:column;gap:0;cursor:default;position:relative;}
+        .sb-check{position:absolute;top:8px;right:8px;z-index:2;opacity:0;transition:opacity .12s;cursor:pointer;}
         .sb-card:hover .sb-check{opacity:1;}
         .sb-selected .sb-check{opacity:1;}
         .sb-check input{width:15px;height:15px;accent-color:#A4123F;cursor:pointer;}
-        .sb-card-body{flex:1;min-width:0;cursor:pointer;}
+        .sb-card-body{min-width:0;cursor:pointer;padding-right:18px;}
         .sb-pill{display:inline-block;margin-top:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;background:#E6E6EA;color:#3A3A42;}
         .sb-pill-qualified{background:#2E7D5B;color:#fff;}
         .sb-pill-in_progress{background:#C79A2E;color:#fff;}
