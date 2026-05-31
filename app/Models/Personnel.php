@@ -32,6 +32,7 @@ class Personnel extends Model
         // Personnel uses soft deletes, so DB-level cascade does NOT fire on delete(). Clean up the
         // person's active bookings and enrollments here so nothing dangling shows after they're removed.
         static::deleting(function (Personnel $p) {
+            if ($p->isForceDeleting()) return; // hard delete handled below
             // Cancel active class enrollments (frees seats; submitted/historical stay as the record).
             \App\Models\ClassEnrollment::where('personnel_id', $p->id)
                 ->whereNotIn('status', ['cancelled', 'completed', 'historical'])
@@ -40,6 +41,15 @@ class Personnel extends Model
             \App\Models\Reservation::where('personnel_id', $p->id)
                 ->whereIn('status', ['requested', 'approved'])
                 ->update(['status' => 'cancelled']);
+        });
+
+        // Hard delete (super-user purge of test people): wipe ALL of the person's data. The DB cascade
+        // removes reservations/qualifications/runs; enrollments + completions are nullOnDelete, so remove
+        // them explicitly to avoid orphans.
+        static::forceDeleting(function (Personnel $p) {
+            \App\Models\ClassEnrollment::where('personnel_id', $p->id)->delete();
+            \App\Models\ClassCompletion::where('personnel_id', $p->id)->delete();
+            // reservations, qualifications, qualification_runs cascade on hard delete via FK.
         });
     }
 
