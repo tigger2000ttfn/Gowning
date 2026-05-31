@@ -161,4 +161,71 @@ class XlsxReader
         }
         return [$col - 1, (int) $m[2] - 1];
     }
+
+    /**
+     * Detect the file format. Many systems (Salesforce/TrackWise "Export to Excel", older Veeva)
+     * produce an HTML <table> with an .xls/.xlsx extension rather than a real OOXML zip. We sniff the
+     * first bytes: 'PK' = real xlsx zip; a leading '<' or an <html>/<table> tag = HTML table.
+     *
+     * @return 'xlsx'|'html'|'csv'
+     */
+    public static function detectFormat(string $path): string
+    {
+        $fh = fopen($path, 'rb');
+        if (! $fh) return 'csv';
+        $head = fread($fh, 1024);
+        fclose($fh);
+        if (substr($head, 0, 2) === 'PK') return 'xlsx';
+        $lower = strtolower($head);
+        if (str_contains($lower, '<table') || str_contains($lower, '<html') || str_contains($lower, '<tr') || ltrim($head)[0] === '<') {
+            return 'html';
+        }
+        return 'csv';
+    }
+
+    /**
+     * Parse an HTML-table export into a row grid (and any <a href> hyperlinks per cell). Handles the
+     * Salesforce/TrackWise "Excel" export which is really HTML. Tabs inside a cell (common in these
+     * exports for multi-value fields) are collapsed to a space so they do not split columns.
+     *
+     * @return array{rows: array<int,array<int,string>>, hyperlinks: array<int,array<int,string>>}
+     */
+    public static function readHtml(string $path): array
+    {
+        $out = ['rows' => [], 'hyperlinks' => []];
+        $html = @file_get_contents($path);
+        if ($html === false || $html === '') return $out;
+
+        // Pull each <tr>...</tr>, then each <td>/<th> within it.
+        if (! preg_match_all('#<tr\b[^>]*>(.*?)</tr>#is', $html, $trMatches)) {
+            return $out;
+        }
+        $r = 0;
+        foreach ($trMatches[1] as $trInner) {
+            if (! preg_match_all('#<t[dh]\b[^>]*>(.*?)</t[dh]>#is', $trInner, $cellMatches)) {
+                continue;
+            }
+            $cells = [];
+            $links = [];
+            $c = 0;
+            foreach ($cellMatches[1] as $cellHtml) {
+                if (preg_match('#<a\b[^>]*href=["\']([^"\']+)["\']#i', $cellHtml, $hm)) {
+                    $links[$c] = html_entity_decode($hm[1], ENT_QUOTES | ENT_HTML5);
+                }
+                $text = preg_replace('#<br\s*/?>#i', ' ', $cellHtml);
+                $text = strip_tags($text);
+                $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5);
+                $text = str_replace(["\t", "\r", "\n"], ' ', $text);
+                $text = trim(preg_replace('/\s+/', ' ', $text));
+                $cells[$c] = $text;
+                $c++;
+            }
+            // skip fully empty rows
+            if (count(array_filter($cells, fn ($v) => $v !== '')) === 0) continue;
+            $out['rows'][$r] = $cells;
+            if ($links) $out['hyperlinks'][$r] = $links;
+            $r++;
+        }
+        return $out;
+    }
 }

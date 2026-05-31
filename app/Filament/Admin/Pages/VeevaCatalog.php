@@ -132,8 +132,8 @@ class VeevaCatalog extends Page implements HasForms
         $this->preview = [];
         $this->headers = [];
         $this->hyperlinks = [];
-        $this->data['csv'] = null;
-        $this->form->fill();
+        $this->data = [];
+        try { $this->form->fill(); } catch (\Throwable $e) { /* ignore */ }
     }
 
     public function parse(): void
@@ -148,18 +148,12 @@ class VeevaCatalog extends Page implements HasForms
         }
         // Detect xlsx by content signature (PK zip header), not extension - Filament's stored
         // filename may not keep .xlsx, which previously caused xlsx to be read as CSV and fail.
-        $isXlsx = false;
-        $fh0 = fopen($full, 'rb');
-        if ($fh0) {
-            $sig = fread($fh0, 4);
-            fclose($fh0);
-            $isXlsx = (substr($sig, 0, 2) === 'PK') || preg_match('/\.xlsx$/i', (string) $full);
-        }
+        $fmt = \App\Support\XlsxReader::detectFormat($full);
 
-        if ($isXlsx) {
-            $read = \App\Support\XlsxReader::read($full);
+        if ($fmt === 'xlsx' || $fmt === 'html') {
+            $read = $fmt === 'xlsx' ? \App\Support\XlsxReader::read($full) : \App\Support\XlsxReader::readHtml($full);
             $rows = $read['rows'];
-            if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The Excel File')->body('No rows were found. Try re-saving as .xlsx, or export as CSV.')->send(); return; }
+            if (empty($rows)) { Notification::make()->danger()->title('Could Not Read The File')->body('No rows were found in the export.')->send(); return; }
             // Re-index hyperlinks from absolute row index to the row's position after the header is shifted.
             // We shift by one (header row) below; capture raw here and remap after array_shift.
             $rawLinks = $read['hyperlinks'];
