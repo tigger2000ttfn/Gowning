@@ -190,6 +190,27 @@ class XlsxReader
      *
      * @return array{rows: array<int,array<int,string>>, hyperlinks: array<int,array<int,string>>}
      */
+    /**
+     * Ensure a string is valid UTF-8. Exports from Salesforce/Excel are often ISO-8859-1 /
+     * Windows-1252 (smart quotes, en-dashes), whose bytes are invalid UTF-8 and make Livewire's
+     * json_encode of the component state throw "Malformed UTF-8 characters". If the string is not
+     * already valid UTF-8, transcode it from Windows-1252 (a superset of ISO-8859-1).
+     */
+    public static function toUtf8(?string $s): string
+    {
+        if ($s === null || $s === '') return '';
+        if (function_exists('mb_check_encoding') && mb_check_encoding($s, 'UTF-8')) {
+            return $s;
+        }
+        // Transcode from Windows-1252 -> UTF-8; fall back to a byte-safe scrub if that fails.
+        $converted = @mb_convert_encoding($s, 'UTF-8', 'Windows-1252');
+        if ($converted !== false && $converted !== null && mb_check_encoding($converted, 'UTF-8')) {
+            return $converted;
+        }
+        // Last resort: drop invalid bytes.
+        return @iconv('UTF-8', 'UTF-8//IGNORE', $s) ?: preg_replace('/[^\x09\x0A\x0D\x20-\x7E]/', '', $s);
+    }
+
     public static function readHtml(string $path): array
     {
         $out = ['rows' => [], 'hyperlinks' => []];
@@ -223,14 +244,14 @@ class XlsxReader
                 if (! preg_match('#<t[dh]\b[^>]*>(.*)$#is', $cellChunk, $cm)) continue;
                 $cellHtml = $cm[1];
                 if (preg_match('#<a\b[^>]*href=["\']([^"\']+)["\']#i', $cellHtml, $hm)) {
-                    $links[$c] = html_entity_decode($hm[1], ENT_QUOTES | ENT_HTML5);
+                    $links[$c] = self::toUtf8(html_entity_decode($hm[1], ENT_QUOTES | ENT_HTML5));
                 }
                 $text = preg_replace('#<br\s*/?>#i', ' ', $cellHtml);
                 $text = strip_tags($text);
                 $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5);
                 $text = str_replace(["\t", "\r", "\n"], ' ', $text);
                 $text = trim(preg_replace('/\s+/', ' ', (string) $text));
-                $cells[$c] = $text;
+                $cells[$c] = self::toUtf8($text);
                 $c++;
             }
             if (empty($cells)) continue;
