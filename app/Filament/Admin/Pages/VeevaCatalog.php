@@ -124,6 +124,18 @@ class VeevaCatalog extends Page implements HasForms
         return is_string($v) && $v !== '' ? $v : null;
     }
 
+    public function resetUpload(): void
+    {
+        $this->parsed = false;
+        $this->imported = false;
+        $this->rows = [];
+        $this->preview = [];
+        $this->headers = [];
+        $this->hyperlinks = [];
+        $this->data['csv'] = null;
+        $this->form->fill();
+    }
+
     public function parse(): void
     {
         $rows = [];

@@ -7,53 +7,33 @@
     '])
 
     @if ($tab === 'upload')
-        <div class="gqs-panel">
-            <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Load Weekly NC Export</div>
-            <div class="gqs-panel-body" style="padding:16px;">
-                <p style="margin:0 0 14px;font-size:13px;color:var(--gqs-text-dim,#6A6A72);">Upload the weekly TrackWise NC export, map the columns, and import. NC links are built automatically.</p>
-                <form wire:submit.prevent>{{ $this->form }}</form>
-                <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                    <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>
-                    <button type="button" wire:click="runBackfill" class="gqs-btn gqs-btn-ghost">Backfill Links Now</button>
-                    <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-left:auto;">{{ $this->catalogCount() }} in catalog</span>
-                </div>
-            </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center;">
+            <span class="gqs-pill {{ ! $parsed && ! $imported ? 'gqs-pill-purple' : 'gqs-pill-gray' }}">1 · Upload</span>
+            <span style="color:var(--gqs-text-dim,#9A9AA4);">→</span>
+            <span class="gqs-pill {{ $parsed ? 'gqs-pill-purple' : 'gqs-pill-gray' }}">2 · Review &amp; Import</span>
+            <span style="color:var(--gqs-text-dim,#9A9AA4);">→</span>
+            <span class="gqs-pill {{ $imported ? 'gqs-pill-green' : 'gqs-pill-gray' }}">3 · Done</span>
         </div>
 
-        @if ($parsed)
+        @if (! $parsed && ! $imported)
             <div class="gqs-panel">
-                <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-link"/> Map Columns</div>
-                <div class="gqs-panel-body">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-                        @php $fields = [
-                            'map_number'   => 'Nonconformance Number *',
-                            'map_recordid' => 'Record ID (builds link)',
-                            'map_url'      => 'Link / URL',
-                            'map_status'   => 'Workflow Status',
-                            'map_created'  => 'Created Date',
-                            'map_closed'   => 'Date Closed',
-                            'map_approver' => 'QA Approver',
-                            'map_dept'     => 'Department',
-                            'map_refs'     => 'Reference Number(s)',
-                            'map_site'     => 'Site',
-                            'map_subgroup' => 'Sub-Group',
-                        ]; @endphp
-                        @foreach ($fields as $key => $label)
-                            <div>
-                                <label class="gqs-flbl">{{ $label }}</label>
-                                <select wire:model="data.{{ $key }}" class="gqs-fld">
-                                    @foreach ($this->columnOptions() as $i => $h)<option value="{{ $i }}">{{ $h }}</option>@endforeach
-                                </select>
-                            </div>
-                        @endforeach
+                <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-arrow-up-tray"/> Upload Weekly NC Export</div>
+                <div class="gqs-panel-body" style="padding:16px;">
+                    <p style="margin:0 0 14px;font-size:13px;color:var(--gqs-text-dim,#6A6A72);">Upload the TrackWise NC export (.xlsx). Columns are detected automatically and NC links are built for you.</p>
+                    <form wire:submit.prevent>{{ $this->form }}</form>
+                    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <button type="button" wire:click="parse" class="gqs-btn gqs-btn-primary">Parse</button>
+                        <span style="font-size:12px;color:var(--gqs-text-dim,#6A6A72);margin-left:auto;">{{ $this->catalogCount() }} in catalog</span>
                     </div>
                 </div>
             </div>
+        @endif
 
+        @if ($parsed)
             <div class="gqs-panel">
-                <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-table-cells"/> Preview</div>
+                <div class="gqs-panel-head"><x-filament::icon icon="heroicon-m-table-cells"/> Review &amp; Import</div>
                 <div class="gqs-panel-body" style="padding:0;">
-                    <p style="margin:0;padding:10px 16px 4px;color:var(--gqs-text-dim,#6A6A72);font-size:13px;">First {{ count($preview) }} of {{ count($rows) }} rows.</p>
+                    <p style="margin:0;padding:12px 16px 6px;color:var(--gqs-text-dim,#6A6A72);font-size:13px;">Detected {{ count($rows) }} rows. Showing the first {{ count($preview) }}.</p>
                     <div style="overflow-x:auto;">
                         <table class="gqs-tbl">
                             <thead><tr>@foreach ($headers as $h)<th>{{ $h }}</th>@endforeach</tr></thead>
@@ -62,16 +42,26 @@
                             @endforeach</tbody>
                         </table>
                     </div>
+                    <div style="padding:14px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" wire:click="import" class="gqs-btn gqs-btn-primary">Import {{ count($rows) }} Rows</button>
+                        <button type="button" wire:click="resetUpload" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                    </div>
                 </div>
-            </div>
-
-            <div style="margin:14px 0;">
-                <button type="button" wire:click="import" class="gqs-btn gqs-btn-primary">Import {{ count($rows) }} Rows</button>
             </div>
         @endif
 
         @if ($imported)
-            <div class="gqs-panel"><div class="gqs-panel-body" style="color:#1E7A52;">NC catalog updated: added {{ $lastCreated }}, updated {{ $lastUpdated }}. Switch to the Catalog tab to browse.</div></div>
+            <div class="gqs-panel">
+                <div class="gqs-panel-head" style="background:linear-gradient(135deg,#2E7D5B,#225F46);"><x-filament::icon icon="heroicon-m-check-circle"/> Import Complete</div>
+                <div class="gqs-panel-body" style="padding:16px;">
+                    <p style="margin:0 0 14px;color:#1E7A52;font-size:13.5px;">NC catalog updated: added {{ $lastCreated }}, updated {{ $lastUpdated }}.</p>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button type="button" wire:click="setTab('catalog')" class="gqs-btn gqs-btn-primary">View Catalog</button>
+                        <button type="button" wire:click="runBackfill" class="gqs-btn gqs-btn-ghost">Backfill Links Now</button>
+                        <button type="button" wire:click="resetUpload" class="gqs-btn gqs-btn-ghost">Upload Another</button>
+                    </div>
+                </div>
+            </div>
         @endif
     @else
         <div class="gqs-panel">
