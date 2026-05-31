@@ -73,7 +73,7 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,
-                fn (): string => Blade::render('@include("filament.session-guard")'),
+                fn (): string => Blade::render('@include("filament.session-guard")' . "\n" . '@livewire(\App\Livewire\QualificationModal::class)'),
             )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_BEFORE,

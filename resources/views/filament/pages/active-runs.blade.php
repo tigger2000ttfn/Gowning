@@ -89,7 +89,7 @@
                         <thead><tr><th>Employee</th><th>Name</th><th>Department</th><th>Type</th><th>Stage</th><th>Status</th><th>Runs</th><th>Due</th><th>Worklist</th></tr></thead>
                         <tbody>
                             @foreach($rows as $row)
-                                <tr wire:key="ar-{{ $row['id'] }}-{{ $row['stage'] }}" style="cursor:pointer;" wire:click="openRow({{ $row['id'] }})">
+                                <tr wire:key="ar-{{ $row['id'] }}-{{ $row['stage'] }}" style="cursor:pointer;" wire:click="$dispatch('open-qual-modal', { id: {{ $row['id'] }} })">
                                     <td style="font-weight:600;">{{ $row['employee_id'] ?: '-' }}</td>
                                     <td>{{ $row['name'] }}</td>
                                     <td>{{ $row['department'] ?: '-' }}</td>
@@ -144,83 +144,6 @@
         </div>
     @endif
 
-    {{-- Row detail modal: rich info before drilling into the full record --}}
-    @if($rowDetail)
-        <div class="gqs-modal-overlay" wire:click.self="closeRowDetail">
-            <div class="gqs-modal" style="width:660px;max-width:96vw;">
-                <div style="background:linear-gradient(135deg,{{ $rowDetail['stage_color'] }},{{ $rowDetail['stage_color'] }}CC);padding:18px 20px;border-radius:14px 14px 0 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
-                    <div>
-                        <div style="font-weight:800;font-size:19px;color:#fff;">{{ $rowDetail['name'] }}</div>
-                        <div style="font-size:12px;color:rgba(255,255,255,.92);">{{ $rowDetail['employee_id'] }}@if($rowDetail['job_title']) · {{ $rowDetail['job_title'] }}@endif@if($rowDetail['department']) · {{ $rowDetail['department'] }}@endif</div>
-                    </div>
-                    <span style="background:rgba(255,255,255,.22);color:#fff;font-weight:700;font-size:12px;padding:5px 12px;border-radius:999px;white-space:nowrap;">{{ $rowDetail['stage_label'] }}</span>
-                </div>
-                <div class="gqs-modal-body">
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
-                        <div><div class="dm-l">Status</div><div class="dm-v"><span class="gqs-pill" style="background:{{ $rowDetail['status_color'] }}1A;color:{{ $rowDetail['status_color'] }};font-weight:700;">{{ $rowDetail['status_pill'] }}</span></div></div>
-                        <div><div class="dm-l">Session Type</div><div class="dm-v">{{ $rowDetail['type'] }}</div></div>
-                        <div><div class="dm-l">Runs</div><div class="dm-v">{{ $rowDetail['passes'] }} / {{ $rowDetail['required'] }} passing</div></div>
-                        <div><div class="dm-l">Due Date</div><div class="dm-v" style="{{ $rowDetail['past_due'] ? 'color:#C8102E;font-weight:700;' : '' }}">{{ $rowDetail['due'] ?: '-' }}@if($rowDetail['past_due']) (past due)@endif</div></div>
-                        <div><div class="dm-l">Qualified Date</div><div class="dm-v">{{ $rowDetail['qualified_date'] ?: 'Not yet (awaiting QA)' }}</div></div>
-                        <div><div class="dm-l">QA Owner</div><div class="dm-v">{{ $rowDetail['qa_owner'] ?: 'Unassigned' }}</div></div>
-                        <div><div class="dm-l">Class On File</div><div class="dm-v">@if($rowDetail['class_on_file'])<span class="gqs-pill gqs-pill-green">Yes</span> {{ $rowDetail['class_on_file_date'] }}@else<span class="gqs-pill gqs-pill-gray">No</span>@endif</div></div>
-                        <div style="grid-column:span 2;"><div class="dm-l">LIMS Worklist</div><div class="dm-v">
-                            @if($rowDetail['worklist']){{ $rowDetail['worklist'] }}
-                            @elseif($rowDetail['needs_worklist'])<button type="button" wire:click="openLinkWorklist({{ $rowDetail['id'] }})" class="sb-act" style="background:#1F6FB2;">+ Link Worklist</button>
-                            @else <span style="color:var(--gqs-text-dim,#9A9AA4);">Not linked yet</span>@endif
-                        </div></div>
-                    </div>
-
-                    {{-- Pipeline stepper --}}
-                    <div class="ar-mstep">
-                        @foreach($rowDetail['steps'] as $s)
-                            <div class="ar-mstep-cell {{ $s['done'] ? 'done' : '' }} {{ $s['current'] ? 'current' : '' }}">
-                                <span class="ar-mstep-bar"></span>
-                                <span class="ar-mstep-dot">@if($s['done'])&check;@endif</span>
-                                <span class="ar-mstep-lbl">{{ $s['label'] }}</span>
-                            </div>
-                        @endforeach
-                    </div>
-
-                    @if($rowDetail['lims'])
-                        <div class="dm-l" style="margin-top:18px;">LIMS &amp; Incubation</div>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px;">
-                            <div><div class="dm-l">Evaluation</div><div class="dm-v">{{ $rowDetail['lims']['evaluation'] ?: '-' }}</div></div>
-                            <div><div class="dm-l">NC / TrackWise</div><div class="dm-v">@if($rowDetail['lims']['nc'])@if($rowDetail['lims']['nc_url'])<a href="{{ $rowDetail['lims']['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $rowDetail['lims']['nc'] }} &nearr;</a>@else {{ $rowDetail['lims']['nc'] }} @endif @else - @endif</div></div>
-                            <div><div class="dm-l">1st Incubation (30-35C)</div><div class="dm-v">{{ $rowDetail['lims']['inc1'] ?: '-' }}</div></div>
-                            <div><div class="dm-l">2nd Incubation (20-25C)</div><div class="dm-v">{{ $rowDetail['lims']['inc2'] ?: '-' }}</div></div>
-                        </div>
-                    @endif
-
-                    @if(count($rowDetail['runs']))
-                        <div class="dm-l" style="margin-top:18px;">Run History</div>
-                        <table class="gqs-tbl" style="margin-top:6px;">
-                            <thead><tr><th>Date</th><th>Result</th><th>Worklist</th><th>Inc Status</th><th>Evaluation</th><th>NC</th></tr></thead>
-                            <tbody>@foreach($rowDetail['runs'] as $r)
-                                <tr>
-                                    <td style="white-space:nowrap;">{{ $r['date'] ?: '-' }}</td>
-                                    <td>{{ $r['result'] }}</td>
-                                    <td>{{ $r['worklist'] ?: '-' }}</td>
-                                    <td>{{ $r['inc_status'] ?: '-' }}</td>
-                                    <td>{{ $r['evaluation'] ?: '-' }}</td>
-                                    <td>@if($r['nc'])@if($r['nc_url'])<a href="{{ $r['nc_url'] }}" target="_blank" rel="noopener" style="color:#A4123F;font-weight:700;">{{ $r['nc'] }} &nearr;</a>@else {{ $r['nc'] }} @endif @else - @endif</td>
-                                </tr>
-                            @endforeach</tbody>
-                        </table>
-                    @endif
-                </div>
-                <div class="gqs-modal-foot" style="justify-content:space-between;">
-                    <button wire:click="closeRowDetail" class="gqs-btn gqs-btn-ghost">Close</button>
-                    <span style="display:flex;gap:8px;">
-                        @if(!empty($rowDetail['review_url']))
-                            <a href="{{ $rowDetail['review_url'] }}" class="gqs-btn" style="background:#1F6FB2;color:#fff;text-decoration:none;">{{ $rowDetail['review_label'] }}</a>
-                        @endif
-                        <a href="{{ $rowDetail['record_url'] }}" class="gqs-btn gqs-btn-primary" style="text-decoration:none;">Open Full Record</a>
-                    </span>
-                </div>
-            </div>
-        </div>
-    @endif
 
     {{-- Link Worklist modal --}}
     @if($wlQid)

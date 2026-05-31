@@ -71,6 +71,7 @@ class ActiveBookings extends Page
                 'past_due' => $q->isPastDue(),
                 'class_on_file' => (bool) $q->class_on_file,
                 'record_url' => \App\Filament\Admin\Resources\QualificationResource::getUrl('index', ['view' => $q->id]),
+                'qid' => $q->id,
             ];
         }
 

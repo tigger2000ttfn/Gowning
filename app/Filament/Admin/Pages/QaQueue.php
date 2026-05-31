@@ -40,6 +40,15 @@ class QaQueue extends Page
     public string $tab = 'runs';
     public function setTab(string $t): void { $this->tab = in_array($t, ['runs', 'classroom', 'historical'], true) ? $t : 'runs'; }
 
+    /** Deep link: arriving with ?signoff={id} (e.g. from the shared record modal) opens the wizard. */
+    public function mount(): void
+    {
+        $sid = request()->integer('signoff');
+        if ($sid && \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::QaApprove)) {
+            $this->openSignoff($sid);
+        }
+    }
+
     // Run undo (revert a QA-approved run for correction): requires a reason, reverts the stage, logs.
     public ?int $undoQid = null;
     public string $undoReason = '';

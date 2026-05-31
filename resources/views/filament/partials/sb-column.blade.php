@@ -13,7 +13,7 @@
                     <input type="checkbox" :checked="isSelected({{ $card['id'] }})" @change="toggleSelect({{ $card['id'] }})">
                 </label>
                 @endif
-                <div class="sb-card-body" @click="openCard({{ $card['id'] }})">
+                <div class="sb-card-body" wire:click="$dispatch('open-qual-modal', { id: {{ $card['id'] }} })" style="cursor:pointer;">
                     <div class="sb-name">{{ $card['name'] }}</div>
                     <div class="sb-meta">{{ $card['employee_id'] }}@if(!empty($card['department'])) · {{ $card['department'] }}@endif</div>
                     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;">

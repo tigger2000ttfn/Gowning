@@ -166,7 +166,7 @@
                             <a href="{{ $bookingDetail['scheduler_url'] }}" class="gqs-btn" style="background:#C79A2E;color:#fff;text-decoration:none;">Take Attendance</a>
                         @endif
                         @if($bookingDetail['qual'])
-                            <a href="{{ $bookingDetail['qual']['record_url'] }}" class="gqs-btn gqs-btn-primary" style="text-decoration:none;">Open Qualification</a>
+                            <button type="button" wire:click="closeBooking" x-on:click="$dispatch('open-qual-modal', { id: {{ $bookingDetail['qual']['qid'] }} })" class="gqs-btn gqs-btn-primary">Open Qualification</button>
                         @endif
                     </span>
                 </div>
