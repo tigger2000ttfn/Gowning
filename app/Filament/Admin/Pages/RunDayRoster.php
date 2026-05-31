@@ -46,6 +46,14 @@ class RunDayRoster extends Page
     public array $intent = [];
     /** Per-reservation flag: operator did ALL remaining cycle runs in one day (the common case). */
     public array $performAll = [];
+    /** reservation_id => number of runs the operator did in this visit (for multi-run sessions). */
+    public array $runsToday = [];
+    /** Run-intent modal: which reservation is open, and what to do with leftover runs. */
+    public ?int $runIntentResId = null;
+    public string $runIntentLeftover = 'next';   // 'next' | 'pick' | 'special' | 'hold'
+    public ?int $runIntentPickSlot = null;
+    public ?string $runIntentSpecialDate = null;
+    public ?string $runIntentSpecialCleanroom = null;
     /** reservation_id => worklist string, when LIMS pre-filled this row (for the "LIMS detected" badge). */
     public array $limsDetected = [];
 
@@ -56,17 +64,73 @@ class RunDayRoster extends Page
         if (($this->intent[$reservationId] ?? null) === $status) {
             unset($this->intent[$reservationId]);
             unset($this->performAll[$reservationId]);
+            unset($this->runsToday[$reservationId]);
         } else {
             $this->intent[$reservationId] = $status;
-            // Attending ALL remaining runs in one visit is the norm, so default it on when marking Present.
-            // Uncheck it to record just one run and keep the others scheduled for their own days.
             if ($status === 'present') {
+                // Default: did ALL remaining runs in this visit (the norm). The Set Runs modal can change it.
                 $this->performAll[$reservationId] = true;
+                $remaining = $this->remainingRunsFor($reservationId);
+                $this->runsToday[$reservationId] = max(1, $remaining);
             } else {
                 unset($this->performAll[$reservationId]);
+                unset($this->runsToday[$reservationId]);
             }
         }
     }
+
+    /** How many runs this person still owes in their current cycle. */
+    public function remainingRunsFor(int $reservationId): int
+    {
+        $res = Reservation::find($reservationId);
+        $q = $res ? \App\Models\Qualification::currentFor($res->personnel_id) : null;
+        if (! $q) return 1;
+        $required = max(1, (int) ($q->runs_required ?? 1));
+        $done = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
+        return max(1, $required - $done);
+    }
+
+    /** Open the run-intent modal for a multi-run person (how many runs today + where the rest go). */
+    public function openRunIntent(int $reservationId): void
+    {
+        $this->runIntentResId = $reservationId;
+        $this->runsToday[$reservationId] = $this->runsToday[$reservationId] ?? $this->remainingRunsFor($reservationId);
+        $this->runIntentLeftover = 'next';
+        $this->runIntentPickSlot = null;
+        $this->runIntentSpecialDate = null;
+        $this->runIntentSpecialCleanroom = null;
+    }
+    public function closeRunIntent(): void { $this->runIntentResId = null; }
+
+    /** Set how many runs were done in this visit (1..remaining) from the modal. */
+    public function setRunsToday(int $reservationId, int $n): void
+    {
+        $remaining = $this->remainingRunsFor($reservationId);
+        $this->runsToday[$reservationId] = max(1, min($n, $remaining));
+        $this->performAll[$reservationId] = ($this->runsToday[$reservationId] >= $remaining);
+    }
+
+    /** Confirm the run-intent choices; the actual records are written on submit. We just remember intent
+     *  here and (if leftover runs go to a chosen/special day) pre-stage that destination for markPerformed. */
+    public function saveRunIntent(): void
+    {
+        $rid = $this->runIntentResId;
+        if (! $rid) return;
+        $remaining = $this->remainingRunsFor($rid);
+        $rt = max(1, min($this->runsToday[$rid] ?? $remaining, $remaining));
+        $this->runsToday[$rid] = $rt;
+        $this->performAll[$rid] = ($rt >= $remaining);
+        // Remember the leftover destination so markPerformed routes the follow-up booking accordingly.
+        $this->runIntentDest[$rid] = [
+            'mode' => $this->runIntentLeftover,
+            'slot' => $this->runIntentPickSlot,
+            'date' => $this->runIntentSpecialDate,
+            'cleanroom' => $this->runIntentSpecialCleanroom,
+        ];
+        $this->runIntentResId = null;
+    }
+    /** reservation_id => leftover destination chosen in the run-intent modal. */
+    public array $runIntentDest = [];
 
     /** Force an EM- prefix and trim; empty stays empty. */
     /**
@@ -797,14 +861,15 @@ class RunDayRoster extends Page
             if ($intent === 'present') {
                 $q = \App\Models\Qualification::currentFor($r->personnel_id);
                 if (! $q || ! $q->class_on_file) { $blocked[] = $r->personnel?->full_name ?? ('#' . $r->id); continue; }
-                $runsToday = 1;
-                if (! empty($this->performAll[$r->id])) {
-                    $required = max(1, (int) ($q->runs_required ?? 1));
-                    $done = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
-                    $runsToday = max(1, $required - $done);
-                }
+                $required = max(1, (int) ($q->runs_required ?? 1));
+                $done = app(\App\Services\RunCycleAdvancer::class)->cycleRuns($q)->count();
+                $remaining = max(1, $required - $done);
+                // Runs done in this visit: explicit count from the Set Runs modal, else default to all remaining.
+                $runsToday = isset($this->runsToday[$r->id])
+                    ? max(1, min((int) $this->runsToday[$r->id], $remaining))
+                    : $remaining;
                 $this->markPerformed($r->id, $runsToday);
-                unset($this->performAll[$r->id]);
+                unset($this->performAll[$r->id], $this->runsToday[$r->id]);
             } elseif ($intent === 'no_show') {
                 $this->rosterNoShow($r->id);
             } elseif ($intent === 'rescheduled') {
@@ -895,34 +960,57 @@ class RunDayRoster extends Page
         $days = (int) \App\Models\Setting::get('incubation_days', 8);
 
         // If runs remain (operator did NOT do all of them today), create a follow-up booking for the
-        // leftover run(s) on the next available run day so it shows as its own card to be attended. The
-        // analyst can then Move it to a specific date / a special one-person session from that booking.
+        // leftover run(s). The destination comes from the run-intent modal: next available, a specific
+        // open day, a special one-person session, or held (no booking). Default is next available.
         $remaining = max(0, $required - $performed);
-        if ($remaining > 0) {
+        $dest = $this->runIntentDest[$reservationId] ?? ['mode' => 'next'];
+        $mode = $dest['mode'] ?? 'next';
+        $createdFollowUp = false;
+        if ($remaining > 0 && $mode !== 'hold') {
             $alreadyBooked = Reservation::where('personnel_id', $res->personnel_id)
                 ->whereIn('status', ['requested', 'approved'])->whereHas('runSlot', fn ($s) => $s->whereDate('slot_date', '>', now()->toDateString()))
                 ->exists();
             if (! $alreadyBooked) {
-                $scheduler = app(\App\Services\AutoScheduler::class);
-                $nextSlot = method_exists($scheduler, 'nextOpenSlot') ? $scheduler->nextOpenSlot() : RunSlot::where('status', '!=', 'cancelled')->where('is_special', false)
-                    ->whereDate('slot_date', '>', now()->toDateString())
-                    ->orderBy('slot_date')->get()
-                    ->first(fn ($s) => $s->reservations()->whereIn('status', ['requested', 'approved', 'completed'])->count() < (int) ($s->capacity ?? 1));
-                if ($nextSlot) {
+                $targetSlot = null;
+                if ($mode === 'pick' && ! empty($dest['slot'])) {
+                    $targetSlot = RunSlot::find($dest['slot']);
+                } elseif ($mode === 'special') {
+                    // Create a private one-off session just for this person.
+                    $date = $dest['date'] ?: now()->addDay()->toDateString();
+                    $targetSlot = RunSlot::create([
+                        'cleanroom' => $dest['cleanroom'] ?: null,
+                        'slot_date' => $date,
+                        'capacity' => 1,
+                        'status' => 'open',
+                        'is_special' => true,
+                        'created_by' => Auth::id(),
+                        'notes' => 'Special follow-up session for ' . ($res->personnel->full_name ?? 'operator') . ' (parent reservation #' . $res->id . ').',
+                    ]);
+                } else {
+                    // next available
+                    $scheduler = app(\App\Services\AutoScheduler::class);
+                    $targetSlot = method_exists($scheduler, 'nextOpenSlot') ? $scheduler->nextOpenSlot() : RunSlot::where('status', '!=', 'cancelled')->where('is_special', false)
+                        ->whereDate('slot_date', '>', now()->toDateString())
+                        ->orderBy('slot_date')->get()
+                        ->first(fn ($s) => $s->reservations()->whereIn('status', ['requested', 'approved', 'completed'])->count() < (int) ($s->capacity ?? 1));
+                }
+                if ($targetSlot) {
                     Reservation::create([
-                        'run_slot_id' => $nextSlot->id,
+                        'run_slot_id' => $targetSlot->id,
                         'personnel_id' => $res->personnel_id,
                         'parent_reservation_id' => $res->id,
                         'status' => 'approved',
                         'requested_at' => now(),
                         'notes' => 'Follow-up for remaining run(s) (parent reservation #' . $res->id . ').',
                     ]);
+                    $createdFollowUp = true;
                 }
             }
         }
+        unset($this->runIntentDest[$reservationId]);
 
         $msg = $performed < $required
-            ? "Run {$performed} of {$required} performed, incubating. " . $remaining . ' more run(s) needed' . ($remaining > 0 ? ' (a follow-up booking was created - Move it to a specific or special day if needed).' : '.')
+            ? "Run {$performed} of {$required} performed, incubating. " . $remaining . ' more run(s) needed' . ($createdFollowUp ? ' (a follow-up booking was created - Move it from the schedule if needed).' : ($remaining > 0 ? ' (left unscheduled - book it when ready).' : '.'))
             : "Final run performed, all {$required} run(s) incubating. Plates ready in {$days} days.";
         Notification::make()->success()->title('Run performed, incubation started')
             ->body(($res->personnel->full_name ?? 'Operator') . ': ' . $msg)->send();

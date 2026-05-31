@@ -295,6 +295,62 @@
             </div>
         @endif
 
+        {{-- Run-intent modal: how many runs this visit + where leftover runs go (multi-run sessions) --}}
+        @if($runIntentResId)
+            @php
+                $rir = \App\Models\Reservation::with('personnel')->find($runIntentResId);
+                $rem = $this->remainingRunsFor($runIntentResId);
+                $sel = $this->runsToday[$runIntentResId] ?? $rem;
+                $leftover = $rem - $sel;
+            @endphp
+            <div class="gqs-modal-overlay" wire:click.self="closeRunIntent">
+                <div class="gqs-modal" style="width:460px;max-width:94vw;">
+                    <div class="gqs-modal-head"><span class="gqs-modal-ico"><x-filament::icon icon="heroicon-m-adjustments-horizontal"/></span>Runs This Visit</div>
+                    <div class="gqs-modal-body" style="display:flex;flex-direction:column;gap:14px;">
+                        <p style="margin:0;font-size:13.5px;color:var(--gqs-text,#1A1A1F);">
+                            <strong>{{ $rir?->personnel?->full_name }}</strong> still owes <strong>{{ $rem }}</strong> run{{ $rem === 1 ? '' : 's' }}. How many did they do in this visit?
+                        </p>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            @for($n = 1; $n <= $rem; $n++)
+                                <button type="button" wire:click="setRunsToday({{ $runIntentResId }}, {{ $n }})"
+                                        class="ri-num {{ $sel === $n ? 'on' : '' }}">{{ $n }}</button>
+                            @endfor
+                        </div>
+                        @if($leftover > 0)
+                            <div style="border-top:1px solid var(--gqs-border,#E2E2E8);padding-top:12px;">
+                                <div class="gqs-flbl" style="margin-bottom:6px;">Where do the remaining {{ $leftover }} run{{ $leftover === 1 ? '' : 's' }} go?</div>
+                                <label class="ri-opt"><input type="radio" wire:model.live="runIntentLeftover" value="next"> Next available run day</label>
+                                <label class="ri-opt"><input type="radio" wire:model.live="runIntentLeftover" value="pick"> A specific open run day</label>
+                                <label class="ri-opt"><input type="radio" wire:model.live="runIntentLeftover" value="special"> A special one-off session (just for them)</label>
+                                <label class="ri-opt"><input type="radio" wire:model.live="runIntentLeftover" value="hold"> Leave unscheduled for now</label>
+
+                                @if($runIntentLeftover === 'pick')
+                                    <select wire:model="runIntentPickSlot" class="gqs-fld" style="margin-top:8px;">
+                                        <option value="">Choose a run day...</option>
+                                        @foreach($this->openSlotsForBooking() as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach
+                                    </select>
+                                @elseif($runIntentLeftover === 'special')
+                                    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                                        <input type="date" wire:model="runIntentSpecialDate" class="gqs-fld" style="flex:1;min-width:150px;">
+                                        <select wire:model="runIntentSpecialCleanroom" class="gqs-fld" style="flex:1;min-width:130px;">
+                                            <option value="">Cleanroom (optional)</option>
+                                            @foreach($this->cleanroomOptions() as $cr)<option value="{{ $cr }}">{{ $cr }}</option>@endforeach
+                                        </select>
+                                    </div>
+                                @endif
+                            </div>
+                        @else
+                            <div style="font-size:12.5px;color:#1E7A52;font-weight:600;">All remaining runs done in this visit - nothing to reschedule.</div>
+                        @endif
+                    </div>
+                    <div class="gqs-modal-foot" style="justify-content:flex-end;">
+                        <button wire:click="closeRunIntent" class="gqs-btn gqs-btn-ghost">Cancel</button>
+                        <button wire:click="saveRunIntent" class="gqs-btn gqs-btn-primary">Done</button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Move reservation modal --}}
         @if($showMoveRes)
             <div class="gqs-modal-overlay" wire:click.self="$set('showMoveRes', false)">
@@ -404,19 +460,19 @@
                                 <div class="att-row {{ $required > 1 ? 'att-multi' : '' }} {{ $tintKey === 'present' ? 'att-done' : ($tintKey === 'no_show' ? 'att-absent' : ($tintKey === 'rescheduled' ? 'att-resched' : '')) }}">
                                     <div class="att-who">
                                         <div class="att-name">{{ $i + 1 }}. {{ $res->personnel?->full_name }}
-                                            @if($required > 1)<span class="att-multi-tag" title="This is a {{ $required }}-run qualification session - all {{ $required }} runs share one LIMS worklist">{{ $required }}-Run Session</span>@endif
+                                            @if($required > 1)<span class="att-multi-tag" title="{{ $required }}-run session - all runs share one LIMS worklist">{{ $required }}-Run</span>@endif
                                         </div>
                                         <div class="att-eid">
                                             <span>{{ $res->personnel?->employee_id }}</span>
-                                            <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}@if($ctx['tag']) · {{ $ctx['tag'] }}@endif</span>
-                                            @if($ctx['retrain'] ?? false)<span class="gqs-pill gqs-pill-red" style="margin-left:4px;">Retraining Required First</span>@endif
+                                            <span class="gqs-pill {{ $ctx['pill'] }}">{{ $ctx['label'] }}{{ $ctx['tag'] ? ' · ' . $ctx['tag'] : '' }}</span>
+                                            @if($ctx['retrain'] ?? false)<span class="gqs-pill gqs-pill-red">Retrain First</span>@endif
                                             <span class="run-pips" title="Run {{ $runNo }} of {{ $required }}">
                                                 @for($k = 1; $k <= $required; $k++)
                                                     <span class="run-pip {{ $k <= $performed ? 'done' : ($k == $runNo ? 'cur' : '') }}"></span>
                                                 @endfor
                                             </span>
-                                            <span style="font-weight:700;">{{ $performed }} of {{ $required }} done@if($required - $performed > 0) · {{ $required - $performed }} left@endif</span>
-                                            @if(!empty($limsDetected[$res->id]))<span class="gqs-pill gqs-pill-green" title="LIMS shows {{ $limsDetected[$res->id] }} for this person - pre-filled as Present. Confirm and submit.">LIMS: Run Detected</span>@endif
+                                            <span style="font-weight:700;font-size:11.5px;">{{ $performed }}/{{ $required }}</span>
+                                            @if(!empty($limsDetected[$res->id]))<span class="gqs-pill gqs-pill-green" title="LIMS shows {{ $limsDetected[$res->id] }}">LIMS Detected</span>@endif
                                         </div>
                                     </div>
 
@@ -438,18 +494,12 @@
                                                     class="att-tog att-no {{ $intent === 'no_show' ? 'on' : '' }}"><span class="att-box"></span> No-Show</button>
                                             <button type="button" wire:click="setIntent({{ $res->id }}, 'rescheduled')"
                                                     class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
-                                            @if($required > 1)
-                                                @php $willRecord = !empty($performAll[$res->id]) ? max(1, $required - $performed) : 1; @endphp
-                                                <div class="att-multi-runs {{ $intent === 'present' ? '' : 'att-dim' }}">
-                                                    <label class="att-allruns">
-                                                        <input type="checkbox" wire:model.live="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
-                                                        Did All {{ $required }} Runs Today
-                                                    </label>
-                                                    @if($intent === 'present')
-                                                        <span class="att-willrec">Will record <strong>{{ $willRecord }}</strong> run{{ $willRecord > 1 ? 's' : '' }} from this visit@if($willRecord < ($required - $performed)) · {{ ($required - $performed) - $willRecord }} stay scheduled@endif</span>
-                                                    @endif
-                                                </div>
-                                                <div class="att-hint" style="flex-basis:100%;margin-left:2px;font-size:11.5px;">All {{ $required }} runs share one LIMS worklist. Leave checked if they did them all in this visit; uncheck to record just one and keep the rest scheduled (Reschedule those rows to move them to another day or a special session).</div>
+                                            @if($required > 1 && $intent === 'present')
+                                                @php $rt = $this->runsToday[$res->id] ?? ($required - $performed); $leftover = ($required - $performed) - $rt; @endphp
+                                                <button type="button" wire:click="openRunIntent({{ $res->id }})" class="att-runs-btn">
+                                                    <x-filament::icon icon="heroicon-m-adjustments-horizontal" style="width:14px;height:14px;"/>
+                                                    {{ $rt }} of {{ $required - $performed }} this visit{{ $leftover > 0 ? ' · ' . $leftover . ' to reschedule' : '' }}
+                                                </button>
                                             @endif
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>

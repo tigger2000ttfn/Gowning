@@ -157,6 +157,17 @@
     .att-multi-runs.att-dim{opacity:.45;}
     .att-allruns{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:#5A2480;cursor:pointer;}
     .att-willrec{font-size:11.5px;font-weight:600;color:var(--gqs-text-dim,#6A6A72);}
+    /* Set Runs button (replaces the verbose multi-run readout on the attendance row) */
+    .att-runs-btn{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:8px;border:1.5px solid #6B2C9140;background:#6B2C910F;color:#5A2480;cursor:pointer;white-space:nowrap;}
+    .att-runs-btn:hover{background:#6B2C911A;border-color:#6B2C9166;}
+    .dark .att-runs-btn{color:#D9B8EE;background:#6B2C9126;border-color:#6B2C9155;}
+    /* Run-intent modal: number-of-runs buttons + leftover-destination radios */
+    .ri-num{width:46px;height:46px;border-radius:10px;border:1.5px solid var(--gqs-border,#D6D6DC);background:var(--gqs-surface,#fff);color:var(--gqs-text,#1A1A1F);font-size:17px;font-weight:800;cursor:pointer;transition:all .12s;}
+    .ri-num:hover{border-color:#6B2C9166;}
+    .ri-num.on{background:#6B2C91;border-color:#6B2C91;color:#fff;box-shadow:0 3px 10px rgba(107,44,145,.28);}
+    .dark .ri-num{background:#23232B;border-color:#3A3A44;color:#ECECF0;}
+    .ri-opt{display:flex;align-items:center;gap:9px;padding:7px 2px;font-size:13px;color:var(--gqs-text,#1A1A1F);cursor:pointer;}
+    .ri-opt input{accent-color:#6B2C91;width:16px;height:16px;}
     .dark .att-multi-tag{color:#D9B8EE;background:#6B2C9133;border-color:#6B2C9155;}
     .dark .att-allruns{color:#D9B8EE;}
     .dark .att-row{background:#23232B;border-color:#34343E;}
