@@ -129,13 +129,20 @@ class QualificationEngine
         $state = $this->replay($runsQuery->get(), $startingRequired);
 
         // If the engine derived a qualifying date from runs, use it. Otherwise fall back to a
-        // manually-entered qualified_date (seeded/historic people who have no full run history),
-        // and always compute the due date as qualified_date + cycle so the Due column is correct.
+        // manually-entered qualified_date (seeded/historic people who have no full run history).
         $qualifiedDate = $state['qualified_date'] ?? $qualification->qualified_date?->toDateString();
-        $dueDate = $state['due_date'];
-        if ($dueDate === null && $qualifiedDate) {
-            $dueDate = \Illuminate\Support\Carbon::parse($qualifiedDate)
-                ->addMonths($this->cycleMonths())->toDateString();
+
+        // DUE DATE OWNERSHIP: the displayed due date is the CURRENT cycle due date and is only advanced
+        // when QA signs off (finalizeSignoff sets due = approval date + cycle). The engine must NOT push
+        // due_date to a freshly-calculated future date when a run passes mid-flow - that showed a "next"
+        // due date prematurely on the boards. So we PRESERVE the existing stored due_date here, and only
+        // fall back to a computed one when the record has no due date at all (brand-new/seeded record).
+        $existingDue = $qualification->due_date?->toDateString();
+        $dueDate = $existingDue;
+        if ($dueDate === null) {
+            $dueDate = $state['due_date'] ?? ($qualifiedDate
+                ? \Illuminate\Support\Carbon::parse($qualifiedDate)->addMonths($this->cycleMonths())->toDateString()
+                : null);
         }
 
         // If the person is qualified by manual entry (status says qualified) but the run replay
