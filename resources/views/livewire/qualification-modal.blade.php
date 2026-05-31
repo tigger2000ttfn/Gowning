@@ -82,7 +82,7 @@
                     @elseif(!empty($detail['review_url']))
                         <a href="{{ $detail['review_url'] }}" class="gqs-btn" style="background:#1F6FB2;color:#fff;text-decoration:none;">{{ $detail['review_label'] }}</a>
                     @endif
-                    <a href="{{ $detail['record_url'] }}" class="gqs-btn gqs-btn-primary" style="text-decoration:none;">Open Full Record</a>
+                    <a href="{{ $detail['record_url'] }}" target="_blank" rel="noopener" class="gqs-btn gqs-btn-primary" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">Open Full Record <x-filament::icon icon="heroicon-m-arrow-top-right-on-square" style="width:14px;height:14px;"/></a>
                 </span>
             </div>
         </div>

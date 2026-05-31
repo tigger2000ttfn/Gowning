@@ -14,6 +14,11 @@ class EditPersonnel extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('backToActiveRuns')
+                ->label('Back To Active Runs')
+                ->icon('heroicon-m-arrow-left')
+                ->color('gray')
+                ->url(fn () => \App\Filament\Admin\Resources\QualificationResource::getUrl('index')),
             DeleteAction::make(),
             Action::make('purge')
                 ->label('Purge (Permanent)')
