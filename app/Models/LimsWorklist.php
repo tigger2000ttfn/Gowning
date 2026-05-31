@@ -132,6 +132,9 @@ class LimsWorklist extends Model
     /** Routine EM monitoring (not a gowning qual) - skip from qual processing. */
     public function isRoutineEm(): bool
     {
+        // A row is "routine EM" only when it has NO explicit qualification type AND the EM area says
+        // routine. Once a type is assigned (e.g. hand-fixed on a legacy row), it is a real qual.
+        if (trim((string) $this->qualification_type) !== '') return false;
         return stripos((string) $this->em_area, 'routine em') !== false;
     }
 
