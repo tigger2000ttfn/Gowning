@@ -34,6 +34,24 @@ class AutomationRuleSeeder extends Seeder
                 'action' => 'notify_capability',
                 'action_config' => ['capability' => 'manage_scheduling', 'title' => 'Qualification lapsed', 'message' => '{name} ({employee_id}) has lapsed and needs requalification.'],
             ],
+            [
+                'name' => 'Notify scheduling when a class is completed',
+                'trigger' => 'class_completed',
+                'action' => 'notify_capability',
+                'action_config' => ['capability' => 'manage_scheduling', 'title' => 'Class completed', 'message' => '{name} ({employee_id}) has completed the gowning class and can be booked for runs.'],
+            ],
+            [
+                'name' => 'Alert QA when a nonconformance is opened',
+                'trigger' => 'nc_opened',
+                'action' => 'notify_capability',
+                'action_config' => ['capability' => 'qa_review', 'title' => 'Nonconformance opened', 'message' => 'An NC was opened for {name} ({employee_id}). Review the excursion.'],
+            ],
+            [
+                'name' => 'Confirm to the operator when a run passes',
+                'trigger' => 'run_passed',
+                'action' => 'notify_person',
+                'action_config' => ['title' => 'Run passed', 'message' => 'Hi {name}, your gowning run passed. Results are recorded and pending QCM/QA review.'],
+            ],
         ];
 
         foreach ($rules as $r) {
