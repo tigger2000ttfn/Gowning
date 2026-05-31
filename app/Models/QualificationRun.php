@@ -60,6 +60,7 @@ class QualificationRun extends Model implements HasMedia
             'results_released_at' => 'datetime',
             'results_entered_at' => 'datetime',
             'qa_signed_at' => 'datetime',
+            'qcm_signed_at' => 'datetime',
             'lims_all_final' => 'boolean',
             'lims_qcm_ready' => 'boolean',
             'lims_synced_at' => 'datetime',
@@ -93,6 +94,11 @@ class QualificationRun extends Model implements HasMedia
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function qcmSignedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'qcm_signed_by');
     }
 
     public function isPass(): bool
