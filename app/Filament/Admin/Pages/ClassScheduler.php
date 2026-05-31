@@ -191,6 +191,7 @@ class ClassScheduler extends Page
     // ---- Trainer e-signature on attendance submit ----
     public ?int $signSubmitSid = null;
     public string $signPassword = '';
+    public string $signVeeva = '';
 
     public function openSubmitSign(int $sessionId): void
     {
@@ -211,8 +212,9 @@ class ClassScheduler extends Page
         }
         $this->signSubmitSid = $sessionId;
         $this->signPassword = '';
+        $this->signVeeva = '';
     }
-    public function closeSubmitSign(): void { $this->signSubmitSid = null; $this->signPassword = ''; }
+    public function closeSubmitSign(): void { $this->signSubmitSid = null; $this->signPassword = ''; $this->signVeeva = ''; }
 
     public function confirmSubmitSign(): void
     {
@@ -244,6 +246,13 @@ class ClassScheduler extends Page
         }
         $s->attendance_submitted_at = now();
         $s->attendance_submitted_by = Auth::id();
+        // Veeva report number entered by the submitter (analyst). Link auto-fills from the catalog.
+        $veeva = trim($this->signVeeva);
+        if ($veeva !== '') {
+            $s->veeva_doc_number = $veeva;
+            $url = \App\Models\VeevaDocument::urlForNumber($veeva);
+            if ($url) $s->veeva_url = $url;
+        }
         $s->save();
 
         $trainerName = $s->instructorUser?->name ?? Auth::user()->name;

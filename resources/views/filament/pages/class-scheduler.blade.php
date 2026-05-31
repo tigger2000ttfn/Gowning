@@ -498,7 +498,19 @@
                     <p style="margin:0 0 10px;font-size:13px;color:var(--gqs-text,#1A1A1F);line-height:1.5;">
                         Trainer Of Record: <strong>{{ $trainerName }}</strong>. Your electronic signature submits this attendance to QA, locks the session, and records your name as the trainer on FORM-AST-36513. If no trainer is set, you are recorded as the trainer.
                     </p>
-                    <label class="gqs-flbl">Password</label>
+                    <label class="gqs-flbl">Veeva Report Number</label>
+                    <input type="text" wire:model.live.debounce.400ms="signVeeva" class="gqs-fld" placeholder="RPT-AST-XXXXX">
+                    @if(trim($signVeeva) !== '')
+                        @php $vd = \App\Models\VeevaDocument::findByNumber(trim($signVeeva)); @endphp
+                        @if($vd && strcasecmp(trim($vd->status), 'Approved') === 0)
+                            <p style="margin:6px 0 0;font-size:12px;color:#1E7A52;font-weight:600;">Veeva Approved ✓@if($vd->title) · {{ \Illuminate\Support\Str::limit($vd->title, 48) }}@endif</p>
+                        @elseif($vd)
+                            <p style="margin:6px 0 0;font-size:12px;color:#8A6D0B;font-weight:600;">In Veeva as {{ $vd->status ?: 'not Approved' }} (not Approved yet)</p>
+                        @else
+                            <p style="margin:6px 0 0;font-size:12px;color:var(--gqs-text-dim,#6A6A72);">Not in the Veeva catalog yet; the link will fill once it is.</p>
+                        @endif
+                    @endif
+                    <label class="gqs-flbl" style="margin-top:12px;">Password</label>
                     <input type="password" wire:model="signPassword" wire:keydown.enter="confirmSubmitSign" class="gqs-fld" autocomplete="off" placeholder="Enter your password to sign">
                     <p style="margin:8px 0 0;font-size:11.5px;color:var(--gqs-text-dim,#6A6A72);">Signed By {{ auth()->user()->name }} · {{ now()->gmpDt() }}</p>
                 </div>
