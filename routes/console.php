@@ -89,6 +89,17 @@ Artisan::command('gqs:backfill-catalogs', function () {
 
 Schedule::command('gqs:backfill-catalogs')->dailyAt('06:17');
 
+// Nightly LIMS worklist sweeper: populate/advance records that ALREADY have a worklist assigned
+// (linked via the run picker or created by backfill). This is the UPDATE step - it pulls the latest
+// LIMS state (sample/incubation status, evaluation, QCM-ready, NC links) onto linked runs and advances
+// their stage as the LIMS feed progresses. It never CREATES records (that is the manual backfill).
+Artisan::command('gqs:sync-worklists', function () {
+    $n = app(\App\Services\WorklistSync::class)->syncAll();
+    $this->info("LIMS worklist sync: {$n} linked run(s) updated.");
+})->purpose('Nightly sync of LIMS data onto runs that already have a worklist assigned');
+
+Schedule::command('gqs:sync-worklists')->dailyAt('06:18');
+
 // Flush queued emails once the mail relay (Postfix) is configured.
 // Until then rows sit in queued_emails with sent_at = null.
 Artisan::command('gqs:flush-emails', function () {
