@@ -21,7 +21,7 @@ class RunNotScheduled extends Page
     public static function shouldRegisterNavigation(): bool { return false; } // absorbed into Run Scheduler > Overview tab
     public static function canViewAny(): bool { return static::allowed(); }
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Run Not Scheduled';
     protected static string|\UnitEnum|null $navigationGroup = 'Classroom';
     protected static ?int $navigationSort = 3;

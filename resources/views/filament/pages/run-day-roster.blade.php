@@ -423,10 +423,11 @@
                                                     class="att-tog att-res {{ $intent === 'rescheduled' ? 'on' : '' }}"><span class="att-box"></span> Reschedule</button>
                                             @if($required > 1)
                                                 <label style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--gqs-text,#1A1A1F);margin-left:8px;{{ $intent === 'present' ? '' : 'opacity:.45;' }}"
-                                                       title="Operator performed all remaining runs today (one sample/incubation each)">
+                                                       title="Check if the operator performed all remaining runs today (one sample and incubation each)">
                                                     <input type="checkbox" wire:model="performAll.{{ $res->id }}" @if($intent !== 'present') disabled @endif>
-                                                    All {{ $required }} Today
+                                                    Attended all {{ $required }} runs today
                                                 </label>
+                                                <div class="att-hint" style="flex-basis:100%;margin-left:8px;font-size:11.5px;">Checked records all {{ $required }} runs today. Unchecked records one run; the other {{ $required - 1 }} stay scheduled for their own days.</div>
                                             @endif
                                         @elseif($st === 'completed')
                                             <span class="gqs-pill gqs-pill-green">Present</span>

@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @include('filament.page-hero', ['title' => 'Run Not Scheduled', 'icon' => 'heroicon-o-calendar'])
+    @include('filament.page-hero', ['title' => 'Run Not Scheduled', 'icon' => 'heroicon-o-calendar-days'])
 
     @php $waiting = $this->getWaiting(); @endphp
 
