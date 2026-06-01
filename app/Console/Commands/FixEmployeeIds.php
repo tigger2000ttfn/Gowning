@@ -22,12 +22,13 @@ use Illuminate\Support\Facades\DB;
  */
 class FixEmployeeIds extends Command
 {
-    protected $signature = 'gqs:fix-employee-ids {--force : Apply the changes (otherwise dry-run)} {--show-skips : List skipped/no-match personnel too} {--file= : Path to the roster CSV (default database/data/employee_roster.csv)}';
+    protected $signature = 'gqs:fix-employee-ids {--force : Apply the changes (otherwise dry-run)} {--show-skips : List skipped/no-match personnel too} {--by-username : Also match no-name-match people by roster user name -> current ID / lims_username} {--file= : Path to the roster CSV (default database/data/employee_roster.csv)}';
     protected $description = 'Replace non-A employee IDs with the authoritative roster value, matched by exact last + first name';
 
     public function handle(): int
     {
         $force = (bool) $this->option('force');
+        $byUsername = (bool) $this->option('by-username');
         $path = $this->option('file') ?: database_path('data/employee_roster.csv');
 
         if (! is_file($path)) {
@@ -35,26 +36,37 @@ class FixEmployeeIds extends Command
             return self::FAILURE;
         }
 
-        // Build the roster index keyed by lower(last)|lower(first); track duplicates as ambiguous.
-        $byName = [];      // key => employee_id
+        // CSV columns: last_name | first_name | user_name | employee_id  (older files may omit user_name).
+        $byName = [];      // lower(last)|lower(first) => employee_id
         $ambiguous = [];   // key => true
+        $byUser = [];      // normalized username => employee_id
         $fh = fopen($path, 'r');
         $header = true;
         while (($cols = fgetcsv($fh, 0, '|')) !== false) {
             if ($header) { $header = false; continue; }
             if (count($cols) < 3) continue;
-            $last = trim((string) $cols[0]);
-            $first = trim((string) $cols[1]);
-            $emp = trim((string) $cols[2]);
+            $last = trim((string) ($cols[0] ?? ''));
+            $first = trim((string) ($cols[1] ?? ''));
+            // Support both layouts: with username (4 cols) or without (3 cols).
+            if (count($cols) >= 4) {
+                $user = trim((string) $cols[2]);
+                $emp = trim((string) $cols[3]);
+            } else {
+                $user = '';
+                $emp = trim((string) $cols[2]);
+            }
             if ($last === '' || $first === '' || $emp === '') continue;
             $key = mb_strtolower($last) . '|' . mb_strtolower($first);
-            if (isset($byName[$key]) && $byName[$key] !== $emp) {
-                $ambiguous[$key] = true;
-            }
+            if (isset($byName[$key]) && $byName[$key] !== $emp) { $ambiguous[$key] = true; }
             $byName[$key] = $emp;
+            if ($user !== '') {
+                $uk = $this->normUser($user);
+                if ($uk !== '') { $byUser[$uk] = $emp; }
+            }
         }
         fclose($fh);
-        $this->info('Roster entries loaded: ' . count($byName) . ' (' . count($ambiguous) . ' ambiguous name(s) will be skipped)');
+        $this->info('Roster entries loaded: ' . count($byName) . ' (' . count($ambiguous) . ' ambiguous name(s) will be skipped)'
+            . ($byUsername ? ' | username match ON' : ''));
 
         // Pre-index existing employee IDs so we can detect collisions (a new id already in use by someone else).
         $idOwner = Personnel::query()->pluck('id', 'employee_id'); // employee_id => personnel id
@@ -74,9 +86,20 @@ class FixEmployeeIds extends Command
 
         foreach ($candidates as $p) {
             $key = mb_strtolower(trim((string) $p->last_name)) . '|' . mb_strtolower(trim((string) $p->first_name));
-            if (! isset($byName[$key])) { $noMatch[] = $p; continue; }
-            if (isset($ambiguous[$key])) { $ambig[] = $p; continue; }
-            $newId = $byName[$key];
+            $newId = null;
+            if (isset($byName[$key])) {
+                if (isset($ambiguous[$key])) { $ambig[] = $p; continue; }
+                $newId = $byName[$key];
+            } elseif ($byUsername) {
+                // Fallback: match the roster's user name to this person's current employee_id (which is the
+                // username placeholder for the unmatched rows) or their lims_username. Normalized so e.g.
+                // "NWADA (ISHII)" matches "NWADA".
+                foreach ([$p->employee_id, $p->lims_username] as $cand) {
+                    $uk = $this->normUser((string) $cand);
+                    if ($uk !== '' && isset($byUser[$uk])) { $newId = $byUser[$uk]; break; }
+                }
+            }
+            if ($newId === null) { $noMatch[] = $p; continue; }
             if ($newId === (string) $p->employee_id) { $unchanged[] = $p; continue; }
             // Collision: the target id already belongs to a different person.
             if (isset($idOwner[$newId]) && (int) $idOwner[$newId] !== (int) $p->id) {
@@ -144,5 +167,15 @@ class FixEmployeeIds extends Command
         $this->newLine();
         $this->info('Applied ' . count($toChange) . ' employee ID update(s).');
         return self::SUCCESS;
+    }
+
+    /** Normalize a username for matching: uppercase, drop any parenthetical suffix and spaces (e.g. "NWADA (ISHII)" -> "NWADA"). */
+    private function normUser(string $u): string
+    {
+        $u = trim($u);
+        if ($u === '') return '';
+        $u = preg_replace('/\s*\(.*?\)\s*/', '', $u); // strip "(ISHII)" etc.
+        $u = preg_replace('/\s+/', '', (string) $u);
+        return mb_strtoupper((string) $u);
     }
 }
