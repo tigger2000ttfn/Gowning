@@ -34,7 +34,19 @@ class StatusBoard extends Page
     public string $search = '';
     public string $deptFilter = '';
     public string $typeFilter = '';
+    public string $stageFilter = '';
+    public bool $stalledOnly = false;
+    public bool $pastDueOnly = false;
     public string $groupBy = '';
+
+    public function stageOptions(): array
+    {
+        $out = ['' => 'All Stages'];
+        foreach (WorkflowStage::pipeline() as $s) { $out[$s->value] = $s->label(); }
+        return $out;
+    }
+
+    public function stalledDays(): int { return (int) \App\Models\Setting::get('stalled_days', 14); }
 
     public function groupByOptions(): array
     {
@@ -56,6 +68,9 @@ class StatusBoard extends Page
             ->whereNull('superseded_at')
             ->whereNull('archived_at')
             ->when($this->typeFilter !== '', fn ($q) => $q->where('type', $this->typeFilter))
+            ->when($this->stageFilter !== '', fn ($q) => $q->where('workflow_stage', $this->stageFilter))
+            ->when($this->stalledOnly, fn ($q) => $q->where('stage_changed_at', '<=', now()->subDays($this->stalledDays())))
+            ->when($this->pastDueOnly, fn ($q) => $q->whereNotNull('due_date')->whereDate('due_date', '<', now()->toDateString()))
             ->when($this->search !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
                 $p->where('first_name', 'ilike', '%' . $this->search . '%')
                   ->orWhere('last_name', 'ilike', '%' . $this->search . '%')

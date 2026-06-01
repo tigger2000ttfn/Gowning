@@ -17,11 +17,20 @@
                 <option value="initial">Initial</option>
                 <option value="annual">Annual</option>
             </select>
+            <select wire:model.live="stageFilter" class="gqs-fld sb-hf-sel">
+                @foreach($this->stageOptions() as $k => $label)<option value="{{ $k }}">{{ $label }}</option>@endforeach
+            </select>
+            <label class="sb-hf-chk"><input type="checkbox" wire:model.live="stalledOnly"> Stalled &gt; {{ $this->stalledDays() }}d</label>
+            <label class="sb-hf-chk"><input type="checkbox" wire:model.live="pastDueOnly"> Past Due</label>
             <select wire:model.live="groupBy" class="gqs-fld sb-hf-sel" title="Group cards into swimlanes">
                 @foreach($this->groupByOptions() as $k => $label)<option value="{{ $k }}">{{ $k === '' ? 'No Grouping' : 'Group: ' . $label }}</option>@endforeach
             </select>
         </div>
     </div>
+    <style>
+        .sb-hf-chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--gqs-text-dim,#5A5A62);white-space:nowrap;padding:0 4px;cursor:pointer;}
+        .sb-hf-chk input{accent-color:#A4123F;}
+    </style>
 
     <div wire:ignore.self
          x-data="sbBoard({ canReorder: @json((bool) auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling)), canMove: @json((bool) (auth()->user()?->hasCapability(\App\Enums\Capability::ManageScheduling) || auth()->user()?->hasCapability(\App\Enums\Capability::QaApprove))) })"
