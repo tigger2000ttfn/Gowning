@@ -15,6 +15,19 @@
                     style="display:inline-flex;align-items:center;gap:7px;padding:9px 15px;background:#A4123F;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;height:40px;">
                 <x-filament::icon icon="heroicon-m-plus" style="width:16px;height:16px;"/> Add Enrollment
             </button>
+            <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search name or ID" class="gqs-fld sb-hf-search">
+            <select wire:model.live="classFilter" class="gqs-fld sb-hf-sel">
+                <option value="">All Classes</option>
+                @foreach($this->classOptions() as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
+            </select>
+            <select wire:model.live="deptFilter" class="gqs-fld sb-hf-sel">
+                <option value="">All Departments</option>
+                @foreach($this->departmentOptions() as $d)<option value="{{ $d }}">{{ $d }}</option>@endforeach
+            </select>
+            <select wire:model.live="sourceFilter" class="gqs-fld sb-hf-sel" title="Filter completed records by source">
+                <option value="">All Sources</option>
+                @foreach($this->sourceOptions() as $k => $label)<option value="{{ $k }}">{{ $label }}</option>@endforeach
+            </select>
             <select wire:model.live="groupBy" class="gqs-fld sb-hf-sel" title="Group cards into swimlanes">
                 @foreach($this->groupByOptions() as $k => $label)<option value="{{ $k }}">{{ $k === '' ? 'No Grouping' : 'Group: ' . $label }}</option>@endforeach
             </select>

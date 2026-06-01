@@ -40,6 +40,49 @@ class ClassBoard extends Page
     ];
 
     public string $groupBy = '';
+    public string $search = '';
+    public string $classFilter = '';
+    public string $deptFilter = '';
+    public string $sourceFilter = '';
+
+    public function classOptions(): array
+    {
+        return \App\Models\TrainingClass::orderBy('name')->pluck('name', 'name')->all();
+    }
+
+    public function departmentOptions(): array
+    {
+        return \App\Models\Department::where('is_active', true)->orderBy('name')->pluck('name', 'name')->all();
+    }
+
+    public function sourceOptions(): array
+    {
+        return ['enrollment' => 'Enrollment / Class Session', 'lms' => 'LMS Import', 'manual' => 'Manual Entry', 'self' => 'Self-Service', 'import' => 'File Import', 'inferred' => 'Inferred (Backfill)'];
+    }
+
+    /** Apply the top-bar filters to an assembled column set (search/class/department/source across all lanes). */
+    protected function applyFilters(array $out): array
+    {
+        $search = trim($this->search);
+        foreach ($out as $key => $col) {
+            $cards = array_filter($col['cards'], function ($c) use ($search) {
+                if ($search !== '') {
+                    $hay = mb_strtolower(($c['name'] ?? '') . ' ' . ($c['employee_id'] ?? ''));
+                    if (! str_contains($hay, mb_strtolower($search))) return false;
+                }
+                if ($this->classFilter !== '' && ($c['class'] ?? null) !== $this->classFilter) return false;
+                if ($this->deptFilter !== '' && ($c['department'] ?? null) !== $this->deptFilter) return false;
+                if ($this->sourceFilter !== '') {
+                    // Enrollment-driven cards have no 'source'; treat them as 'enrollment'.
+                    $src = $c['source'] ?? 'enrollment';
+                    if ($src !== $this->sourceFilter) return false;
+                }
+                return true;
+            });
+            $out[$key]['cards'] = array_values($cards);
+        }
+        return $out;
+    }
 
     public function groupByOptions(): array
     {
@@ -124,6 +167,11 @@ class ClassBoard extends Page
         return \App\Models\Qualification::with('personnel')
             ->where('workflow_stage', \App\Enums\WorkflowStage::ClassPending->value)
             ->whereNotIn('personnel_id', $enrolled)
+            ->when($this->deptFilter !== '', fn ($q) => $q->whereHas('personnel', fn ($p) => $p->where('department', $this->deptFilter)))
+            ->when(trim($this->search) !== '', fn ($q) => $q->whereHas('personnel', fn ($p) =>
+                $p->where('first_name', 'ilike', '%' . trim($this->search) . '%')
+                  ->orWhere('last_name', 'ilike', '%' . trim($this->search) . '%')
+                  ->orWhere('employee_id', 'ilike', '%' . trim($this->search) . '%')))
             ->get()
             ->map(fn ($q) => [
                 'id' => $q->id,
@@ -198,7 +246,7 @@ class ClassBoard extends Page
             $out['completed']['cards'] = array_merge($out['completed']['cards'], $extra);
         }
 
-        return $out;
+        return $this->applyFilters($out);
     }
 
     /** Drag an enrollment to a new status. 'completed' advances the person's workflow stage. */
