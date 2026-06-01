@@ -19,13 +19,16 @@ class QualificationRun extends Model implements HasMedia
     {
         // Auto-link the Veeva document URL from the catalog whenever a Veeva number is set/changed and no
         // explicit URL was provided. Keeps run records hyperlinked without anyone pasting the link.
+        // Each link type can be turned off in Settings (auto-link is on by default).
         static::saving(function ($run) {
-            if ($run->veeva_doc_number && (empty($run->veeva_url) || $run->isDirty('veeva_doc_number'))) {
+            if ($run->veeva_doc_number && (empty($run->veeva_url) || $run->isDirty('veeva_doc_number'))
+                && \App\Models\Setting::get('autolink_veeva', true)) {
                 $url = \App\Models\VeevaDocument::urlForNumber($run->veeva_doc_number);
                 if ($url) $run->veeva_url = $url;
             }
             // Same for an NC/TrackWise number stored on the run (failed runs carry lims_nc_number).
-            if ($run->lims_nc_number && (empty($run->lims_nc_url) || $run->isDirty('lims_nc_number'))) {
+            if ($run->lims_nc_number && (empty($run->lims_nc_url) || $run->isDirty('lims_nc_number'))
+                && \App\Models\Setting::get('autolink_nc', true)) {
                 $ncUrl = \App\Models\NcDocument::urlForNumber($run->lims_nc_number);
                 if ($ncUrl) $run->lims_nc_url = $ncUrl;
             }

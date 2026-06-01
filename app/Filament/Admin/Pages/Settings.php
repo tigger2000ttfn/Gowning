@@ -61,6 +61,8 @@ class Settings extends Page implements HasForms
             'lapsed_runs_required'  => (int) Setting::get('lapsed_runs_required', 3),
             'allow_self_reschedule' => (bool) Setting::get('allow_self_reschedule', true),
             'allow_self_request_run' => (bool) Setting::get('allow_self_request_run', true),
+            'autolink_veeva' => (bool) Setting::get('autolink_veeva', true),
+            'autolink_nc' => (bool) Setting::get('autolink_nc', true),
             'allow_self_book_class' => (bool) Setting::get('allow_self_book_class', true),
             'default_run_cleanroom' => Setting::get('default_run_cleanroom', ''),
             'default_run_analyst_id' => Setting::get('default_run_analyst_id'),
@@ -142,6 +144,14 @@ class Settings extends Page implements HasForms
                         ->numeric()->minValue(0)
                         ->helperText('Flag a plate as overdue this many days after its incubation due-out. Default 1.'),
                 ]),
+                Section::make('Auto-Linking')->icon('heroicon-o-link')->columns(2)
+                    ->description('Automatically turn entered reference numbers into clickable links from the catalogs. Turn off to store the number without auto-creating the link.')
+                    ->schema([
+                        Toggle::make('autolink_veeva')->label('Auto-Link Veeva Reports')->default(true)
+                            ->helperText('When a Veeva (RPT-AST-) number is entered, link it from the Veeva catalog.'),
+                        Toggle::make('autolink_nc')->label('Auto-Link Nonconformances')->default(true)
+                            ->helperText('When an NC / TrackWise number is entered, link it from the NC catalog.'),
+                    ]),
                 Section::make('Auto-Scheduling')->icon('heroicon-o-calendar-days')->columns(2)->schema([
                     Toggle::make('auto_schedule')->label('Auto-schedule Qualification Runs')
                         ->helperText('Automatically book people who need runs into the next available run day.'),

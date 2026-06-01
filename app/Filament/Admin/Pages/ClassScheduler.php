@@ -267,8 +267,10 @@ class ClassScheduler extends Page
             $veeva = strtoupper($veeva);
             if (! str_starts_with($veeva, 'RPT-AST-')) { $veeva = 'RPT-AST-' . ltrim(preg_replace('/^RPT-AST[-\s]*/i', '', $veeva), '-'); }
             $s->veeva_doc_number = $veeva;
-            $url = \App\Models\VeevaDocument::urlForNumber($veeva);
-            if ($url) $s->veeva_url = $url;
+            if (\App\Models\Setting::get('autolink_veeva', true)) {
+                $url = \App\Models\VeevaDocument::urlForNumber($veeva);
+                if ($url) $s->veeva_url = $url;
+            }
         }
         $s->save();
 
