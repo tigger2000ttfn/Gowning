@@ -369,6 +369,10 @@
                                                         wire:click="openReschedule({{ $row['id'] }})">Reschedule</button>
                                                 <button type="button" class="att-tog att-cancel"
                                                         wire:click="askConfirm('cancelEnrollment', {{ $row['id'] }}, 'Cancel Enrollment', 'Cancel this person\'s class enrollment and free their seat?', 'Cancel Enrollment', true)">Cancel</button>
+                                                @if(auth()->user()?->hasCapability(\App\Enums\Capability::ManageUsers) || auth()->user()?->hasCapability(\App\Enums\Capability::SystemSettings))
+                                                    <button type="button" class="att-tog att-cancel" style="opacity:.85;"
+                                                            wire:click="askConfirm('removeEnrollment', {{ $row['id'] }}, 'Remove Enrollment', 'Completely remove this person from the class? Use only for someone added by mistake.', 'Remove', true)" title="Administrator: fully remove this enrollment">Remove</button>
+                                                @endif
                                             </div>
                                             <input type="text" class="att-note" placeholder="Notes (optional)"
                                                    value="{{ $row['note'] }}"

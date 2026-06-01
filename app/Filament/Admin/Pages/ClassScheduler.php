@@ -192,7 +192,7 @@ class ClassScheduler extends Page
     public function runConfirm(): void
     {
         $m = $this->confirm['method'] ?? null;
-        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession', 'rescheduleEnrollment', 'cancelEnrollment'];
+        $allowed = ['submitAttendance', 'reopenAttendance', 'cancelSession', 'rescheduleEnrollment', 'cancelEnrollment', 'removeEnrollment'];
         if ($m && in_array($m, $allowed, true)) {
             $this->{$m}($this->confirm['arg']);
         }
@@ -523,6 +523,28 @@ class ClassScheduler extends Page
         $e->markStatus('cancelled', Auth::id());
         Notification::make()->success()->title('Enrollment Cancelled')
             ->body($name . "'s class enrollment was cancelled and their seat freed.")->send();
+    }
+
+    /** Super-user: completely remove an enrollment row (for someone accidentally added to a class). */
+    public function removeEnrollment(int $enrollmentId): void
+    {
+        $u = Auth::user();
+        if (! ($u?->hasCapability(\App\Enums\Capability::ManageUsers) || $u?->hasCapability(\App\Enums\Capability::SystemSettings))) {
+            Notification::make()->danger()->title('Not Authorized')
+                ->body('Only an administrator can fully remove an enrollment.')->send();
+            return;
+        }
+        $e = \App\Models\ClassEnrollment::with('classSession')->find($enrollmentId);
+        if (! $e) return;
+        if ($e->classSession?->attendance_submitted_at) {
+            Notification::make()->warning()->title('Attendance Submitted')
+                ->body('This session is already submitted. Reopen attendance first if you need to change it.')->send();
+            return;
+        }
+        $name = $e->name ?: ($e->personnel?->full_name ?? 'Trainee');
+        $e->delete();
+        Notification::make()->success()->title('Enrollment Removed')
+            ->body($name . ' was completely removed from the class.')->send();
     }
 
     public function rescheduleToSelected(): void

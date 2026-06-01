@@ -14,6 +14,37 @@ class EditPersonnel extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('startQualification')
+                ->label('Start Qualification')
+                ->icon('heroicon-m-play')
+                ->color('primary')
+                ->visible(fn () => $this->record && ! $this->record->qualification()->exists())
+                ->modalHeading('Start A Qualification')
+                ->modalDescription('This puts the person into the gowning pipeline. Pick the type and the due date. They start at the class step (or, for a transfer who is already qualified, you can mark the class on file).')
+                ->form([
+                    \Filament\Forms\Components\Select::make('type')->label('Qualification Type')
+                        ->options(['initial' => 'Initial Gowning Qualification (3 runs)', 'annual' => 'Annual Requalification (1 run)'])
+                        ->default('initial')->required(),
+                    \Filament\Forms\Components\DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')
+                        ->label('Qualification Due Date')->required(),
+                ])
+                ->action(function (array $data) {
+                    $person = $this->record;
+                    $type = ($data['type'] ?? 'initial') === 'annual' ? \App\Enums\QualificationType::Annual : \App\Enums\QualificationType::Initial;
+                    \App\Models\Qualification::create([
+                        'personnel_id' => $person->id,
+                        'type' => $type,
+                        'status' => \App\Enums\QualificationStatus::Pending,
+                        'runs_required' => $type->runsRequired(),
+                        'runs_completed' => 0,
+                        'due_date' => \Illuminate\Support\Carbon::parse($data['due_date'])->toDateString(),
+                        'workflow_stage' => \App\Enums\WorkflowStage::ClassPending,
+                        'stage_changed_at' => now(),
+                    ]);
+                    \Filament\Notifications\Notification::make()->success()->title('Qualification Started')
+                        ->body(trim($person->first_name . ' ' . $person->last_name) . ' is now in the pipeline.')->send();
+                    $this->redirect(static::getResource()::getUrl('edit', ['record' => $person]));
+                }),
             Action::make('backToActiveRuns')
                 ->label('Back To Active Runs')
                 ->icon('heroicon-m-arrow-left')

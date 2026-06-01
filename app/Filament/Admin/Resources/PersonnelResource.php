@@ -111,8 +111,8 @@ class PersonnelResource extends Resource
                             ]),
                     ]),
                 Step::make('Qualification Setup')->icon('heroicon-o-shield-check')
-                    ->visibleOn('edit')
-                    ->description('Record the classroom approval, then build the run history. The next due date is driven off the QA approval date.')
+                    ->visible(fn ($record, string $operation) => $operation === 'edit' && $record && $record->qualification()->exists())
+                    ->description('Edit the classroom approval and the qualification cycle. The next due date is driven off the QA approval date.')
                     ->schema([
                         Section::make('Qualification Record')
                             ->description('The classroom approval plus the qualification cycle. The next due date always calculates from the final QA qualification approval date, not the run date.')
