@@ -22,6 +22,27 @@
     {{-- Filament action modals (the buttons above trigger these via mountAction) --}}
     <x-filament-actions::modals />
 
+    @php
+        // Explain a missing button set so the header is never a silent blank.
+        $selfBook = (bool) \App\Models\Setting::get('allow_self_book_class', true);
+        $selfRun = (bool) \App\Models\Setting::get('allow_self_request_run', true);
+        $hint = null;
+        if ($person && ! $showBook && ! $showRun && ! $showResched) {
+            if ((bool) $person->qualification?->class_on_file && ! $selfRun) {
+                $hint = 'Self-service run requests are turned off. Your scheduler will book your run.';
+            } elseif (! (bool) $person->qualification?->class_on_file && ! $selfBook) {
+                $hint = 'Self-service class booking is turned off. Your scheduler will enrol you in a class.';
+            } elseif (\App\Models\ClassEnrollment::where('personnel_id', $person->id)->whereIn('status', \App\Models\ClassEnrollment::ACTIVE_STATUSES)->exists()) {
+                $hint = 'You are already enrolled in a class - see My Schedule below.';
+            }
+        }
+    @endphp
+    @if($hint)
+        <div style="margin-bottom:16px;padding:11px 15px;background:var(--gqs-surface-2,#F4F4F6);border-radius:10px;font-size:13px;color:var(--gqs-text-dim,#5A5A62);display:flex;align-items:center;gap:10px;">
+            <x-filament::icon icon="heroicon-o-information-circle" style="width:18px;height:18px;flex-shrink:0;"/> {{ $hint }}
+        </div>
+    @endif
+
     @php $needsClass = $person && ! $person->qualification?->class_on_file; @endphp
     @if($needsClass)
         <div style="margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:#FFF6E5;border:1px solid #F0D08A;border-radius:10px;">
