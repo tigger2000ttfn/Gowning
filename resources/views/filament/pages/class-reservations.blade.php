@@ -12,6 +12,30 @@
         <div class="gqs-stat charcoal"><div class="n">{{ $sessionCount ? round($totalEnrolled / max($sessionCount,1), 1) : 0 }}</div><div class="l">Avg Per Session</div><span class="wm"><x-filament::icon icon="heroicon-o-users"/></span></div>
     </div>
 
+    <div class="cr-filterbar">
+        <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search name or ID" class="gqs-fld cr-f-search">
+        <select wire:model.live="classFilter" class="gqs-fld cr-f-sel">
+            <option value="">All Classes</option>
+            @foreach($this->classOptions() as $c)<option value="{{ $c }}">{{ $c }}</option>@endforeach
+        </select>
+        <select wire:model.live="locationFilter" class="gqs-fld cr-f-sel">
+            <option value="">All Locations</option>
+            @foreach($this->locationOptions() as $loc)<option value="{{ $loc }}">{{ $loc }}</option>@endforeach
+        </select>
+        <label class="cr-f-lbl">From <input type="date" wire:model.live="dateFrom" class="gqs-fld cr-f-date"></label>
+        <label class="cr-f-lbl">To <input type="date" wire:model.live="dateTo" class="gqs-fld cr-f-date"></label>
+        <label class="cr-f-chk"><input type="checkbox" wire:model.live="hidePast"> Upcoming Only</label>
+    </div>
+    <style>
+        .cr-filterbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 14px;}
+        .cr-f-search{min-width:190px;}
+        .cr-f-sel{min-width:150px;}
+        .cr-f-date{padding:7px 9px;}
+        .cr-f-lbl{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--gqs-text-dim,#5A5A62);}
+        .cr-f-chk{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--gqs-text-dim,#5A5A62);white-space:nowrap;cursor:pointer;}
+        .cr-f-chk input{accent-color:#A4123F;}
+    </style>
+
     @forelse ($groups as $group)
         <div class="gqs-panel">
             <div class="gqs-panel-head" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><x-filament::icon icon="heroicon-m-academic-cap"/> {{ $group['title'] }}

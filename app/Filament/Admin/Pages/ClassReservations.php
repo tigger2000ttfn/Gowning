@@ -50,13 +50,37 @@ class ClassReservations extends Page
 
     protected string $view = 'filament.pages.class-reservations';
 
+    public string $search = '';
+    public string $classFilter = '';
+    public string $locationFilter = '';
+    public string $dateFrom = '';
+    public string $dateTo = '';
+    public bool $hidePast = true;
+
+    public function classOptions(): array
+    {
+        return \App\Models\TrainingClass::orderBy('name')->pluck('name', 'name')->all();
+    }
+
+    public function locationOptions(): array
+    {
+        return ClassSession::query()->whereNotNull('location')->where('location', '!=', '')
+            ->distinct()->orderBy('location')->pluck('location', 'location')->all();
+    }
+
     /** Enrollments grouped by class session, booking-management view. */
     public function getGroupedBySession(): array
     {
         $manager = $this->viewerIsManager();
         $mineId = $manager ? null : (static::viewerPersonnel()?->id);
+        $search = trim($this->search);
 
         return ClassSession::with(['trainingClass', 'enrollments.personnel'])
+            ->when($this->hidePast, fn ($q) => $q->whereDate('session_date', '>=', now()->toDateString()))
+            ->when($this->classFilter !== '', fn ($q) => $q->whereHas('trainingClass', fn ($t) => $t->where('name', $this->classFilter)))
+            ->when($this->locationFilter !== '', fn ($q) => $q->where('location', $this->locationFilter))
+            ->when($this->dateFrom !== '', fn ($q) => $q->whereDate('session_date', '>=', $this->dateFrom))
+            ->when($this->dateTo !== '', fn ($q) => $q->whereDate('session_date', '<=', $this->dateTo))
             ->orderBy('session_date')
             ->get()
             ->map(fn ($s) => [
@@ -70,6 +94,11 @@ class ClassReservations extends Page
                 'rows' => $s->enrollments
                     ->whereNotIn('status', ['cancelled'])
                     ->when(! $manager, fn ($c) => $c->where('personnel_id', $mineId))
+                    ->filter(function ($e) use ($search) {
+                        if ($search === '') return true;
+                        $hay = mb_strtolower(($e->personnel?->full_name ?? $e->name ?? '') . ' ' . ($e->personnel?->employee_id ?? $e->employee_id ?? ''));
+                        return str_contains($hay, mb_strtolower($search));
+                    })
                     ->map(fn ($e) => [
                         'id' => $e->id,
                         'name' => $e->personnel?->full_name ?? $e->name ?? 'Unknown',
@@ -77,8 +106,8 @@ class ClassReservations extends Page
                         'status' => $e->status instanceof \BackedEnum ? $e->status->value : (string) $e->status,
                     ])->values()->all(),
             ])
-            // operators only see sessions they're actually in
-            ->filter(fn ($g) => $this->viewerIsManager() || ! empty($g['rows']))
+            // operators only see sessions they're in; with a name search active, hide sessions with no matching rows
+            ->filter(fn ($g) => ($this->viewerIsManager() && trim($this->search) === '') || ! empty($g['rows']))
             ->values()->all();
     }
 
