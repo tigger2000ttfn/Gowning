@@ -156,17 +156,20 @@ class WorklistBackfill
                     }
                     $qual->stage_changed_at = now();
 
-                    // Inferred classroom completion (only when none already exists).
+                    // Inferred classroom completion (only when none already exists), dated to the worklist's
+                    // QUAL DATE 1 (the first run date is the same for an initial cycle). QA edits these later
+                    // and can add the LMS number on the Class Completions page.
                     if (! \App\Models\ClassCompletion::where('personnel_id', $person->id)->exists()) {
+                        $classDate = ($this->parseLimsDate($wl->qual_date_1) ?: $firstDate)->toDateString();
                         \App\Models\ClassCompletion::create([
                             'personnel_id' => $person->id,
                             'employee_id' => $person->employee_id,
                             'class_name' => 'Gowning Qualification Class (Inferred)',
-                            'completion_date' => $firstDate->toDateString(),
+                            'completion_date' => $classDate,
                             'source' => 'inferred',
                         ]);
                         $qual->class_on_file = true;
-                        $qual->class_on_file_date = $firstDate->toDateString();
+                        $qual->class_on_file_date = $classDate;
                     }
                     $qual->save();
                     return $added;

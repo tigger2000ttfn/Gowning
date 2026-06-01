@@ -68,6 +68,8 @@ class ClassCompletionResource extends Resource
                         ->placeholder('e.g. Gowning Qualification Class')->columnSpanFull(),
                     DatePicker::make('completion_date')->label('Completion Date')
                         ->native(false)->displayFormat('d-M-Y')->required(),
+                    TextInput::make('lms_number')->label('LMS Number')
+                        ->placeholder('LMS course / completion number'),
                     Select::make('source')->label('Source')
                         ->options(['lms' => 'LMS Import', 'manual' => 'Manual Entry', 'self' => 'Self-Service', 'import' => 'File Import', 'inferred' => 'Inferred (From Backfill)'])
                         ->default('manual')->required(),

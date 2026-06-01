@@ -25,6 +25,12 @@
                 <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#9A9AA4;">Completion Date</div>
                 <div style="font-weight:700;color:#1A1A1F;margin-top:3px;">{{ $c->completion_date?->gmp() ?? '—' }}</div>
             </div>
+            @if($c->lms_number)
+            <div>
+                <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#9A9AA4;">LMS Number</div>
+                <div style="font-weight:700;color:#1A1A1F;margin-top:3px;">{{ $c->lms_number }}</div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

@@ -11,7 +11,7 @@ class ClassCompletion extends Model
     use Auditable;
 
     protected $fillable = [
-        'personnel_id', 'employee_id', 'class_name',
+        'personnel_id', 'employee_id', 'class_name', 'lms_number',
         'completion_date', 'source', 'import_batch_id',
     ];
 
