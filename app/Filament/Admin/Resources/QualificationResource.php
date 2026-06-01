@@ -172,29 +172,42 @@ class QualificationResource extends Resource
                             ->url(fn ($record) => QualificationResource::getUrl('view', ['record' => $record]))
                             ->openUrlInNewTab(),
                     ]),
-                \Filament\Actions\Action::make('removeFromPipeline')
-                    ->label('Remove From Active Runs')
-                    ->icon('heroicon-m-x-circle')
-                    ->color('danger')
-                    ->visible(fn () => (bool) (\Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::ManageUsers)
-                        || \Illuminate\Support\Facades\Auth::user()?->hasCapability(\App\Enums\Capability::SystemSettings)))
-                    ->requiresConfirmation()
-                    ->modalHeading('Remove From Active Runs')
-                    ->modalDescription('Removes this qualification cycle and its run records, taking the person out of the run pipeline / Status Board. The person record and their class history are kept. If they have an earlier cycle, that earlier cycle becomes their current one again. Use for people accidentally added to the queue.')
-                    ->modalSubmitActionLabel('Remove From Pipeline')
-                    ->action(function ($record) {
-                        $personId = $record->personnel_id;
-                        $parentId = $record->parent_qualification_id;
-                        // delete this cycle's runs then the cycle itself
-                        \App\Models\QualificationRun::where('qualification_id', $record->id)->delete();
-                        $record->delete();
-                        // restore the parent cycle as active if there was one
-                        if ($parentId) {
-                            $parent = \App\Models\Qualification::find($parentId);
-                            if ($parent) { $parent->forceFill(['superseded_at' => null])->saveQuietly(); }
-                        }
-                        \Filament\Notifications\Notification::make()->success()->title('Removed From Active Runs')
-                            ->body('The qualification cycle was removed from the pipeline.')->send();
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('removeFromPipeline')
+                        ->label('Remove From Active Runs')
+                        ->icon('heroicon-m-x-circle')
+                        ->color('danger')
+                        ->visible(function () {
+                            $u = \Illuminate\Support\Facades\Auth::user();
+                            return (bool) ($u && ($u->role?->isSuperUser()
+                                || $u->hasCapability(\App\Enums\Capability::ManageUsers)
+                                || $u->hasCapability(\App\Enums\Capability::SystemSettings)));
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Remove From Active Runs')
+                        ->modalDescription('Removes this qualification cycle and its run records, taking the person out of the run pipeline / Status Board. The person record and their class history are kept. If they have an earlier cycle, that earlier cycle becomes their current one again. Use for people accidentally added to the queue.')
+                        ->modalSubmitActionLabel('Remove From Pipeline')
+                        ->action(function ($record) {
+                            $parentId = $record->parent_qualification_id;
+                            \App\Models\QualificationRun::where('qualification_id', $record->id)->delete();
+                            $record->delete();
+                            if ($parentId) {
+                                $parent = \App\Models\Qualification::find($parentId);
+                                if ($parent) { $parent->forceFill(['superseded_at' => null])->saveQuietly(); }
+                            }
+                            \Filament\Notifications\Notification::make()->success()->title('Removed From Active Runs')
+                                ->body('The qualification cycle was removed from the pipeline.')->send();
+                        }),
+                ])
+                    ->label('Actions')
+                    ->icon('heroicon-m-ellipsis-horizontal')
+                    ->button()
+                    ->color('gray')
+                    ->visible(function () {
+                        $u = \Illuminate\Support\Facades\Auth::user();
+                        return (bool) ($u && ($u->role?->isSuperUser()
+                            || $u->hasCapability(\App\Enums\Capability::ManageUsers)
+                            || $u->hasCapability(\App\Enums\Capability::SystemSettings)));
                     }),
             ])
             ->recordAction('view')
