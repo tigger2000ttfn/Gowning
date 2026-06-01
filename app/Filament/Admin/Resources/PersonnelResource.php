@@ -114,7 +114,8 @@ class PersonnelResource extends Resource
                     ->visibleOn('edit')
                     ->description('Record the classroom approval, then build the run history. The next due date is driven off the QA approval date.')
                     ->schema([
-                        Section::make('Classroom History')
+                        Section::make('Qualification Record')
+                            ->description('The classroom approval plus the qualification cycle. The next due date always calculates from the final QA qualification approval date, not the run date.')
                             ->columns(2)
                             ->relationship('qualification')
                             ->disabled(function ($record) {
@@ -128,39 +129,34 @@ class PersonnelResource extends Resource
                                     ->helperText('On = Gowning Class / OJT Is QA-Approved And On File.')
                                     ->live()->columnSpanFull(),
                                 DatePicker::make('class_on_file_date')->native(false)->displayFormat('d-M-Y')->label('Class Date')
-                                    ->visible(fn ($get) => $get('class_on_file')),
+                                    ->visible(fn ($get) => $get('class_on_file'))->columnSpanFull(),
+                                Select::make('type')->label('Qualification Type')
+                                    ->options(['initial' => 'Initial', 'annual' => 'Annual (Requalification)'])->default('initial')
+                                    ->helperText('Initial = 3 Runs · Annual = 1 Run.'),
+                                Select::make('status')->label('Current Status')->live()
+                                    ->options([
+                                        'pending' => 'Pending', 'in_progress' => 'In Progress',
+                                        'qualified' => 'Qualified', 'lapsed' => 'Lapsed',
+                                    ])->default('pending'),
+                                Select::make('workflow_stage')->label('Workflow Stage')
+                                    ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
+                                    ->default('class_pending'),
+                                DatePicker::make('qualified_date')->native(false)->displayFormat('d-M-Y')->label('Date Last Qualified (QA Approval)')
+                                    ->live()
+                                    ->visible(fn ($get) => $get('status') === 'qualified')
+                                    ->afterStateUpdated(function ($state, $set) {
+                                        if (! $state) return;
+                                        $cycle = (int) \App\Models\Setting::get('cycle_months', 12);
+                                        $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
+                                    })
+                                    ->helperText('Set Only When QA Has Qualified This Person · Drives The Next Due Date.'),
+                                DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('Next Qualification Due Date')
+                                    ->visible(fn ($get) => $get('status') === 'qualified')
+                                    ->helperText('Auto-Calculates From The QA Approval Date + Cycle Length.'),
                             ]),
                         Section::make('Run History')
-                            ->description('The qualification record plus every run. The next due date always calculates from the final QA qualification approval date, not the run date.')
+                            ->description('Every run in the current cycle.')
                             ->schema([
-                                Section::make('Qualification Record')
-                                    ->columns(2)
-                                    ->relationship('qualification')
-                                    ->schema([
-                                        Select::make('type')->label('Qualification Type')
-                                            ->options(['initial' => 'Initial', 'annual' => 'Annual (Requalification)'])->default('initial')
-                                            ->helperText('Initial = 3 Runs · Annual = 1 Run.'),
-                                        Select::make('status')->label('Current Status')->live()
-                                            ->options([
-                                                'pending' => 'Pending', 'in_progress' => 'In Progress',
-                                                'qualified' => 'Qualified', 'lapsed' => 'Lapsed',
-                                            ])->default('pending'),
-                                        Select::make('workflow_stage')->label('Workflow Stage')
-                                            ->options(collect(\App\Enums\WorkflowStage::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all())
-                                            ->default('class_pending'),
-                                        DatePicker::make('qualified_date')->native(false)->displayFormat('d-M-Y')->label('Date Last Qualified (QA Approval)')
-                                            ->live()
-                                            ->visible(fn ($get) => $get('status') === 'qualified')
-                                            ->afterStateUpdated(function ($state, $set) {
-                                                if (! $state) return;
-                                                $cycle = (int) \App\Models\Setting::get('cycle_months', 12);
-                                                $set('due_date', \Illuminate\Support\Carbon::parse($state)->addMonths($cycle)->toDateString());
-                                            })
-                                            ->helperText('Set Only When QA Has Qualified This Person · Drives The Next Due Date.'),
-                                        DatePicker::make('due_date')->native(false)->displayFormat('d-M-Y')->label('Next Qualification Due Date')
-                                            ->visible(fn ($get) => $get('status') === 'qualified')
-                                            ->helperText('Auto-Calculates From The QA Approval Date + Cycle Length.'),
-                                    ]),
                                 Repeater::make('runs')
                                     ->label('Runs')
                                     ->relationship('runs')
